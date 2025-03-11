@@ -8,24 +8,12 @@ const purchaseorderResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        // const userId = context.getUser()._id;
+        // Simply return the purchase orders without any item filtering
         const purchaseorders = await Purchaseorder.find({
-          // userId,
           isDeleted: false,
         }).sort({ date: -1 });
 
-        // Filter out deleted items from each purchase order
-        const filteredPurchaseorders = purchaseorders.map((po) => {
-          if (po.items && Array.isArray(po.items)) {
-            return {
-              ...po.toObject(),
-              items: po.items.filter((item) => !item.isDeleted),
-            };
-          }
-          return po;
-        });
-
-        return filteredPurchaseorders;
+        return purchaseorders; // No need for filteredPurchaseorders
       } catch (error) {
         console.error("Error fetching purchaseorders, error: ", error);
         throw new Error(error.message || "Internal server error");
@@ -45,13 +33,13 @@ const purchaseorderResolver = {
         }
 
         // Filter out deleted items
-        if (purchaseorder.items && Array.isArray(purchaseorder.items)) {
-          const purchaseorderObj = purchaseorder.toObject();
-          purchaseorderObj.items = purchaseorderObj.items.filter(
-            (item) => !item.isDeleted
-          );
-          return purchaseorderObj;
-        }
+        // if (purchaseorder.items && Array.isArray(purchaseorder.items)) {
+        //   const purchaseorderObj = purchaseorder.toObject();
+        //   purchaseorderObj.items = purchaseorderObj.items.filter(
+        //     (item) => !item.isDeleted
+        //   );
+        //   return purchaseorderObj;
+        // }
 
         return purchaseorder;
       } catch (error) {
@@ -59,26 +47,27 @@ const purchaseorderResolver = {
         throw new Error(error.message || "Internal server error");
       }
     },
-    purchaseorderItems: async (_, { purchaseorderId }, context) => {
-      try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-
-        // Query the separate collection instead of embedded documents
-        return await PurchaseOrderItems.find({
-          ponumber: purchaseorderId,
-          isDeleted: false,
-        });
-      } catch (error) {
-        console.error("Error fetching purchaseorder items:", error);
-        throw new Error(error.message || "Internal server error");
-      }
-    },
+    // redundant query since we can use field resolvers
+    // purchaseorderItems: async (_, { purchaseorderId }, context) => {
+    //   try {
+    //     if (!context.isAuthenticated()) {
+    //       throw new Error("Unauthorized");
+    //     }
+    //     // Query the separate collection instead of embedded documents
+    //     return await PurchaseOrderItems.find({
+    //       ponumber: purchaseorderId,
+    //       isDeleted: false,
+    //     });
+    //   } catch (error) {
+    //     console.error("Error fetching purchaseorder items:", error);
+    //     throw new Error(error.message || "Internal server error");
+    //   }
+    // },
   },
   // Add this field resolver to connect purchase orders with their items
   Purchaseorder: {
     items: async (parent) => {
+      console.log(`items  for PO: ${parent._id}`);
       try {
         return await PurchaseOrderItems.find({
           ponumber: parent._id,
@@ -87,6 +76,28 @@ const purchaseorderResolver = {
       } catch (error) {
         console.error("Error fetching purchase order items:", error);
         throw new Error("Failed to load purchase order items");
+      }
+    },
+    amount: async (parent) => {
+      console.log(`Calculating amount for PO: ${parent._id}`);
+      try {
+        const items = await PurchaseOrderItems.find({
+          ponumber: parent._id,
+          isDeleted: false,
+        });
+
+        console.log(`Found ${items.length} items for PO: ${parent._id}`);
+
+        const total = items.reduce((sum, item) => {
+          console.log(`Adding item amount: ${item.amount}`);
+          return sum + (Number(item.amount) || 0);
+        }, 0);
+
+        console.log(`Total calculated: ${total}`);
+        return total;
+      } catch (error) {
+        console.error(`ERROR calculating amount for PO: ${parent._id}`, error);
+        return parent.amount || 0;
       }
     },
   },
@@ -205,14 +216,9 @@ const purchaseorderResolver = {
 
         await newItem.save();
 
-        // Add the item reference to the purchase order
-        const purchaseorder = await Purchaseorder.findByIdAndUpdate(
-          purchaseorderId,
-          { $push: { items: newItem._id } },
-          { new: true }
-        );
-
-        return purchaseorder;
+        // No need to update the purchase order if using field resolvers
+        // Simply return the purchase order
+        return await Purchaseorder.findById(purchaseorderId);
       } catch (error) {
         console.error("Error adding purchaseorder item:", error);
         throw new Error(error.message || "Internal server error");

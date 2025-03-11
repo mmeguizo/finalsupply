@@ -19,6 +19,7 @@ const purchaseOrderSchema = new mongoose.Schema(
       type: Number,
       // required: true,
     },
+
     modeofprocurement: {
       type: String,
       // required: true,
@@ -51,12 +52,12 @@ const purchaseOrderSchema = new mongoose.Schema(
       type: String,
       // required: true,
     },
-    items: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "purchaseOrderItems",
-      },
-    ],
+    // items: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "purchaseOrderItems",
+    //   },
+    // ],
     amount: {
       type: Number,
       required: true,
@@ -71,6 +72,7 @@ const purchaseOrderSchema = new mongoose.Schema(
       default: false,
     },
   },
+
   { timestamps: true }
 );
 

@@ -24,7 +24,7 @@ const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "purchaseorder",
-    title: "Purchase Orders",
+    title: "Inspection Acceptance Report",
     icon: <BusinessCenterIcon />,
   },
   {

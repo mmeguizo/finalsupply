@@ -6,6 +6,7 @@ const purchaseOrderItemsSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Purchaseorders",
       required: true,
+      index: true,
     },
     item: {
       type: String,
@@ -50,7 +51,7 @@ const PurchaseOrderItems = mongoose.model(
   "purchaseOrderItems"
 );
 
-purchaseOrderItemsSchema.index({ ponumber: 1 });
+// purchaseOrderItemsSchema.index({ ponumber: 1 });
 purchaseOrderItemsSchema.index({ isDeleted: 1 });
 
 export default PurchaseOrderItems;
