@@ -1,0 +1,85 @@
+// import "@mui/material/styles";
+import * as React from "react";
+import * as ReactDOM from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import App from "./App";
+import Layout from "./layouts/dashboard";
+import DashboardPage from "./pages";
+import OrdersPage from "./pages/orders";
+import SignInPage from "./pages/signIn";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import TestPage from "./pages/test";
+import { ProtectedRoute } from "./protected";
+import PurchaseOrder from "./pages/purchaseorder";
+
+const client = new ApolloClient({
+  // TODO => update uri to production uri
+  uri: "http://localhost:4000/graphql",
+  cache: new InMemoryCache(),
+  credentials: "include",
+
+  // ssrMode: true, //false in production
+});
+
+const router = createBrowserRouter([
+  {
+    Component: App,
+    children: [
+      {
+        path: "/",
+        Component: Layout,
+        children: [
+          {
+            path: "/",
+            Component: DashboardPage,
+          },
+          {
+            path: "/purchaseorder",
+            // Component: OrdersPage,
+            children: [
+              {
+                path: "",
+                Component: PurchaseOrder,
+              },
+            ],
+            element: <ProtectedRoute routePath="orders" />,
+          },
+          {
+            path: "/orders",
+            // Component: OrdersPage,
+            children: [
+              {
+                path: "",
+                Component: OrdersPage,
+              },
+            ],
+            element: <ProtectedRoute routePath="orders" />,
+          },
+          {
+            path: "/tests",
+            element: <ProtectedRoute routePath="tests" />,
+            // Component: TestPage,
+            children: [
+              {
+                path: "",
+                Component: TestPage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "/sign-in",
+        Component: SignInPage,
+      },
+    ],
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <ApolloProvider client={client}>
+      <RouterProvider router={router} />
+    </ApolloProvider>
+  </React.StrictMode>
+);
