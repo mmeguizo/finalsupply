@@ -1,6 +1,6 @@
 import * as React from "react";
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
-import { useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import {
   CircularProgress,
   Alert,
@@ -29,37 +29,32 @@ import {
 } from "@mui/x-data-grid";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import PrintIcon from "@mui/icons-material/Print";
-// Custom toolbar with export button for PO with items
-function CustomToolbar({ onExportWithItems, onPrintWithItems }: any) {
-  return (
-    // original toolbar
-    // <GridToolbarContainer>
-    //   <GridToolbar />
-    //   <Tooltip title="Export">
-    //     <Button startIcon={<FileDownloadIcon />} onClick={onExportWithItems}>
-    //       Export with Items
-    //     </Button>
-    //   </Tooltip>
-    //   <Tooltip title="Print">
-    //     <Button
-    //       startIcon={<PrintIcon />}
-    //       onClick={onPrintWithItems}
-    //       sx={{ ml: 1 }}
-    //     >
-    //       Print with Items
-    //     </Button>
-    //   </Tooltip>
-    // </GridToolbarContainer>
+import AddIcon from "@mui/icons-material/Add";
+import PurchaseOrderModal from "../components/purchaseordermodel";
+import {
+  ADD_PURCHASEORDER,
+  UPDATE_PURCHASEORDER,
+} from "../graphql/mutations/purchaseorder.mutation";
 
-    // Custom toolbar with individual
-    // components instead of GridToolbar
+// Custom toolbar with export button for PO with items
+function CustomToolbar({ onExportWithItems, onPrintWithItems, onAddPO }: any) {
+  return (
     <GridToolbarContainer>
-      {/* Individual toolbar components instead of GridToolbar */}
       <GridToolbarColumnsButton />
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
 
-      {/* Your custom buttons */}
+      {/* Add PO button */}
+      <Button
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={onAddPO}
+        sx={{ ml: 1 }}
+      >
+        Add PO
+      </Button>
+
+      {/* Your existing export and print buttons */}
       <Tooltip title="Export">
         <Button
           startIcon={<FileDownloadIcon />}
@@ -78,6 +73,7 @@ function CustomToolbar({ onExportWithItems, onPrintWithItems }: any) {
           Print
         </Button>
       </Tooltip>
+
       <GridToolbarQuickFilter />
     </GridToolbarContainer>
   );
@@ -89,6 +85,16 @@ export default function PurchaseOrder() {
   console.log(data);
 
   const [selectedPO, setSelectedPO] = React.useState<any>(null);
+  const [openPOModal, setOpenPOModal] = React.useState(false);
+  const [editingPO, setEditingPO] = React.useState<any>(null);
+
+  const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
+    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+  });
+
+  const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+  });
 
   // Define columns for purchase orders
   const poColumns: GridColDef[] = [
@@ -123,6 +129,38 @@ export default function PurchaseOrder() {
       align: "right",
       headerAlign: "right",
     },
+    {
+      field: "edit",
+      headerName: "Edit",
+      width: 100,
+      renderCell: (params) => (
+        <Button
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row selection
+            handleOpenEditModal(params.row);
+          }}
+        >
+          Edit
+        </Button>
+      ),
+    },
+    {
+      field: "delete",
+      headerName: "Delete",
+      width: 100,
+      renderCell: (params) => (
+        <Button
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row selection
+            handleOpenEditModal(params.row);
+          }}
+        >
+          Edit
+        </Button>
+      ),
+    },
   ];
 
   // Define columns for items
@@ -136,20 +174,12 @@ export default function PurchaseOrder() {
       headerName: "Unit Cost",
       type: "number",
       width: 120,
-      // valueFormatter: (params: any) => {
-      //   if (params.value == null) return "₱0.00";
-      //   return `₱${Number(params.value).toFixed(2)}`;
-      // },
     },
     {
       field: "formatAmount",
       headerName: "Amount",
       type: "number",
       width: 120,
-      // valueFormatter: (params: any) => {
-      //   if (params.value == null) return "₱0.00";
-      //   return `₱${Number(params.value).toFixed(2)}`;
-      // },
     },
   ];
 
@@ -158,10 +188,6 @@ export default function PurchaseOrder() {
     if (!data?.purchaseorders) return [];
 
     return data.purchaseorders.map((po: any) => {
-      // Pre-format dates during row preparation instead of in the formatter
-
-      console.log(po);
-
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
 
       const formattedDeliveryDate = po.dateofdelivery
@@ -172,16 +198,12 @@ export default function PurchaseOrder() {
         ? new Date(Number(po.dateofpayment)).toLocaleDateString()
         : "Not specified";
 
-      // Use the amount directly from the data - no calculations needed
-      // The data shows the amount is already populated correctly
-
       return {
         id: po._id,
         ...po,
         formattedDeliveryDate,
         formattedPaymentDate,
-        formatAmount, // No amount recalculation needed since it's already in the data
-        // No amount recalculation needed since it's already in the data
+        formatAmount,
       };
     });
   }, [data]);
@@ -208,10 +230,8 @@ export default function PurchaseOrder() {
 
   // Function to export PO with items
   const exportPurchaseOrdersWithItems = () => {
-    // Get all purchase orders and their items
     const allData = data?.purchaseorders
       .map((po: any) => {
-        // Get base PO data
         const poData = {
           "PO Number": po.ponumber,
           Supplier: po.supplier,
@@ -224,7 +244,6 @@ export default function PurchaseOrder() {
           "Total Amount": `${po.amount.toFixed(2)}`,
         };
 
-        // If PO has no items, return just the PO row
         if (!po.items || po.items.length === 0) {
           return [
             {
@@ -239,11 +258,9 @@ export default function PurchaseOrder() {
           ];
         }
 
-        // Otherwise, return the PO data combined with each item
         return po.items.map((item: any, idx: any) => {
           return {
             ...poData,
-            // Only include PO details in first row of each PO group
             "PO Number": idx === 0 ? po.ponumber : "",
             Supplier: idx === 0 ? po.supplier : "",
             "Delivery Date":
@@ -255,7 +272,6 @@ export default function PurchaseOrder() {
                 ? new Date(Number(po.dateofpayment)).toLocaleDateString()
                 : "",
             "Total Amount": idx === 0 ? `${po.amount.toFixed(2)}` : "",
-            // Item details
             Item: item.item,
             Description: item.description,
             Unit: item.unit,
@@ -267,18 +283,13 @@ export default function PurchaseOrder() {
       })
       .flat();
 
-    // Convert to CSV
     let csvContent = "data:text/csv;charset=utf-8,";
-
-    // Add header row
     const headers = Object.keys(allData[0]);
     csvContent += headers.join(",") + "\n";
 
-    // Add data rows
     allData.forEach((row: any) => {
       const rowContent = headers
         .map((header) => {
-          // Escape quotes and commas in text fields
           const cell = row[header] !== undefined ? row[header].toString() : "";
           return `"${cell.replace(/"/g, '""')}"`;
         })
@@ -286,7 +297,6 @@ export default function PurchaseOrder() {
       csvContent += rowContent + "\n";
     });
 
-    // Create download link
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -296,17 +306,14 @@ export default function PurchaseOrder() {
     document.body.removeChild(link);
   };
 
-  // print PO with items
   // Function to print PO with items
   const printPurchaseOrdersWithItems = () => {
-    // Create a print window
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert("Please allow popups to print purchase orders.");
       return;
     }
 
-    // Start building HTML content
     let htmlContent = `
     <html>
     <head>
@@ -331,11 +338,9 @@ export default function PurchaseOrder() {
       <h2>Purchase Orders with Items</h2>
   `;
 
-    // Group data by purchase order
     const purchaseOrders = data?.purchaseorders || [];
 
     purchaseOrders.forEach((po: any, poIndex: number) => {
-      // Add purchase order header
       htmlContent += `
       <table>
         <thead>
@@ -368,7 +373,6 @@ export default function PurchaseOrder() {
       </table>
     `;
 
-      // Add items table
       if (po.items && po.items.length > 0) {
         htmlContent += `
         <table>
@@ -406,22 +410,67 @@ export default function PurchaseOrder() {
         htmlContent += `<p>No items found for this purchase order.</p>`;
       }
 
-      // Add page break between purchase orders (except for the last one)
       if (poIndex < purchaseOrders.length - 1) {
         htmlContent += `<div class="page-break"></div>`;
       }
     });
 
-    // Close HTML document
     htmlContent += `
     </body>
     </html>
   `;
 
-    // Write to the new window and trigger print
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingPO(null);
+    setOpenPOModal(true);
+  };
+
+  const handleOpenEditModal = (po: any) => {
+    setEditingPO(po);
+    setOpenPOModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenPOModal(false);
+  };
+
+  const handleSavePO = async (formData: any) => {
+    try {
+      // Clean items - remove __typename and handle _id appropriately
+      const cleanedItems = formData.items.map((item: any) => {
+        const { __typename, ...cleanItem } = item;
+        return cleanItem;
+      });
+
+      // Clean the formData to remove __typename
+      const { __typename, ...cleanFormData } = formData;
+      cleanFormData.items = cleanedItems;
+
+      console.log({ handleSavePO: cleanedItems });
+
+      if (editingPO) {
+        await updatePurchaseOrder({
+          variables: {
+            input: {
+              purchaseorderId: editingPO._id,
+              ...cleanFormData,
+            },
+          },
+        });
+      } else {
+        await addPurchaseOrder({
+          variables: { input: formData },
+        });
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error("Error saving purchase order:", err);
+    }
   };
 
   return (
@@ -440,7 +489,6 @@ export default function PurchaseOrder() {
 
       {data && data.purchaseorders && (
         <Stack spacing={3}>
-          {/* Purchase Orders Grid */}
           <Paper sx={{ height: 400, width: "100%" }}>
             <DataGrid
               rows={poRows}
@@ -459,6 +507,7 @@ export default function PurchaseOrder() {
                     {...props}
                     onExportWithItems={exportPurchaseOrdersWithItems}
                     onPrintWithItems={printPurchaseOrdersWithItems}
+                    onAddPO={handleOpenAddModal}
                   />
                 ),
               }}
@@ -471,7 +520,6 @@ export default function PurchaseOrder() {
             />
           </Paper>
 
-          {/* Items Grid - shown when a purchase order is selected */}
           {selectedPO && (
             <Paper sx={{ width: "100%" }}>
               <Box p={2} pb={0}>
@@ -501,6 +549,13 @@ export default function PurchaseOrder() {
           )}
         </Stack>
       )}
+
+      <PurchaseOrderModal
+        open={openPOModal}
+        handleClose={handleCloseModal}
+        purchaseOrder={editingPO}
+        handleSave={handleSavePO}
+      />
     </PageContainer>
   );
 }

@@ -104,6 +104,8 @@ const purchaseorderResolver = {
   Mutation: {
     addPurchaseorder: async (_, { input }, context) => {
       try {
+        const { items, ...poRestData } = input;
+
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
@@ -124,11 +126,22 @@ const purchaseorderResolver = {
 
         // If no duplicate, create new purchase order
         const newPurchaseorder = new Purchaseorder({
-          ...input,
+          ...poRestData,
           // userId: context.getUser()._id,
         });
 
         const savedPurchaseorder = await newPurchaseorder.save();
+
+        // Handle items if provided
+        if (items && Array.isArray(items)) {
+          for (const item of items) {
+            const newItem = new PurchaseOrderItems({
+              ...item,
+              ponumber: savedPurchaseorder._id,
+            });
+            await newItem.save();
+          }
+        }
         return savedPurchaseorder;
       } catch (error) {
         console.error("Error adding purchase order:", error);
@@ -140,12 +153,61 @@ const purchaseorderResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        const { purchaseorderId, ...update } = input;
+
+        // Extract fields
+        const { purchaseorderId, items, ...poUpdates } = input;
+
+        // 1. Update the purchase order document
         const updatedPurchaseorder = await Purchaseorder.findByIdAndUpdate(
           purchaseorderId,
-          update,
+          poUpdates,
           { new: true }
         );
+
+        // 2. Handle items if provided
+        if (items && Array.isArray(items)) {
+          // Get existing items
+          const existingItems = await PurchaseOrderItems.find({
+            ponumber: purchaseorderId,
+            isDeleted: false,
+          });
+
+          // Process each incoming item
+          for (const item of items) {
+            if (item._id) {
+              // Update existing item
+              await PurchaseOrderItems.findByIdAndUpdate(
+                item._id,
+                { ...item, ponumber: purchaseorderId },
+                { new: true }
+              );
+            } else {
+              // Create new item
+              const newItem = new PurchaseOrderItems({
+                ...item,
+                ponumber: purchaseorderId,
+              });
+              await newItem.save();
+            }
+          }
+
+          // Optional: Remove items not in the updated list (soft delete)
+          if (items.length > 0) {
+            const updatedItemIds = items
+              .filter((item) => item._id)
+              .map((item) => item._id);
+
+            await PurchaseOrderItems.updateMany(
+              {
+                ponumber: purchaseorderId,
+                _id: { $nin: updatedItemIds },
+                isDeleted: false,
+              },
+              { isDeleted: true }
+            );
+          }
+        }
+
         return updatedPurchaseorder;
       } catch (error) {
         console.error("Error updating purchaseorder, error: ", error);

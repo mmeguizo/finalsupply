@@ -57,6 +57,7 @@ type Mutation {
 }
 
 input UpdatePurchaseorderInput {
+    purchaseorderId: ID!
     supplier: String
     address: String
     ponumber: Int
@@ -86,7 +87,6 @@ input PurchaseorderInput {
     paymentterms: String
     items: [ItemInput!]
     amount: Float
-
 }
 
 `;
