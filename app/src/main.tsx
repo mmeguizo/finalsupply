@@ -12,10 +12,26 @@ import TestPage from "./pages/test";
 import { ProtectedRoute } from "./protected";
 import PurchaseOrder from "./pages/purchaseorder";
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Purchaseorder: {
+      fields: {
+        items: {
+          // Specify a custom merge function for the items field
+          merge(existing = [], incoming = []) {
+            return [...incoming]; // Simply use the incoming items
+          },
+        },
+      },
+    },
+  },
+});
+
 const client = new ApolloClient({
   // TODO => update uri to production uri
   uri: "http://localhost:4000/graphql",
-  cache: new InMemoryCache(),
+  // cache: new InMemoryCache(),
+  cache: cache,
   credentials: "include",
 
   // ssrMode: true, //false in production

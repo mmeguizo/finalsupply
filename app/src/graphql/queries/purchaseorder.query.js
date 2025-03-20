@@ -13,6 +13,8 @@ const GET_PURCHASEORDERS = gql`
       dateofpayment
       deliveryterms
       paymentterms
+      category
+      status
       items {
         _id
         item
@@ -21,9 +23,12 @@ const GET_PURCHASEORDERS = gql`
         quantity
         unitcost
         amount
+        category
         isDeleted
+        actualquantityrecieved
       }
       amount
+      invoice
     }
   }
 `;
@@ -41,6 +46,8 @@ const GET_PURCHASEORDER = gql`
       dateofpayment
       deliveryterms
       paymentterms
+      category
+      status
       items {
         _id
         item
@@ -49,9 +56,12 @@ const GET_PURCHASEORDER = gql`
         quantity
         unitcost
         amount
+        category
         isDeleted
+        actualquantityrecieved
       }
       amount
+      invoice
     }
   }
 `;
@@ -67,6 +77,7 @@ const GET_PURCHASEORDER_ITEMS = gql`
       unitcost
       amount
       isDeleted
+      actualquantityrecieved
     }
   }
 `;

@@ -37,6 +37,19 @@ const purchaseOrderItemsSchema = new mongoose.Schema(
       default: Date.now,
       required: true,
     },
+    actualquantityrecieved: {
+      type: Number,
+    },
+    category: {
+      type: String,
+      enum: [
+        "",
+        "property acknowledgement reciept",
+        "inventory custodian slip",
+        "requisition issue slip",
+      ],
+      default: "",
+    },
     isDeleted: {
       type: Boolean,
       default: false,

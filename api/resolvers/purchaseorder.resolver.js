@@ -31,38 +31,12 @@ const purchaseorderResolver = {
         if (!purchaseorder) {
           throw new Error("Purchase order not found");
         }
-
-        // Filter out deleted items
-        // if (purchaseorder.items && Array.isArray(purchaseorder.items)) {
-        //   const purchaseorderObj = purchaseorder.toObject();
-        //   purchaseorderObj.items = purchaseorderObj.items.filter(
-        //     (item) => !item.isDeleted
-        //   );
-        //   return purchaseorderObj;
-        // }
-
         return purchaseorder;
       } catch (error) {
         console.error("Error fetching purchaseorder, error: ", error);
         throw new Error(error.message || "Internal server error");
       }
     },
-    // redundant query since we can use field resolvers
-    // purchaseorderItems: async (_, { purchaseorderId }, context) => {
-    //   try {
-    //     if (!context.isAuthenticated()) {
-    //       throw new Error("Unauthorized");
-    //     }
-    //     // Query the separate collection instead of embedded documents
-    //     return await PurchaseOrderItems.find({
-    //       ponumber: purchaseorderId,
-    //       isDeleted: false,
-    //     });
-    //   } catch (error) {
-    //     console.error("Error fetching purchaseorder items:", error);
-    //     throw new Error(error.message || "Internal server error");
-    //   }
-    // },
   },
   // Add this field resolver to connect purchase orders with their items
   Purchaseorder: {
@@ -153,9 +127,14 @@ const purchaseorderResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-
         // Extract fields
         const { purchaseorderId, items, ...poUpdates } = input;
+
+        //get current items length for specific po
+        const currentItemsLength = await PurchaseOrderItems.find({
+          ponumber: purchaseorderId,
+          isDeleted: false,
+        });
 
         // 1. Update the purchase order document
         const updatedPurchaseorder = await Purchaseorder.findByIdAndUpdate(
@@ -166,19 +145,22 @@ const purchaseorderResolver = {
 
         // 2. Handle items if provided
         if (items && Array.isArray(items)) {
-          // Get existing items
-          const existingItems = await PurchaseOrderItems.find({
-            ponumber: purchaseorderId,
-            isDeleted: false,
-          });
-
           // Process each incoming item
           for (const item of items) {
             if (item._id) {
+              const increment = item.actualquantityrecieved;
+              //delete the actualquantityrecieved in the items array since we do not need to update it
+              delete item.actualquantityrecieved;
+              //so we can increment it if not removed apollo will have error
+
               // Update existing item
               await PurchaseOrderItems.findByIdAndUpdate(
                 item._id,
-                { ...item, ponumber: purchaseorderId },
+                {
+                  ...item,
+                  ponumber: purchaseorderId,
+                  $inc: { actualquantityrecieved: increment },
+                },
                 { new: true }
               );
             } else {
@@ -192,11 +174,13 @@ const purchaseorderResolver = {
           }
 
           // Optional: Remove items not in the updated list (soft delete)
-          if (items.length > 0) {
+          if (
+            items.length !== currentItemsLength.length &&
+            items.length < currentItemsLength.length
+          ) {
             const updatedItemIds = items
               .filter((item) => item._id)
               .map((item) => item._id);
-
             await PurchaseOrderItems.updateMany(
               {
                 ponumber: purchaseorderId,
