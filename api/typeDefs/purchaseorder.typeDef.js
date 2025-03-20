@@ -15,6 +15,9 @@ type Purchaseorder {
     paymentterms: String
     items: [Item!]
     amount: Float
+    category : String
+    status : String
+    invoice : String
 
 }
 
@@ -26,7 +29,9 @@ type Item {
     quantity: Int
     unitcost: Float
     amount: Float
+    category: String
     isDeleted: Boolean
+    actualquantityrecieved : Int
 }
 
 type Query {
@@ -43,7 +48,9 @@ input ItemInput {
     quantity: Int
     unitcost: Float
     amount: Float
+    category: String
     isDeleted: Boolean
+    actualquantityrecieved : Int
 }
 
 type Mutation {
@@ -71,6 +78,8 @@ input UpdatePurchaseorderInput {
     paymentterms: String
     items: [ItemInput!]
     amount: Float
+    status : String
+    invoice: String
 }
 
 input PurchaseorderInput {
@@ -87,6 +96,8 @@ input PurchaseorderInput {
     paymentterms: String
     items: [ItemInput!]
     amount: Float
+    status : String
+    invoice: String
 }
 
 `;

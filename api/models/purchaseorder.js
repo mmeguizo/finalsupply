@@ -52,15 +52,18 @@ const purchaseOrderSchema = new mongoose.Schema(
       type: String,
       // required: true,
     },
-    // items: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "purchaseOrderItems",
-    //   },
-    // ],
+    invoice: {
+      type: String,
+      // required: true,
+    },
     amount: {
       type: Number,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["partial", "close", "cancel", "completed", "pending"],
+      default: "pending",
     },
     date: {
       type: Date,
