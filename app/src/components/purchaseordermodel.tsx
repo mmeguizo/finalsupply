@@ -18,7 +18,6 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -36,6 +35,7 @@ export default function PurchaseOrderModal({
 }: PurchaseOrderModalProps) {
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  const [actualQuantityfromDb, setActualQuantityfromDb] = React.useState(0);
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
@@ -90,14 +90,17 @@ export default function PurchaseOrderModal({
           : null,
         // items: purchaseOrder.items || [],
         items:
-          purchaseOrder.items.map((item: any) => ({
-            ...item,
-            // Use the existing value instead of resetting to 0
-            actualquantityrecieved:
-              purchaseOrder.status === "completed"
-                ? item.actualquantityrecieved
-                : 0,
-          })) || [],
+          purchaseOrder.items.map((item: any) => {
+            setActualQuantityfromDb(item.actualquantityrecieved);
+            return {
+              ...item,
+              // Use the existing value instead of resetting to 0
+              actualquantityrecieved:
+                purchaseOrder.status === "completed"
+                  ? item.actualquantityrecieved
+                  : 0,
+            };
+          }) || [],
         amount: purchaseOrder.amount || 0,
         status: purchaseOrder.status || "",
         invoice: purchaseOrder.invoice || "",
@@ -185,11 +188,13 @@ export default function PurchaseOrderModal({
     }
 
     // Check if quantities match to update status
-    const allItemsComplete = updatedItems.every(
-      (item) =>
-        Number(item.quantity) === Number(item.actualquantityrecieved) &&
+    const allItemsComplete = updatedItems.every((item) => {
+      return (
+        Number(item.quantity) ===
+          Number(item.actualquantityrecieved + actualQuantityfromDb) &&
         item.quantity > 0
-    );
+      );
+    });
 
     console.log("allItemsComplete", allItemsComplete);
     // console.log("updatedItems", updatedItems);
@@ -482,6 +487,10 @@ export default function PurchaseOrderModal({
                     label="Received"
                     placeholder="Received"
                     value={item.actualquantityrecieved}
+                    inputProps={{
+                      min: 0,
+                      max: item.quantity - actualQuantityfromDb,
+                    }}
                     onChange={(e) => {
                       const value = Number(e.target.value);
                       if (
@@ -496,21 +505,11 @@ export default function PurchaseOrderModal({
                       Number(item.actualquantityrecieved) ===
                         Number(item.quantity)
                     }
-                    // onFocus={() => {
-                    //   // Debug logging
-                    //   console.log("Received:", {
-                    //     actualValue: item.actualquantityrecieved,
-                    //     actualType: typeof item.actualquantityrecieved,
-                    //     quantityValue: item.quantity,
-                    //     quantityType: typeof item.quantity,
-                    //     isEqual:
-                    //       Number(item.actualquantityrecieved) ===
-                    //       Number(item.quantity),
-                    //     strictEqual:
-                    //       item.actualquantityrecieved === item.quantity,
-                    //   });
-                    // }}
+                    onFocus={() => {
+                      console.log(item.actualquantityrecieved);
+                    }}
                     sx={{
+                      width: "8vw",
                       "& .MuiInputBase-root": {
                         height: "40px",
                       },

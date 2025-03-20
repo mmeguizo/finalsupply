@@ -148,10 +148,19 @@ const purchaseorderResolver = {
           // Process each incoming item
           for (const item of items) {
             if (item._id) {
+              const increment = item.actualquantityrecieved;
+              //delete the actualquantityrecieved in the items array since we do not need to update it
+              delete item.actualquantityrecieved;
+              //so we can increment it if not removed apollo will have error
+
               // Update existing item
               await PurchaseOrderItems.findByIdAndUpdate(
                 item._id,
-                { ...item, ponumber: purchaseorderId },
+                {
+                  ...item,
+                  ponumber: purchaseorderId,
+                  $inc: { actualquantityrecieved: increment },
+                },
                 { new: true }
               );
             } else {
