@@ -146,24 +146,43 @@ const purchaseorderResolver = {
         // 2. Handle items if provided
         if (items && Array.isArray(items)) {
           // Process each incoming item
+          //remove the actualquantityrecieved
+
           for (const item of items) {
             if (item._id) {
-              const increment = item.actualquantityrecieved;
+              // const increment = item.actualquantityrecieved;
               //delete the actualquantityrecieved in the items array since we do not need to update it
-              delete item.actualquantityrecieved;
-              //so we can increment it if not removed apollo will have error
-
+              // delete item.actualquantityrecieved;
+              console.log(item);
               // Update existing item
+              // console.log({ updatedFields });
+              // console.log({ actualquantityrecieved });
+              // console.log({ oldupdateitem: item });
+              //so we can increment it if not removed apollo will have error
+              // Update existing item
+              const { actualquantityrecieved, ...updatedFields } = item;
+              console.log("=============================");
+
+              console.log({ updatedFields });
+              console.log("=============================");
+
+              console.log({ actualquantityrecieved });
+              console.log("=============================");
+              console.log({ oldupdateitem: item });
+
               await PurchaseOrderItems.findByIdAndUpdate(
                 item._id,
                 {
-                  ...item,
+                  updatedFields,
                   ponumber: purchaseorderId,
-                  $inc: { actualquantityrecieved: increment },
+                  $inc: { actualquantityrecieved: actualquantityrecieved },
                 },
                 { new: true }
               );
             } else {
+              console.log("=============================");
+
+              console.log({ newItem: item });
               // Create new item
               const newItem = new PurchaseOrderItems({
                 ...item,
