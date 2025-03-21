@@ -98,10 +98,7 @@ export default function PurchaseOrderModal({
               actualquantityrecieved:
                 purchaseOrder.status === "completed"
                   ? item.actualquantityrecieved
-                  : purchaseOrder.status !== "completed" &&
-                      item.quantity === item.actualquantityrecieved
-                    ? item.actualquantityrecieved
-                    : 0,
+                  : 0,
             };
           }) || [],
         amount: purchaseOrder.amount || 0,
@@ -135,15 +132,6 @@ export default function PurchaseOrderModal({
     });
     console.log(formData);
   };
-
-  // const handleCategoryChange = (e: SelectChangeEvent) => {
-  //   const { value } = e.target;
-  //   setFormData({
-  //     ...formData,
-  //     ["category"]: value,
-  //   });
-  //   console.log(formData);
-  // };
 
   // Handle date changes
   const handleDateChange = (date: Date | null, fieldName: string) => {
@@ -208,14 +196,6 @@ export default function PurchaseOrderModal({
       status: allItemsComplete ? "completed" : "pending",
     });
   };
-
-  // Remove item
-  // const removeItem = (index: number) => {
-  //   setFormData({
-  //     ...formData,
-  //     items: formData.items.filter((_, i) => i !== index),
-  //   });
-  // };
 
   // Handle form submission
   const onSubmit = () => {
@@ -308,16 +288,6 @@ export default function PurchaseOrderModal({
               disabled={true}
             />
           </Grid>
-
-          {/* <Grid item xs={12} md={6}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Delivery Date"
-                value={formData.dateofdelivery}
-                onChange={(date) => handleDateChange(date, "dateofdelivery")}
-              />
-            </LocalizationProvider>
-          </Grid> */}
 
           <Grid item xs={12} md={6}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -492,7 +462,7 @@ export default function PurchaseOrderModal({
                     value={item.actualquantityrecieved}
                     inputProps={{
                       min: 0,
-                      max: Number(item.quantity) - Number(actualQuantityfromDb),
+                      max: item.quantity - actualQuantityfromDb,
                     }}
                     onChange={(e) => {
                       const value = Number(e.target.value);
@@ -504,30 +474,12 @@ export default function PurchaseOrderModal({
                       }
                     }}
                     disabled={
-                      (hasSubmitted ||
-                        purchaseOrder?.status === "completed" ||
-                        (purchaseOrder?.status === "pending" &&
-                          item.quantity === item.actualquantityrecieved) ||
-                        !addingItem) &&
+                      (hasSubmitted || purchaseOrder?.status === "completed") &&
                       Number(item.actualquantityrecieved) ===
                         Number(item.quantity)
                     }
                     onFocus={() => {
-                      console.log({
-                        "item.quantity": item.quantity,
-                        actualQuantityfromDbF: actualQuantityfromDb,
-                      });
-                      // console.log({
-                      //   hasSubmitted,
-                      //   ' purchaseOrder?.status === "completed"':
-                      //     purchaseOrder?.status === "completed",
-                      //   'purchaseOrder?.status !== "completed"':
-                      //     purchaseOrder?.status !== "completed",
-                      //   "item.quantity === item.actualquantityrecieved":
-                      //     item.quantity === item.actualquantityrecieved,
-                      //   "!addingItem": !addingItem,
-                      // });
-                      // console.log(purchaseOrder);
+                      console.log(item.actualquantityrecieved);
                     }}
                     sx={{
                       width: "8vw",
@@ -600,9 +552,6 @@ export default function PurchaseOrderModal({
         <Button onClick={handleClose} disabled={isSubmitting}>
           Cancel
         </Button>
-        {/* <Button onClick={onSubmit} variant="contained">
-          Submit
-        </Button> */}
         <LoadingButton
           onClick={onSubmit}
           loading={isSubmitting}
