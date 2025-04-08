@@ -1,105 +1,111 @@
 const purchaseorderTypeDef = `#graphql
 
-type Purchaseorder {
-    _id: ID!
+
+type PurchaseOrder {
+    id: ID!
     supplier: String
     address: String
-    ponumber: Int
-    modeofprocurement: String
+    poNumber: Int
+    modeOfProcurement: String
     email: String
-    telephone: Int
-    placeofdelivery: String
-    dateofdelivery: String
-    dateofpayment: String
-    deliveryterms: String
-    paymentterms: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
     items: [Item!]
     amount: Float
-    category : String
-    status : String
-    invoice : String
-
+    category: String
+    status: String
+    invoice: String
+    isDeleted: Boolean
 }
 
 type Item {
-    _id: ID!
-    item: String
+    id: ID!
+    itemName: String
+    purchaseOrderId: String
     description: String
     unit: String
     quantity: Int
-    unitcost: Float
+    unitCost: Float
     amount: Float
     category: String
     isDeleted: Boolean
-    actualquantityrecieved : Int
+    date: String
+    actualQuantityReceived: Int
 }
 
 type Query {
-    purchaseorders: [Purchaseorder!]
-    purchaseorder(purchaseorderId: ID!): Purchaseorder
-    purchaseorderItems(purchaseorderId: ID!): [Item!]
+    purchaseOrders: [PurchaseOrder!]
+    purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    purchaseOrderItems(purchaseOrderId: ID!): [Item!]
+    purchaseOrderItems: [Item!]
+    allPurchaseOrderItems: [Item!]
 }
 
 input ItemInput {
-    _id: ID
-    item: String
+    id: ID
+    item_name: String
+    purchaseOrderId: String
     description: String
     unit: String
     quantity: Int
-    unitcost: Float
+    unitCost: Float
     amount: Float
     category: String
     isDeleted: Boolean
-    actualquantityrecieved : Int
+    actualQuantityReceived: Int
+    currentInput: Int
 }
 
 type Mutation {
-   addPurchaseorder(input: PurchaseorderInput!): Purchaseorder
-   updatePurchaseorder(input: UpdatePurchaseorderInput!): Purchaseorder
-   deletePurchaseorder(purchaseorderId: ID!): Purchaseorder
-   reactivatePurchaseorder(purchaseorderId: ID!): Purchaseorder
-   addPurchaseorderItem(purchaseorderId: ID!, item: ItemInput!): Purchaseorder
-   updatePurchaseorderItem(purchaseorderId: ID!, item: ItemInput!): Purchaseorder
-   deletePurchaseorderItem(purchaseorderId: ID!, item: ItemInput!): Purchaseorder
+    addPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder
+    updatePurchaseOrder(input: UpdatePurchaseOrderInput!): PurchaseOrder
+    deletePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    reactivatePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    addPurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+    updatePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+    deletePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
 }
 
-input UpdatePurchaseorderInput {
-    purchaseorderId: ID!
+input UpdatePurchaseOrderInput {
+    purchaseOrderId: ID!
     supplier: String
     address: String
-    ponumber: Int
-    modeofprocurement: String
+    poNumber: Int
+    modeOfProcurement: String
     email: String
-    telephone: Int
-    placeofdelivery: String
-    dateofdelivery: String
-    dateofpayment: String
-    deliveryterms: String
-    paymentterms: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
     items: [ItemInput!]
     amount: Float
-    status : String
+    status: String
     invoice: String
 }
 
-input PurchaseorderInput {
+input PurchaseOrderInput {
     supplier: String
     address: String
-    ponumber: Int
-    modeofprocurement: String
+    poNumber: Int
+    modeOfProcurement: String
     email: String
-    telephone: Int
-    placeofdelivery: String
-    dateofdelivery: String
-    dateofpayment: String
-    deliveryterms: String
-    paymentterms: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
     items: [ItemInput!]
     amount: Float
-    status : String
+    status: String
     invoice: String
 }
-
 `;
 
 export default purchaseorderTypeDef;

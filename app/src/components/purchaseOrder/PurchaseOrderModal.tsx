@@ -39,15 +39,15 @@ export default function PurchaseOrderModal({
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
-    ponumber: purchaseOrder?.ponumber || "",
+    poNumber: purchaseOrder?.poNumber || "",
     supplier: purchaseOrder?.supplier || "",
     address: purchaseOrder?.address || "",
-    placeofdelivery: purchaseOrder?.placeofdelivery || "",
+    placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
     // dateofdelivery: purchaseOrder?.dateofdelivery
     //   ? new Date(Number(purchaseOrder.dateofdelivery))
     //   : null,
-    dateofpayment: purchaseOrder?.dateofpayment
-      ? new Date(Number(purchaseOrder.dateofpayment))
+    dateOfPayment: purchaseOrder?.dateOfPayment
+      ? new Date(Number(purchaseOrder.dateOfPayment))
       : null,
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
@@ -75,29 +75,28 @@ export default function PurchaseOrderModal({
     setAddingItem(false);
     setHasSubmitted(false); // Add this line
     if (purchaseOrder) {
-      console.log(purchaseOrder);
       setFormData({
-        ponumber: purchaseOrder.ponumber || "",
+        poNumber: purchaseOrder.poNumber || "",
         supplier: purchaseOrder.supplier || "",
         address: purchaseOrder.address || "",
 
-        placeofdelivery: purchaseOrder.placeofdelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
+        placeOfDelivery: purchaseOrder.placeOfDelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
         // dateofdelivery: purchaseOrder.dateofdelivery
         // ? new Date(Number(purchaseOrder.dateofdelivery))
         // : null,
-        dateofpayment: purchaseOrder.dateofpayment
-          ? new Date(Number(purchaseOrder.dateofpayment))
+        dateOfPayment: purchaseOrder.dateOfPayment
+          ? new Date(Number(purchaseOrder.dateOfPayment))
           : null,
         // items: purchaseOrder.items || [],
         items:
           purchaseOrder.items.map((item: any) => {
-            setActualQuantityfromDb(item.actualquantityrecieved);
+            setActualQuantityfromDb(item.actualQuantityReceived);
             return {
               ...item,
               // Use the existing value instead of resetting to 0
-              actualquantityrecieved:
+              actualQuantityReceived:
                 purchaseOrder.status === "completed"
-                  ? item.actualquantityrecieved
+                  ? item.actualQuantityReceived
                   : 0,
             };
           }) || [],
@@ -108,12 +107,12 @@ export default function PurchaseOrderModal({
     } else {
       // Reset form when adding new PO
       setFormData({
-        ponumber: "",
+        poNumber: "",
         supplier: "",
         address: "",
-        placeofdelivery: "",
+        placeOfDelivery: "",
         // dateofdelivery: null,
-        dateofpayment: null,
+        dateOfPayment: null,
         amount: 0,
         items: [],
         status: "",
@@ -154,9 +153,9 @@ export default function PurchaseOrderModal({
           description: "",
           unit: "",
           quantity: 0,
-          unitcost: 0,
+          unitCost: 0,
           amount: 0,
-          actualquantityrecieved: 0,
+          actualQuantityReceived: 0,
         },
       ],
     });
@@ -170,19 +169,19 @@ export default function PurchaseOrderModal({
       [field]: value,
     };
 
-    // Auto-calculate amount if quantity or unitcost changes
-    if (field === "quantity" || field === "unitcost") {
+    // Auto-calculate amount if quantity or unitCost changes
+    if (field === "quantity" || field === "unitCost") {
       formData.amount,
         (updatedItems[index].amount =
           Number(updatedItems[index].quantity) *
-          Number(updatedItems[index].unitcost));
+          Number(updatedItems[index].unitCost));
     }
 
     // Check if quantities match to update status
     const allItemsComplete = updatedItems.every((item) => {
       return (
         Number(item.quantity) ===
-          Number(item.actualquantityrecieved + actualQuantityfromDb) &&
+          Number(item.actualQuantityReceived + actualQuantityfromDb) &&
         item.quantity > 0
       );
     });
@@ -212,10 +211,10 @@ export default function PurchaseOrderModal({
       // dateofdelivery: formData.dateofdelivery
       //   ? formData.dateofdelivery.getTime().toString()
       //   : null,
-      dateofpayment: formData.dateofpayment
-        ? formData.dateofpayment.getTime().toString()
+      dateOfPayment: formData.dateOfPayment
+        ? formData.dateOfPayment.getTime().toString()
         : null,
-      ponumber: parseInt(formData.ponumber),
+      poNumber: parseInt(formData.poNumber),
     };
 
     // Remove __typename from the main object if it exists
@@ -242,8 +241,8 @@ export default function PurchaseOrderModal({
             <TextField
               fullWidth
               label="PO Number"
-              name="ponumber"
-              value={formData.ponumber}
+              name="poNumber"
+              value={formData.poNumber}
               onChange={handleChange}
               disabled={true}
             />
@@ -282,8 +281,8 @@ export default function PurchaseOrderModal({
             <TextField
               fullWidth
               label="Place of Delivery"
-              name="placeofdelivery"
-              value={formData.placeofdelivery}
+              name="placeOfDelivery"
+              value={formData.placeOfDelivery}
               onChange={handleChange}
               disabled={true}
             />
@@ -293,8 +292,8 @@ export default function PurchaseOrderModal({
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Payment Date"
-                value={formData.dateofpayment}
-                onChange={(date) => handleDateChange(date, "dateofpayment")}
+                value={formData.dateOfPayment}
+                onChange={(date) => handleDateChange(date, "dateOfPayment")}
                 disabled={true}
               />
             </LocalizationProvider>
@@ -459,7 +458,7 @@ export default function PurchaseOrderModal({
                     type="number"
                     label="Received"
                     placeholder="Received"
-                    value={item.actualquantityrecieved}
+                    value={item.actualQuantityReceived}
                     inputProps={{
                       min: 0,
                       max: item.quantity - actualQuantityfromDb,
@@ -468,18 +467,18 @@ export default function PurchaseOrderModal({
                       const value = Number(e.target.value);
                       if (
                         value >= 0 &&
-                        value <= item.quantity - item.actualquantityrecieved
+                        value <= item.quantity - item.actualQuantityReceived
                       ) {
-                        updateItem(index, "actualquantityrecieved", value);
+                        updateItem(index, "actualQuantityReceived", value);
                       }
                     }}
                     disabled={
                       (hasSubmitted || purchaseOrder?.status === "completed") &&
-                      Number(item.actualquantityrecieved) ===
+                      Number(item.actualQuantityReceived) ===
                         Number(item.quantity)
                     }
                     onFocus={() => {
-                      console.log(item.actualquantityrecieved);
+                      console.log(item.actualQuantityReceived);
                     }}
                     sx={{
                       width: "8vw",
@@ -492,7 +491,7 @@ export default function PurchaseOrderModal({
                       },
                       // Optional: Add visual feedback
                       backgroundColor:
-                        Number(item.actualquantityrecieved) ===
+                        Number(item.actualQuantityReceived) ===
                         Number(item.quantity)
                           ? "action.disabledBackground"
                           : "transparent",
@@ -507,11 +506,11 @@ export default function PurchaseOrderModal({
                     type="number"
                     label="Unit Cost"
                     placeholder="Unit Cost"
-                    value={item.unitcost}
+                    value={item.unitCost}
                     onChange={(e) =>
-                      updateItem(index, "unitcost", Number(e.target.value))
+                      updateItem(index, "unitCost", Number(e.target.value))
                     }
-                    disabled={isFieldDisabled(item.unitcost)}
+                    disabled={isFieldDisabled(item.unitCost)}
                     InputProps={{
                       startAdornment: (
                         <Typography sx={{ color: "text.secondary", mr: 0.5 }}>

@@ -3,10 +3,11 @@ import { gql } from "@apollo/client";
 const SIGN_UP = gql`
   mutation SignUp($input: SignUpInput!) {
     signUp(input: $input) {
-      _id
+      # _id     // Changed _id to id
+      id
       email
       name
-      profilePic
+      profile_pic
     }
   }
 `;
@@ -14,11 +15,12 @@ const SIGN_UP = gql`
 const LOGIN = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
-      _id
+      # _id     // Changed _id to id
+      id
       email
       name
       role
-      profilePic
+      profile_pic
     }
   }
 `;

@@ -1,5 +1,6 @@
 export const exportPurchaseOrdersWithItems = (data: any) => {
-  const allData = data?.purchaseorders
+    console.log({exportPurchaseOrdersWithItems: data.purchaseorders})
+  const allData = data?.purchaseOrders
     .map((po: any) => {
       const poData = {
         "PO Number": po.ponumber,
@@ -43,7 +44,7 @@ export const exportPurchaseOrdersWithItems = (data: any) => {
           Description: item.description,
           Unit: item.unit,
           Quantity: item.quantity,
-          "Unit Cost": `${item.unitcost.toFixed(2)}`,
+          "Unit Cost": `${item.unitCost.toFixed(2)}`,
           "Item Amount": `${item.amount.toFixed(2)}`,
         };
       });

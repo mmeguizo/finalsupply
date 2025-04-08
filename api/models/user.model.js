@@ -1,50 +1,52 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import { sequelize } from "../db/connectDB.js"; // Import sequelize connection
 
-const userSchema = mongoose.Schema(
+const User = sequelize.define(
+  "User", // Model name (capitalized by convention)
   {
     email: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
     },
     name: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    firstname: {
-      type: String,
-    },
-    lastname: {
-      type: String,
-    },
+    // firstname: {
+    //   type: DataTypes.STRING,
+    // },
+    // lastname: {
+    //   type: DataTypes.STRING,
+    // },
     password: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    profilePic: {
-      type: String,
-      default: "",
+    profile_pic: {
+      type: DataTypes.STRING,
+      defaultValue: "",
     },
     gender: {
-      type: String,
-      enum: ["male", "female", "others"],
-      default: "male",
+      type: DataTypes.ENUM("male", "female", "others"),
+      defaultValue: "male",
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
     role: {
-      type: String,
-      enum: ["admin", "user"],
-      default: "user",
+      type: DataTypes.ENUM("admin", "user"),
+      defaultValue: "user",
     },
   },
   {
-    timestamps: true,
+    // Add some additional settings
+    timestamps: true, // Sequelize automatically adds `created_at` and `updated_at` fields
+    tableName: "users", // Name of the table in MySQL
+    underscored: true, // Converts camelCase field names to snake_case
   }
 );
 
-const User = mongoose.model("User", userSchema, "users");
-
+// Export the model
 export default User;
