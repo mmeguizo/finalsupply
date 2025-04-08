@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 export const ADD_PURCHASEORDER = gql`
-  mutation AddPurchaseOrder($input: PurchaseorderInput!) {
-    addPurchaseorder(input: $input) {
-      _id
-      ponumber
+  mutation AddPurchaseOrder($input: PurchaseOrderInput!) {
+    addPurchaseOrder(input: $input) {
+      id
+      poNumber
       supplier
       address
-      dateofdelivery
-      dateofpayment
+      dateOfDelivery
+      dateOfPayment
       category
       invoice
     }
@@ -16,31 +16,31 @@ export const ADD_PURCHASEORDER = gql`
 `;
 
 export const UPDATE_PURCHASEORDER = gql`
-  mutation UpdatePurchaseOrder($input: UpdatePurchaseorderInput!) {
-    updatePurchaseorder(input: $input) {
-      _id
+  mutation UpdatePurchaseOrder($input: UpdatePurchaseOrderInput!) {
+    updatePurchaseOrder(input: $input) {
+      id
       supplier
       address
-      ponumber
+      poNumber
       telephone
-      placeofdelivery
-      dateofdelivery
-      dateofpayment
-      deliveryterms
-      paymentterms
+      placeOfDelivery
+      dateOfDelivery
+      dateOfPayment
+      deliveryTerms
+      paymentTerms
       category
       status
       items {
-        _id
+        id
         item
         description
         unit
         quantity
-        unitcost
+        unitCost
         amount
         category
         isDeleted
-        actualquantityrecieved
+        actualQuantityReceived
       }
       amount
       invoice
@@ -50,10 +50,71 @@ export const UPDATE_PURCHASEORDER = gql`
 
 export const DELETE_PURCHASEORDER = gql`
   mutation DeletePurchaseOrder($id: ID!) {
-    deletePurchaseorder(purchaseorderId: $id) {
-      _id
-      ponumber
+    deletePurchaseOrder(purchaseOrderId: $id) {
+      id
+      poNumber
       supplier
     }
   }
 `;
+
+
+// import { gql } from "@apollo/client";
+
+// export const ADD_PURCHASEORDER = gql`
+//   mutation AddPurchaseOrder($input: PurchaseorderInput!) {
+//     addPurchaseorder(input: $input) {
+//       _id
+//       ponumber
+//       supplier
+//       address
+//       dateofdelivery
+//       dateofpayment
+//       category
+//       invoice
+//     }
+//   }
+// `;
+
+// export const UPDATE_PURCHASEORDER = gql`
+//   mutation UpdatePurchaseOrder($input: UpdatePurchaseorderInput!) {
+//     updatePurchaseorder(input: $input) {
+//       _id
+//       supplier
+//       address
+//       ponumber
+//       telephone
+//       placeofdelivery
+//       dateofdelivery
+//       dateofpayment
+//       deliveryterms
+//       paymentterms
+//       category
+//       status
+//       items {
+//         _id
+//         item
+//         description
+//         unit
+//         quantity
+//         unitcost
+//         amount
+//         category
+//         isDeleted
+//         actualquantityrecieved
+//       }
+//       amount
+//       invoice
+//     }
+//   }
+// `;
+
+// export const DELETE_PURCHASEORDER = gql`
+//   mutation DeletePurchaseOrder($id: ID!) {
+//     deletePurchaseorder(purchaseorderId: $id) {
+//       _id
+//       ponumber
+//       supplier
+//     }
+//   }
+// `;

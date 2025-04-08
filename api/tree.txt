@@ -1,0 +1,35 @@
+
+C:.
+¦   .env
+¦   .gitignore
+¦   .nvmrc
+¦   Dockerfile
+¦   index.js
+¦   package-lock.json
+¦   package.json
+¦   tree.txt
+¦   
++---db
+¦       connectDB.js
+¦       
++---models
+¦       purchaseorder.js
+¦       purchaseorderitems.js
+¦       transaction.model.js
+¦       user.model.js
+¦       
++---passport
+¦       passport.config.js
+¦       
++---resolvers
+¦       index.js
+¦       purchaseorder.resolver.js
+¦       transaction.resolver.js
+¦       user.resolver.js
+¦       
++---typeDefs
+        index.js
+        purchaseorder.typeDef.js
+        transaction.typeDef.js
+        user.typeDef.js
+        

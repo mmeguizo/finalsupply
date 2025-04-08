@@ -45,7 +45,7 @@ function CustomToolbar({
   onExportWithItems,
   onPrintWithItems,
   onPrintSelectedWithItems,
-  onAddPO,
+  // onAddPO,
 }: any) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -64,14 +64,14 @@ function CustomToolbar({
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
 
-      <Button
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={onAddPO}
-        sx={{ ml: 1 }}
-      >
-        Add PO
-      </Button>
+      {/*<Button*/}
+      {/*  color="primary"*/}
+      {/*  startIcon={<AddIcon />}*/}
+      {/*  onClick={onAddPO}*/}
+      {/*  sx={{ ml: 1 }}*/}
+      {/*>*/}
+      {/*  Add PO*/}
+      {/*</Button>*/}
       <Tooltip title="Export">
         <Button
           startIcon={<FileDownloadIcon />}
@@ -107,25 +107,7 @@ function CustomToolbar({
           Print All
         </MenuItem>
       </Menu>
-      {/* <Tooltip title="Print Selected">
-        <Button
-          startIcon={<PrintIcon />}
-          onClick={onPrintSelectedWithItems}
-          sx={{ ml: 1 }}
-        >
-          Print Selected
-        </Button>
-      </Tooltip>
 
-      <Tooltip title="Print All">
-        <Button
-          startIcon={<PrintIcon />}
-          onClick={onPrintWithItems}
-          sx={{ ml: 1 }}
-        >
-          Print All
-        </Button>
-      </Tooltip> */}
       <GridToolbarQuickFilter />
     </GridToolbarContainer>
   );
@@ -136,6 +118,9 @@ export default function PurchaseOrder() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const { data, loading, error } = useQuery(GET_PURCHASEORDERS);
+
+  console.log("PO", { data, loading, error });
+
   const [selectedPO, setSelectedPO] = React.useState<any>(null);
   const [openPOModal, setOpenPOModal] = React.useState(false);
   const [editingPO, setEditingPO] = React.useState<any>(null);
@@ -162,7 +147,7 @@ export default function PurchaseOrder() {
   // Define columns for purchase orders
   const poColumns: GridColDef[] = [
     {
-      field: "ponumber",
+      field: "poNumber",
       headerName: "Purchase Order #",
       width: 150,
     },
@@ -173,13 +158,13 @@ export default function PurchaseOrder() {
       flex: 1,
     },
     {
-      field: "placeofdelivery", // Use the pre-formatted field
+      field: "placeOfDelivery", // Use the pre-formatted field
       headerName: "Place of Delivery",
       width: 150,
       // No formatter needed!
     },
     {
-      field: "formattedPaymentDate", // Use the pre-formatted field
+      field: "dateOfPayment", // Use the pre-formatted field
       headerName: "P.O Date",
       width: 150,
       // No formatter needed!
@@ -249,11 +234,11 @@ export default function PurchaseOrder() {
       width: 150,
       valueFormatter: (params) => formatCategory(params),
     },
-    { field: "item", headerName: "Item", width: 150 },
+    { field: "itemName", headerName: "Item", width: 150 },
     { field: "description", headerName: "Description", width: 300, flex: 1 },
     { field: "unit", headerName: "Unit", width: 100 },
     {
-      field: "actualquantityrecieved",
+      field: "actualQuantityReceived",
       headerName: "Actual Recieved",
       type: "number",
       width: 100,
@@ -275,24 +260,24 @@ export default function PurchaseOrder() {
 
   // Format purchase orders for DataGrid
   const poRows = React.useMemo(() => {
-    if (!data?.purchaseorders) return [];
+    if (!data?.purchaseOrders) return [];
 
-    return data.purchaseorders.map((po: any) => {
+    return data.purchaseOrders.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
 
       // const formattedDeliveryDate = po.dateofdelivery
       //   ? new Date(Number(po.dateofdelivery)).toLocaleDateString()
       //   : "Not specified";
 
-      const formattedPaymentDate = po.dateofpayment
-        ? new Date(Number(po.dateofpayment)).toLocaleDateString()
-        : "Not specified";
+      // const formattedPaymentDate = po.dateOfPayment
+      //   ? new Date(Number(po.dateOfPayment)).toLocaleDateString()
+      //   : "Not specified";
 
       return {
         id: po._id,
         ...po,
         // formattedDeliveryDate,
-        formattedPaymentDate,
+        // formattedPaymentDate,
         formatAmount,
       };
     });
@@ -303,7 +288,7 @@ export default function PurchaseOrder() {
     if (!selectedPO?.items) return [];
 
     return selectedPO.items.map((item: any) => ({
-      formatUnitCost: item.unitcost ? `₱${item.unitcost.toFixed(2)}` : "0.00",
+      formatUnitCost: item.unitCost ? `₱${item.unitCost.toFixed(2)}` : "0.00",
       formatAmount: item.amount ? `₱${item.amount.toFixed(2)}` : "0.00",
       id: item._id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
@@ -313,9 +298,13 @@ export default function PurchaseOrder() {
   // Handle row click to show items
   const handleRowClick = (params: GridRowParams) => {
     console.log({ handleRowClick: params });
-    const clickedPO = data?.purchaseorders.find(
-      (po: any) => po._id === params.id
+    console.log({"data?.purchaseOrders": data.purchaseOrders})
+    const clickedPO = data?.purchaseOrders.find(
+      (po: any) => po.id === params.id
     );
+
+    console.log({selectedPO})
+    console.log({clickedPO})
     setSelectedPO(clickedPO || null);
   };
 
@@ -343,39 +332,6 @@ export default function PurchaseOrder() {
     setOpenPOModal(true);
   };
 
-  //not used delete functions
-  // const handleConfirmDialogClose = async (confirmed: boolean) => {
-  //   if (confirmed && deletingPO) {
-  //     try {
-  //       const { data } = await deletePurchaseOrder({
-  //         variables: { id: deletingPO._id },
-  //       });
-  //       // Maybe show success message
-  //       if (data?.deletePurchaseorder) {
-  //         setNotificationMessage(
-  //           `Purchase Order #${deletingPO.ponumber} deleted successfully`
-  //         );
-  //         setNotificationSeverity("success");
-  //         setShowNotification(true);
-
-  //         // Clear selectedPO if it was the deleted one
-  //         if (selectedPO?._id === deletingPO._id) {
-  //           setSelectedPO(null);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Error deleting purchase order:", error);
-  //       // Maybe show error message
-  //       setNotificationMessage("Error deleting purchase order");
-  //       setNotificationSeverity("error");
-  //       setShowNotification(true);
-  //     }
-  //   }
-  //   // Reset state regardless of result
-  //   setConfirmDialogOpen(false);
-  //   setDeletingPO(null);
-  // };
-
   const handleCloseModal = () => {
     setOpenPOModal(false);
   };
@@ -399,16 +355,19 @@ export default function PurchaseOrder() {
       const { __typename, ...cleanFormData } = formData;
       cleanFormData.items = cleanedItems;
 
+      console.log({ cleanFormData });
+
       let updatedPO: any;
+
       if (editingPO) {
-        const results = await updatePurchaseOrder({
-          variables: {
-            input: {
-              purchaseorderId: editingPO._id,
-              ...cleanFormData,
-            },
-          },
-        });
+        // const results = await updatePurchaseOrder({
+        //   variables: {
+        //     input: {
+        //       purchaseorderId: editingPO._id,
+        //       ...cleanFormData,
+        //     },
+        //   },
+        // });
 
         console.log({ isloading: loading });
 
@@ -417,7 +376,7 @@ export default function PurchaseOrder() {
         //   "Returned after Updated PO:",
         //   results.data.updatePurchaseorder
         // );
-        updatedPO = results.data.updatePurchaseorder;
+        // updatedPO = results.data.updatePurchaseorder;
       } else {
         const results = await addPurchaseOrder({
           variables: { input: formData },
@@ -425,8 +384,8 @@ export default function PurchaseOrder() {
         updatedPO = results.data.addPurchaseorder;
       }
       // Update selectedPO state
-      setSelectedPO(updatedPO);
-      handleCloseModal();
+      // setSelectedPO(updatedPO);
+      // handleCloseModal();
     } catch (err) {
       console.error("Error saving purchase order:", err);
     } finally {
@@ -472,7 +431,7 @@ export default function PurchaseOrder() {
           Error loading purchase orders: {error.message}
         </Alert>
       )}
-      {data && data.purchaseorders && (
+      {data && data.purchaseOrders && (
         <Stack spacing={3}>
           <Paper sx={{ height: 400, width: "100%" }}>
             <DataGrid
@@ -495,7 +454,7 @@ export default function PurchaseOrder() {
                     onPrintSelectedWithItems={
                       printSelectedPurchaseOrdersWithItemsFunc
                     }
-                    onAddPO={handleOpenAddModal}
+                    // onAddPO={handleOpenAddModal}
                   />
                 ),
               }}
@@ -512,7 +471,7 @@ export default function PurchaseOrder() {
             <Paper sx={{ width: "100%" }}>
               <Box p={2} pb={0}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Items for Purchase Order #{selectedPO.ponumber} -{" "}
+                  Items for Purchase Order #{selectedPO.poNumber} -{" "}
                   {selectedPO.supplier}
                 </Typography>
               </Box>
@@ -553,3 +512,58 @@ export default function PurchaseOrder() {
     </PageContainer>
   );
 }
+
+//not used delete functions
+// const handleConfirmDialogClose = async (confirmed: boolean) => {
+//   if (confirmed && deletingPO) {
+//     try {
+//       const { data } = await deletePurchaseOrder({
+//         variables: { id: deletingPO._id },
+//       });
+//       // Maybe show success message
+//       if (data?.deletePurchaseorder) {
+//         setNotificationMessage(
+//           `Purchase Order #${deletingPO.ponumber} deleted successfully`
+//         );
+//         setNotificationSeverity("success");
+//         setShowNotification(true);
+
+//         // Clear selectedPO if it was the deleted one
+//         if (selectedPO?._id === deletingPO._id) {
+//           setSelectedPO(null);
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error deleting purchase order:", error);
+//       // Maybe show error message
+//       setNotificationMessage("Error deleting purchase order");
+//       setNotificationSeverity("error");
+//       setShowNotification(true);
+//     }
+//   }
+//   // Reset state regardless of result
+//   setConfirmDialogOpen(false);
+//   setDeletingPO(null);
+// };
+
+/*
+ <Tooltip title="Print Selected">
+        <Button
+          startIcon={<PrintIcon />}
+          onClick={onPrintSelectedWithItems}
+          sx={{ ml: 1 }}
+        >
+          Print Selected
+        </Button>
+      </Tooltip>
+
+      <Tooltip title="Print All">
+        <Button
+          startIcon={<PrintIcon />}
+          onClick={onPrintWithItems}
+          sx={{ ml: 1 }}
+        >
+          Print All
+        </Button>
+      </Tooltip> 
+*/

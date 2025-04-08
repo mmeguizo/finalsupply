@@ -27,7 +27,7 @@ export default function SignIn() {
             user: {
               name: data?.data?.login?.name,
               email: data?.data?.login?.email,
-              image: data?.data?.login?.profilePic,
+              image: data?.data?.login?.profile_pic,
               role: data?.data?.login?.role,
             },
           });
