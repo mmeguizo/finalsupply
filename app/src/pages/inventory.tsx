@@ -11,46 +11,111 @@ import {
   Tooltip,
   Backdrop,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+
+import { GridColDef, DataGrid, GridRowParams } from "@mui/x-data-grid";
 import { useDemoData } from "@mui/x-data-grid-generator";
 import { useQuery } from "@apollo/client";
-import  {GET_ALL_PURCHASEORDER_ITEMS}  from "../graphql/queries/purchaseorder.query.js";
+import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query.js";
+import { formatCategory } from "../utils/generalUtils";
 export default function InventoryPage() {
   const { data, loading, error } = useQuery(GET_ALL_PURCHASEORDER_ITEMS);
+  const { allPurchaseOrderItems } = data || {};
 
   console.log("INVENTORY", {
-    data,
+    data: allPurchaseOrderItems,
     loading,
     error,
   });
 
-  const [nbRows, setNbRows] = React.useState(3);
-  const removeRow = () => setNbRows((x) => Math.max(0, x - 1));
-  const addRow = () => setNbRows((x) => Math.min(100, x + 1));
+  const itemColumns: GridColDef[] = [
+    {
+      field: "category",
+      headerName: "Category",
+      width: 150,
+      valueFormatter: (params) => formatCategory(params),
+    },
+    { field: "itemName", headerName: "Item", width: 150 },
+    { field: "description", headerName: "Description", width: 300, flex: 1 },
+    { field: "unit", headerName: "Unit", width: 100 },
+    {
+      field: "actualQuantityReceived",
+      headerName: "Actual Recieved",
+      type: "number",
+      width: 100,
+    },
+    { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
+    {
+      field: "formatUnitCost",
+      headerName: "Unit Cost",
+      type: "number",
+      width: 120,
+    },
+    {
+      field: "formatAmount",
+      headerName: "Amount",
+      type: "number",
+      width: 120,
+    },
+  ];
 
-  const { data: data2, loading: loading2 } = useDemoData({
-    dataSet: "Commodity",
-    rowLength: 100,
-    maxColumns: 6,
-  });
+  const poRows = React.useMemo(() => {
+    if (!data?.allPurchaseOrderItems) return [];
+
+    return data.allPurchaseOrderItems.map((po: any) => {
+      const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
+
+      // const formattedDeliveryDate = po.dateofdelivery
+      //   ? new Date(Number(po.dateofdelivery)).toLocaleDateString()
+      //   : "Not specified";
+
+      // const formattedPaymentDate = po.dateOfPayment
+      //   ? new Date(Number(po.dateOfPayment)).toLocaleDateString()
+      //   : "Not specified";
+
+      return {
+        id: po.id,
+        ...po,
+        // formattedDeliveryDate,
+        // formattedPaymentDate,
+        formatAmount,
+      };
+    });
+  }, [data]);
+
+  const handleRowClick = (params: GridRowParams) => {
+    console.log("Row clicked", params);
+  };
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-        <Button size="small" onClick={removeRow}>
-          Remove a row
-        </Button>
-        <Button size="small" onClick={addRow}>
-          Add a row
-        </Button>
-      </Stack>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <DataGrid
-          {...data2}
-          rows={data2.rows.slice(0, nbRows)}
-          loading={loading2}
-        />
-      </div>
-    </Box>
+    <Stack spacing={3}>
+      <Box p={2} pb={0}></Box>
+      <Paper sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%" }}>
+          <Stack direction="row" spacing={1} sx={{ mb: 1 }}></Stack>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {data?.purchaseOrders?.length !== 0 && (
+              <DataGrid
+                {...allPurchaseOrderItems}
+                rows={poRows}
+                columns={itemColumns}
+                loading={loading}
+                hideFooter={poRows.length <= 10}
+                disableRowSelectionOnClick
+                density="compact"
+                initialState={{
+                  pagination: {
+                    paginationModel: {
+                      pageSize: 10,
+                    },
+                  },
+                }}
+                pageSizeOptions={[5, 10, 25]}
+                onRowClick={handleRowClick}
+              />
+            )}
+          </div>
+        </Box>
+      </Paper>
+    </Stack>
   );
 }
