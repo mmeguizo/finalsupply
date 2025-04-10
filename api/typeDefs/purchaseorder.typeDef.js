@@ -47,7 +47,7 @@ type Query {
 
 input ItemInput {
     id: ID
-    item_name: String
+    itemName: String
     purchaseOrderId: String
     description: String
     unit: String
@@ -71,7 +71,7 @@ type Mutation {
 }
 
 input UpdatePurchaseOrderInput {
-    purchaseOrderId: ID!
+    id: Int
     supplier: String
     address: String
     poNumber: Int

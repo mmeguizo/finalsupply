@@ -32,7 +32,6 @@ export const UPDATE_PURCHASEORDER = gql`
       status
       items {
         id
-        item
         description
         unit
         quantity
@@ -57,7 +56,6 @@ export const DELETE_PURCHASEORDER = gql`
     }
   }
 `;
-
 
 // import { gql } from "@apollo/client";
 

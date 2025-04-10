@@ -39,88 +39,12 @@ import { exportPurchaseOrdersWithItems } from "../utils/exportCsvpurchaseorderwi
 import { printPurchaseOrdersWithItems } from "../utils/printPurchaseOrderWithItems";
 import { printSelectedPurchaseOrdersWithItems } from "../utils/printSelectedPurchaseOrder";
 import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
-
-// Custom toolbar with export button for PO with items
-function CustomToolbar({
-  onExportWithItems,
-  onPrintWithItems,
-  onPrintSelectedWithItems,
-  // onAddPO,
-}: any) {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-
-  const handlePrintClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  return (
-    <GridToolbarContainer>
-      <GridToolbarColumnsButton />
-      <GridToolbarFilterButton />
-      <GridToolbarDensitySelector />
-
-      {/*<Button*/}
-      {/*  color="primary"*/}
-      {/*  startIcon={<AddIcon />}*/}
-      {/*  onClick={onAddPO}*/}
-      {/*  sx={{ ml: 1 }}*/}
-      {/*>*/}
-      {/*  Add PO*/}
-      {/*</Button>*/}
-      <Tooltip title="Export">
-        <Button
-          startIcon={<FileDownloadIcon />}
-          onClick={onExportWithItems}
-          sx={{ ml: 1 }}
-        >
-          Export
-        </Button>
-      </Tooltip>
-
-      <Button
-        startIcon={<PrintIcon />}
-        onClick={handlePrintClick}
-        sx={{ ml: 1 }}
-      >
-        Print
-      </Button>
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-        <MenuItem
-          onClick={() => {
-            onPrintSelectedWithItems();
-            handleClose();
-          }}
-        >
-          Print Selected
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            onPrintWithItems();
-            handleClose();
-          }}
-        >
-          Print All
-        </MenuItem>
-      </Menu>
-
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
-}
+import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
 
 export default function PurchaseOrder() {
   //for submit loading
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
   const { data, loading, error } = useQuery(GET_PURCHASEORDERS);
-
-  console.log("PO", { data, loading, error });
-
   const [selectedPO, setSelectedPO] = React.useState<any>(null);
   const [openPOModal, setOpenPOModal] = React.useState(false);
   const [editingPO, setEditingPO] = React.useState<any>(null);
@@ -143,6 +67,8 @@ export default function PurchaseOrder() {
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
     refetchQueries: [{ query: GET_PURCHASEORDERS }],
   });
+
+  //custom toolbar
 
   // Define columns for purchase orders
   const poColumns: GridColDef[] = [
@@ -297,20 +223,21 @@ export default function PurchaseOrder() {
 
   // Handle row click to show items
   const handleRowClick = (params: GridRowParams) => {
-    console.log({ handleRowClick: params });
-    console.log({"data?.purchaseOrders": data.purchaseOrders})
     const clickedPO = data?.purchaseOrders.find(
       (po: any) => po.id === params.id
     );
-
-    console.log({selectedPO})
-    console.log({clickedPO})
     setSelectedPO(clickedPO || null);
   };
 
   // Function to export PO with items
   const exportPurchaseOrdersWithItemsFunctions = () => {
-    exportPurchaseOrdersWithItems(data);
+    if (selectedPO) {
+      exportPurchaseOrdersWithItems(selectedPO);
+    } else {
+      exportPurchaseOrdersWithItems(data);
+    }
+
+    // exportPurchaseOrdersWithItems(selectedPO ?? data);
   };
 
   // Function to print PO with items
@@ -354,28 +281,25 @@ export default function PurchaseOrder() {
       // Clean the formData to remove __typename
       const { __typename, ...cleanFormData } = formData;
       cleanFormData.items = cleanedItems;
-
-      console.log({ cleanFormData });
-
       let updatedPO: any;
-
       if (editingPO) {
-        // const results = await updatePurchaseOrder({
-        //   variables: {
-        //     input: {
-        //       purchaseorderId: editingPO._id,
-        //       ...cleanFormData,
-        //     },
-        //   },
-        // });
+        const results = await updatePurchaseOrder({
+          variables: {
+            input: {
+              id: parseInt(editingPO.id),
+              ...cleanFormData,
+            },
+          },
+        });
+        console.log(results.data);
+        let data = results.data.updatePurchaseOrder;
 
-        console.log({ isloading: loading });
-
-        // handleRowClick(results.data.updatePurchaseorder._id);
-        // console.log(
-        //   "Returned after Updated PO:",
-        //   results.data.updatePurchaseorder
-        // );
+        handleRowClick(data.id);
+        console.log(
+          "Returned after Updated PO:",
+          results.data.updatePurchaseorder
+        );
+        updatedPO = data;
         // updatedPO = results.data.updatePurchaseorder;
       } else {
         const results = await addPurchaseOrder({
@@ -384,8 +308,8 @@ export default function PurchaseOrder() {
         updatedPO = results.data.addPurchaseorder;
       }
       // Update selectedPO state
-      // setSelectedPO(updatedPO);
-      // handleCloseModal();
+      setSelectedPO(updatedPO);
+      handleCloseModal();
     } catch (err) {
       console.error("Error saving purchase order:", err);
     } finally {
@@ -446,17 +370,23 @@ export default function PurchaseOrder() {
               }}
               pageSizeOptions={[5, 10, 25]}
               slots={{
-                toolbar: (props) => (
-                  <CustomToolbar
-                    {...props}
-                    onExportWithItems={exportPurchaseOrdersWithItemsFunctions}
-                    onPrintWithItems={printPurchaseOrdersWithItemsFunc}
-                    onPrintSelectedWithItems={
-                      printSelectedPurchaseOrdersWithItemsFunc
-                    }
-                    // onAddPO={handleOpenAddModal}
-                  />
-                ),
+                toolbar: (props) =>
+                  CustomToolbarForTable({
+                    props: { ...props, data: selectedPO ?? data },
+                    onExportWithItems: exportPurchaseOrdersWithItems,
+                    onPrintWithItems: printPurchaseOrdersWithItems,
+                    onPrintSelectedWithItems:
+                      printSelectedPurchaseOrdersWithItems,
+                  }),
+                // <CustomToolbar
+                //   {...props}
+                //   onExportWithItems={exportPurchaseOrdersWithItemsFunctions}
+                //   onPrintWithItems={printPurchaseOrdersWithItemsFunc}
+                //   onPrintSelectedWithItems={
+                //     printSelectedPurchaseOrdersWithItemsFunc
+                //   }
+                //   // onAddPO={handleOpenAddModal}
+                // />
               }}
               slotProps={{
                 toolbar: {
@@ -567,3 +497,78 @@ export default function PurchaseOrder() {
         </Button>
       </Tooltip> 
 */
+
+// Custom toolbar with export button for PO with items
+// function CustomToolbar({
+//   onExportWithItems,
+//   onPrintWithItems,
+//   onPrintSelectedWithItems,
+//   // onAddPO,
+// }: any) {
+//   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+//   const open = Boolean(anchorEl);
+
+//   const handlePrintClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+//     setAnchorEl(event.currentTarget);
+//   };
+
+//   const handleClose = () => {
+//     setAnchorEl(null);
+//   };
+
+//   return (
+//     <GridToolbarContainer>
+//       <GridToolbarColumnsButton />
+//       <GridToolbarFilterButton />
+//       <GridToolbarDensitySelector />
+
+//       {/*<Button*/}
+//       {/*  color="primary"*/}
+//       {/*  startIcon={<AddIcon />}*/}
+//       {/*  onClick={onAddPO}*/}
+//       {/*  sx={{ ml: 1 }}*/}
+//       {/*>*/}
+//       {/*  Add PO*/}
+//       {/*</Button>*/}
+//       <Tooltip title="Export">
+//         <Button
+//           startIcon={<FileDownloadIcon />}
+//           onClick={onExportWithItems}
+//           sx={{ ml: 1 }}
+//         >
+//           Export
+//         </Button>
+//       </Tooltip>
+
+//       <Button
+//         startIcon={<PrintIcon />}
+//         onClick={handlePrintClick}
+//         sx={{ ml: 1 }}
+//       >
+//         Print
+//       </Button>
+//       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+//         <MenuItem
+//           onClick={() => {
+//             onPrintSelectedWithItems();
+//             handleClose();
+//           }}
+//         >
+//           Print Selected
+//         </MenuItem>
+//         <MenuItem
+//           onClick={() => {
+//             onPrintWithItems();
+//             handleClose();
+//           }}
+//         >
+//           Print All
+//         </MenuItem>
+//       </Menu>
+
+//       <GridToolbarQuickFilter />
+//     </GridToolbarContainer>
+//   );
+// }
+
+// Custom toolbar with export button for PO with items

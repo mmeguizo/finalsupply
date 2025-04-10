@@ -43,12 +43,6 @@ try {
     process.exit(1);
 }
 
-// // mongodb session store
-// const MongoDBStore = connectMongo(session);
-// const store = new MongoDBStore({
-//   uri: process.env.MONGO_URI,
-//   collection: "sessions",
-// });
 
 const options = {
     host: process.env.MYSQL_HOST,
@@ -73,7 +67,7 @@ app.use(
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
             httpOnly: true, // prevent cross scripting attacks
-        },
+        },    
     })
 );
 

@@ -22,7 +22,8 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import { Unstable_NumberInput as NumberInput } from "@mui/base/Unstable_NumberInput";
 import NumberInputBasic from "./numberInput";
-
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -38,21 +39,23 @@ export default function PurchaseOrderModal({
   handleSave,
   isSubmitting,
 }: PurchaseOrderModalProps) {
+  console.log({ PurchaseOrderModal: purchaseOrder });
+
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [recievedLimit, setrecievedLimit] = React.useState(0);
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
-    ponumber: purchaseOrder?.ponumber || "",
+    poNumber: purchaseOrder?.poNumber || "",
     supplier: purchaseOrder?.supplier || "",
     address: purchaseOrder?.address || "",
-    placeofdelivery: purchaseOrder?.placeofdelivery || "",
+    placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
     // dateofdelivery: purchaseOrder?.dateofdelivery
     //   ? new Date(Number(purchaseOrder.dateofdelivery))
     //   : null,
-    dateofpayment: purchaseOrder?.dateofpayment
-      ? new Date(Number(purchaseOrder.dateofpayment))
+    dateOfPayment: purchaseOrder?.dateOfPayment
+      ? new Date(Number(purchaseOrder.dateOfPayment))
       : null,
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
@@ -88,13 +91,13 @@ export default function PurchaseOrderModal({
 
       // Set the formData with the latest purchaseOrder values
       setFormData({
-        ponumber: purchaseOrder.ponumber || "",
+        poNumber: purchaseOrder.poNumber || "",
         supplier: purchaseOrder.supplier || "",
         address: purchaseOrder.address || "",
-        placeofdelivery: purchaseOrder.placeofdelivery || "",
-        dateofpayment: purchaseOrder.dateofpayment
-          ? new Date(Number(purchaseOrder.dateofpayment))
-          : null,
+        placeOfDelivery: purchaseOrder.placeOfDelivery || "",
+        dateOfPayment: purchaseOrder.dateOfPayment,
+        // ? new Date(Number(purchaseOrder.dateOfPayment))
+        // : null,
         items: mappedItems || [],
         amount: purchaseOrder.amount || 0,
         status: purchaseOrder.status || "",
@@ -107,11 +110,11 @@ export default function PurchaseOrderModal({
     } else {
       // Reset formData when adding new PO
       setFormData({
-        ponumber: "",
+        poNumber: "",
         supplier: "",
         address: "",
-        placeofdelivery: "",
-        dateofpayment: null,
+        placeOfDelivery: "",
+        dateOfPayment: null,
         items: [],
         amount: 0,
         status: "",
@@ -137,6 +140,8 @@ export default function PurchaseOrderModal({
       ...formData,
       [fieldName]: date,
     });
+
+    console.log({ handleDateChange: formData });
   };
 
   // Add empty item
@@ -211,6 +216,8 @@ export default function PurchaseOrderModal({
       return cleanItem;
     });
 
+    console.log("formattedData", formData);
+
     // Format dates for GraphQL
     const formattedData = {
       ...formData,
@@ -218,12 +225,12 @@ export default function PurchaseOrderModal({
       // dateofdelivery: formData.dateofdelivery
       //   ? formData.dateofdelivery.getTime().toString()
       //   : null,
-      dateofpayment: formData.dateofpayment
-        ? formData.dateofpayment.getTime().toString()
-        : null,
-      ponumber: parseInt(formData.ponumber),
+      // dateOfPayment: formData.dateOfPayment
+      //   ? formData.dateOfPayment.getTime().toString()
+      //   : null,
+      poNumber: parseInt(formData.poNumber),
     };
-
+    console.log("formattedData", formattedData);
     // Remove __typename, status from the main object if it exists
 
     const { __typename, status, ...cleanData } = formattedData;
@@ -249,8 +256,8 @@ export default function PurchaseOrderModal({
             <TextField
               fullWidth
               label="PO Number"
-              name="ponumber"
-              value={formData.ponumber}
+              name="poNumber"
+              value={formData.poNumber}
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
@@ -289,19 +296,21 @@ export default function PurchaseOrderModal({
             <TextField
               fullWidth
               label="Place of Delivery"
-              name="placeofdelivery"
-              value={formData.placeofdelivery}
+              name="placeOfDelivery"
+              value={formData.placeOfDelivery}
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="Payment Date"
-                value={formData.dateofpayment}
-                onChange={(date) => handleDateChange(date, "dateofpayment")}
+                value={dayjs(formData.dateOfPayment)}
+                onChange={(date) =>
+                  handleDateChange(dayjs(date), "dateOfPayment")
+                }
                 disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
@@ -601,16 +610,16 @@ export default function PurchaseOrderModal({
   //   if (purchaseOrder) {
   //     console.log(purchaseOrder);
   //     setFormData({
-  //       ponumber: purchaseOrder.ponumber || "",
+  //       poNumber: purchaseOrder.poNumber || "",
   //       supplier: purchaseOrder.supplier || "",
   //       address: purchaseOrder.address || "",
 
-  //       placeofdelivery: purchaseOrder.placeofdelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
+  //       placeOfDelivery: purchaseOrder.placeOfDelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
   //       // dateofdelivery: purchaseOrder.dateofdelivery
   //       // ? new Date(Number(purchaseOrder.dateofdelivery))
   //       // : null,
-  //       dateofpayment: purchaseOrder.dateofpayment
-  //         ? new Date(Number(purchaseOrder.dateofpayment))
+  //       dateOfPayment: purchaseOrder.dateOfPayment
+  //         ? new Date(Number(purchaseOrder.dateOfPayment))
   //         : null,
   //       // items: purchaseOrder.items || [],
   //       items:
@@ -639,12 +648,12 @@ export default function PurchaseOrderModal({
   //   } else {
   //     // Reset form when adding new PO
   //     setFormData({
-  //       ponumber: "",
+  //       poNumber: "",
   //       supplier: "",
   //       address: "",
-  //       placeofdelivery: "",
+  //       placeOfDelivery: "",
   //       // dateofdelivery: null,
-  //       dateofpayment: null,
+  //       dateOfPayment: null,
   //       amount: 0,
   //       items: [],
   //       status: "",
