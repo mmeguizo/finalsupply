@@ -10,7 +10,7 @@ export const INITIAL_ITEM = {
   description: "",
   unit: "",
   quantity: 0,
-  unitcost: 0,
+  unitCost: 0,
   amount: 0,
-  actualquantityrecieved: 0,
+  actualQuantityReceived: 0,
 };

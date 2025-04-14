@@ -5,7 +5,7 @@ CREATE TABLE purchase_order_items (
     description TEXT,
     unit VARCHAR(50),
     quantity INT,
-    unitcost DECIMAL(10,2),
+    unitCost DECIMAL(10,2),
     amount DECIMAL(10,2),
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     actual_quantity_received INT,

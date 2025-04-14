@@ -4,9 +4,9 @@ export interface PurchaseOrderItem {
   description: string;
   unit: string;
   quantity: number;
-  unitcost: number;
+  unitCost: number;
   amount: number;
-  actualquantityrecieved: number;
+  actualQuantityReceived: number;
 }
 
 export interface PurchaseOrderFormData {

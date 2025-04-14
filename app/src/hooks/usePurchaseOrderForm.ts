@@ -37,12 +37,12 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
           : null,
         items:
           purchaseOrder.items.map((item: any) => {
-            setActualQuantityfromDb(item.actualquantityrecieved);
+            setActualQuantityfromDb(item.actualQuantityReceived);
             return {
               ...item,
-              actualquantityrecieved:
+              actualQuantityReceived:
                 purchaseOrder.status === "completed"
-                  ? item.actualquantityrecieved
+                  ? item.actualQuantityReceived
                   : 0,
             };
           }) || [],
@@ -92,9 +92,9 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
           description: "",
           unit: "",
           quantity: 0,
-          unitcost: 0,
+          unitCost: 0,
           amount: 0,
-          actualquantityrecieved: 0,
+          actualQuantityReceived: 0,
         },
       ],
     });
@@ -107,16 +107,16 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       [field]: value,
     };
 
-    if (field === "quantity" || field === "unitcost") {
+    if (field === "quantity" || field === "unitCost") {
       updatedItems[index].amount =
         Number(updatedItems[index].quantity) *
-        Number(updatedItems[index].unitcost);
+        Number(updatedItems[index].unitCost);
     }
 
     const allItemsComplete = updatedItems.every((item) => {
       return (
         Number(item.quantity) ===
-          Number(item.actualquantityrecieved + actualQuantityfromDb) &&
+          Number(item.actualQuantityReceived + actualQuantityfromDb) &&
         item.quantity > 0
       );
     });

@@ -46,7 +46,8 @@ const PurchaseOrderItems = sequelize.define(
     },
     actualQuantityReceived: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: 0,
     },
     category: {
       type: DataTypes.ENUM(

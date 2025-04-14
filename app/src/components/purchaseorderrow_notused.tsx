@@ -81,7 +81,7 @@ export function PurchaseOrderRow({ purchaseOrder }: PurchaseOrderRowProps) {
                         <TableCell>{item.unit}</TableCell>
                         <TableCell align="right">{item.quantity}</TableCell>
                         <TableCell align="right">
-                          ${item.unitcost ? item.unitcost.toFixed(2) : "0.00"}
+                          ${item.unitCost ? item.unitCost.toFixed(2) : "0.00"}
                         </TableCell>
                         <TableCell align="right">
                           ${item.amount ? item.amount.toFixed(2) : "0.00"}

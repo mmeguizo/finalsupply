@@ -23,16 +23,14 @@ import {
 import PrintIcon from "@mui/icons-material/Print";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
-
+import AddIcon from "@mui/icons-material/Add";
 export function CustomToolbarForTable({
   props,
   onExportWithItems,
   onPrintWithItems,
   onPrintSelectedWithItems,
-  // onAddPO,
+  onAddPO,
 }: any) {
-  console.log("CustomToolbarForTable", props.data);
-
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -49,15 +47,14 @@ export function CustomToolbarForTable({
       <GridToolbarColumnsButton />
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
-
-      {/*<Button*/}
-      {/*  color="primary"*/}
-      {/*  startIcon={<AddIcon />}*/}
-      {/*  onClick={onAddPO}*/}
-      {/*  sx={{ ml: 1 }}*/}
-      {/*>*/}
-      {/*  Add PO*/}
-      {/*</Button>*/}
+      <Button
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={() => onAddPO()}
+        sx={{ ml: 1 }}
+      >
+        Add PO
+      </Button>
       <Tooltip title="Export">
         <Button
           startIcon={<FileDownloadIcon />}
@@ -70,15 +67,23 @@ export function CustomToolbarForTable({
 
       <Button
         startIcon={<PrintIcon />}
-        onClick={handlePrintClick}
+        onClick={() => onPrintSelectedWithItems(props.data)}
         sx={{ ml: 1 }}
       >
         Print
       </Button>
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+      {/* <Button
+        startIcon={<PrintIcon />}
+        onClick={handlePrintClick}
+        sx={{ ml: 1 }}
+      >
+        Print
+      </Button> */}
+
+      {/* <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem
           onClick={() => {
-            onPrintSelectedWithItems();
+            onPrintSelectedWithItems(props.data);
             handleClose();
           }}
         >
@@ -86,7 +91,32 @@ export function CustomToolbarForTable({
         </MenuItem>
         <MenuItem
           onClick={() => {
-            onPrintWithItems();
+            onPrintWithItems(props.data);
+            handleClose();
+          }}
+        >
+          Print All
+        </MenuItem>
+      </Menu> */}
+
+      <GridToolbarQuickFilter />
+    </GridToolbarContainer>
+  );
+}
+/* 
+old menu do not delete
+<Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+        <MenuItem
+          onClick={() => {
+            onPrintSelectedWithItems(props.data);
+            handleClose();
+          }}
+        >
+          Print Selected
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onPrintWithItems(props.data);
             handleClose();
           }}
         >
@@ -94,7 +124,4 @@ export function CustomToolbarForTable({
         </MenuItem>
       </Menu>
 
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
-}
+*/
