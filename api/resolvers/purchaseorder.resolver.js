@@ -46,14 +46,87 @@ const purchaseorderResolver = {
         const purchaseordersItems = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
           order: [["createdAt", "DESC"]],
+          include: [PurchaseOrder],
         });
-
         return purchaseordersItems;
       } catch (error) {
         console.error("Error fetching purchase order items: ", error);
         throw new Error(error.message || "Internal server error");
       }
     },
+
+    getAllTotalPurchaseOrderAmount: async (_, __, context) => {
+      try {
+
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        let totalItemAmount = await PurchaseOrderItems.findAll({
+          where: { isDeleted: false },
+          order: [["createdAt", "DESC"]],
+        });
+        let totalAmount = totalItemAmount.reduce((sum, item) => {
+          return sum + (Number(item.amount) || 0);
+        }, 0);
+        return totalAmount; // Return the total amoun
+        
+      } catch (error) {
+        console.error("Error fetching purchase order items: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+    getTotalPurchaseOrderItems: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        let totalItemAmount = await PurchaseOrderItems.findAll({
+          where: { isDeleted: false },
+          order: [["createdAt", "DESC"]],
+        });
+        let totalAmount = totalItemAmount.length;
+        return totalAmount; // Return the total amoun
+      } catch (error) {
+        console.error("Error fetching purchase order items: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+    getTotalPurchaseOrders: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        let totalItemAmount = await PurchaseOrder.findAll({
+          where: { isDeleted: false },
+          order: [["createdAt", "DESC"]],
+        });
+        let totalAmount = totalItemAmount.length;
+        return totalAmount; // Return the total amoun
+      } catch (error) {
+        console.error("Error fetching purchase order items: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+    getPurchaseOrderForBarCharts: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        let totalItemAmount = await PurchaseOrder.findAll({
+          where: { isDeleted: false },
+          order: [["createdAt", "DESC"]],
+          include: [PurchaseOrderItems],
+        });
+        console.log(totalItemAmount);
+      
+        return totalItemAmount; // Return the total amoun
+
+      } catch (error) {
+        console.error("Error fetching purchase order items: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    }
     // purchaseOrders: async (_, { purchaseorderId }, context) => {
     //   try {
     //     if (!context.isAuthenticated()) {
@@ -109,6 +182,7 @@ const purchaseorderResolver = {
 
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
+      console.log(input);
       try {
         const { items, ...poRestData } = input;
 
@@ -141,7 +215,14 @@ const purchaseorderResolver = {
             });
           }
         }
-        return newPurchaseorder;
+
+        // Fetch the newly created purchase order with its items
+        const purchaseOrderWithItems = await PurchaseOrder.findOne({
+          where: { id: newPurchaseorder.id },
+          include: [PurchaseOrderItems],
+        });
+
+        return purchaseOrderWithItems;
       } catch (error) {
         console.error("Error adding purchase order: ", error);
         throw new Error(error.message || "Internal server error");
@@ -155,39 +236,48 @@ const purchaseorderResolver = {
         }
 
         const { id, items, ...poUpdates } = input;
-        console.log("Updating purchase order with ID:", input, id);
+        const findIfExists = await PurchaseOrder.findOne({ where: { id: id } });
+
+        if (!findIfExists) {
+          throw new Error("Purchase order not found");
+        }
+
         // Update the purchase order details
         const updatedPurchaseorder = await PurchaseOrder.update(poUpdates, {
           where: { id: id },
-          // where: { id: id },
           // returning: true, // Fetch the updated purchase order
         });
-        console.log({ updatedPurchaseorder });
-
-        // if (!updatedPurchaseorder[0]) {
-        //   throw new Error("Purchase order not found");
-        // }
+        console.log(updatedPurchaseorder);
 
         // Handle items if provided
-        // if (items && Array.isArray(items) && items.length > 0) {
-        //   for (const item of items) {
-        //     if (item.id) {
-        //       // Update existing item
-        //       await PurchaseOrderItems.update(item, {
-        //         where: { id: item.id, purchaseOrderId: id },
-        //         returning: true,
-        //       });
-        //     } else {
-        //       // Create new item if the item does not have an id
-        //       await PurchaseOrderItems.create({
-        //         ...item,
-        //         purchaseOrderId: purchaseorderId,
-        //       });
-        //     }
-        //   }
-        // }
+        if (items && Array.isArray(items) && items.length > 0) {
+          for (const item of items) {
+            if (item.id) {
+              // Increment actualQuantityReceived by currentInput
+              if (item.currentInput && item.currentInput > 0) {
+                console.log({ id, item });
+                await PurchaseOrderItems.increment(
+                  { actualQuantityReceived: item.currentInput }, // Increment field
+                  { where: { id: item.id, purchaseOrderId: id } } // Condition to match the item
+                );
+              }
 
-        const returnData = await PurchaseOrder.findOne({ id: id });
+              // Update existing item
+              await PurchaseOrderItems.update(item, {
+                where: { id: item.id, purchaseOrderId: id },
+                returning: true,
+              });
+            } else {
+              // Create new item if the item does not have an id
+              await PurchaseOrderItems.create({
+                ...item,
+                purchaseOrderId: id,
+              });
+            }
+          }
+        }
+
+        const returnData = await PurchaseOrder.findOne({ where: { id: id } });
 
         // Return the updated purchase order
         return returnData; // Get the updated object

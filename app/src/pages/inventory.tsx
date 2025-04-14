@@ -12,27 +12,32 @@ import {
   Backdrop,
 } from "@mui/material";
 
-import { GridColDef, DataGrid, GridRowParams } from "@mui/x-data-grid";
+import { GridColDef, DataGrid, GridRowParams, GridToolbar } from "@mui/x-data-grid";
 import { useDemoData } from "@mui/x-data-grid-generator";
 import { useQuery } from "@apollo/client";
-import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query.js";
-import { formatCategory } from "../utils/generalUtils";
+import { GET_ALL_PURCHASEORDER_ITEMS  } from "../graphql/queries/purchaseorder.query.js";
+import { currencyFormat, formatCategory } from "../utils/generalUtils";
 export default function InventoryPage() {
   const { data, loading, error } = useQuery(GET_ALL_PURCHASEORDER_ITEMS);
   const { allPurchaseOrderItems } = data || {};
-
-  console.log("INVENTORY", {
-    data: allPurchaseOrderItems,
-    loading,
-    error,
-  });
 
   const itemColumns: GridColDef[] = [
     {
       field: "category",
       headerName: "Category",
+      width: 200,
+      // valueFormatter: (params) => formatCategory(params),
+      valueFormatter : (params : any) => {
+        let category;
+        category = params.split(" ")
+        return category.map((word : any) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+      }
+    },
+    { 
+      field: "PurchaseOrder",
+      headerName: "P.O. #", 
       width: 150,
-      valueFormatter: (params) => formatCategory(params),
+      valueGetter: (params : any) => params.poNumber,
     },
     { field: "itemName", headerName: "Item", width: 150 },
     { field: "description", headerName: "Description", width: 300, flex: 1 },
@@ -41,14 +46,15 @@ export default function InventoryPage() {
       field: "actualQuantityReceived",
       headerName: "Actual Recieved",
       type: "number",
-      width: 100,
+      width: 50,
     },
     { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
     {
       field: "formatUnitCost",
       headerName: "Unit Cost",
       type: "number",
-      width: 120,
+      width: 100,
+      // valueFormatter: (params) => params,
     },
     {
       field: "formatAmount",
@@ -63,6 +69,7 @@ export default function InventoryPage() {
 
     return data.allPurchaseOrderItems.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
+      const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
 
       // const formattedDeliveryDate = po.dateofdelivery
       //   ? new Date(Number(po.dateofdelivery)).toLocaleDateString()
@@ -78,6 +85,7 @@ export default function InventoryPage() {
         // formattedDeliveryDate,
         // formattedPaymentDate,
         formatAmount,
+        formatUnitCost
       };
     });
   }, [data]);
@@ -111,6 +119,7 @@ export default function InventoryPage() {
                 }}
                 pageSizeOptions={[5, 10, 25]}
                 onRowClick={handleRowClick}
+                slots={{ toolbar: GridToolbar }}
               />
             )}
           </div>

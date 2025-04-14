@@ -94,15 +94,15 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               fullWidth
               type="number"
               label="Received"
-              value={item.actualquantityrecieved}
+              value={item.actualQuantityReceived}
               onChange={(e) =>
                 onUpdateItem(
                   index,
-                  "actualquantityrecieved",
+                  "actualQuantityReceived",
                   Number(e.target.value)
                 )
               }
-              disabled={isFieldDisabled(item.actualquantityrecieved)}
+              disabled={isFieldDisabled(item.actualQuantityReceived)}
             />
           </Grid>
           <Grid item xs={1}>
@@ -110,11 +110,11 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               fullWidth
               type="number"
               label="Unit Cost"
-              value={item.unitcost}
+              value={item.unitCost}
               onChange={(e) =>
-                onUpdateItem(index, "unitcost", Number(e.target.value))
+                onUpdateItem(index, "unitCost", Number(e.target.value))
               }
-              disabled={isFieldDisabled(item.unitcost)}
+              disabled={isFieldDisabled(item.unitCost)}
             />
           </Grid>
           <Grid item xs={1}>

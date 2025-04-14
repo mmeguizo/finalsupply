@@ -11,6 +11,18 @@ export const ADD_PURCHASEORDER = gql`
       dateOfPayment
       category
       invoice
+      items {
+        id
+        description
+        purchaseOrderId
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+      }
     }
   }
 `;
@@ -95,11 +107,11 @@ export const DELETE_PURCHASEORDER = gql`
 //         description
 //         unit
 //         quantity
-//         unitcost
+//         unitCost
 //         amount
 //         category
 //         isDeleted
-//         actualquantityrecieved
+//         actualQuantityReceived
 //       }
 //       amount
 //       invoice

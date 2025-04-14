@@ -1,5 +1,5 @@
 const purchaseorderTypeDef = `#graphql
-
+scalar JSON
 
 type PurchaseOrder {
     id: ID!
@@ -20,6 +20,7 @@ type PurchaseOrder {
     status: String
     invoice: String
     isDeleted: Boolean
+    createdAt: String
 }
 
 type Item {
@@ -42,7 +43,21 @@ type Query {
     purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
     purchaseOrderItems(purchaseOrderId: ID!): [Item!]
     purchaseOrderItems: [Item!]
-    allPurchaseOrderItems: [Item!]
+    # allPurchaseOrderItems: [Item!]
+    allPurchaseOrderItems: [ItemWithPurchaseOrder!]
+    getAllTotalPurchaseOrderAmount: Float
+    getTotalPurchaseOrderItems: Int
+    getTotalPurchaseOrders: Int
+    getPurchaseOrderForBarCharts : [PurchaseOrder]
+}
+
+type PurchaseOrderBarChartDataType {
+    data : JSON
+}
+# input later
+input PurchaseOrderBarChartData {
+    date: String
+    totalAmount: Float
 }
 
 input ItemInput {
@@ -58,6 +73,25 @@ input ItemInput {
     isDeleted: Boolean
     actualQuantityReceived: Int
     currentInput: Int
+}
+type ItemWithPurchaseOrder {
+    id: ID
+    itemName: String
+    purchaseOrderId: String
+    description: String
+    unit: String
+    quantity: Int
+    unitCost: Float
+    amount: Float
+    category: String
+    isDeleted: Boolean
+    actualQuantityReceived: Int
+    currentInput: Int
+    PurchaseOrder: PurchaseOrderType
+}
+
+type PurchaseOrderType {
+    poNumber: Int
 }
 
 type Mutation {

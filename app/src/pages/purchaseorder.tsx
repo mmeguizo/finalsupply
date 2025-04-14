@@ -226,6 +226,7 @@ export default function PurchaseOrder() {
     const clickedPO = data?.purchaseOrders.find(
       (po: any) => po.id === params.id
     );
+    console.log("Row clicked", params, clickedPO);
     setSelectedPO(clickedPO || null);
   };
 
@@ -377,6 +378,7 @@ export default function PurchaseOrder() {
                     onPrintWithItems: printPurchaseOrdersWithItems,
                     onPrintSelectedWithItems:
                       printSelectedPurchaseOrdersWithItems,
+                    onAddPO: handleOpenAddModal,
                   }),
                 // <CustomToolbar
                 //   {...props}

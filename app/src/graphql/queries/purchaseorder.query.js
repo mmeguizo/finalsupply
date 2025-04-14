@@ -95,10 +95,52 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
       quantity
       unitCost
       amount
-      date
       actualQuantityReceived
       category
       isDeleted
+      PurchaseOrder  {
+        poNumber
+      }
+    }
+  }
+`;
+
+// dashboard tables
+
+const GET_ALL_DASHBOARD_DATA = gql`
+  query GetAllTotalPurchaseOrderItems {
+    getAllTotalPurchaseOrderAmount
+    getTotalPurchaseOrderItems
+    getTotalPurchaseOrders
+    getPurchaseOrderForBarCharts  {
+      id
+      supplier
+      address
+      poNumber
+      telephone
+      placeOfDelivery
+      dateOfDelivery
+      dateOfPayment
+      deliveryTerms
+      paymentTerms
+      category
+      status
+      items {
+        id
+        itemName
+        purchaseOrderId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+      }
+      amount
+      invoice
+      createdAt
     }
   }
 `;
@@ -108,4 +150,5 @@ export {
   GET_PURCHASEORDER,
   GET_PURCHASEORDER_ITEMS,
   GET_ALL_PURCHASEORDER_ITEMS,
+  GET_ALL_DASHBOARD_DATA
 };
