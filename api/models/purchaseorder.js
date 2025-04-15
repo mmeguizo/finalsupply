@@ -1,88 +1,92 @@
-import mongoose from "mongoose";
-
-const purchaseOrderSchema = new mongoose.Schema(
+import { DataTypes } from "sequelize";
+import { sequelize } from "../db/connectDB.js";
+import PurchaseOrderItems from "./purchaseorderitems.js";
+const PurchaseOrder = sequelize.define(
+  "PurchaseOrder",
   {
-    // userId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "User",
-    //   required: true,
-    // },
-    supplier: {
-      type: String,
-      // required: true,
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    address: {
-      type: String,
-      // required: true,
+    poNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
-    ponumber: {
-      type: Number,
-      // required: true,
+    modeOfProcurement: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
     },
-
-    modeofprocurement: {
-      type: String,
-      // required: true,
+    placeOfDelivery: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
     },
-    email: {
-      type: String,
-      // required: true,
+    dateOfDelivery: {
+      type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
+      allowNull: false,
     },
-    telephone: {
-      type: Number,
-      // required: true,
+    dateOfPayment: {
+      type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
+      allowNull: false,
     },
-    placeofdelivery: {
-      type: String,
-      // required: true,
+    deliveryTerms: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-    dateofdelivery: {
-      type: Date,
-      // required: true,
-    },
-    dateofpayment: {
-      type: Date,
-      // required: true,
-    },
-    deliveryterms: {
-      type: String,
-      // required: true,
-    },
-    paymentterms: {
-      type: String,
-      // required: true,
-    },
-    invoice: {
-      type: String,
-      // required: true,
+    paymentTerms: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     amount: {
-      type: Number,
-      required: true,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
     },
     status: {
-      type: String,
-      enum: ["partial", "close", "cancel", "completed", "pending"],
-      default: "pending",
-    },
-    date: {
-      type: Date,
-      default: Date.now,
-      required: true,
+      type: DataTypes.ENUM(
+        "partial",
+        "closed",
+        "cancel",
+        "completed",
+        "pending"
+      ),
+      allowNull: true,
+      defaultValue: "pending", // Default status as 'pending'
     },
     isDeleted: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.TINYINT(1),
+      allowNull: true,
+      defaultValue: 0,
+    },
+    supplier: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    address: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    invoice: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    telephone: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
   },
-
-  { timestamps: true }
+  {
+    tableName: "purchase_orders", // Specify the table name
+    underscored: true,
+    timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
+  }
 );
 
-const Purchaseorder = mongoose.model(
-  "Purchaseorders",
-  purchaseOrderSchema,
-  "Purchaseorders"
-);
+// You may add associations if necessary (e.g., PurchaseOrder has many PurchaseOrderItems)
 
-export default Purchaseorder;
+PurchaseOrder.hasMany(PurchaseOrderItems, { foreignKey: "purchaseOrderId" });
+PurchaseOrderItems.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
+export default PurchaseOrder;

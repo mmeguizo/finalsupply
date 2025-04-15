@@ -5,7 +5,7 @@ const GET_AUTHENTICATED_USER = gql`
       _id
       email
       name
-      profilePic
+      profile_pic
       role
     }
   }
