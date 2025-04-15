@@ -42,7 +42,7 @@ export const printPurchaseOrdersWithItems = (data: any) => {
         <tbody>
           <tr>
             <td>PO Number:</td>
-            <td>${po.ponumber}</td>
+            <td>${po.poNumber}</td>
           </tr>
           <tr>
             <td>Supplier:</td>
@@ -50,11 +50,11 @@ export const printPurchaseOrdersWithItems = (data: any) => {
           </tr>
           <tr>
             <td>Delivery Date:</td>
-            <td>${new Date(Number(po.dateofdelivery)).toLocaleDateString()}</td>
+            <td>${new Date(po.dateOfDelivery).toLocaleDateString()}</td>
           </tr>
           <tr>
             <td>Payment Date:</td>
-            <td>${new Date(Number(po.dateofpayment)).toLocaleDateString()}</td>
+            <td>${new Date(po.dateOfPayment).toLocaleDateString()}</td>
           </tr>
           <tr>
             <td>Total Amount:</td>
@@ -87,7 +87,7 @@ export const printPurchaseOrdersWithItems = (data: any) => {
             <td>${item.description}</td>
             <td>${item.unit}</td>
             <td>${item.quantity}</td>
-            <td class="text-right">PHP ${item.unitcost.toFixed(2)}</td>
+            <td class="text-right">PHP ${item.unitCost.toFixed(2)}</td>
             <td class="text-right">PHP ${item.amount.toFixed(2)}</td>
           </tr>
         `;

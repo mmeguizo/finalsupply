@@ -1,13 +1,15 @@
 const userTypeDef = `#graphql
 
 type User {
-    _id: ID!
+    id: ID!  # Changed _id to id for Sequelize
     email: String!
     name: String!
-    password: String!
-    profilePic: String
+    # firstname: String
+    # lastname: String
+    profile_pic: String
     gender: String!
     role: String!
+    is_active: Boolean!
 }
 
 type Query {
@@ -16,23 +18,24 @@ type Query {
     user(userId: ID!): User
 }
 
-
 type Mutation {
-    signUp(input: SignUpInput!) : User
+    signUp(input: SignUpInput!): User
     updateUser(input: UpdateUserInput!): User
-    login(input:LoginInput!): User
+    login(input: LoginInput!): User
     logout: LogoutResponse
 }
 
 input UpdateUserInput {
     userId: ID!
     name: String
-    profilePic: String
+    profile_pic: String
     password: String
     gender: String
     email: String
     role: String
-
+    # firstname: String
+    # lastname: String
+    is_active: Boolean
 }
 
 input SignUpInput {
@@ -43,7 +46,6 @@ input SignUpInput {
 }
 
 input LoginInput {
-    # email: String!
     email: String!
     password: String!
 }
@@ -51,8 +53,63 @@ input LoginInput {
 type LogoutResponse {
     message: String!
 }
-
-
 `;
 
 export default userTypeDef;
+
+// const userTypeDef = `#graphql
+
+// type User {
+//     _id: ID!
+//     email: String!
+//     name: String!
+//     password: String!
+//     profile_pic: String
+//     gender: String!
+//     role: String!
+// }
+
+// type Query {
+//     users: [User!]
+//     authUser: User
+//     user(userId: ID!): User
+// }
+
+// type Mutation {
+//     signUp(input: SignUpInput!) : User
+//     updateUser(input: UpdateUserInput!): User
+//     login(input:LoginInput!): User
+//     logout: LogoutResponse
+// }
+
+// input UpdateUserInput {
+//     userId: ID!
+//     name: String
+//     profile_pic: String
+//     password: String
+//     gender: String
+//     email: String
+//     role: String
+
+// }
+
+// input SignUpInput {
+//     email: String!
+//     name: String!
+//     password: String!
+//     gender: String!
+// }
+
+// input LoginInput {
+//     # email: String!
+//     email: String!
+//     password: String!
+// }
+
+// type LogoutResponse {
+//     message: String!
+// }
+
+// `;
+
+// export default userTypeDef;

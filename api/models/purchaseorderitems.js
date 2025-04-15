@@ -1,70 +1,76 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import { sequelize } from "../db/connectDB.js"; // Assuming you have a Sequelize instance
 
-const purchaseOrderItemsSchema = new mongoose.Schema(
+const PurchaseOrderItems = sequelize.define(
+  "PurchaseOrderItems",
   {
-    ponumber: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Purchaseorders",
-      required: true,
-      index: true,
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    item: {
-      type: String,
-      // required: true,
+    purchaseOrderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "purchaseOrders", // Assuming the table for purchase orders is named 'purchaseOrders'
+        key: "id", // The referenced column in the 'purchaseOrders' table
+      },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
+      index: true, // Index for optimization
+    },
+    itemName: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
     },
     description: {
-      type: String,
-      // required: true,
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     unit: {
-      type: String,
-      // required: true,
+      type: DataTypes.STRING(50),
+      allowNull: true,
     },
     quantity: {
-      type: Number,
-      // required: true,
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
-    unitcost: {
-      type: Number,
-      // required: true,
+    unitCost: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
     amount: {
-      type: Number,
-      // required: true,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
-    date: {
-      type: Date,
-      default: Date.now,
-      required: true,
-    },
-    actualquantityrecieved: {
-      type: Number,
+    actualQuantityReceived: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     category: {
-      type: String,
-      enum: [
-        "",
-        "property acknowledgement reciept",
+      type: DataTypes.ENUM(
+        "property acknowledgement receipt",
         "inventory custodian slip",
-        "requisition issue slip",
-      ],
-      default: "",
+        "requisition issue slip"
+      ),
+      allowNull: true,
+      defaultValue: "requisition issue slip", // Default value
     },
     isDeleted: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.TINYINT(1),
+      allowNull: true,
+      defaultValue: 0,
     },
   },
-  { timestamps: true }
+  {
+    tableName: "purchase_order_items", // Specify the table name
+    underscored: true,
+    timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
+  }
 );
 
-const PurchaseOrderItems = mongoose.model(
-  "purchaseOrderItems",
-  purchaseOrderItemsSchema,
-  "purchaseOrderItems"
-);
-
-// purchaseOrderItemsSchema.index({ ponumber: 1 });
-purchaseOrderItemsSchema.index({ isDeleted: 1 });
+// No association is needed here because ponumber is not a foreign key
 
 export default PurchaseOrderItems;

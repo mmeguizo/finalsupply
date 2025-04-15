@@ -1,31 +1,32 @@
 import { gql } from "@apollo/client";
 
 const GET_PURCHASEORDERS = gql`
-  query GetPurchaseorders {
-    purchaseorders {
-      _id
+  query GetPurchaseOrders {
+    purchaseOrders {
+      id
       supplier
       address
-      ponumber
+      poNumber
       telephone
-      placeofdelivery
-      dateofdelivery
-      dateofpayment
-      deliveryterms
-      paymentterms
+      placeOfDelivery
+      dateOfDelivery
+      dateOfPayment
+      deliveryTerms
+      paymentTerms
       category
       status
       items {
-        _id
-        item
+        id
+        itemName
+        purchaseOrderId
         description
         unit
         quantity
-        unitcost
+        unitCost
         amount
         category
         isDeleted
-        actualquantityrecieved
+        actualQuantityReceived
       }
       amount
       invoice
@@ -34,31 +35,32 @@ const GET_PURCHASEORDERS = gql`
 `;
 
 const GET_PURCHASEORDER = gql`
-  query GetPurchaseorder($purchaseorderId: ID!) {
-    purchaseorder(purchaseorderId: $purchaseorderId) {
-      _id
+  query GetPurchaseOrder($purchaseOrderId: ID!) {
+    purchaseOrder(purchaseOrderId: $purchaseOrderId) {
+      id
       supplier
       address
-      ponumber
+      poNumber
       telephone
-      placeofdelivery
-      dateofdelivery
-      dateofpayment
-      deliveryterms
-      paymentterms
+      placeOfDelivery
+      dateOfDelivery
+      dateOfPayment
+      deliveryTerms
+      paymentTerms
       category
       status
       items {
-        _id
-        item
+        id
+        itemName
+        purchaseOrderId
         description
         unit
         quantity
-        unitcost
+        unitCost
         amount
         category
         isDeleted
-        actualquantityrecieved
+        actualQuantityReceived
       }
       amount
       invoice
@@ -67,19 +69,86 @@ const GET_PURCHASEORDER = gql`
 `;
 
 const GET_PURCHASEORDER_ITEMS = gql`
-  query GetPurchaseorderItems($purchaseorderId: ID!) {
-    purchaseorderItems(purchaseorderId: $purchaseorderId) {
-      _id
-      item
+  query GetPurchaseOrderItems($purchaseOrderId: ID!) {
+    purchaseOrderItems(purchaseOrderId: $purchaseOrderId) {
+      id
+      poNumber
       description
       unit
       quantity
-      unitcost
+      unitCost
       amount
       isDeleted
-      actualquantityrecieved
+      actualQuantityReceived
     }
   }
 `;
 
-export { GET_PURCHASEORDERS, GET_PURCHASEORDER, GET_PURCHASEORDER_ITEMS };
+const GET_ALL_PURCHASEORDER_ITEMS = gql`
+  query GetAllPurchaseOrderItems {
+    allPurchaseOrderItems {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      PurchaseOrder  {
+        poNumber
+      }
+    }
+  }
+`;
+
+// dashboard tables
+
+const GET_ALL_DASHBOARD_DATA = gql`
+  query GetAllTotalPurchaseOrderItems {
+    getAllTotalPurchaseOrderAmount
+    getTotalPurchaseOrderItems
+    getTotalPurchaseOrders
+    getPurchaseOrderForBarCharts  {
+      id
+      supplier
+      address
+      poNumber
+      telephone
+      placeOfDelivery
+      dateOfDelivery
+      dateOfPayment
+      deliveryTerms
+      paymentTerms
+      category
+      status
+      items {
+        id
+        itemName
+        purchaseOrderId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+      }
+      amount
+      invoice
+      createdAt
+    }
+  }
+`;
+
+export {
+  GET_PURCHASEORDERS,
+  GET_PURCHASEORDER,
+  GET_PURCHASEORDER_ITEMS,
+  GET_ALL_PURCHASEORDER_ITEMS,
+  GET_ALL_DASHBOARD_DATA
+};

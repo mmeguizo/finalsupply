@@ -11,6 +11,7 @@ import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 import TestPage from "./pages/test";
 import { ProtectedRoute } from "./protected";
 import PurchaseOrder from "./pages/purchaseorder";
+import InventoryPage from "./pages/inventory";
 
 const cache = new InMemoryCache({
   typePolicies: {
@@ -33,8 +34,6 @@ const client = new ApolloClient({
   // cache: new InMemoryCache(),
   cache: cache,
   credentials: "include",
-
-  // ssrMode: true, //false in production
 });
 
 const router = createBrowserRouter([
@@ -59,6 +58,17 @@ const router = createBrowserRouter([
               },
             ],
             element: <ProtectedRoute routePath="orders" />,
+          },
+          {
+            path: "/inventory",
+            // Component: OrdersPage,
+            children: [
+              {
+                path: "",
+                Component: InventoryPage,
+              },
+            ],
+            element: <ProtectedRoute routePath="inventory" />,
           },
           {
             path: "/orders",

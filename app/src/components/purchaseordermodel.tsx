@@ -1,3 +1,5 @@
+/*eslint no-unused-vars: "off"*/
+
 import React from "react";
 import {
   Dialog,
@@ -18,6 +20,11 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
+import { Unstable_NumberInput as NumberInput } from "@mui/base/Unstable_NumberInput";
+import NumberInputBasic from "./numberInput";
+import dayjs from "dayjs";
+import { Dayjs } from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -33,22 +40,30 @@ export default function PurchaseOrderModal({
   handleSave,
   isSubmitting,
 }: PurchaseOrderModalProps) {
+  console.log({ PurchaseOrderModal: purchaseOrder });
+
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
-  const [actualQuantityfromDb, setActualQuantityfromDb] = React.useState(0);
+  const [recievedLimit, setrecievedLimit] = React.useState(0);
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
-    ponumber: purchaseOrder?.ponumber || "",
+    poNumber: purchaseOrder?.poNumber || "",
     supplier: purchaseOrder?.supplier || "",
     address: purchaseOrder?.address || "",
-    placeofdelivery: purchaseOrder?.placeofdelivery || "",
+    placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
+    deliveryTerms: purchaseOrder?.deliveryTerms || "",
+    paymentTerms: purchaseOrder?.paymentTerms || "",
+    dateOfDelivery: purchaseOrder?.dateOfDelivery
+      ? dayjs(purchaseOrder.dateOfDelivery)
+      : dayjs(),
     // dateofdelivery: purchaseOrder?.dateofdelivery
     //   ? new Date(Number(purchaseOrder.dateofdelivery))
     //   : null,
-    dateofpayment: purchaseOrder?.dateofpayment
-      ? new Date(Number(purchaseOrder.dateofpayment))
-      : null,
+    dateOfPayment: purchaseOrder?.dateOfPayment
+      ? dayjs(purchaseOrder.dateOfPayment)
+      : dayjs(),
+    modeOfProcurement: purchaseOrder?.modeOfProcurement || "",
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
     status: purchaseOrder?.status || "",
@@ -69,58 +84,57 @@ export default function PurchaseOrderModal({
     return false;
   };
 
-  // Update form data when purchaseOrder prop changes
   React.useEffect(() => {
-    // Reset addingItem when modal opens/closes
-    setAddingItem(false);
-    setHasSubmitted(false); // Add this line
     if (purchaseOrder) {
-      console.log(purchaseOrder);
+      // Map items properly before setting state
+      const mappedItems = purchaseOrder.items.map((item: any) => {
+        return {
+          ...item,
+          recievelimit: item.quantity - item.actualQuantityReceived,
+          currentInput: 0,
+        };
+      });
+      // console.log(mappedItems);
+
+      // Set the formData with the latest purchaseOrder values
       setFormData({
-        ponumber: purchaseOrder.ponumber || "",
+        poNumber: purchaseOrder.poNumber || "",
         supplier: purchaseOrder.supplier || "",
         address: purchaseOrder.address || "",
-
-        placeofdelivery: purchaseOrder.placeofdelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
-        // dateofdelivery: purchaseOrder.dateofdelivery
-        // ? new Date(Number(purchaseOrder.dateofdelivery))
-        // : null,
-        dateofpayment: purchaseOrder.dateofpayment
-          ? new Date(Number(purchaseOrder.dateofpayment))
-          : null,
-        // items: purchaseOrder.items || [],
-        items:
-          purchaseOrder.items.map((item: any) => {
-            setActualQuantityfromDb(item.actualquantityrecieved);
-            return {
-              ...item,
-              // Use the existing value instead of resetting to 0
-              actualquantityrecieved:
-                purchaseOrder.status === "completed"
-                  ? item.actualquantityrecieved
-                  : 0,
-            };
-          }) || [],
+        placeOfDelivery: purchaseOrder.placeOfDelivery || "",
+        dateOfPayment: dayjs(),
+        dateOfDelivery: dayjs(),
+        deliveryTerms: purchaseOrder.deliveryTerms || "",
+        paymentTerms: purchaseOrder.paymentTerms || "",
+        modeOfProcurement: purchaseOrder.modeOfProcurement || "",
+        items: mappedItems || [],
         amount: purchaseOrder.amount || 0,
         status: purchaseOrder.status || "",
         invoice: purchaseOrder.invoice || "",
       });
+
+      // Reset additional states
+      setAddingItem(false);
+      setHasSubmitted(false);
     } else {
-      // Reset form when adding new PO
+      // Reset formData when adding new PO
       setFormData({
-        ponumber: "",
+        poNumber: "",
         supplier: "",
         address: "",
-        placeofdelivery: "",
-        // dateofdelivery: null,
-        dateofpayment: null,
-        amount: 0,
+        placeOfDelivery: "",
+        modeOfProcurement: "",
+        deliveryTerms: "",
+        paymentTerms: "",
+        dateOfPayment: dayjs(),
+        dateOfDelivery: dayjs(),
         items: [],
+        amount: 0,
         status: "",
         invoice: "",
       });
     }
-  }, [purchaseOrder, open]);
+  }, [purchaseOrder, open]); // Depend on both purchaseOrder and open
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,21 +147,12 @@ export default function PurchaseOrderModal({
     console.log(formData);
   };
 
-  // const handleCategoryChange = (e: SelectChangeEvent) => {
-  //   const { value } = e.target;
-  //   setFormData({
-  //     ...formData,
-  //     ["category"]: value,
-  //   });
-  //   console.log(formData);
-  // };
-
   // Handle date changes
-  const handleDateChange = (date: Date | null, fieldName: string) => {
-    setFormData({
-      ...formData,
-      [fieldName]: date,
-    });
+  const handleDateChange = (date: Dayjs | null, field: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: date ? date.format("YYYY-MM-DD HH:mm:ss") : "",
+    }));
   };
 
   // Add empty item
@@ -159,46 +164,91 @@ export default function PurchaseOrderModal({
         ...formData.items,
         {
           category: "",
-          item: "",
+          itemName: "",
           description: "",
           unit: "",
           quantity: 0,
-          unitcost: 0,
+          unitCost: 0,
           amount: 0,
-          actualquantityrecieved: 0,
+          actualQuantityReceived: 0,
         },
       ],
     });
   };
 
   // Update item
+  // const updateItem = (index: number, field: string, value: any) => {
+  //   console.log({ index, field, value });
+  //   const updatedItems = [...formData.items];
+  //   updatedItems[index] = {
+  //     ...updatedItems[index],
+  //     [field]: value,
+  //   };
+
+  //   // Auto-calculate amount if quantity or unitCost changes
+  //   if (field === "quantity" || field === "unitCost") {
+  //     formData.amount,
+  //       (updatedItems[index].amount =
+  //         Number(updatedItems[index].quantity) *
+  //         Number(updatedItems[index].unitCost));
+  //   }
+
+  //   // Check if quantities match to update status
+  //   const allItemsComplete = updatedItems.every((item) => {
+  //     const quantity = Number(item.quantity);
+  //     const currentInput = Number(item.currentInput);
+  //     const actualReceived = Number(item.actualQuantityReceived);
+
+  //     if (currentInput > 0) {
+  //       return quantity === actualReceived + currentInput && quantity > 0;
+  //     } else {
+  //       return quantity === actualReceived && quantity > 0;
+  //     }
+  //   });
+
+  //   console.log("allItemsComplete", allItemsComplete);
+  //   // console.log("updatedItems", updatedItems);
+  //   setFormData({
+  //     ...formData,
+  //     items: updatedItems,
+  //     status: allItemsComplete ? "completed" : "pending",
+  //   });
+  // };
+
   const updateItem = (index: number, field: string, value: any) => {
+    console.log({ index, field, value });
     const updatedItems = [...formData.items];
+    const item = updatedItems[index];
+
+    // Ensure currentInput does not exceed the remaining quantity
+    if (field === "currentInput") {
+      const remaining =
+        Number(item.quantity) - Number(item.actualQuantityReceived);
+      value = Math.min(Math.max(value, 0), remaining); // Clamp value between 0 and remaining
+    }
+
     updatedItems[index] = {
-      ...updatedItems[index],
+      ...item,
       [field]: value,
     };
 
-    // Auto-calculate amount if quantity or unitcost changes
-    if (field === "quantity" || field === "unitcost") {
-      formData.amount,
-        (updatedItems[index].amount =
-          Number(updatedItems[index].quantity) *
-          Number(updatedItems[index].unitcost));
+    // Auto-calculate amount if quantity or unitCost changes
+    if (field === "quantity" || field === "unitCost") {
+      updatedItems[index].amount =
+        Number(updatedItems[index].quantity) *
+        Number(updatedItems[index].unitCost);
     }
 
     // Check if quantities match to update status
     const allItemsComplete = updatedItems.every((item) => {
-      return (
-        Number(item.quantity) ===
-          Number(item.actualquantityrecieved + actualQuantityfromDb) &&
-        item.quantity > 0
-      );
+      const quantity = Number(item.quantity);
+      const currentInput = Number(item.currentInput);
+      const actualReceived = Number(item.actualQuantityReceived);
+
+      return quantity === actualReceived + currentInput && quantity > 0;
     });
 
     console.log("allItemsComplete", allItemsComplete);
-    // console.log("updatedItems", updatedItems);
-
     setFormData({
       ...formData,
       items: updatedItems,
@@ -206,21 +256,17 @@ export default function PurchaseOrderModal({
     });
   };
 
-  // Remove item
-  // const removeItem = (index: number) => {
-  //   setFormData({
-  //     ...formData,
-  //     items: formData.items.filter((_, i) => i !== index),
-  //   });
-  // };
-
   // Handle form submission
   const onSubmit = () => {
     // Clean items - remove __typename and handle _id appropriately
-    const cleanedItems = formData.items.map((item) => {
+    const cleanedItems = formData.items.map((item: any) => {
+      delete item.recievelimit;
+      delete item.actualQuantityReceived;
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
+
+    console.log("formattedData", formData);
 
     // Format dates for GraphQL
     const formattedData = {
@@ -229,14 +275,16 @@ export default function PurchaseOrderModal({
       // dateofdelivery: formData.dateofdelivery
       //   ? formData.dateofdelivery.getTime().toString()
       //   : null,
-      dateofpayment: formData.dateofpayment
-        ? formData.dateofpayment.getTime().toString()
-        : null,
-      ponumber: parseInt(formData.ponumber),
+      // dateOfPayment: formData.dateOfPayment
+      //   ? formData.dateOfPayment.getTime().toString()
+      //   : null,
+      deliveryTerms: formData.deliveryTerms || "none",
+      poNumber: parseInt(formData.poNumber),
     };
+    console.log("formattedData", formattedData);
+    // Remove __typename, status from the main object if it exists
 
-    // Remove __typename from the main object if it exists
-    const { __typename, ...cleanData } = formattedData;
+    const { __typename, status, ...cleanData } = formattedData;
 
     console.log("formattedData", cleanData);
 
@@ -259,10 +307,10 @@ export default function PurchaseOrderModal({
             <TextField
               fullWidth
               label="PO Number"
-              name="ponumber"
-              value={formData.ponumber}
+              name="poNumber"
+              value={formData.poNumber}
               onChange={handleChange}
-              disabled={true}
+              disabled={purchaseOrder ? true : false}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -272,6 +320,8 @@ export default function PurchaseOrderModal({
               name="invoice"
               value={formData.invoice}
               onChange={handleChange}
+              disabled={purchaseOrder?.invoice ? true : false}
+              // disabled={isFieldDisabled(formData.invoice)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -281,10 +331,41 @@ export default function PurchaseOrderModal({
               name="supplier"
               value={formData.supplier}
               onChange={handleChange}
-              disabled={true}
+              disabled={purchaseOrder ? true : false}
             />
           </Grid>
-
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Mode of Procurement"
+              name="modeOfProcurement"
+              value={formData.modeOfProcurement}
+              placeholder="e.g direct contracting"
+              onChange={handleChange}
+              disabled={purchaseOrder ? true : false}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Delivery Terms"
+              name="deliveryTerms"
+              value={formData.deliveryTerms}
+              onChange={handleChange}
+              disabled={purchaseOrder ? true : false}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Payment Terms"
+              name="paymentTerms"
+              value={formData.paymentTerms}
+              placeholder="e.g not more than 30 days"
+              onChange={handleChange}
+              disabled={purchaseOrder ? true : false}
+            />
+          </Grid>
           <Grid item xs={12} md={12}>
             <TextField
               fullWidth
@@ -292,37 +373,43 @@ export default function PurchaseOrderModal({
               name="address"
               value={formData.address}
               onChange={handleChange}
-              disabled={true}
+              disabled={purchaseOrder ? true : false}
             />
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Place of Delivery"
-              name="placeofdelivery"
-              value={formData.placeofdelivery}
+              name="placeOfDelivery"
+              value={formData.placeOfDelivery}
               onChange={handleChange}
-              disabled={true}
+              disabled={purchaseOrder ? true : false}
             />
           </Grid>
 
-          {/* <Grid item xs={12} md={6}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Grid item xs={12} md={6}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="Delivery Date"
-                value={formData.dateofdelivery}
-                onChange={(date) => handleDateChange(date, "dateofdelivery")}
+                name="dateOfPayment"
+                label="Payment Date"
+                value={dayjs(formData.dateOfPayment)}
+                onChange={(newValue) =>
+                  handleDateChange(newValue, "dateOfPayment")
+                }
+                disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
-          </Grid> */}
-
+          </Grid>
           <Grid item xs={12} md={6}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="Payment Date"
-                value={formData.dateofpayment}
-                onChange={(date) => handleDateChange(date, "dateofpayment")}
-                disabled={true}
+                name="dateOfDelivery"
+                label="Delivery Date"
+                value={dayjs(formData.dateOfDelivery)}
+                onChange={(newValue) =>
+                  handleDateChange(newValue, "dateOfDelivery")
+                }
+                disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
           </Grid>
@@ -428,9 +515,11 @@ export default function PurchaseOrderModal({
                     size="small"
                     placeholder="Item"
                     label="Item"
-                    value={item.item}
-                    onChange={(e) => updateItem(index, "item", e.target.value)}
-                    disabled={isFieldDisabled(item.item)}
+                    value={item.itemName}
+                    onChange={(e) =>
+                      updateItem(index, "itemName", e.target.value)
+                    }
+                    disabled={isFieldDisabled(item.itemName)}
                   />
                 </Grid>
 
@@ -478,35 +567,98 @@ export default function PurchaseOrderModal({
                     disabled={isFieldDisabled(item.quantity)}
                   />
                 </Grid>
-
                 <Grid item xs={1}>
                   <TextField
                     fullWidth
                     size="small"
                     type="number"
-                    label="Received"
-                    placeholder="Received"
-                    value={item.actualquantityrecieved}
+                    label={`left: ${
+                      Number(item.quantity) -
+                      Number(item.actualQuantityReceived)
+                    }`}
+                    placeholder={`${
+                      Number(item.quantity) -
+                      Number(item.actualQuantityReceived)
+                    }`}
                     inputProps={{
                       min: 0,
-                      max: item.quantity - actualQuantityfromDb,
+                      max:
+                        Number(item.quantity) -
+                        Number(item.actualQuantityReceived),
                     }}
+                    value={item.currentInput || ""}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-                      if (
-                        value >= 0 &&
-                        value <= item.quantity - item.actualquantityrecieved
-                      ) {
-                        updateItem(index, "actualquantityrecieved", value);
+                      const remaining =
+                        Number(item.quantity) -
+                        Number(item.actualQuantityReceived);
+
+                      // Ensure the input value does not exceed the remaining quantity
+                      if (value >= 0 && value <= remaining) {
+                        updateItem(index, "currentInput", value);
+                      } else if (value > remaining) {
+                        updateItem(index, "currentInput", remaining); // Cap the value at the remaining quantity
                       }
                     }}
                     disabled={
-                      (hasSubmitted || purchaseOrder?.status === "completed") &&
-                      Number(item.actualquantityrecieved) ===
-                        Number(item.quantity)
+                      Number(item.quantity) ===
+                        Number(item.actualQuantityReceived) || !item.category
                     }
+                    sx={{
+                      width: "8vw",
+                      "& .MuiInputBase-root": {
+                        height: "40px",
+                      },
+                      "& input": {
+                        textAlign: "right",
+                        height: "100%",
+                      },
+                      backgroundColor:
+                        Number(item.actualQuantityReceived) ===
+                        Number(item.quantity)
+                          ? "action.disabledBackground"
+                          : "transparent",
+                    }}
+                  />
+                </Grid>
+
+                {/* 
+                <Grid item xs={1}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label={
+                      Number(item.quantity) ===
+                      Number(item.actualQuantityReceived)
+                        ? `${item.quantity}`
+                        : "Received"
+                    }
+                    placeholder={
+                      Number(item.quantity) ===
+                      Number(item.actualQuantityReceived)
+                        ? `${item.quantity}`
+                        : "0"
+                    }
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                        max: Number(item.recievelimit || 0),
+                      },
+                    }}
+                    disabled={
+                      Number(item.quantity) ===
+                        Number(item.actualQuantityReceived) || !item.category
+                    }
+                    onChange={(e) => {
+
+                      updateItem(index, "currentInput", value);
+                    }}
                     onFocus={() => {
-                      console.log(item.actualquantityrecieved);
+                      console.log(
+                        Number(item.quantity) ===
+                          Number(item.actualQuantityReceived)
+                      );
                     }}
                     sx={{
                       width: "8vw",
@@ -519,13 +671,13 @@ export default function PurchaseOrderModal({
                       },
                       // Optional: Add visual feedback
                       backgroundColor:
-                        Number(item.actualquantityrecieved) ===
+                        Number(item.actualQuantityReceived) ===
                         Number(item.quantity)
                           ? "action.disabledBackground"
                           : "transparent",
                     }}
                   />
-                </Grid>
+                </Grid> */}
 
                 <Grid item xs={1.5}>
                   <TextField
@@ -534,11 +686,11 @@ export default function PurchaseOrderModal({
                     type="number"
                     label="Unit Cost"
                     placeholder="Unit Cost"
-                    value={item.unitcost}
+                    value={item.unitCost}
                     onChange={(e) =>
-                      updateItem(index, "unitcost", Number(e.target.value))
+                      updateItem(index, "unitCost", Number(e.target.value))
                     }
-                    disabled={isFieldDisabled(item.unitcost)}
+                    disabled={isFieldDisabled(item.unitCost)}
                     InputProps={{
                       startAdornment: (
                         <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
@@ -579,9 +731,6 @@ export default function PurchaseOrderModal({
         <Button onClick={handleClose} disabled={isSubmitting}>
           Cancel
         </Button>
-        {/* <Button onClick={onSubmit} variant="contained">
-          Submit
-        </Button> */}
         <LoadingButton
           onClick={onSubmit}
           loading={isSubmitting}
@@ -595,3 +744,142 @@ export default function PurchaseOrderModal({
     </Dialog>
   );
 }
+/*
+
+  // const handleCategoryChange = (e: SelectChangeEvent) => {
+  //   const { value } = e.target;
+  //   setFormData({
+  //     ...formData,
+  //     ["category"]: value,
+  //   });
+  //   console.log(formData);
+  // };
+
+
+ // Update form data when purchaseOrder prop changes
+  // React.useEffect(() => {
+  //   // Reset addingItem when modal opens/closes
+  //   setAddingItem(false);
+  //   setHasSubmitted(false); // Add this line
+  //   if (purchaseOrder) {
+  //     console.log(purchaseOrder);
+  //     setFormData({
+  //       poNumber: purchaseOrder.poNumber || "",
+  //       supplier: purchaseOrder.supplier || "",
+  //       address: purchaseOrder.address || "",
+
+  //       placeOfDelivery: purchaseOrder.placeOfDelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
+  //       // dateofdelivery: purchaseOrder.dateofdelivery
+  //       // ? new Date(Number(purchaseOrder.dateofdelivery))
+  //       // : null,
+  //       dateOfPayment: purchaseOrder.dateOfPayment
+  //         ? new Date(Number(purchaseOrder.dateOfPayment))
+  //         : null,
+  //       // items: purchaseOrder.items || [],
+  //       items:
+  //         purchaseOrder.items.map((item: any) => {
+  //           setActualQuantityfromDb({
+  //             actualQuantityReceived: item.actualQuantityReceived,
+  //             id: item._id,
+  //           });
+  //           return {
+  //             ...item,
+  //             // Use the existing value instead of resetting to 0
+  //             // actualQuantityReceived: item.actualQuantityReceived,
+  //             // actualQuantityReceived:
+  //             //   purchaseOrder.status === "completed"
+  //             //     ? item.actualQuantityReceived
+  //             //     : purchaseOrder.status !== "completed" &&
+  //             //         item.quantity === item.actualQuantityReceived
+  //             //       ? item.actualQuantityReceived
+  //             //       : 0,
+  //           };
+  //         }) || [],
+  //       amount: purchaseOrder.amount || 0,
+  //       status: purchaseOrder.status || "",
+  //       invoice: purchaseOrder.invoice || "",
+  //     });
+  //   } else {
+  //     // Reset form when adding new PO
+  //     setFormData({
+  //       poNumber: "",
+  //       supplier: "",
+  //       address: "",
+  //       placeOfDelivery: "",
+  //       // dateofdelivery: null,
+  //       dateOfPayment: null,
+  //       amount: 0,
+  //       items: [],
+  //       status: "",
+  //       invoice: "",
+  //     });
+  //   }
+  // }, [purchaseOrder, open]);
+  // Add this useEffect to log updated values
+  // React.useEffect(() => {
+  //   formData.items.forEach((item) => {
+  //     console.log({
+  //       itemquantityuseEffect: Number(item.quantity),
+  //       actualQuantityReceiveduseEffect: Number(
+  //         actualQuantityfromDb.actualQuantityReceived
+  //       ),
+  //     });
+  //   });
+  // }, [formData.items, actualQuantityfromDb]);
+
+
+  // Remove item
+  // const removeItem = (index: number) => {
+  //   setFormData({
+  //     ...formData,
+  //     items: formData.items.filter((_, i) => i !== index),
+  //   });
+  // };
+
+
+  //ui 
+
+     <Grid item xs={12} md={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Delivery Date"
+                value={formData.dateofdelivery}
+                onChange={(date) => handleDateChange(date, "dateofdelivery")}
+              />
+            </LocalizationProvider>
+          </Grid> 
+
+          <NumberInput
+                    placeholder="Received"
+                    value={item.actualQuantityReceived}
+                    min={0}
+                    max={Number(item.quantity) - Number(actualQuantityfromDb)}
+                    onInputChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (
+                        value >= 0 &&
+                        value <= item.quantity - item.actualQuantityReceived
+                      ) {
+                        updateItem(index, "actualQuantityReceived", value);
+                      }
+                    }}
+                  /> 
+
+                  // disabled={
+                    //   Number(item.actualQuantityReceived) ===
+                    //     Number(item.quantity) &&
+                    //   Number(item.actualQuantityReceived) !== 0
+                    // }
+
+                   // console.log(item);
+                      // console.log({ value: value });
+                      // const limit =
+                      //   Number(item.quantity) -
+                      //   Number(actualQuantityfromDb.actualQuantityReceived);
+                      // console.log({ limit: limit });
+                      // console.log({ condition: value >= 0 && value <= limit });
+                      // if (value >= 0 && value <= limit) {
+                      //   updateItem(index, "actualQuantityReceived", value);
+                      // }
+
+*/

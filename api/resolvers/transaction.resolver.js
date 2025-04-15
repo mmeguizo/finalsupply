@@ -29,7 +29,6 @@ const transactionResolver = {
           _id: transactionId,
           // userId,
         });
-        console.log("transaction: ", transaction);
         return transaction;
       } catch (error) {
         console.error("Error fetching transaction, error: ", error);
@@ -73,7 +72,6 @@ const transactionResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        console.log("context.getUser(): ", context.getUser());
         const newTransaction = new Transaction({
           ...input,
           userId: context.getUser()._id,
@@ -106,8 +104,6 @@ const transactionResolver = {
     },
 
     deleteTransaction: async (_, { transactionId }, context) => {
-      console.log("input: ", transactionId);
-
       try {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");

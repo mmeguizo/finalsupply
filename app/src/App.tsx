@@ -11,7 +11,7 @@ import { SessionsType } from "./types/genericTypes";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import PurchaseOrder from "./pages/purchaseorder";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 // Original full navigation
 const ALL_NAVIGATION: Navigation = [
   {
@@ -26,6 +26,11 @@ const ALL_NAVIGATION: Navigation = [
     segment: "purchaseorder",
     title: "Inspection Acceptance Report",
     icon: <BusinessCenterIcon />,
+  },
+  {
+    segment: "inventory",
+    title: " Inventory",
+    icon: <ShowChartIcon />,
   },
   {
     segment: "orders",
@@ -44,6 +49,7 @@ export const ROUTE_ROLES = {
   "": ["admin", "user"], // Dashboard (default route)
   orders: ["admin"],
   purchaseorder: ["admin"],
+  inventory: ["user", "admin"],
   tests: ["user", "admin"],
 };
 
