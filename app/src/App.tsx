@@ -1,15 +1,19 @@
 import * as React from "react";
 // import DashboardIcon from "@mui/icons-material/Dashboard";
+// @ts-ignore
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { ReactRouterAppProvider } from "@toolpad/core/react-router";
 import { Outlet, useNavigate } from "react-router";
 import type { Navigation, Session } from "@toolpad/core/AppProvider";
+// @ts-ignore
 import { SessionContext } from "./SessionContext";
+// @ts-ignore
 import AddBusinessIcon from "@mui/icons-material/AddBusiness";
 import { SessionsType } from "./types/genericTypes";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import PurchaseOrder from "./pages/purchaseorder";
+// @ts-ignore
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 // Original full navigation
@@ -102,11 +106,6 @@ export default function App() {
       if ("segment" in item && item.segment) {
         const allowedRoles =
           ROUTE_ROLES[item.segment as keyof typeof ROUTE_ROLES] || [];
-        // console.log("Filtered navigation check:", {
-        //   item,
-        //   allowedRoles,
-        //   userRole: session?.user?.role,
-        // });
         return allowedRoles.includes(session?.user?.role as any);
       }
 

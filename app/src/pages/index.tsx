@@ -1,58 +1,115 @@
-import * as React from 'react';
-import { 
-  Box, 
-  Grid, 
-  Paper, 
-  Typography, 
-  Card, 
+import * as React from "react";
+import {
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  Card,
   CardContent,
   CardHeader,
-} from '@mui/material';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { PieChart } from '@mui/x-charts/PieChart';
-import { GET_ALL_DASHBOARD_DATA } from '../graphql/queries/purchaseorder.query.js';
-import { useQuery } from '@apollo/client';
-import { currencyFormat, formatCategory ,formatBarChartData, currencyFormatWithRoundingSymbol } from '../utils/generalUtils';
+} from "@mui/material";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { PieChart } from "@mui/x-charts/PieChart";
+import { useQuery } from "@apollo/client";
+import {
+  currencyFormat,
+  formatCategory,
+  formatBarChartData,
+  currencyFormatWithRoundingSymbol,
+} from "../utils/generalUtils";
+// @ts-ignore
+import { GET_USERS_COUNT } from "../graphql/queries/user.query.js";
+// @ts-ignore
+import { GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query.js";
+import CircularProgress from "@mui/material/CircularProgress";
 // Sample data - replace with your actual data
-const barChartData = [
-  { month: 'Jan', amount: 2400 },
-  { month: 'Feb', amount: 1398 },
-  { month: 'Mar', amount: 9800 },
-  { month: 'Apr', amount: 3908 },
-  { month: 'May', amount: 4800 },
-  { month: 'Jun', amount: 3800 },
-];
-
-const pieChartData = [
-  { id: 0, value: 35, label: 'PAR' },
-  { id: 1, value: 45, label: 'RIS' },
-  { id: 2, value: 20, label: 'ICS' },
-];
+let pieChartData: any[] = [];
 
 export default function DashboardPage() {
+  const { data, loading, error } = useQuery(GET_ALL_DASHBOARD_DATA);
+  const {
+    data: usersCountData,
+    loading: usersCountLoading,
+    error: usersCountError,
+  } = useQuery(GET_USERS_COUNT);
 
-  const { data , loading , error } = useQuery(GET_ALL_DASHBOARD_DATA);
-  console.log('Dashboard Data:', data); // Add this to debug
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isError, setIsError] = React.useState(false);
 
-  const totalAmount = data?.getAllTotalPurchaseOrderAmount || 0;
-  const totalPurchaseOrderitems = data?.getTotalPurchaseOrderItems || 0;
-  const totalPurchaseOrders = data?.getTotalPurchaseOrders || 0;
-  const formattedBarChartData = formatBarChartData(data?.getPurchaseOrderForBarCharts || []);
+  // State for processed data
+  const [processedData, setProcessedData] = React.useState({
+    totalAmount: 0,
+    totalItems: 0,
+    totalOrders: 0,
+    usersCount: 0,
+    barChartData: [],
+    totalCategory: [],
+  });
+
+  React.useEffect(() => {
+    setIsLoading(loading || usersCountLoading);
+  }, [loading, usersCountLoading]);
+
+  // Process data when it changes
+  React.useEffect(() => {
+    if (data) {
+      setIsLoading(false);
+      setIsError(false);
+      // Use reduce to count categories
+      const categoryCounts = data.getAllCategory.reduce((acc: any, e: any) => {
+        const category = e.category;
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      }, {});
+      console.log(categoryCounts)
+      // Create pieChartData based on the counts
+       pieChartData = [
+        {
+          value: categoryCounts["property acknowledgement reciept"] || 0,
+          label: "PAR",
+        },
+        {
+          value: categoryCounts["inventory custodian slip"] || 0,
+          label: "ICS",
+        },
+        { value: categoryCounts["requisition issue slip"] || 0, label: "RIS" },
+      ];
+
+
+      setProcessedData({
+        totalAmount: data.getAllTotalPurchaseOrderAmount || 0,
+        usersCount: usersCountData?.countAllUsers || 0,
+        totalItems: data.getTotalPurchaseOrderItems || 0,
+        totalOrders: data.getTotalPurchaseOrders || 0,
+        barChartData: formatBarChartData(
+          data.getPurchaseOrderForBarCharts || []
+        ),
+        totalCategory: data.getAllCategory || [],
+      });
+    }
+  }, [data, usersCountData]);
+  console.log(pieChartData)
+
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* <Typography variant="h4" gutterBottom>
         Dashboard Overview
       </Typography> */}
-      
+
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Total Items
+                Users
               </Typography>
-              <Typography variant="h5">{totalPurchaseOrderitems}</Typography>
+              {/* Display loading indicator */}
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Typography variant="h5">{processedData.usersCount}</Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -60,9 +117,15 @@ export default function DashboardPage() {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Total Purchase Orders
+                PO
               </Typography>
-              <Typography variant="h5">{totalPurchaseOrders}</Typography>
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Typography variant="h5">
+                  {processedData.totalOrders}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -70,9 +133,13 @@ export default function DashboardPage() {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Pending Deliveries
+                Items
               </Typography>
-              <Typography variant="h5">12</Typography>
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Typography variant="h5">{processedData.totalItems}</Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -80,9 +147,16 @@ export default function DashboardPage() {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Total Amount
+                Amount
               </Typography>
-              <Typography variant="h5">&#8369;{currencyFormatWithRoundingSymbol(totalAmount)}</Typography>
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <Typography variant="h5">
+                  &#8369;
+                  {currencyFormatWithRoundingSymbol(processedData.totalAmount)}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -96,13 +170,22 @@ export default function DashboardPage() {
               Monthly Purchase Orders
             </Typography>
             <BarChart
-              xAxis={[{ 
-                scaleType: 'band', 
-                data: formattedBarChartData.map(item => item.month) 
-              }]}
-              series={[{ 
-                data: formattedBarChartData.map(item => item.amount) 
-              }]}
+              loading={isLoading}
+              xAxis={[
+                {
+                  scaleType: "band",
+                  data: processedData.barChartData.map(
+                    (item: any) => item.month
+                  ),
+                },
+              ]}
+              series={[
+                {
+                  data: processedData.barChartData.map(
+                    (item: any) => item.amount
+                  ),
+                },
+              ]}
               height={300}
             />
           </Paper>
@@ -113,10 +196,13 @@ export default function DashboardPage() {
               Distribution by Category
             </Typography>
             <PieChart
-              series={[{
-                data: pieChartData,
-                highlightScope: { faded: 'global', highlighted: 'item' },
-              }]}
+              loading={isLoading}
+              series={[
+                {
+                  data: pieChartData,
+                  highlightScope: { faded: "global", highlighted: "item" },
+                },
+              ]}
               height={300}
             />
           </Paper>
