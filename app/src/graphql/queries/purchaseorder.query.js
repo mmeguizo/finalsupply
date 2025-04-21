@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 
 const GET_PURCHASEORDERS = gql`
+
   query GetPurchaseOrders {
     purchaseOrders {
       id
@@ -141,6 +142,9 @@ const GET_ALL_DASHBOARD_DATA = gql`
       amount
       invoice
       createdAt
+    }
+    getAllCategory {
+      category
     }
   }
 `;

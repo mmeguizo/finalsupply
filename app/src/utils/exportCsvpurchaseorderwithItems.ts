@@ -1,5 +1,4 @@
 export const exportPurchaseOrdersWithItems = (data: any) => {
-  console.log({ exportPurchaseOrdersWithItems: data });
 
   let allData: any;
   if (data.purchaseOrders === undefined) {

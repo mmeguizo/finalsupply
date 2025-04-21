@@ -1,6 +1,9 @@
 import * as React from "react";
+// @ts-ignore
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
-import { useQuery, useMutation } from "@apollo/client";
+// @ts-ignore
+import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query";
+import { useQuery, useMutation , useApolloClient  } from "@apollo/client";
 import {
   CircularProgress,
   Alert,
@@ -25,6 +28,7 @@ import {
 } from "@mui/x-data-grid";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import PrintIcon from "@mui/icons-material/Print";
+// @ts-ignore
 import AddIcon from "@mui/icons-material/Add";
 import PurchaseOrderModal from "../components/purchaseordermodel";
 import {
@@ -40,7 +44,8 @@ import { printPurchaseOrdersWithItems } from "../utils/printPurchaseOrderWithIte
 import { printSelectedPurchaseOrdersWithItems } from "../utils/printSelectedPurchaseOrder";
 import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
 import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
-
+import { createPoColumns, itemColumns } from './purchaseOrderFunctions/purchaseorder_column';
+import { handleSavePurchaseOrder, } from './purchaseOrderFunctions/purchaseOrderOperations';
 export default function PurchaseOrder() {
   //for submit loading
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -58,131 +63,34 @@ export default function PurchaseOrder() {
     "success" | "error" | "info" | "warning"
   >("success");
 
+
+  const client = useApolloClient(); // ADD THIS LINE!
+
   const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
-    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+      refetchQueries: [{ query: GET_PURCHASEORDERS  },
+      {query : GET_ALL_PURCHASEORDER_ITEMS}],
+    onCompleted: () => {
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
+      client.cache.gc();
+    },
   });
+  // const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
+  //   refetchQueries: [{ query: GET_PURCHASEORDERS  },
+  //     {query : GET_ALL_PURCHASEORDER_ITEMS}],
+  // });
   const [deletePurchaseOrder] = useMutation(DELETE_PURCHASEORDER, {
     refetchQueries: [{ query: GET_PURCHASEORDERS }],
   });
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
-    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+    onCompleted: () => {
+      console.log(client.cache)
+      client.cache.evict({ fieldName: "getAllCategory" });
+      client.cache.gc();
+    },
   });
-
-  //custom toolbar
-
-  // Define columns for purchase orders
-  const poColumns: GridColDef[] = [
-    {
-      field: "poNumber",
-      headerName: "Purchase Order #",
-      width: 150,
-    },
-    {
-      field: "supplier",
-      headerName: "Supplier",
-      width: 200,
-      flex: 1,
-    },
-    {
-      field: "placeOfDelivery", // Use the pre-formatted field
-      headerName: "Place of Delivery",
-      width: 150,
-      // No formatter needed!
-    },
-    {
-      field: "dateOfPayment", // Use the pre-formatted field
-      headerName: "P.O Date",
-      width: 150,
-      // No formatter needed!
-    },
-    {
-      field: "formatAmount",
-      headerName: "Amount",
-      type: "number",
-      width: 150,
-      align: "right",
-      headerAlign: "right",
-    },
-
-    {
-      field: "status",
-      headerName: "Status",
-      width: 100,
-      align: "right",
-      headerAlign: "right",
-      valueFormatter: (params: string) => {
-        if (!params) return "";
-        return params.charAt(0).toUpperCase() + params.slice(1).toLowerCase();
-      },
-    },
-    {
-      field: "update",
-      headerName: "UPDATE",
-      width: 100,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={(e: any) => {
-            e.stopPropagation(); // Prevent row selection
-            handleOpenEditModal(params.row);
-          }}
-        >
-          UPDATE
-        </Button>
-      ),
-    },
-
-    /*
-    {
-      field: "delete",
-      headerName: "Delete",
-      width: 100,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent row selection
-            handleOpenEditModal(params.row);
-          }}
-        >
-          Edit
-        </Button>
-      ),
-    },
-    */
-  ];
-
-  // Define columns for items
-  const itemColumns: GridColDef[] = [
-    {
-      field: "category",
-      headerName: "Category",
-      width: 150,
-      valueFormatter: (params) => formatCategory(params),
-    },
-    { field: "itemName", headerName: "Item", width: 150 },
-    { field: "description", headerName: "Description", width: 300, flex: 1 },
-    { field: "unit", headerName: "Unit", width: 100 },
-    {
-      field: "actualQuantityReceived",
-      headerName: "Actual Recieved",
-      type: "number",
-      width: 100,
-    },
-    { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-    {
-      field: "formatUnitCost",
-      headerName: "Unit Cost",
-      type: "number",
-      width: 120,
-    },
-    {
-      field: "formatAmount",
-      headerName: "Amount",
-      type: "number",
-      width: 120,
-    },
-  ];
+  // const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+  //   refetchQueries: [{ query: GET_PURCHASEORDERS }],
+  // });
 
   // Format purchase orders for DataGrid
   const poRows = React.useMemo(() => {
@@ -190,15 +98,6 @@ export default function PurchaseOrder() {
 
     return data.purchaseOrders.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
-
-      // const formattedDeliveryDate = po.dateofdelivery
-      //   ? new Date(Number(po.dateofdelivery)).toLocaleDateString()
-      //   : "Not specified";
-
-      // const formattedPaymentDate = po.dateOfPayment
-      //   ? new Date(Number(po.dateOfPayment)).toLocaleDateString()
-      //   : "Not specified";
-
       return {
         id: po._id,
         ...po,
@@ -226,7 +125,6 @@ export default function PurchaseOrder() {
     const clickedPO = data?.purchaseOrders.find(
       (po: any) => po.id === params.id
     );
-    console.log("Row clicked", params, clickedPO);
     setSelectedPO(clickedPO || null);
   };
 
@@ -237,7 +135,6 @@ export default function PurchaseOrder() {
     } else {
       exportPurchaseOrdersWithItems(data);
     }
-
     // exportPurchaseOrdersWithItems(selectedPO ?? data);
   };
 
@@ -270,53 +167,63 @@ export default function PurchaseOrder() {
     setConfirmDialogOpen(true);
   };
 
+  //for saving the po or submitting
   const handleSavePO = async (formData: any) => {
-    setIsSubmitting(true); // Start loading
-    try {
-      // Clean items - remove __typename and handle _id appropriately
-      const cleanedItems = formData.items.map((item: any) => {
-        const { __typename, ...cleanItem } = item;
-        return cleanItem;
-      });
-
-      // Clean the formData to remove __typename
-      const { __typename, ...cleanFormData } = formData;
-      cleanFormData.items = cleanedItems;
-      let updatedPO: any;
-      if (editingPO) {
-        const results = await updatePurchaseOrder({
-          variables: {
-            input: {
-              id: parseInt(editingPO.id),
-              ...cleanFormData,
-            },
-          },
-        });
-        console.log(results.data);
-        let data = results.data.updatePurchaseOrder;
-
-        handleRowClick(data.id);
-        console.log(
-          "Returned after Updated PO:",
-          results.data.updatePurchaseorder
-        );
-        updatedPO = data;
-        // updatedPO = results.data.updatePurchaseorder;
-      } else {
-        const results = await addPurchaseOrder({
-          variables: { input: formData },
-        });
-        updatedPO = results.data.addPurchaseorder;
-      }
-      // Update selectedPO state
-      setSelectedPO(updatedPO);
-      handleCloseModal();
-    } catch (err) {
-      console.error("Error saving purchase order:", err);
-    } finally {
-      setIsSubmitting(false); // End loading regardless of outcome
-    }
+    await handleSavePurchaseOrder(
+      formData,
+      editingPO,
+      updatePurchaseOrder,
+      addPurchaseOrder,
+      handleRowClick,
+      setSelectedPO,
+      handleCloseModal,
+      setIsSubmitting
+    );
   };
+
+
+  // const handleSavePO = async (formData: any) => {
+  //   setIsSubmitting(true); // Start loading
+  //   try {
+  //     // Clean items - remove __typename and handle _id appropriately
+  //     const cleanedItems = formData.items.map((item: any) => {
+  //       const { __typename, ...cleanItem } = item;
+  //       return cleanItem;
+  //     });
+
+  //     // Clean the formData to remove __typename
+  //     const { __typename, ...cleanFormData } = formData;
+  //     cleanFormData.items = cleanedItems;
+  //     let updatedPO: any;
+  //     if (editingPO) {
+  //       const results = await updatePurchaseOrder({
+  //         variables: {
+  //           input: {
+  //             id: parseInt(editingPO.id),
+  //             ...cleanFormData,
+  //           },
+  //         },
+  //       });
+  //       let data = results.data.updatePurchaseOrder;
+
+  //       handleRowClick(data.id);
+  //       updatedPO = data;
+  //       // updatedPO = results.data.updatePurchaseorder;
+  //     } else {
+  //       const results = await addPurchaseOrder({
+  //         variables: { input: formData },
+  //       });
+  //       updatedPO = results.data.addPurchaseorder;
+  //     }
+  //     // Update selectedPO state
+  //     setSelectedPO(updatedPO);
+  //     handleCloseModal();
+  //   } catch (err) {
+  //     console.error("Error saving purchase order:", err);
+  //   } finally {
+  //     setIsSubmitting(false); // End loading regardless of outcome
+  //   }
+  // };
 
   // Show notification when purchase order is deleted
   React.useEffect(() => {
@@ -327,6 +234,11 @@ export default function PurchaseOrder() {
       return () => clearTimeout(timer);
     }
   }, [showNotification]);
+
+  const poColumns = React.useMemo(
+    () => createPoColumns(handleOpenEditModal),
+    [handleOpenEditModal]
+  );
 
   return (
     <PageContainer title="" breadcrumbs={[]}>

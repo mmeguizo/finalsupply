@@ -11,7 +11,9 @@ import {
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+// @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
+// @ts-ignore
 import AddIcon from "@mui/icons-material/Add";
 import Grid from "@mui/material/Grid2";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
@@ -124,12 +126,10 @@ export default function PurchaseOrderModal({
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(name, value);
     setFormData({
       ...formData,
       [name]: value,
     });
-    console.log(formData);
   };
 
   // Handle date changes
@@ -185,10 +185,6 @@ export default function PurchaseOrderModal({
         item.quantity > 0
       );
     });
-
-    console.log("allItemsComplete", allItemsComplete);
-    // console.log("updatedItems", updatedItems);
-
     setFormData({
       ...formData,
       items: updatedItems,
@@ -219,9 +215,6 @@ export default function PurchaseOrderModal({
 
     // Remove __typename from the main object if it exists
     const { __typename, ...cleanData } = formattedData;
-
-    console.log("formattedData", cleanData);
-
     setAddingItem(false);
     handleSave(cleanData);
   };
@@ -478,7 +471,6 @@ export default function PurchaseOrderModal({
                         Number(item.quantity)
                     }
                     onFocus={() => {
-                      console.log(item.actualQuantityReceived);
                     }}
                     sx={{
                       width: "8vw",
