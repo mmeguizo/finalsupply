@@ -1,9 +1,12 @@
 import { GridColDef } from '@mui/x-data-grid';
 import { formatCategory } from '../../utils/generalUtils';
 import { Button } from "@mui/material";
-
+//@ts-ignore
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
+import PrintIcon from '@mui/icons-material/Print';
 // Define columns for purchase orders
-export const createPoColumns = (handleOpenEditModal : (po : any) => void) : GridColDef[] => [
+export const createPoColumns = (handleOpenEditModal : (po : any) => void, handleOpenHistoryModal : (po : any) => void, handleOpenPrintModal : (po : any) => void) : GridColDef[] => [
     {
         field: "poNumber",
         headerName: "Purchase Order #",
@@ -49,7 +52,7 @@ export const createPoColumns = (handleOpenEditModal : (po : any) => void) : Grid
     },
     {
         field: "update",
-        headerName: "UPDATE",
+        headerName: "Update",
         width: 100,
         renderCell: (params) => (
             <Button
@@ -60,29 +63,45 @@ export const createPoColumns = (handleOpenEditModal : (po : any) => void) : Grid
                     handleOpenEditModal(params.row);
                 }}
             >
-                UPDATE
+              <EditNoteIcon fontSize='large' />
             </Button>
         ),
     },
-
-    /*
     {
-      field: "delete",
-      headerName: "Delete",
-      width: 100,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent row selection
-            handleOpenEditModal(params.row);
-          }}
-        >
-          Edit
-        </Button>
-      ),
+        field: "viewHistory",
+        headerName: "History",
+        width: 100,
+        renderCell: (params) => (
+            <Button
+            sx={{whiteSpace: 'normal'}}
+                size="small"
+                onClick={(e: any) => {
+                    e.stopPropagation(); // Prevent row selection
+                    // @ts-ignore
+                    handleOpenHistoryModal(params.row);
+                }}
+            >
+               <ManageHistoryIcon fontSize='large'/>    
+            </Button>
+        ),
     },
-    */
+    {
+        field: "print",
+        headerName: "Print",
+        width: 100,
+        renderCell: (params) => (
+            <Button
+                size="small"
+                onClick={(e: any) => {
+                    e.stopPropagation(); // Prevent row selection
+                    // @ts-ignore
+                    handleOpenPrintModal(params.row);
+                }}
+            >
+               <PrintIcon fontSize='large' />    
+            </Button>
+        ),
+    }
 ];
 
 // Define columns for items
