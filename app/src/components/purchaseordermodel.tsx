@@ -13,14 +13,19 @@ import {
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+// @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
+// @ts-ignore
 import AddIcon from "@mui/icons-material/Add";
-import Grid from "@mui/material/Grid2";
+// @ts-ignore
+// import Grid from "@mui/material/Grid2";
+import Grid from '@mui/material/Grid';
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import { Unstable_NumberInput as NumberInput } from "@mui/base/Unstable_NumberInput";
+// @ts-ignore
 import NumberInputBasic from "./numberInput";
 import dayjs from "dayjs";
 import { Dayjs } from "dayjs";
@@ -40,7 +45,7 @@ export default function PurchaseOrderModal({
   handleSave,
   isSubmitting,
 }: PurchaseOrderModalProps) {
-  console.log({ PurchaseOrderModal: purchaseOrder });
+ 
 
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
@@ -139,12 +144,10 @@ export default function PurchaseOrderModal({
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(name, value);
     setFormData({
       ...formData,
       [name]: value,
     });
-    console.log(formData);
   };
 
   // Handle date changes
@@ -176,47 +179,9 @@ export default function PurchaseOrderModal({
     });
   };
 
-  // Update item
-  // const updateItem = (index: number, field: string, value: any) => {
-  //   console.log({ index, field, value });
-  //   const updatedItems = [...formData.items];
-  //   updatedItems[index] = {
-  //     ...updatedItems[index],
-  //     [field]: value,
-  //   };
 
-  //   // Auto-calculate amount if quantity or unitCost changes
-  //   if (field === "quantity" || field === "unitCost") {
-  //     formData.amount,
-  //       (updatedItems[index].amount =
-  //         Number(updatedItems[index].quantity) *
-  //         Number(updatedItems[index].unitCost));
-  //   }
-
-  //   // Check if quantities match to update status
-  //   const allItemsComplete = updatedItems.every((item) => {
-  //     const quantity = Number(item.quantity);
-  //     const currentInput = Number(item.currentInput);
-  //     const actualReceived = Number(item.actualQuantityReceived);
-
-  //     if (currentInput > 0) {
-  //       return quantity === actualReceived + currentInput && quantity > 0;
-  //     } else {
-  //       return quantity === actualReceived && quantity > 0;
-  //     }
-  //   });
-
-  //   console.log("allItemsComplete", allItemsComplete);
-  //   // console.log("updatedItems", updatedItems);
-  //   setFormData({
-  //     ...formData,
-  //     items: updatedItems,
-  //     status: allItemsComplete ? "completed" : "pending",
-  //   });
-  // };
 
   const updateItem = (index: number, field: string, value: any) => {
-    console.log({ index, field, value });
     const updatedItems = [...formData.items];
     const item = updatedItems[index];
 
@@ -248,7 +213,6 @@ export default function PurchaseOrderModal({
       return quantity === actualReceived + currentInput && quantity > 0;
     });
 
-    console.log("allItemsComplete", allItemsComplete);
     setFormData({
       ...formData,
       items: updatedItems,
@@ -266,7 +230,6 @@ export default function PurchaseOrderModal({
       return cleanItem;
     });
 
-    console.log("formattedData", formData);
 
     // Format dates for GraphQL
     const formattedData = {
@@ -281,12 +244,10 @@ export default function PurchaseOrderModal({
       deliveryTerms: formData.deliveryTerms || "none",
       poNumber: parseInt(formData.poNumber),
     };
-    console.log("formattedData", formattedData);
     // Remove __typename, status from the main object if it exists
 
-    const { __typename, status, ...cleanData } = formattedData;
+    const { status, ...cleanData } = formattedData;
 
-    console.log("formattedData", cleanData);
 
     setAddingItem(false);
     handleSave(cleanData);
@@ -473,66 +434,53 @@ export default function PurchaseOrderModal({
             )}
 
             {/* Items table/form */}
-            {formData.items.map((item, index) => (
+            {formData.items.map((item: any, index: any) => (
               <Grid
                 container
-                spacing={2}
+                spacing={1}
                 key={index}
                 sx={{
-                  mb: 2,
-                  p: 1,
+                  mb: 1,
+                  p: 0.5,
                   alignItems: "center",
-                  "&:hover": {
-                    backgroundColor: "action.hover",
-                  },
-                  borderBottom: 5,
+                  "&:hover": { backgroundColor: "action.hover" },
+                  borderBottom: 1,
                   borderColor: "divider",
                 }}
               >
-                <Grid item xs={2}>
+                <Grid item xs={1.5}>
                   <Select
                     fullWidth
                     size="small"
                     value={item.category}
-                    onChange={(e) =>
-                      updateItem(index, "category", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, "category", e.target.value)}
                     label="Category"
                     disabled={isFieldDisabled(item.category)}
-                    sx={{ "& .MuiSelect-select": { py: 1 } }}
                   >
-                    <MenuItem value={"property acknowledgement reciept"}>
-                      PAR
-                    </MenuItem>
+                    <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
                     <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
                     <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
                   </Select>
                 </Grid>
 
-                <Grid item xs={1}>
+                <Grid item xs={1.5}>
                   <TextField
                     fullWidth
                     size="small"
                     placeholder="Item"
-                    label="Item"
                     value={item.itemName}
-                    onChange={(e) =>
-                      updateItem(index, "itemName", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, "itemName", e.target.value)}
                     disabled={isFieldDisabled(item.itemName)}
                   />
                 </Grid>
 
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                   <TextField
                     fullWidth
                     size="small"
-                    label="Description"
                     placeholder="Description"
                     value={item.description}
-                    onChange={(e) =>
-                      updateItem(index, "description", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, "description", e.target.value)}
                     disabled={isFieldDisabled(item.description)}
                   />
                 </Grid>
@@ -542,7 +490,6 @@ export default function PurchaseOrderModal({
                     fullWidth
                     size="small"
                     placeholder="Unit"
-                    label="Unit"
                     value={item.unit}
                     onChange={(e) => updateItem(index, "unit", e.target.value)}
                     disabled={isFieldDisabled(item.unit)}
@@ -554,75 +501,100 @@ export default function PurchaseOrderModal({
                     fullWidth
                     size="small"
                     type="number"
-                    label="Quantity"
-                    placeholder="Quantity"
-                    inputProps={{
-                      min: 0,
-                      style: { textAlign: "right" },
-                    }}
+                    placeholder="Qty"
+                    inputProps={{ min: 0, style: { textAlign: "right" } }}
                     value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, "quantity", Number(e.target.value))
-                    }
+                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
                     disabled={isFieldDisabled(item.quantity)}
                   />
                 </Grid>
-                <Grid item xs={1}>
+
+                <Grid item xs={1.5}>
                   <TextField
                     fullWidth
                     size="small"
                     type="number"
-                    label={`left: ${
-                      Number(item.quantity) -
-                      Number(item.actualQuantityReceived)
-                    }`}
-                    placeholder={`${
-                      Number(item.quantity) -
-                      Number(item.actualQuantityReceived)
-                    }`}
+                    placeholder="Received"
                     inputProps={{
                       min: 0,
-                      max:
-                        Number(item.quantity) -
-                        Number(item.actualQuantityReceived),
+                      max: Number(item.quantity) - Number(item.actualQuantityReceived)
                     }}
                     value={item.currentInput || ""}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-                      const remaining =
-                        Number(item.quantity) -
-                        Number(item.actualQuantityReceived);
-
-                      // Ensure the input value does not exceed the remaining quantity
+                      const remaining = Number(item.quantity) - Number(item.actualQuantityReceived);
                       if (value >= 0 && value <= remaining) {
                         updateItem(index, "currentInput", value);
                       } else if (value > remaining) {
-                        updateItem(index, "currentInput", remaining); // Cap the value at the remaining quantity
+                        updateItem(index, "currentInput", remaining);
                       }
                     }}
-                    disabled={
-                      Number(item.quantity) ===
-                        Number(item.actualQuantityReceived) || !item.category
-                    }
+                    disabled={Number(item.quantity) === Number(item.actualQuantityReceived) || !item.category}
                     sx={{
-                      width: "8vw",
-                      "& .MuiInputBase-root": {
-                        height: "40px",
-                      },
-                      "& input": {
-                        textAlign: "right",
-                        height: "100%",
-                      },
-                      backgroundColor:
-                        Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
-                          ? "action.disabledBackground"
-                          : "transparent",
+                      "& input": { textAlign: "right" },
+                      backgroundColor: Number(item.actualQuantityReceived) === Number(item.quantity) 
+                        ? "action.disabledBackground" 
+                        : "transparent"
                     }}
                   />
                 </Grid>
 
-                {/* 
+                <Grid item xs={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    placeholder="Unit Cost"
+                    value={item.unitCost}
+                    onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
+                    disabled={isFieldDisabled(item.unitCost)}
+                    InputProps={{
+                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
+                    }}
+                    sx={{ "& input": { textAlign: "right" } }}
+                  />
+                </Grid>
+
+                <Grid item xs={2}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    placeholder="Amount"
+                    value={item.amount}
+                    disabled={true}
+                    InputProps={{
+                      readOnly: true,
+                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
+                    }}
+                    sx={{ "& input": { textAlign: "right" } }}
+                  />
+                </Grid>
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <LoadingButton
+          onClick={onSubmit}
+          loading={isSubmitting}
+          variant="contained"
+          loadingPosition="start"
+          startIcon={<SaveIcon />}
+        >
+          Submit
+        </LoadingButton>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+
+ {/* 
                 <Grid item xs={1}>
                   <TextField
                     fullWidth
@@ -679,72 +651,47 @@ export default function PurchaseOrderModal({
                   />
                 </Grid> */}
 
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    label="Unit Cost"
-                    placeholder="Unit Cost"
-                    value={item.unitCost}
-                    onChange={(e) =>
-                      updateItem(index, "unitCost", Number(e.target.value))
-                    }
-                    disabled={isFieldDisabled(item.unitCost)}
-                    InputProps={{
-                      startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
-                      ),
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    label="Amount"
-                    placeholder="Amount"
-                    value={item.amount}
-                    disabled={true}
-                    InputProps={{
-                      readOnly: true,
-                      startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
-                      ),
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-              </Grid>
-            ))}
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} disabled={isSubmitting}>
-          Cancel
-        </Button>
-        <LoadingButton
-          onClick={onSubmit}
-          loading={isSubmitting}
-          variant="contained"
-          loadingPosition="start"
-          startIcon={<SaveIcon />}
-        >
-          Submit
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
-  );
-}
 /*
+
+
+  // Update item
+  // const updateItem = (index: number, field: string, value: any) => {
+  //   console.log({ index, field, value });
+  //   const updatedItems = [...formData.items];
+  //   updatedItems[index] = {
+  //     ...updatedItems[index],
+  //     [field]: value,
+  //   };
+
+  //   // Auto-calculate amount if quantity or unitCost changes
+  //   if (field === "quantity" || field === "unitCost") {
+  //     formData.amount,
+  //       (updatedItems[index].amount =
+  //         Number(updatedItems[index].quantity) *
+  //         Number(updatedItems[index].unitCost));
+  //   }
+
+  //   // Check if quantities match to update status
+  //   const allItemsComplete = updatedItems.every((item) => {
+  //     const quantity = Number(item.quantity);
+  //     const currentInput = Number(item.currentInput);
+  //     const actualReceived = Number(item.actualQuantityReceived);
+
+  //     if (currentInput > 0) {
+  //       return quantity === actualReceived + currentInput && quantity > 0;
+  //     } else {
+  //       return quantity === actualReceived && quantity > 0;
+  //     }
+  //   });
+
+  //   console.log("allItemsComplete", allItemsComplete);
+  //   // console.log("updatedItems", updatedItems);
+  //   setFormData({
+  //     ...formData,
+  //     items: updatedItems,
+  //     status: allItemsComplete ? "completed" : "pending",
+  //   });
+  // };
 
   // const handleCategoryChange = (e: SelectChangeEvent) => {
   //   const { value } = e.target;
