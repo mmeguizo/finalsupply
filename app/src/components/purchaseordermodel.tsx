@@ -82,7 +82,7 @@ export default function PurchaseOrderModal({
   // For example:
   const isFieldDisabled = (existingValue: any) => {
     // If editing (purchaseOrder exists) and value exists and not adding new item
-    if (purchaseOrder && existingValue && !addingItem) {
+    if (purchaseOrder && purchaseOrder.items.length !== 0 && existingValue && !addingItem) {
       return true;
     }
     // If not editing (new PO) or adding new item
@@ -225,7 +225,10 @@ export default function PurchaseOrderModal({
     // Clean items - remove __typename and handle _id appropriately
     const cleanedItems = formData.items.map((item: any) => {
       delete item.recievelimit;
+      // delete this since we will increment this on the backend no need an input here
       delete item.actualQuantityReceived;
+      //remove later for test purposes
+      item.itemName = "";
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
@@ -235,13 +238,11 @@ export default function PurchaseOrderModal({
     const formattedData = {
       ...formData,
       items: cleanedItems,
-      // dateofdelivery: formData.dateofdelivery
-      //   ? formData.dateofdelivery.getTime().toString()
-      //   : null,
-      // dateOfPayment: formData.dateOfPayment
-      //   ? formData.dateOfPayment.getTime().toString()
-      //   : null,
-      deliveryTerms: formData.deliveryTerms || "none",
+      deliveryTerms: formData.deliveryTerms || "",
+      modeOfProcurement: formData.modeOfProcurement || "",
+      paymentTerms: formData.paymentTerms || "",
+      address : formData.address || "",
+      placeOfDelivery: formData.placeOfDelivery || "",
       poNumber: parseInt(formData.poNumber),
     };
     // Remove __typename, status from the main object if it exists
@@ -250,6 +251,7 @@ export default function PurchaseOrderModal({
 
 
     setAddingItem(false);
+    // console.log(cleanData)
     handleSave(cleanData);
   };
 
@@ -295,7 +297,7 @@ export default function PurchaseOrderModal({
               disabled={purchaseOrder ? true : false}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          {/* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Mode of Procurement"
@@ -305,8 +307,8 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
+          </Grid> */}
+          {/* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Delivery Terms"
@@ -315,8 +317,8 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
+          </Grid> */}
+          {/* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Payment Terms"
@@ -326,8 +328,8 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid>
-          <Grid item xs={12} md={12}>
+          </Grid> */}
+          {/* <Grid item xs={12} md={12}>
             <TextField
               fullWidth
               label="Address"
@@ -336,11 +338,11 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid>
+          </Grid> */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Place of Delivery"
+              label="Office / Dept"
               name="placeOfDelivery"
               value={formData.placeOfDelivery}
               onChange={handleChange}
@@ -406,24 +408,24 @@ export default function PurchaseOrderModal({
                   borderRadius: 1,
                 }}
               >
-                <Grid item xs={2}>
-                  <Typography variant="subtitle2">Category</Typography>
-                </Grid>
                 <Grid item xs={1}>
-                  <Typography variant="subtitle2">Item</Typography>
+                  <Typography variant="subtitle2">Category</Typography>
                 </Grid>
                 <Grid item xs={3}>
                   <Typography variant="subtitle2">Description</Typography>
                 </Grid>
-                <Grid item xs={1}>
-                  <Typography variant="subtitle2">Unit</Typography>
+                <Grid item xs={2}>
+                  <Typography variant="subtitle2">Received</Typography>
                 </Grid>
-                <Grid item xs={1}>
+                <Grid item xs={1.5}>
                   <Typography variant="subtitle2">Qty</Typography>
                 </Grid>
                 <Grid item xs={1}>
-                  <Typography variant="subtitle2">Received</Typography>
+                  <Typography variant="subtitle2">Unit</Typography>
                 </Grid>
+                {/* <Grid item xs={1}>
+                  <Typography variant="subtitle2">Item</Typography>
+                </Grid> */}
                 <Grid item xs={1.5}>
                   <Typography variant="subtitle2">Unit Cost</Typography>
                 </Grid>
@@ -448,7 +450,7 @@ export default function PurchaseOrderModal({
                   borderColor: "divider",
                 }}
               >
-                <Grid item xs={1.5}>
+                <Grid item xs={1}>
                   <Select
                     fullWidth
                     size="small"
@@ -463,18 +465,7 @@ export default function PurchaseOrderModal({
                   </Select>
                 </Grid>
 
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Item"
-                    value={item.itemName}
-                    onChange={(e) => updateItem(index, "itemName", e.target.value)}
-                    disabled={isFieldDisabled(item.itemName)}
-                  />
-                </Grid>
-
-                <Grid item xs={2}>
+                <Grid item xs={3}>
                   <TextField
                     fullWidth
                     size="small"
@@ -485,36 +476,20 @@ export default function PurchaseOrderModal({
                   />
                 </Grid>
 
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Unit"
-                    value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    disabled={isFieldDisabled(item.unit)}
-                  />
-                </Grid>
 
-                <Grid item xs={1}>
+                <Grid item xs={2}>
                   <TextField
                     fullWidth
                     size="small"
+                      label={`left: ${
+                      (Number(item.quantity) -
+                      Number(item.actualQuantityReceived)) || 0
+                    }`}
                     type="number"
-                    placeholder="Qty"
-                    inputProps={{ min: 0, style: { textAlign: "right" } }}
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                    disabled={isFieldDisabled(item.quantity)}
-                  />
-                </Grid>
-
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Received"
+                    placeholder={`${
+                      Number(item.quantity) -
+                      Number(item.actualQuantityReceived)
+                    }`}
                     inputProps={{
                       min: 0,
                       max: Number(item.quantity) - Number(item.actualQuantityReceived)
@@ -538,6 +513,40 @@ export default function PurchaseOrderModal({
                     }}
                   />
                 </Grid>
+                <Grid item xs={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    placeholder="Qty"
+                    inputProps={{ min: 0, style: { textAlign: "right" } }}
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
+                    disabled={isFieldDisabled(item.quantity)}
+                  />
+                </Grid>
+
+                <Grid item xs={1}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Unit"
+                    value={item.unit}
+                    onChange={(e) => updateItem(index, "unit", e.target.value)}
+                    disabled={isFieldDisabled(item.unit)}
+                  />
+                </Grid>
+
+                {/* <Grid item xs={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Item"
+                    value={item.itemName}
+                    onChange={(e) => updateItem(index, "itemName", e.target.value)}
+                    disabled={isFieldDisabled(item.itemName)}
+                  />
+                </Grid> */}
 
                 <Grid item xs={1.5}>
                   <TextField
@@ -555,7 +564,7 @@ export default function PurchaseOrderModal({
                   />
                 </Grid>
 
-                <Grid item xs={2}>
+                <Grid item xs={1.5}>
                   <TextField
                     fullWidth
                     size="small"
