@@ -38,42 +38,12 @@ type Item {
     actualQuantityReceived: Int
 }
 
-type Query {
-    purchaseOrders: [PurchaseOrder!]
-    purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
-    purchaseOrderItems(purchaseOrderId: ID!): [Item!]
-    purchaseOrderItems: [Item!]
-    # allPurchaseOrderItems: [Item!]
-    allPurchaseOrderItems: [ItemWithPurchaseOrder!]
-    getAllTotalPurchaseOrderAmount: Float
-    getTotalPurchaseOrderItems: Int
-    getTotalPurchaseOrders: Int
-    getPurchaseOrderForBarCharts : [PurchaseOrder]
-}
+
 
 type PurchaseOrderBarChartDataType {
     data : JSON
 }
-# input later
-input PurchaseOrderBarChartData {
-    date: String
-    totalAmount: Float
-}
 
-input ItemInput {
-    id: ID
-    itemName: String
-    purchaseOrderId: String
-    description: String
-    unit: String
-    quantity: Int
-    unitCost: Float
-    amount: Float
-    category: String
-    isDeleted: Boolean
-    actualQuantityReceived: Int
-    currentInput: Int
-}
 type ItemWithPurchaseOrder {
     id: ID
     itemName: String
@@ -94,14 +64,27 @@ type PurchaseOrderType {
     poNumber: Int
 }
 
-type Mutation {
-    addPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder
-    updatePurchaseOrder(input: UpdatePurchaseOrderInput!): PurchaseOrder
-    deletePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
-    reactivatePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
-    addPurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
-    updatePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
-    deletePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+#INPUTS
+
+# input later
+input PurchaseOrderBarChartData {
+    date: String
+    totalAmount: Float
+}
+
+input ItemInput {
+    id: ID
+    itemName: String
+    purchaseOrderId: String
+    description: String
+    unit: String
+    quantity: Int
+    unitCost: Float
+    amount: Float
+    category: String
+    isDeleted: Boolean
+    actualQuantityReceived: Int
+    currentInput: Int
 }
 
 input UpdatePurchaseOrderInput {
@@ -140,6 +123,38 @@ input PurchaseOrderInput {
     status: String
     invoice: String
 }
+
+
+
+type Query {
+    purchaseOrders: [PurchaseOrder!]
+    purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    purchaseOrderItems(purchaseOrderId: ID!): [Item!]
+    purchaseOrderItems: [Item!]
+    # allPurchaseOrderItems: [Item!]
+    allPurchaseOrderItems: [ItemWithPurchaseOrder!]
+    getAllTotalPurchaseOrderAmount: Float
+    getTotalPurchaseOrderItems: Int
+    getTotalPurchaseOrders: Int
+    getPurchaseOrderForBarCharts : [PurchaseOrder]
+    getAllCategory : [Item]
+   
+}
+
+type Mutation {
+    addPurchaseOrder(input: PurchaseOrderInput!): PurchaseOrder
+    updatePurchaseOrder(input: UpdatePurchaseOrderInput!): PurchaseOrder
+    deletePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    reactivatePurchaseOrder(purchaseOrderId: ID!): PurchaseOrder
+    addPurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+    updatePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+    deletePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+}
+
+
 `;
+
+
+
 
 export default purchaseorderTypeDef;

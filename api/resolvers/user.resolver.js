@@ -113,6 +113,20 @@ const userResolver = {
       return await User.findAll();
     },
 
+    countAllUsers: async (_, __, context) => {
+      try {
+        // Check if the user is authenticated
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        // Count all users
+        return await User.count();
+      } catch (error) {
+        console.error("Error fetching all users, error: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+
     authUser: async (_, __, context) => {
       try {
         const user = await context.getUser();

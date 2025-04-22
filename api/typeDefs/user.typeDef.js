@@ -16,6 +16,7 @@ type Query {
     users: [User!]
     authUser: User
     user(userId: ID!): User
+    countAllUsers : Int
 }
 
 type Mutation {

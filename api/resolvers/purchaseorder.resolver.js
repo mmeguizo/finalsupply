@@ -118,7 +118,6 @@ const purchaseorderResolver = {
           order: [["createdAt", "DESC"]],
           include: [PurchaseOrderItems],
         });
-        console.log(totalItemAmount);
       
         return totalItemAmount; // Return the total amoun
 
@@ -126,6 +125,22 @@ const purchaseorderResolver = {
         console.error("Error fetching purchase order items: ", error);
         throw new Error(error.message || "Internal server error");
       }
+    },
+    getAllCategory : async (_ , __, context) => {
+        try {
+
+          if (!context.isAuthenticated()) {
+            throw new Error("Unauthorized");
+          }
+
+          let allCategory = await PurchaseOrderItems.findAll({
+            where : { isDeleted : false},
+          })
+          return allCategory
+        } catch (error) {
+          console.error("Error fetching purchase order items: ", error);
+          throw new Error(error.message || "Internal server error");
+        }
     }
     // purchaseOrders: async (_, { purchaseorderId }, context) => {
     //   try {
@@ -148,41 +163,10 @@ const purchaseorderResolver = {
     // },
   },
 
-  // Field resolvers to connect purchase orders with their items
-  PurchaseOrder: {
-    items: async (parent) => {
-      console.log(`Fetching items for PO: ${parent.id}`);
-      try {
-        return await PurchaseOrderItems.findAll({
-          where: { purchaseOrderId: parent.id, isDeleted: false },
-        });
-      } catch (error) {
-        console.error("Error fetching purchase order items:", error);
-        throw new Error("Failed to load purchase order items");
-      }
-    },
-    amount: async (parent) => {
-      console.log(`Calculating amount for PO: ${parent.id}`);
-      try {
-        const items = await PurchaseOrderItems.findAll({
-          where: { purchaseOrderId: parent.id, isDeleted: false },
-        });
 
-        const total = items.reduce((sum, item) => {
-          return sum + (Number(item.amount) || 0);
-        }, 0);
-
-        return total;
-      } catch (error) {
-        console.error(`Error calculating amount for PO: ${parent.id}`, error);
-        return parent.amount || 0;
-      }
-    },
-  },
 
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
-      console.log(input);
       try {
         const { items, ...poRestData } = input;
 
@@ -247,7 +231,6 @@ const purchaseorderResolver = {
           where: { id: id },
           // returning: true, // Fetch the updated purchase order
         });
-        console.log(updatedPurchaseorder);
 
         // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
@@ -255,7 +238,6 @@ const purchaseorderResolver = {
             if (item.id) {
               // Increment actualQuantityReceived by currentInput
               if (item.currentInput && item.currentInput > 0) {
-                console.log({ id, item });
                 await PurchaseOrderItems.increment(
                   { actualQuantityReceived: item.currentInput }, // Increment field
                   { where: { id: item.id, purchaseOrderId: id } } // Condition to match the item
@@ -318,6 +300,42 @@ const purchaseorderResolver = {
       }
     },
   },
+
+
+    
+  // Custom 
+  // Field resolvers to connect purchase orders with their items
+  PurchaseOrder: {
+    items: async (parent) => {
+      try {
+        return await PurchaseOrderItems.findAll({
+          where: { purchaseOrderId: parent.id, isDeleted: false },
+        });
+      } catch (error) {
+        console.error("Error fetching purchase order items:", error);
+        throw new Error("Failed to load purchase order items");
+      }
+    },
+    amount: async (parent) => {
+      try {
+        const items = await PurchaseOrderItems.findAll({
+          where: { purchaseOrderId: parent.id, isDeleted: false },
+        });
+
+        const total = items.reduce((sum, item) => {
+          return sum + (Number(item.amount) || 0);
+        }, 0);
+
+        return total;
+      } catch (error) {
+        console.error(`Error calculating amount for PO: ${parent.id}`, error);
+        return parent.amount || 0;
+      }
+    },
+  },
+
+
+
   //  updatePurchaseOrder: async (_, { input }, context) => {
 };
 

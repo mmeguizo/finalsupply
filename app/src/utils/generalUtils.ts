@@ -30,12 +30,10 @@ export const formatBarChartData = (data: any[]) => {
   const currentYear = new Date().getFullYear();
   
   return data?.reduce((acc, item) => {
-    console.log(acc,item)
     const date = new Date(parseInt(item.createdAt));
     if (date.getFullYear() === currentYear) {
-      console.log({getFullYear : acc})
       const month = date.toLocaleDateString('en-US', { month: 'short' });
-      const existingMonth = acc.find(x => x.month === month);
+      const existingMonth = acc.find((x: any) => x.month === month);
       
       if (existingMonth) {
         existingMonth.amount += item.amount;
@@ -43,10 +41,9 @@ export const formatBarChartData = (data: any[]) => {
         acc.push({ month, amount: item.amount });
       }
     }
-    console.log(acc)
     return acc;
   }, [])
-  .sort((a, b) => {
+  .sort((a : any, b : any) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months.indexOf(a.month) - months.indexOf(b.month);
   }) || [];

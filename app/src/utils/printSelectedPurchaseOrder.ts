@@ -1,10 +1,5 @@
 export const printSelectedPurchaseOrdersWithItems = (purchaseOrders) => {
   let data: any;
-
-  console.log(typeof purchaseOrders, "printSelectedPurchaseOrdersWithItems");
-  console.log(purchaseOrders, "printSelectedPurchaseOrdersWithItems");
-  console.log(purchaseOrders.length, "printSelectedPurchaseOrdersWithItems");
-
   if (typeof purchaseOrders === "object" && !purchaseOrders.purchaseOrders) {
     // put the object into an array
     data = [purchaseOrders];
@@ -13,9 +8,6 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders) => {
     data = purchaseOrders.purchaseOrders;
   }
 
-  console.log(typeof purchaseOrders, "printSelectedPurchaseOrdersWithItems");
-  console.log(purchaseOrders, "printSelectedPurchaseOrdersWithItems");
-  console.log(purchaseOrders.length, "printSelectedPurchaseOrdersWithItems");
 
   const printWindow = window.open("", "_blank");
   if (!printWindow) {

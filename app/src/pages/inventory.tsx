@@ -15,6 +15,7 @@ import {
 import { GridColDef, DataGrid, GridRowParams, GridToolbar } from "@mui/x-data-grid";
 import { useDemoData } from "@mui/x-data-grid-generator";
 import { useQuery } from "@apollo/client";
+// @ts-ignore
 import { GET_ALL_PURCHASEORDER_ITEMS  } from "../graphql/queries/purchaseorder.query.js";
 import { currencyFormat, formatCategory } from "../utils/generalUtils";
 export default function InventoryPage() {
@@ -101,9 +102,8 @@ export default function InventoryPage() {
         <Box sx={{ width: "100%" }}>
           <Stack direction="row" spacing={1} sx={{ mb: 1 }}></Stack>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {data?.purchaseOrders?.length !== 0 && (
+            {data?.allPurchaseOrderItems?.length !== 0 && (
               <DataGrid
-                {...allPurchaseOrderItems}
                 rows={poRows}
                 columns={itemColumns}
                 loading={loading}
