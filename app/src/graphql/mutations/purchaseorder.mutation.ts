@@ -11,6 +11,7 @@ export const ADD_PURCHASEORDER = gql`
       dateOfPayment
       category
       invoice
+      completed_status_date
       items {
         id
         description
@@ -42,6 +43,7 @@ export const UPDATE_PURCHASEORDER = gql`
       paymentTerms
       category
       status
+      completed_status_date
       items {
         id
         description

@@ -52,6 +52,10 @@ const PurchaseOrder = sequelize.define(
       allowNull: true,
       defaultValue: "pending", // Default status as 'pending'
     },
+    completed_status_date : {
+      type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
+      allowNull: true,
+    },
     isDeleted: {
       type: DataTypes.TINYINT(1),
       allowNull: true,

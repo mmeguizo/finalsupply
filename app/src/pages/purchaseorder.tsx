@@ -48,7 +48,11 @@ import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
 import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
 import { createPoColumns, itemColumns } from './purchaseOrderFunctions/purchaseorder_column';
 import { handleSavePurchaseOrder, } from './purchaseOrderFunctions/purchaseOrderOperations';
-import PurchaseOrderPrintModal from "../components/purchaseorderprint";
+import PurchaseOrderPrintModal from "../components/printReportModal";
+import PrintReportDialog from "../components/printReportModal";
+
+
+
 export default function PurchaseOrder() {
   //for submit loading
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -62,7 +66,6 @@ export default function PurchaseOrder() {
   const [historyPO, setHistoryPO] = React.useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [deletingPO, setDeletingPO] = React.useState<any>(null);
-
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
   const [notificationMessage, setNotificationMessage] = React.useState("");
@@ -72,12 +75,13 @@ export default function PurchaseOrder() {
 
 
   const client = useApolloClient(); // ADD THIS LINE!
-
   const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
       refetchQueries: [{ query: GET_PURCHASEORDERS  },
       {query : GET_ALL_PURCHASEORDER_ITEMS}],
     onCompleted: () => {
       client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
+      client.cache.evict({ fieldName: "getAllCategory" });
       client.cache.gc();
     },
   });
@@ -89,9 +93,13 @@ export default function PurchaseOrder() {
     refetchQueries: [{ query: GET_PURCHASEORDERS }],
   });
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+     refetchQueries: [{ query: GET_PURCHASEORDERS  },
+      {query : GET_ALL_PURCHASEORDER_ITEMS}],
     onCompleted: () => {
       console.log(client.cache)
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
       client.cache.evict({ fieldName: "getAllCategory" });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
       client.cache.gc();
     },
   });
@@ -326,10 +334,11 @@ export default function PurchaseOrder() {
         handleClose={handleCloseHistoryModal}
         purchaseOrder={historyPO}
       />
-      <PurchaseOrderPrintModal
+      <PrintReportDialog
         open={openPrintModal}
         handleClose={handleClosePrintModal}
-        purchaseOrder={printPO}
+        reportData={printPO}
+        reportType="inspection"
       />
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}

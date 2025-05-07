@@ -48,3 +48,8 @@ export const formatBarChartData = (data: any[]) => {
     return months.indexOf(a.month) - months.indexOf(b.month);
   }) || [];
 };
+
+// add uppercase to first letter of each word
+export const capitalizeFirstLetter = (str: string | undefined) => {
+  return str?.replace(/\b\w/g, (match) => match.toUpperCase());
+};
