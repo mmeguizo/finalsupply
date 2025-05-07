@@ -203,20 +203,23 @@ export default function PurchaseOrderModal({
         Number(updatedItems[index].quantity) *
         Number(updatedItems[index].unitCost);
     }
+    console.log(updatedItems);
 
     // Check if quantities match to update status
-    const allItemsComplete = updatedItems.every((item) => {
-      const quantity = Number(item.quantity);
-      const currentInput = Number(item.currentInput);
-      const actualReceived = Number(item.actualQuantityReceived);
+    // const allItemsComplete = updatedItems.every((item) => {
+    //   const quantity = Number(item.quantity);
+    //   const currentInput = Number(item.currentInput);
+    //   const actualReceived = Number(item.actualQuantityReceived);
 
-      return quantity === actualReceived + currentInput && quantity > 0;
-    });
+    //   return (quantity === actualReceived + currentInput) && quantity > 0;
+    // });
+
+    // console.log({allItemsComplete})
 
     setFormData({
       ...formData,
       items: updatedItems,
-      status: allItemsComplete ? "completed" : "pending",
+      // status: allItemsComplete ? "completed" : "pending",
     });
   };
 
@@ -251,7 +254,7 @@ export default function PurchaseOrderModal({
 
 
     setAddingItem(false);
-    // console.log(cleanData)
+    console.log(cleanData)
     handleSave(cleanData);
   };
 

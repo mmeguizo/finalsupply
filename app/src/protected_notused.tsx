@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { useSession } from "./SessionContext";
-import { ROUTE_ROLES } from "./App"; // Import ROUTE_ROLES as a named export
+import { useSession } from "./SessionContext_notused";
+import { ROUTE_ROLES } from "./config/role"; // Import ROUTE_ROLES as a named export
 
 interface ProtectedRouteProps {
   routePath: string;

@@ -21,6 +21,7 @@ type PurchaseOrder {
     invoice: String
     isDeleted: Boolean
     createdAt: String
+    completed_status_date : String
 }
 
 type Item {
@@ -62,7 +63,38 @@ type ItemWithPurchaseOrder {
 
 type PurchaseOrderType {
     poNumber: Int
+    supplier: String
+    address: String
+    modeOfProcurement: String
+    email: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
+    amount: Float
+    category: String
+    status: String
+    invoice: String
 }
+
+type PurchaseOrderItemHistory {
+  id: ID!
+  purchaseOrderItemId: Int!
+  previousQuantity: Int!
+  newQuantity: Int!
+  previousActualQuantityReceived: Int!
+  newActualQuantityReceived: Int!
+  previousAmount: Float!
+  newAmount: Float!
+  changeType: String!
+  changedBy: String!
+  changeReason: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
 
 #INPUTS
 
@@ -104,6 +136,8 @@ input UpdatePurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    completed_status_date : String
+    markingComplete : Boolean
 }
 
 input PurchaseOrderInput {
@@ -122,6 +156,7 @@ input PurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    completed_status_date : String
 }
 
 
@@ -138,6 +173,7 @@ type Query {
     getTotalPurchaseOrders: Int
     getPurchaseOrderForBarCharts : [PurchaseOrder]
     getAllCategory : [Item]
+    purchaseOrderHistory(purchaseOrderId: ID!): [PurchaseOrderItemHistory!]
    
 }
 

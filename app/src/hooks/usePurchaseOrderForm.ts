@@ -113,6 +113,8 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
         Number(updatedItems[index].unitCost);
     }
 
+    console.log(updatedItems);
+
     const allItemsComplete = updatedItems.every((item) => {
       return (
         Number(item.quantity) ===
@@ -151,7 +153,9 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
     };
 
     const { __typename, ...cleanData } = formattedData;
+    console.log({cleanData});
 
+    setHasSubmitted(true);
     setAddingItem(false);
     handleSave(cleanData);
   };
