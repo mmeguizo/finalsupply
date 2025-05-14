@@ -27,6 +27,8 @@ const GET_PURCHASEORDERS = gql`
         category
         isDeleted
         actualQuantityReceived
+        tag
+        iarId
       }
       amount
       invoice
@@ -61,6 +63,7 @@ const GET_PURCHASEORDER = gql`
         category
         isDeleted
         actualQuantityReceived
+        tag
       }
       amount
       invoice
@@ -80,6 +83,7 @@ const GET_PURCHASEORDER_ITEMS = gql`
       amount
       isDeleted
       actualQuantityReceived
+      tag
     }
   }
 `;
@@ -98,6 +102,42 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
       actualQuantityReceived
       category
       isDeleted
+      tag
+      iarId
+      PurchaseOrder {
+        poNumber
+        supplier
+        address
+        poNumber
+        telephone
+        placeOfDelivery
+        dateOfDelivery
+        dateOfPayment
+        deliveryTerms
+        paymentTerms
+        category
+        status
+        amount
+        invoice
+      }
+    }
+  }
+`;
+const GET_ALL_ICS_PURCHASEORDER_ITEMS = gql`
+  query GetAllICSPurchaseOrderItems {
+    allICSPurchaseOrderItems {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
       PurchaseOrder {
         poNumber
         supplier
@@ -189,4 +229,5 @@ export {
   GET_ALL_PURCHASEORDER_ITEMS,
   GET_ALL_DASHBOARD_DATA,
   GET_ITEM_HISTORY,
+  GET_ALL_ICS_PURCHASEORDER_ITEMS
 };

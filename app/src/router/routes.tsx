@@ -5,7 +5,7 @@ import Layout from "../layouts/dashboard";
 import DashboardPage from "../pages";
 import SignatoriesPage from "../pages/signatories";
 import SignInPage from "../pages/signIn";
-import TestPage from "../pages/test";
+import icsLowHighVolume from "../pages/icsLowHighVolume";
 import { ProtectedRoute } from "../auth/protected";
 import PurchaseOrder from "../pages/purchaseorder";
 import InventoryPage from "../pages/inventory";
@@ -53,12 +53,12 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute routePath="signatories" />,
           },
           {
-            path: "/tests",
-            element: <ProtectedRoute routePath="tests" />,
+            path: "/ics-lv-hv",
+            element: <ProtectedRoute routePath="ics-lv-hv" />,
             children: [
               {
                 path: "",
-                Component: TestPage,
+                Component: icsLowHighVolume,
               },
             ],
           },

@@ -82,7 +82,7 @@ export default function InventoryPage() {
     <Stack spacing={3}  sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
       <Paper sx={{ width: "100%" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {data?.allPurchaseOrderItems?.length !== 0 && (
+            {data && data.allPurchaseOrderItems && (
               <DataGrid
                 rows={poRows}
                 columns={itemColumns}

@@ -1,51 +1,5 @@
-import * as React from "react";
-import { ReactRouterAppProvider } from "@toolpad/core/react-router";
-import { Outlet, useNavigate } from "react-router";
-import { SessionProvider, useSession } from "./auth/SessionContext";
-import { ROUTE_ROLES } from "./auth/config/role";
-import { clearSession, filterNavigationByRole } from "./auth/authUtils";
-import { ALL_NAVIGATION } from "./navigation/routes";
-import { BRANDING } from "./utils/branding";
-import useSignatoryStore from "./stores/signatoryStore";
-import { useEffect } from "react";
-
-const AppContent = () => {
-  const { session, setSession } = useSession();
-  const navigate = useNavigate();
-
-  const signIn = React.useCallback(() => {
-    navigate("/sign-in");
-  }, [navigate]);
-
-  const signOut = React.useCallback(() => {
-    setSession(null);
-    clearSession();
-    navigate("/sign-in");
-  }, [navigate, setSession]);
-
-  const filteredNavigation = React.useMemo(
-    () =>
-      filterNavigationByRole(ALL_NAVIGATION, session?.user?.role, ROUTE_ROLES),
-    [session]
-  );
-
-  // Inside your component:
-  const fetchSignatories = useSignatoryStore((state) => state.fetchSignatories);
-  useEffect(() => {
-    fetchSignatories();
-  }, [fetchSignatories]);
-
-  return (
-    <ReactRouterAppProvider
-      navigation={filteredNavigation}
-      branding={BRANDING}
-      session={session}
-      authentication={{ signIn, signOut }}
-    >
-      <Outlet />
-    </ReactRouterAppProvider>
-  );
-};
+import { SessionProvider } from "./auth/SessionContext";
+import { AppContent } from "./auth/components/AppContent";
 
 export default function App() {
   return (
@@ -54,6 +8,63 @@ export default function App() {
     </SessionProvider>
   );
 }
+//TODO clean up code in the future
+// import * as React from "react";
+// import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+// import { Outlet, useNavigate } from "react-router";
+// import { SessionProvider, useSession } from "./auth/SessionContext";
+// import { ROUTE_ROLES } from "./auth/config/role";
+// import { clearSession, filterNavigationByRole } from "./auth/authUtils";
+// import { ALL_NAVIGATION } from "./navigation/routes";
+// import { BRANDING } from "./utils/branding";
+// import useSignatoryStore from "./stores/signatoryStore";
+// import { useEffect } from "react";
+
+// const AppContent = () => {
+//   const { session, setSession } = useSession();
+//   const navigate = useNavigate();
+
+//   const signIn = React.useCallback(() => {
+//     navigate("/sign-in");
+//   }, [navigate]);
+
+//   const signOut = React.useCallback(() => {
+//     setSession(null);
+//     clearSession();
+//     navigate("/sign-in");
+//   }, [navigate, setSession]);
+
+//   const filteredNavigation = React.useMemo(
+//     () =>
+//       filterNavigationByRole(ALL_NAVIGATION, session?.user?.role, ROUTE_ROLES),
+//     [session]
+//   );
+
+//   // Inside your component:
+//   const fetchSignatories = useSignatoryStore((state) => state.fetchSignatories);
+//   useEffect(() => {
+//     fetchSignatories();
+//   }, [fetchSignatories]);
+
+//   return (
+//     <ReactRouterAppProvider
+//       navigation={filteredNavigation}
+//       branding={BRANDING}
+//       session={session}
+//       authentication={{ signIn, signOut }}
+//     >
+//       <Outlet />
+//     </ReactRouterAppProvider>
+//   );
+// };
+
+// export default function App() {
+//   return (
+//     <SessionProvider>
+//       <AppContent />
+//     </SessionProvider>
+//   );
+// }
 
 //TODO clean up code in the future
 // import * as React from "react";

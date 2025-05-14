@@ -37,6 +37,8 @@ type Item {
     isDeleted: Boolean
     date: String
     actualQuantityReceived: Int
+    tag : String
+    iarId : String
 }
 
 
@@ -59,6 +61,8 @@ type ItemWithPurchaseOrder {
     actualQuantityReceived: Int
     currentInput: Int
     PurchaseOrder: PurchaseOrderType
+    tag : String
+    iarId : String
 }
 
 type PurchaseOrderType {
@@ -117,6 +121,7 @@ input ItemInput {
     isDeleted: Boolean
     actualQuantityReceived: Int
     currentInput: Int
+    tag : String
 }
 
 input UpdatePurchaseOrderInput {
@@ -168,6 +173,7 @@ type Query {
     purchaseOrderItems: [Item!]
     # allPurchaseOrderItems: [Item!]
     allPurchaseOrderItems: [ItemWithPurchaseOrder!]
+    allICSPurchaseOrderItems: [ItemWithPurchaseOrder!]
     getAllTotalPurchaseOrderAmount: Float
     getTotalPurchaseOrderItems: Int
     getTotalPurchaseOrders: Int

@@ -20,12 +20,12 @@ export const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "purchaseorder",
-    title: "Inspection Acceptance Report",
+    title: "Purchase Order",
     icon: React.createElement(BusinessCenterIcon),
   },
   {
     segment: "inventory",
-    title: " Inventory",
+    title: "Inspection Acceptance Report ",
     icon: React.createElement(ShowChartIcon),
   },
   {
@@ -34,8 +34,8 @@ export const ALL_NAVIGATION: Navigation = [
     icon: React.createElement(DrawIcon),
   },
   {
-    segment: "tests",
-    title: "Test",
+    segment: "ics-lv-hv",
+    title: "ICS",
     icon: React.createElement(AddBusinessIcon) ,
   },
 ];
