@@ -12,15 +12,14 @@ export const handleSavePurchaseOrder = async (
 ): Promise<{ success: boolean; message: string }> => {
   setIsSubmitting(true);
   try {
+      //remove id , typname and iarId
     const cleanedItems = formData.items.map((item: any) => {
-      const { __typename, ...cleanItem } = item;
+      const { __typename, iarId, id, ...cleanItem } = item;
       return cleanItem;
     });
-
     const { __typename, ...cleanFormData } = formData;
     cleanFormData.items = cleanedItems;
     let updatedPO: any;
-
     if (editingPO) {
       try {
         const results = await updatePurchaseOrder({

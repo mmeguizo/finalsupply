@@ -9,6 +9,10 @@ const PurchaseOrderItems = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    iarId : {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     purchaseOrderId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -57,6 +61,11 @@ const PurchaseOrderItems = sequelize.define(
       ),
       allowNull: true,
       defaultValue: "requisition issue slip", // Default value
+    },
+    tag : {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "none", // Default value
     },
     isDeleted: {
       type: DataTypes.TINYINT(1),

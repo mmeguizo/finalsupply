@@ -8,14 +8,9 @@ export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
 ): GridColDef[] => [
   {
-    field: "iarId",
-    headerName: "IAR#",
-    width: 100, 
-  },
-  {
-    field: "category",
-    headerName: "Category",
-    width: 200,
+    field: "tag",
+    headerName: "Tag",
+    width: 80,
     valueFormatter: (params: any) => {
       let category;
       category = params.split(" ");

@@ -90,23 +90,7 @@ export default function PurchaseOrderModal({
   //   // If not editing (new PO) or adding new item
   //   return false;
   // };
-  const isIndexFieldDisabled = (existingValue: any, field: string, itemIndex: number) => {
-    // If editing (purchaseOrder exists) and value exists and not adding new item
-    if (field ) {
-      // If adding new item, only enable the last item's category
-      if (addingItem && itemIndex === formData.items.length - 1) {
-        return false;
-      }
-      // Otherwise, disable if purchase order exists and has items
-      return purchaseOrder && purchaseOrder.items.length !== 0 && existingValue;
-    }
-    
-    // For other fields, use the original logic
-    // if (purchaseOrder && purchaseOrder.items.length !== 0 && existingValue && !addingItem) {
-    //   return true;
-    // }
-    return false;
-  };
+
 
 
   React.useEffect(() => {
@@ -115,8 +99,6 @@ export default function PurchaseOrderModal({
       if(purchaseOrder.status === "completed"){
         setAddItemButtonDisable(true);
       }
-      console.log(purchaseOrder.status);
-      console.log(addItemButton);
       // Map items properly before setting state
       const mappedItems = purchaseOrder.items.map((item: any) => {
         return {
@@ -125,8 +107,6 @@ export default function PurchaseOrderModal({
           currentInput: 0,
         };
       });
-      // console.log(mappedItems);
-
       // Set the formData with the latest purchaseOrder values
       setFormData({
         poNumber: purchaseOrder.poNumber || "",
@@ -187,12 +167,14 @@ export default function PurchaseOrderModal({
 
   // Add empty item
   const addItem = () => {
+    const tempId = `temp-${Date.now()}`;
     setAddingItem(true);
     setFormData({
       ...formData,
       items: [
         ...formData.items,
         {
+          id: tempId, // Add a temporary ID for new items
           category: "",
           itemName: "",
           description: "",
@@ -202,31 +184,52 @@ export default function PurchaseOrderModal({
           amount: 0,
           actualQuantityReceived: 0,
           tag: "", // Add this field
+          purchaseOrderId: tempId, // Use the same tempId as purchaseOrderId to ensure it's unique
         },
       ],
     });
   };
 
+// Add this near your other useEffect hooks
+React.useEffect(() => {
+  console.log("Current items:", formData.items);
+}, [formData.items]); // This will run whenever formData.items changes
 
+const isIndexFieldDisabled = (existingValue: any, field: string, itemIndex: number) => {
+  // Check if this is a newly added item by looking at the item directly
+  const item = formData.items[itemIndex + 1];
+  const isNewItem = item && item.id && item.id.toString().startsWith('temp-');
+  // If it's a new item, never disable it
+  // if (isNewItem) {
+  //   return false;
+  // }
+  // For existing items, disable if purchase order exists and has items
+  // return true;
+  return isNewItem ? false : true;
+  // return purchaseOrder && purchaseOrder.items.length !== 0 && existingValue;
+};
 
   const updateItem = (index: number, field: string, value: any) => {
     const updatedItems = [...formData.items];
     const item = updatedItems[index];
+    
     // Ensure currentInput does not exceed the remaining quantity
     if (field === "currentInput") {
       const remaining =
-        Number(item.quantity) - Number(item.actualQuantityReceived);
-      value = Math.min(Math.max(value, 0), remaining); // Clamp value between 0 and remaining
+        Number(item.quantity || 0) - Number(item.actualQuantityReceived || 0);
+      value = Math.min(Math.max(value || 0, 0), remaining); // Clamp value between 0 and remaining
     }
+    
     updatedItems[index] = {
       ...item,
       [field]: value,
     };
+    
     // Auto-calculate amount if quantity or unitCost changes
     if (field === "quantity" || field === "unitCost") {
       updatedItems[index].amount =
-        Number(updatedItems[index].quantity) *
-        Number(updatedItems[index].unitCost);
+        Number(updatedItems[index].quantity || 0) *
+        Number(updatedItems[index].unitCost || 0);
     }
       
     setFormData({
@@ -265,15 +268,59 @@ export default function PurchaseOrderModal({
 
     const { status, ...cleanData } = formattedData;
 
-
+    
     setAddingItem(false);
     console.log(cleanData)
-    handleSave(cleanData);
+    // handleSave(cleanData);
   };
 
-  console.log(formData.items);
-
-
+  // Add this function before the return statement
+  const groupItemsByCategory = (items: any[]) => {
+    const groupedItems: { [key: string]: any } = {};
+    
+    items.forEach(item => {
+      const key = `${item.purchaseOrderId}-${item.category}`;
+      
+      if (!groupedItems[key]) {
+        // Create a new group with this item as the base
+        groupedItems[key] = {
+          ...item,
+          originalItems: [item], // Store original items for reference
+          // Don't sum quantities - use the first item's quantity
+          quantity: Number(item.quantity),
+          amount: Number(item.amount),
+          // Sum actualQuantityReceived
+          actualQuantityReceived: Number(item.actualQuantityReceived),
+          recievelimit: Number(item.quantity) - Number(item.actualQuantityReceived),
+          currentInput: Number(item.currentInput || 0),
+          // Create a combined description if there are multiple items
+          // descriptions: [item.description]
+        };
+      } else {
+        // Add to existing group
+        const group = groupedItems[key];
+        // Don't add quantity - we use the first item's quantity
+        // group.quantity += Number(item.quantity);
+        // group.amount += Number(item.amount);
+        
+        // Do add actualQuantityReceived
+        group.actualQuantityReceived += Number(item.actualQuantityReceived);
+        // Recalculate recievelimit based on the first item's quantity and total actualQuantityReceived
+        group.recievelimit = Number(group.quantity) - Number(group.actualQuantityReceived);
+        
+        group.originalItems.push(item);
+        
+        // // Add description if it's unique
+        // if (!group.descriptions.includes(item.description)) {
+        //   group.descriptions.push(item.description);
+        // }
+        
+        // // Update the description to show all unique descriptions
+        // group.description = group.descriptions.join(", ");
+      }
+    });
+    return Object.values(groupedItems);
+  };
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -414,8 +461,10 @@ export default function PurchaseOrderModal({
               </Grid>
             )}
 
+          
+
             {/* Items table/form */}
-            {formData.items.map((item: any, index: any) => (
+            {groupItemsByCategory(formData.items).map((item: any, index: any) => (
               <Grid
                 container
                 spacing={1}
@@ -434,9 +483,23 @@ export default function PurchaseOrderModal({
                     fullWidth
                     size="small"
                     value={item.category}
-                    onChange={(e) => updateItem(index, "category", e.target.value)}
+                    onChange={(e) => {
+                      const isNewItem = item.id && item.id.toString().startsWith('temp-');
+                      if (isNewItem) {
+                        // Find the index of this specific item
+                        const itemIndex = formData.items.findIndex((it: any) => it.id === item.id);
+                        if (itemIndex !== -1) {
+                          updateItem(itemIndex, "category", e.target.value);
+                        }
+                      } else if (item.originalItems && item.originalItems.length > 0) {
+                        // For existing items, update all in the group
+                        item.originalItems.forEach((originalItem: any, i: number) => {
+                          updateItem(formData.items.findIndex((it: any) => it.id === originalItem.id), "category", e.target.value);
+                        });
+                      }
+                    }}
                     label="Category"
-                    disabled={isIndexFieldDisabled(item.category, 'category', index)}
+                    // disabled={isIndexFieldDisabled(item.category, 'category', index)}
                   >
                     <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
                     <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
@@ -451,7 +514,12 @@ export default function PurchaseOrderModal({
                       fullWidth
                       size="small"
                       value={item.tag || ""}
-                      onChange={(e) => updateItem(index, "tag", e.target.value)}
+                      onChange={(e) => {
+                        // Update all original items with the new tag
+                        item.originalItems.forEach((originalItem: any, i: number) => {
+                          updateItem(formData.items.findIndex((it: any) => it.id === originalItem.id), "tag", e.target.value);
+                        });
+                      }}
                       label="Tag"
                       disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
                     >
@@ -468,7 +536,13 @@ export default function PurchaseOrderModal({
                     size="small"
                     placeholder="Description"
                     value={item.description}
-                    onChange={(e) => updateItem(index, "description", e.target.value)}
+                    onChange={(e) => {
+                      // For simplicity, update all original items with the same description
+                      // You might want a more sophisticated approach depending on requirements
+                      item.originalItems.forEach((originalItem: any, i: number) => {
+                        updateItem(formData.items.findIndex((it: any) => it.id === originalItem.id), "description", e.target.value);
+                      });
+                    }}
                     disabled={isIndexFieldDisabled(item.description, 'description', index)}
                   />
                 </Grid>
@@ -477,13 +551,9 @@ export default function PurchaseOrderModal({
                   <TextField
                     fullWidth
                     size="small"
-                    label={`left: ${
-                      Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0
-                    }`}
+                    label={`left: ${Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0}`}
                     type="number"
-                    placeholder={`${
-                      Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0
-                    }`}
+                    placeholder={`${Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0}`}
                     inputProps={{
                       min: 0,
                       max: Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0,
@@ -493,10 +563,13 @@ export default function PurchaseOrderModal({
                     onChange={(e) => {
                       const value = Number(e.target.value);
                       const remaining = Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived));
-                      if (value >= 0 && value <= remaining) {
-                        updateItem(index, "currentInput", value);
-                      } else if (value > remaining) {
-                        updateItem(index, "currentInput", remaining);
+                      const newValue = value <= remaining ? value : remaining;
+                      
+                      // Since we're only using the first item for each category-purchaseOrderId combination,
+                      // we can directly update that item in the formData
+                      const itemIndex = formData.items.findIndex((it: any) => it.id === item.id);
+                      if (itemIndex !== -1) {
+                        updateItem(itemIndex, "currentInput", newValue);
                       }
                     }}
                     disabled={Number(item.quantity) === Number(item.actualQuantityReceived) || !item.category}
@@ -508,6 +581,7 @@ export default function PurchaseOrderModal({
                     }}
                   />
                 </Grid>
+                
                 <Grid item xs={1.5}>
                   <TextField
                     fullWidth
@@ -516,8 +590,30 @@ export default function PurchaseOrderModal({
                     placeholder="Qty"
                     inputProps={{ min: 0, style: { textAlign: "right" } }}
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
+                    onChange={(e) => {
+                      const newValue = Number(e.target.value);
+                      // Check if this is a newly added item with a temp ID
+                      const isNewItem = item.id && item.id.toString().startsWith('temp-');
+                      
+                      if (isNewItem) {
+                        // For new items, directly update the quantity
+                        const itemIndex = formData.items.findIndex((it: any) => it.id === item.id);
+                        if (itemIndex !== -1) {
+                          updateItem(itemIndex, "quantity", newValue);
+                        }
+                      } else if (item.originalItems && item.originalItems.length > 0) {
+                        // For existing grouped items, distribute proportionally
+                        const totalQty = item.originalItems.reduce((sum: number, origItem: any) => sum + Number(origItem.quantity), 0);
+                        
+                        item.originalItems.forEach((originalItem: any, i: number) => {
+                          const itemIndex = formData.items.findIndex((it: any) => it.id === originalItem.id);
+                          const proportion = Number(originalItem.quantity) / totalQty;
+                          const newItemQty = Math.round(newValue * proportion);
+                          updateItem(itemIndex, "quantity", newItemQty);
+                        });
+                      }
+                    }}
+                    disabled={isIndexFieldDisabled(item.quantity, "quantity", index)}
                   />
                 </Grid>
 
@@ -527,21 +623,15 @@ export default function PurchaseOrderModal({
                     size="small"
                     placeholder="Unit"
                     value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.unit,"unit",index)}
+                    onChange={(e) => {
+                      // Update all original items with the same unit
+                      item.originalItems.forEach((originalItem: any, i: number) => {
+                        updateItem(formData.items.findIndex((it: any) => it.id === originalItem.id), "unit", e.target.value);
+                      });
+                    }}
+                    disabled={isIndexFieldDisabled(item.unit, "unit", index)}
                   />
                 </Grid>
-
-                {/* <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Item"
-                    value={item.itemName}
-                    onChange={(e) => updateItem(index, "itemName", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.itemName)}
-                  />
-                </Grid> */}
 
                 <Grid item xs={1.5}>
                   <TextField
@@ -550,8 +640,15 @@ export default function PurchaseOrderModal({
                     type="number"
                     placeholder="Unit Cost"
                     value={item.unitCost}
-                    onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
+                    onChange={(e) => {
+                      const newUnitCost = Number(e.target.value);
+                      // Update all original items with the same unit cost
+                      item.originalItems.forEach((originalItem: any, i: number) => {
+                        const itemIndex = formData.items.findIndex((it: any) => it.id === originalItem.id);
+                        updateItem(itemIndex, "unitCost", newUnitCost);
+                      });
+                    }}
+                    disabled={isIndexFieldDisabled(item.unitCost, "unitCost", index)}
                     InputProps={{
                       startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
                     }}
@@ -626,6 +723,7 @@ export default function PurchaseOrderModal({
                     <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
                   </Select>
                 </Grid>
+             
                 {item.category === "inventory custodian slip" && (
                   <Grid item xs={1}>
                     <Select
@@ -641,6 +739,8 @@ export default function PurchaseOrderModal({
                     </Select>
                   </Grid>
                 )}
+
+             
                 <Grid item xs={item.category === "inventory custodian slip" ? 2 : 3}>
                   <TextField
                     fullWidth
@@ -710,6 +810,7 @@ export default function PurchaseOrderModal({
                     disabled={isIndexFieldDisabled(item.unit,"unit",index)}
                   />
                 </Grid>
+
                 <Grid item xs={1.5}>
                   <TextField
                     fullWidth
@@ -725,6 +826,7 @@ export default function PurchaseOrderModal({
                     sx={{ "& input": { textAlign: "right" } }}
                   />
                 </Grid>
+
                 <Grid item xs={1.5}>
                   <TextField
                     fullWidth

@@ -4,5 +4,5 @@ export const ROUTE_ROLES = {
     signatories: ["admin"],
     purchaseorder: ["admin"],
     inventory: ["user", "admin"],
-    tests: ["user", "admin"],
+    "ics-lv-hv": ["user", "admin"],
   };

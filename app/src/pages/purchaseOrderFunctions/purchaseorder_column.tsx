@@ -158,10 +158,10 @@ export const createPoColumns = (
   },
   {
     field: "print",
-    headerName: "Print Preview",
+    headerName: "Print",
     width: 100,
     renderCell: (params) => (
-      <Tooltip title="Print Preview" placement="right">
+      <Tooltip title="Print" placement="right">
         <Button
           size="small"
           onClick={(e: any) => {

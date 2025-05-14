@@ -27,8 +27,6 @@ export default function PurchaseOrderHistoryModal({
   purchaseOrder,
 }: PurchaseOrderHistoryModalProps) {
 
-  console.log(purchaseOrder); 
-
   const { data, refetch } = useQuery(GET_ITEM_HISTORY, {
     variables: {
       purchaseOrderId: purchaseOrder?.items[0].purchaseOrderId
@@ -36,7 +34,6 @@ export default function PurchaseOrderHistoryModal({
      fetchPolicy: 'network-only'
   });
 
-  console.log(data); // Add this log t
 
   React.useEffect(() => {
     if (open) {
@@ -106,13 +103,13 @@ export default function PurchaseOrderHistoryModal({
     <Dialog open={open} onClose={handleClose} maxWidth="xl" fullWidth>
       <DialogTitle>Purchase Order History</DialogTitle>
       <DialogContent>
-        <Box sx={{ height: 400, width: '100%' }}>
+        <Box sx={{ width: '100%' }}>
           <DataGrid
             rows={data?.purchaseOrderHistory || []}
             columns={columns}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 5 },
+                paginationModel: { pageSize: 10 },
               },
             }}
             pageSizeOptions={[5, 10, 25]}

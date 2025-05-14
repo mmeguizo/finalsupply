@@ -1,7 +1,7 @@
 import * as React from "react";
 // import type { Session } from "@toolpad/core";
 
-import { SessionsType } from "./types/genericTypes";
+import { SessionsType } from "../types/genericTypes";
 
 export interface SessionContextValue {
   session: SessionsType | null;

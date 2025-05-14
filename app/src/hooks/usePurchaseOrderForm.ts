@@ -139,7 +139,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
 
   const onSubmit = (handleSave: (formData: any) => void) => {
     const cleanedItems = formData.items.map((item) => {
-      const { __typename, ...cleanItem } = item;
+      const { ...cleanItem } = item;
       return cleanItem;
     });
 
@@ -152,7 +152,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       ponumber: parseInt(formData.ponumber),
     };
 
-    const { __typename, ...cleanData } = formattedData;
+    const { ...cleanData } = formattedData;
     console.log({cleanData});
 
     setHasSubmitted(true);
