@@ -1,4 +1,4 @@
-export const printSelectedPurchaseOrdersWithItems = (purchaseOrders) => {
+export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
   let data: any;
   if (typeof purchaseOrders === "object" && !purchaseOrders.purchaseOrders) {
     // put the object into an array
@@ -36,7 +36,7 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders) => {
       <button onclick="window.print();" style="padding: 10px; margin-bottom: 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Purchase Orders</button>
   `;
 
-  data.forEach((po) => {
+  data.forEach((po : any) => {
     htmlContent += `
       <div class="po-section">
         <h2>Purchase Order #${po.poNumber}</h2>

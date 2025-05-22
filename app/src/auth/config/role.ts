@@ -2,7 +2,8 @@
 export const ROUTE_ROLES = {
     "": ["admin", "user"], // Dashboard (default route)
     signatories: ["admin"],
-    purchaseorder: ["admin"],
+    purchaseorder: ["user","admin"],
     inventory: ["user", "admin"],
     "ics-lv-hv": ["user", "admin"],
+    requisition: ["user", "admin"],
   };

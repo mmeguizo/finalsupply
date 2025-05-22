@@ -1,9 +1,8 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db/connectDB.js"; // Assuming you have a Sequelize instance
-import InspectionAcceptanceReport from "./inspectionacceptancereport.js";
 
-const PurchaseOrderItems = sequelize.define(
-  "PurchaseOrderItems",
+const inspectionAcceptanceReport = sequelize.define(
+  "inspectionAcceptanceReport",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -14,11 +13,34 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    icsId : {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    risId : {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    parId : {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     purchaseOrderId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: "purchaseOrders", // Assuming the table for purchase orders is named 'purchaseOrders'
+        key: "id", // The referenced column in the 'purchaseOrders' table
+      },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
+      index: true, // Index for optimization
+    },
+    purchaseOrderItemId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "purchaseOrdersItems", // Assuming the table for purchase orders is named 'purchaseOrders'
         key: "id", // The referenced column in the 'purchaseOrders' table
       },
       onUpdate: "CASCADE",
@@ -75,13 +97,12 @@ const PurchaseOrderItems = sequelize.define(
     },
   },
   {
-    tableName: "purchase_order_items", // Specify the table name
+    tableName: "inspection_acceptance_report", // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
   }
 );
 
 // No association is needed here because ponumber is not a foreign key
-PurchaseOrderItems.hasMany(InspectionAcceptanceReport, { foreignKey: "purchaseOrderItemId" });
 
-export default PurchaseOrderItems;
+export default inspectionAcceptanceReport;

@@ -1,8 +1,11 @@
 import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize models
 import PurchaseOrderItems from "../models/purchaseorderitems.js"; // Import the Sequelize models
 import PurchaseOrderItemsHistory from "../models/purchaseorderitemshistory.js"; // Import history model
-import { customAlphabet } from 'nanoid'
-const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
+import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
+import { customAlphabet } from "nanoid";
+import { omitId } from "../utils/helper.js";
+
+const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
@@ -63,7 +66,7 @@ const purchaseorderResolver = {
         }
         // Fetch all purchase order items using Sequelize
         const purchaseordersItems = await PurchaseOrderItems.findAll({
-          where: { isDeleted: false, category : "inventory custodian slip" },
+          where: { isDeleted: false, category: "inventory custodian slip" },
           order: [["createdAt", "DESC"]],
           include: [PurchaseOrder],
         });
@@ -168,9 +171,7 @@ const purchaseorderResolver = {
           include: [PurchaseOrderItems],
         });
 
-        const itemsID = purchaseOrder.PurchaseOrderItems.map(
-          (item) => item.id
-        )
+        const itemsID = purchaseOrder.PurchaseOrderItems.map((item) => item.id);
         const history = await PurchaseOrderItemsHistory.findAll({
           where: { purchaseOrderItemId: itemsID },
           order: [["createdAt", "DESC"]],
@@ -182,30 +183,33 @@ const purchaseorderResolver = {
         throw new Error(error.message || "Internal server error");
       }
     },
-    // purchaseOrders: async (_, { purchaseorderId }, context) => {
-    //   try {
-    //     if (!context.isAuthenticated()) {
-    //       throw new Error("Unauthorized");
-    //     }
-    //     // Fetch a single purchase order by ID
-    //     const purchaseorder = await PurchaseOrder.findOne({
-    //       where: { id: purchaseorderId },
-    //     });
+    inspectionAcceptanceReport: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        // Fetch a single purchase order by ID
+        const inspectionAcceptanceReportdata =
+          await inspectionAcceptanceReport.findAll({
+            where: { isDeleted: false },
+            order: [["createdAt", "DESC"]],
+            include: [PurchaseOrder],
+          });
 
-    //     if (!purchaseorder) {
-    //       throw new Error("Purchase order not found");
-    //     }
-    //     return purchaseorder;
-    //   } catch (error) {
-    //     console.error("Error fetching purchase order: ", error);
-    //     throw new Error(error.message || "Internal server error");
-    //   }
-    // },
+        if (!inspectionAcceptanceReportdata) {
+          throw new Error("Purchase order not found");
+        }
+        return inspectionAcceptanceReportdata;
+      } catch (error) {
+        console.error("Error fetching purchase order: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
   },
 
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
-     
+      const batchIarId = nanoid();
       try {
         const user = context.req.user;
         const { items, ...poRestData } = input;
@@ -232,12 +236,21 @@ const purchaseorderResolver = {
 
         // If items exist, create purchase order items
         if (items && Array.isArray(items)) {
+          // Generate a single IAR ID for all items in this batch
           for (const item of items) {
+            const { id: poId, ...cleanedItems } = item;
             const newPOI = await PurchaseOrderItems.create({
-              ...item,
-              iarId :nanoid(), //=> "4f90d13a42"
+              ...cleanedItems,
               actualQuantityReceived: item.currentInput,
               purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
+            });
+
+            await inspectionAcceptanceReport.create({
+              ...cleanedItems,
+              iarId: batchIarId, // Use the same IAR ID for all items in this batch
+              actualQuantityReceived: item.currentInput,
+              purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
+              purchaseOrderItemId: newPOI.id, // Link items to the new purchase order
             });
 
             await PurchaseOrderItemsHistory.create({
@@ -268,33 +281,29 @@ const purchaseorderResolver = {
 
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
-      // console.log("Context keys:", Object.keys(context));
-      // console.log("Auth status:", context.isAuthenticated?.());
-      // console.log("Request user:", context.req?.user);
-      // console.log("Direct user:", context.user);
+      const batchIarId = nanoid();
       try {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        const { id, items, markingComplete, ...poUpdates } = input;
+        const { id: ID, items, markingComplete, ...poUpdates } = input;
 
-        const findIfExists = await PurchaseOrder.findOne({ where: { id: id } });
+        const findIfExists = await PurchaseOrder.findOne({ where: { id: ID } });
         if (!findIfExists) {
           throw new Error("Purchase order not found");
         }
-
         // Update the purchase order details
         // Update the purchase order
         const [_, affectedRows] = await PurchaseOrder.update(poUpdates, {
-          where: { id: id },
+          where: { id: ID },
         });
-        
+
         if (markingComplete) {
-          const currentPurchaseOrder = await PurchaseOrder.findByPk(id, {
+          const currentPurchaseOrder = await PurchaseOrder.findByPk(ID, {
             include: [PurchaseOrderItems],
           });
           const dataHistory = currentPurchaseOrder.PurchaseOrderItems.find(
-            (item) => item.purchaseOrderId === id
+            (item) => item.purchaseOrderId === ID
           );
           await PurchaseOrderItemsHistory.create({
             purchaseOrderItemId: dataHistory.id,
@@ -313,50 +322,76 @@ const purchaseorderResolver = {
 
         // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
+          // Generate a single IAR ID for all items in this batch
           for (const item of items) {
-            // if (item.id) {
+            if (item.id !== "temp") {
               // Increment actualQuantityReceived by currentInput
-              // if (item.currentInput && item.currentInput > 0) {
-              //   // Get the current item state before update
-              //   const currentItem = await PurchaseOrderItems.findOne({
-              //     where: { id: item.id, purchaseOrderId: id },
-              //   });
+              if (item.currentInput && item.currentInput > 0) {
+                // Get the current item state before update
+                const currentItem = await PurchaseOrderItems.findOne({
+                  where: { id: item.id, purchaseOrderId: ID },
+                });
 
-              //   // Increment the actualQuantityReceived
-              //   await PurchaseOrderItems.increment(
-              //     { actualQuantityReceived: item.currentInput }, // Increment field
-              //     { where: { id: item.id, purchaseOrderId: id } } // Condition to match the item
-              //   );
+                // Increment the actualQuantityReceived
+                await PurchaseOrderItems.increment(
+                  { actualQuantityReceived: item.currentInput }, // Increment field
+                  { where: { id: item.id, purchaseOrderId: ID } } // Condition to match the item
+                );
+                // Update existing item
+                const poitems = await PurchaseOrderItems.update(item, {
+                  where: { id: item.id, purchaseOrderId: ID },
+                  returning: true,
+                });
+                //add entry to inspection acceptance report
+                //remove first the existing id of the poitems
+                const cleanedItem = omitId(item);
+                await inspectionAcceptanceReport.create({
+                  ...cleanedItem,
+                  iarId: batchIarId, // Use the same IAR ID for all items in this batch
+                  actualQuantityReceived: item.currentInput,
+                  purchaseOrderId: ID, // Link items to the new purchase order
+                  purchaseOrderItemId: currentItem.id, // Link items to the new purchase order
+                });
 
-              //   // Update existing item
-              //   await PurchaseOrderItems.update(item, {
-              //     where: { id: item.id, purchaseOrderId: id },
-              //     returning: true,
-              //   });
-              //   // Create history record for the quantity update
-
-              //   const updateHistory = await PurchaseOrderItemsHistory.create({
-              //     purchaseOrderItemId: item.id,
-              //     previousQuantity: currentItem.quantity,
-              //     newQuantity: currentItem.quantity,
-              //     previousActualQuantityReceived:
-              //       currentItem.actualQuantityReceived,
-              //     newActualQuantityReceived:
-              //       currentItem.actualQuantityReceived + item.currentInput,
-              //     previousAmount: currentItem.amount,
-              //     newAmount: currentItem.amount,
-              //     changeType: "received_update",
-              //     changedBy: user.name,
-              //     changeReason: "Quantity received update",
-              //   });
-              // }
-            // } else {
+                // Create history record for the quantity update
+                const updateHistory = await PurchaseOrderItemsHistory.create({
+                  purchaseOrderItemId: item.id,
+                  previousQuantity: currentItem.quantity,
+                  newQuantity: currentItem.quantity,
+                  previousActualQuantityReceived:
+                    currentItem.actualQuantityReceived,
+                  newActualQuantityReceived:
+                    currentItem.actualQuantityReceived + item.currentInput,
+                  previousAmount: currentItem.amount,
+                  newAmount: currentItem.amount,
+                  changeType: "received_update",
+                  changedBy: user.name,
+                  changeReason: "Quantity received update",
+                });
+              }
+            } else {
               // Create new item if the item does not have an id
+              const { id: poId, ...cleanedItems } = item;
               const newPOI = await PurchaseOrderItems.create({
-                ...item,
-                iarId :nanoid(),
+                itemName: item.itemName,
+                description: item.description,
+                unit: item.unit,
+                quantity: item.quantity,
+                unitCost: item.unitCost,
+                amount: item.amount,
+                category: item.category,
+                tag: item.tag,
                 actualQuantityReceived: item.currentInput,
-                purchaseOrderId: id,
+                purchaseOrderId: ID,
+              });
+
+              //add entry to inspection acceptance report
+              await inspectionAcceptanceReport.create({
+                ...cleanedItems,
+                iarId: batchIarId, //=> "4f90d13a42"
+                actualQuantityReceived: item.currentInput,
+                purchaseOrderId: ID, // Link items to the new purchase order
+                purchaseOrderItemId: newPOI.id,
               });
 
               await PurchaseOrderItemsHistory.create({
@@ -369,12 +404,12 @@ const purchaseorderResolver = {
                 newAmount: item.amount,
                 changeType: "quantity_update",
                 changedBy: user.name,
-                changeReason: "Quantity received update",
+                changeReason: "Initial item creation",
               });
-            // }
+            }
           }
         }
-        const returnData = await PurchaseOrder.findOne({ where: { id: id } });
+        const returnData = await PurchaseOrder.findOne({ where: { id: ID } });
         // Return the updated purchase order
         return returnData; // Get the updated object
       } catch (error) {

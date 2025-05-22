@@ -30,7 +30,7 @@ import { PageContainer } from "@toolpad/core/PageContainer";
 import PrintIcon from "@mui/icons-material/Print";
 // @ts-ignore
 import AddIcon from "@mui/icons-material/Add";
-import PurchaseOrderModal from "../components/purchaseordermodel";
+import PurchaseOrderModal from "./purchaseOrderFunctions/purchaseordermodel";
 import PurchaseOrderHistoryModal from "../components/purchaseorderhistorymodel";
 
 import {
@@ -80,6 +80,8 @@ export default function PurchaseOrder() {
       {query : GET_ALL_PURCHASEORDER_ITEMS}],
     onCompleted: () => {
       client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReport' });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReportForICS' });
       client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
       client.cache.evict({ fieldName: "getAllCategory" });
       client.cache.gc();
@@ -100,6 +102,8 @@ export default function PurchaseOrder() {
       client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
       client.cache.evict({ fieldName: "getAllCategory" });
       client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReport' });
+      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReportForICS' });
       client.cache.gc();
     },
   });
@@ -523,5 +527,4 @@ export default function PurchaseOrder() {
 //     </GridToolbarContainer>
 //   );
 // }
-
 // Custom toolbar with export button for PO with items

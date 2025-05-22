@@ -12,7 +12,7 @@ import {
   styled,
   Button,
 } from "@mui/material";
-import { InspectionAcceptanceReportProps } from "../../types/previewPrintDocument/types";
+import { InspectionAcceptanceReportPropsForIAR } from "../../types/previewPrintDocument/types";
 import useSignatoryStore from "../../stores/signatoryStore";
 import { Divider } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
@@ -64,13 +64,13 @@ const PrintControls = styled(Box)({
   },
 });
 
-export default function InspectionAcceptanceReport({
+export default function InspectionAcceptanceReportForIAR({
   signatories,
   reportData,
   onPrint,
   onClose,
-}: InspectionAcceptanceReportProps) {
-  console.log(reportData, "reportData");
+}: InspectionAcceptanceReportPropsForIAR) {
+  console.log(reportData, "reportDataxxxx");
   const componentRef = useRef(null);
   // const { signatories, loading, error } = useSignatoryStore();
   // Get specific signatories by role
@@ -217,7 +217,7 @@ export default function InspectionAcceptanceReport({
                           variant="h6"
                           sx={{ fontSize: "14px", fontWeight: "normal" }}
                         >
-                          INSPECTION & ACCEPTANCE REPORT
+                          INSPECTION & ACCEPTANCE REPORT11
                         </Typography>
                       </Box>
                       <Box></Box>
@@ -239,7 +239,7 @@ export default function InspectionAcceptanceReport({
                           alignItems: "end",
                         }}
                       >
-                        No.
+                        No. {reportData?.iarId}
                       </Box>
                       <Box
                         sx={{
@@ -274,7 +274,7 @@ export default function InspectionAcceptanceReport({
                   Supplier:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={6}>
-                  {reportData?.supplier || ""}
+                  {reportData?.PurchaseOrder?.supplier || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -283,17 +283,17 @@ export default function InspectionAcceptanceReport({
                   PO # & Date:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.poNumber || ""}
+                  {reportData?.PurchaseOrder?.poNumber || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.poDate || ""}
+                  {reportData?.PurchaseOrder?.dateOfDelivery || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>Invoice# & Date:</StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={2}>
-                  {reportData?.invoice || ""}
+                  {reportData?.PurchaseOrder?.invoice || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.invoiceDate || ""}
+                  {reportData?.PurchaseOrder?.dateOfPayment || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -302,7 +302,7 @@ export default function InspectionAcceptanceReport({
                   Requisitioning Office/Department:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={5}>
-                  {reportData?.department || ""}
+                  {reportData?.PurchaseOrder?.placeOfDelivery || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -319,19 +319,18 @@ export default function InspectionAcceptanceReport({
             </TableHead>
 
             <TableBody>
-              {reportData?.items?.length > 0 ? (
-                reportData.items.map((item, index) => (
-                  <StyledTableRow key={index}>
-                    <StyledTableCell>{index + 1}</StyledTableCell>
-                    <StyledTableCell>{item.unit}</StyledTableCell>
+              {reportData ? (
+                  <StyledTableRow key={reportData.id}>
+                    <StyledTableCell>{1}</StyledTableCell>
+                    <StyledTableCell>{reportData.unit}</StyledTableCell>
                     <StyledTableCell colSpan={3}>
-                      {item.description}
+                      {reportData.description}
                     </StyledTableCell>
-                    <StyledTableCell>{item.quantity}</StyledTableCell>
-                    <StyledTableCell>{item.unitCost}</StyledTableCell>
-                    <StyledTableCell>{item.amount}</StyledTableCell>
+                    <StyledTableCell>{reportData.quantity}</StyledTableCell>
+                    <StyledTableCell>{reportData.unitCost}</StyledTableCell>
+                    <StyledTableCell>{reportData.amount}</StyledTableCell>
                   </StyledTableRow>
-                ))
+                
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
@@ -362,7 +361,7 @@ export default function InspectionAcceptanceReport({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Inspected: {reportData?.dateInspected || ""}</Box>
+                    <Box>Date Inspected: {reportData?.PurchaseOrder?.dateOfDelivery || ""}</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -422,7 +421,7 @@ export default function InspectionAcceptanceReport({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Received: {reportData?.dateReceived || ""}</Box>
+                    <Box>Date Received: {reportData?.PurchaseOrder?.dateOfDelivery || ""}</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -446,7 +445,7 @@ export default function InspectionAcceptanceReport({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: reportData?.isComplete
+                            backgroundColor: reportData?.PurchaseOrder.status
                               ? "#ccc"
                               : "transparent",
                           }}
@@ -465,7 +464,7 @@ export default function InspectionAcceptanceReport({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: !reportData?.isComplete
+                            backgroundColor: !reportData?.PurchaseOrder.status
                               ? "#ccc"
                               : "transparent",
                           }}

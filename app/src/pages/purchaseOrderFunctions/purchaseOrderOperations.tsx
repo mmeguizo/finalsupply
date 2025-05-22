@@ -14,9 +14,10 @@ export const handleSavePurchaseOrder = async (
   try {
       //remove id , typname and iarId
     const cleanedItems = formData.items.map((item: any) => {
-      const { __typename, iarId, id, ...cleanItem } = item;
+      const { __typename, iarId, ...cleanItem } = item;
       return cleanItem;
     });
+    console.log(cleanedItems, "cleanedItems");
     const { __typename, ...cleanFormData } = formData;
     cleanFormData.items = cleanedItems;
     let updatedPO: any;

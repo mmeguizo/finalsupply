@@ -8,7 +8,7 @@ import DrawIcon from '@mui/icons-material/Draw';
 //@ts-ignore
 import AddBusinessIcon from "@mui/icons-material/AddBusiness";
 import type { Navigation } from "@toolpad/core/AppProvider";
-
+import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 export const ALL_NAVIGATION: Navigation = [
   {
     kind: "header",
@@ -35,7 +35,12 @@ export const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "ics-lv-hv",
-    title: "ICS",
+    title: "Inventory Custodian Slip",
     icon: React.createElement(AddBusinessIcon) ,
+  },
+  {
+    segment: "requisition",
+    title: "Requisition Issue Slip",
+    icon: React.createElement(DocumentScannerIcon) ,
   },
 ];

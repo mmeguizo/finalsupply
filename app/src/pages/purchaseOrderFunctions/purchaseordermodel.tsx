@@ -115,8 +115,6 @@ export default function PurchaseOrderModal({
       if(purchaseOrder.status === "completed"){
         setAddItemButtonDisable(true);
       }
-      console.log(purchaseOrder.status);
-      console.log(addItemButton);
       // Map items properly before setting state
       const mappedItems = purchaseOrder.items.map((item: any) => {
         return {
@@ -239,12 +237,12 @@ export default function PurchaseOrderModal({
   const onSubmit = () => {
     // Clean items - remove __typename and handle _id appropriately
     const cleanedItems = formData.items.map((item: any) => {
-      
       delete item.recievelimit;
       // delete this since we will increment this on the backend no need an input here
       delete item.actualQuantityReceived;
       //remove later for test purposes
       item.itemName = "";
+      item.id = item.id ? item.id : "temp"
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
@@ -264,14 +262,10 @@ export default function PurchaseOrderModal({
     // Remove __typename, status from the main object if it exists
 
     const { status, ...cleanData } = formattedData;
-
-
     setAddingItem(false);
-    console.log(cleanData)
+    console.log(cleanData);
     handleSave(cleanData);
   };
-
-  console.log(formData.items);
 
 
   return (

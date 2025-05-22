@@ -2,11 +2,19 @@ import { GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import PreviewIcon from "@mui/icons-material/Preview";
-
+import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
+import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
+import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 // Define columns for inventory items
 export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
 ): GridColDef[] => [
+  {
+    field: "icsId",
+    headerName: "ICS ID",
+    width: 100,
+    // valueGetter: (params: any) => params.poNumber,
+  },
   {
     field: "tag",
     headerName: "Tag",
@@ -48,18 +56,25 @@ export const createItemColumns = (
   },
   {
     field: "print",
-    headerName: "Print",
+    headerName: "Printed",
     width: 100,
-    renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={(e: any) => {
-            e.stopPropagation(); // Prevent row selection
-            handleOpenPrintModal(params.row);
+    renderCell: (params: GridRenderCellParams) => {
+      return (
+        <div
+          style={{
+            paddingTop: "8px",
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
           }}
         >
-          <PreviewIcon fontSize="large" />
-        </Button>
-    ),
+          {params.row.icsId ? (
+            <PrintDisabledIcon color="disabled" />
+          ) : (
+            <LocalPrintshopIcon color="success" />
+          )}
+        </div>
+      );
+    },
   },
 ];
