@@ -23,6 +23,28 @@ type PurchaseOrder {
     createdAt: String
     completed_status_date : String
 }
+type InspectionAcceptanceReport {
+    id: ID!
+    supplier: String
+    address: String
+    poNumber: Int
+    modeOfProcurement: String
+    email: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
+    items: [Item!]
+    amount: Float
+    category: String
+    status: String
+    invoice: String
+    isDeleted: Boolean
+    createdAt: String
+    completed_status_date : String
+}
 
 type Item {
     id: ID!
@@ -66,6 +88,24 @@ type ItemWithPurchaseOrder {
 }
 
 type PurchaseOrderType {
+    poNumber: Int
+    supplier: String
+    address: String
+    modeOfProcurement: String
+    email: String
+    telephone: String
+    placeOfDelivery: String
+    dateOfDelivery: String
+    dateOfPayment: String
+    deliveryTerms: String
+    paymentTerms: String
+    amount: Float
+    category: String
+    status: String
+    invoice: String
+}
+
+type InspectionAcceptanceReportType {
     poNumber: Int
     supplier: String
     address: String

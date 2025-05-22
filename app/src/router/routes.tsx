@@ -9,6 +9,7 @@ import icsLowHighVolume from "../pages/icsLowHighVolume";
 import { ProtectedRoute } from "../auth/protected";
 import PurchaseOrder from "../pages/purchaseorder";
 import InventoryPage from "../pages/inventory";
+import RequisitionPage from "../pages/requisition";
 
 export const router = createBrowserRouter([
   {
@@ -59,6 +60,16 @@ export const router = createBrowserRouter([
               {
                 path: "",
                 Component: icsLowHighVolume,
+              },
+            ],
+          },
+          {
+            path: "/requisition",
+            element: <ProtectedRoute routePath="requisition" />,
+            children: [
+              {
+                path: "",
+                Component: RequisitionPage,
               },
             ],
           },

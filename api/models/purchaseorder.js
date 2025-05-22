@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db/connectDB.js";
 import PurchaseOrderItems from "./purchaseorderitems.js";
+import InspectionAcceptanceReport from "./inspectionacceptancereport.js";
 const PurchaseOrder = sequelize.define(
   "PurchaseOrder",
   {
@@ -92,5 +93,7 @@ const PurchaseOrder = sequelize.define(
 // You may add associations if necessary (e.g., PurchaseOrder has many PurchaseOrderItems)
 
 PurchaseOrder.hasMany(PurchaseOrderItems, { foreignKey: "purchaseOrderId" });
+PurchaseOrder.hasMany(InspectionAcceptanceReport, { foreignKey: "purchaseOrderId" });
 PurchaseOrderItems.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
+InspectionAcceptanceReport.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 export default PurchaseOrder;

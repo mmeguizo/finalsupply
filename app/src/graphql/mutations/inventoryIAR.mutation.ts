@@ -28,35 +28,25 @@ export const ADD_PURCHASEORDER = gql`
   }
 `;
 
-export const UPDATE_PURCHASEORDER = gql`
-  mutation UpdatePurchaseOrder($input: UpdatePurchaseOrderInput!) {
-    updatePurchaseOrder(input: $input) {
+export const UPDATE_ICSID = gql`
+  mutation updateICSInventoryIDs($input: ICSUpdateInput!) {
+    updateICSInventoryIDs(input: $input) {
       id
-      supplier
-      address
-      poNumber
-      telephone
-      placeOfDelivery
-      dateOfDelivery
-      dateOfPayment
-      deliveryTerms
-      paymentTerms
-      category
-      status
-      completed_status_date
-      items {
-        id
-        description
-        unit
-        quantity
-        unitCost
-        amount
-        category
-        isDeleted
-        actualQuantityReceived
-      }
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
       amount
-      invoice
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
     }
   }
 `;
@@ -70,3 +60,4 @@ export const DELETE_PURCHASEORDER = gql`
     }
   }
 `;
+

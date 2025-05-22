@@ -20,17 +20,11 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import PrintIcon from "@mui/icons-material/Print";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
 //@ts-ignore
 import AddIcon from "@mui/icons-material/Add";
 export function CustomToolbarForTable({
   props,
-  onExportWithItems,
-  onPrintWithItems,
-  onPrintSelectedWithItems,
-  onAddPO,
+  printICS,
 }: any) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -43,6 +37,16 @@ export function CustomToolbarForTable({
     setAnchorEl(null);
   };
 
+  // const dataArray = [ ...props?.data?.inspectionAcceptanceReportForICS]
+  // const idList = [ ...props?.rowSelectionModel]
+// const { data, rowSelectionModel } = props;
+// const filteredData = data?.filter((item : any) => rowSelectionModel.includes(item.id));
+// console.log(idList)
+// console.log(dataArray)
+// console.log(props.data?.inspectionAcceptanceReportForICS)
+// console.log(props?.rowSelectionModel)
+// console.log(props.data?.inspectionAcceptanceReportForICS.filter((id : any) => props.rowSelectionModel.includes(id)))
+console.log(props)
   return (
     <GridToolbarContainer>
       <GridToolbarColumnsButton />
@@ -51,12 +55,12 @@ export function CustomToolbarForTable({
       <Button
         color="primary"
         startIcon={<AddIcon />}
-        onClick={() => onAddPO()}
+        onClick={() => printICS(props.selectedItems)}
         sx={{ ml: 1 }}
       >
-        Add PO
+        PRINT
       </Button>
-      <Tooltip title="Export">
+      {/* <Tooltip title="Export">
         <Button
           startIcon={<FileDownloadIcon />}
           onClick={() => onExportWithItems(props.data)}
@@ -72,7 +76,7 @@ export function CustomToolbarForTable({
         sx={{ ml: 1 }}
       >
         Print
-      </Button>
+      </Button> */}
       {/* <Button
         startIcon={<PrintIcon />}
         onClick={handlePrintClick}

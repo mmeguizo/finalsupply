@@ -69,7 +69,8 @@ export default function InventoryCustodianSlip({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
-  
+  console.log({signatories: signatories})
+  // const { inspectionOfficer , supplyOfficer, receivedFrom } = signatories
   // Create and inject print styles dynamically
   useEffect(() => {
     // Create a style element
@@ -112,6 +113,19 @@ export default function InventoryCustodianSlip({
       document.head.removeChild(style);
     };
   }, []);
+
+  // Check if reportData is an array, if not, convert it to an array for consistent handling
+  const itemsArray = Array.isArray(reportData) 
+    ? reportData.filter(item => item !== null && item !== undefined) 
+    : (reportData ? [reportData] : []);
+  
+  // Calculate total amount from all items
+  const totalAmount = itemsArray.reduce((sum, item) => {
+    return sum + (item?.amount || 0);
+  }, 0);
+  
+  // Format the total amount
+  const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
 
   return (
     <>
@@ -224,10 +238,10 @@ export default function InventoryCustodianSlip({
                           }}
                         >
                           <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                            ISC No:
+                            ISC No: 
                           </Typography>
                           <Box sx={{ borderBottom: "1px solid #000" }}>
-                            {reportData?.poNumber || ""}
+                            {itemsArray[0]?.icsId || ""}
                           </Box>
                         </Box>
                       </Box>
@@ -247,7 +261,7 @@ export default function InventoryCustodianSlip({
                         Entity Name: Carlos Hilado Memorial State University
                       </Typography>
                       <Typography sx={{ fontSize: "14px" }}>
-                        Date: {reportData?.PurchaseOrder?.dateOfDelivery || ""}
+                        Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
                       </Typography>
                     </Box>
                   </Box>
@@ -271,16 +285,22 @@ export default function InventoryCustodianSlip({
             </TableHead>
 
             <TableBody>
-              {reportData ? (
-                <StyledTableRow key={reportData?.id}>
-                  <StyledTableCell align="center">{reportData.quantity}</StyledTableCell>
-                  <StyledTableCell align="center">{reportData.unit}</StyledTableCell>
-                  <StyledTableCell align="right">{reportData.formatUnitCost}</StyledTableCell>
-                  <StyledTableCell align="right">{reportData.formatAmount}</StyledTableCell>
-                  <StyledTableCell colSpan={2} align="left">{reportData.description}</StyledTableCell>
-                  <StyledTableCell align="center">{reportData.id}</StyledTableCell>
-                  <StyledTableCell align="center">5 years</StyledTableCell>
-                </StyledTableRow>
+              {itemsArray && itemsArray.length > 0 ? (
+                itemsArray.map((item, index) => (
+                  <StyledTableRow key={item?.id || index}>
+                    <StyledTableCell align="center">{item?.quantity || ''}</StyledTableCell>
+                    <StyledTableCell align="center">{item?.unit || ''}</StyledTableCell>
+                    <StyledTableCell align="right">
+                      {item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : '')}
+                    </StyledTableCell>
+                    <StyledTableCell align="right">
+                      {item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}
+                    </StyledTableCell>
+                    <StyledTableCell colSpan={2} align="left">{item?.description || ''}</StyledTableCell>
+                    <StyledTableCell align="center">{item?.id || ''}</StyledTableCell>
+                    <StyledTableCell align="center">5 years</StyledTableCell>
+                  </StyledTableRow>
+                ))
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
@@ -295,7 +315,7 @@ export default function InventoryCustodianSlip({
               
               <StyledTableRow>
                 <StyledTableCell colSpan={3} align="right" sx={{ fontWeight: 600 }}>Total</StyledTableCell>
-                <StyledTableCell align="right">{reportData?.formatAmount || reportData?.amount}</StyledTableCell>
+                <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell>
                 <StyledTableCell colSpan={4}></StyledTableCell>
               </StyledTableRow>
             
@@ -333,8 +353,9 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
+                        <span>{signatories.receivedFrom}</span> 
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{reportData?.PurchaseOrder?.supplier || ""}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -348,7 +369,7 @@ export default function InventoryCustodianSlip({
                     >
                       <Typography>Signature over Printed Name</Typography>
                       <Typography>Position/Office</Typography>
-                      <Typography>Date: {reportData?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
+                      <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -375,6 +396,7 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
+                       <span>{signatories.supplyOfficer}</span>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Custodian</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
@@ -390,7 +412,7 @@ export default function InventoryCustodianSlip({
                     >
                       <Typography>Signature over Printed Name</Typography>
                       <Typography>Position/Office</Typography>
-                      <Typography>Date: {reportData?.PurchaseOrder?.dateOfPayment || ""}</Typography>
+                      <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>

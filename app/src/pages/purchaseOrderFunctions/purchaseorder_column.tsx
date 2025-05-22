@@ -61,11 +61,10 @@ export const createPoColumns = (
         const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
           refetchQueries: ["GET_PURCHASEORDERS", "GET_ALL_PURCHASEORDER_ITEMS"],
         });
-
         // Check if all items have received quantities equal to their total quantities
-        const allItemsComplete = params.row.items?.every(
+        const allItemsComplete = params.row.items.length ? params.row.items.every(
           (item: any) => item.quantity === item.actualQuantityReceived && item.quantity > 0
-        );
+        ) : false;
 
         const handleMarkComplete = async (e: React.MouseEvent) => {
           e.stopPropagation(); // Prevent row selection

@@ -15,13 +15,13 @@ import { DataGrid, GridRowParams, GridToolbar } from "@mui/x-data-grid";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import PreviewIcon from "@mui/icons-material/Preview";
 //@ts-ignore
-import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query";
-import PrintReportDialog from "../components/printReportModal";
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
+import PrintReportDialogForIAR from "../components/printReportModalForIAR";
 import { createItemColumns } from "./inventoryFunctions/inventory_gridColDef";
 
 export default function InventoryPage() {
   const client = useApolloClient();
-  const { data, loading, error, refetch } = useQuery(GET_ALL_PURCHASEORDER_ITEMS);
+  const { data, loading, error, refetch } = useQuery(GET_ALL_INSPECTION_ACCEPTANCE_REPORT);
   const { allPurchaseOrderItems } = data || {};
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -37,10 +37,12 @@ export default function InventoryPage() {
   // }, []);
 
   const handleOpenPrintModal = (po: any) => {
-    console.log("printPOI", po);
     const reportTitle = po.category.split(" ")
     const reportTitleString = reportTitle.map((word : string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-    setReportType(reportTitle[0]);
+    //TODO : add the inspectionslip report here
+    // manually set the report type and title
+    // setReportType("inspection");
+    setReportType("inspection");
     setTitle(`${reportTitleString} Report`);
     setPrintPOI(po);
     setOpenPrintModal(true);
@@ -58,9 +60,9 @@ export default function InventoryPage() {
   );
 
   const poRows = React.useMemo(() => {
-    if (!data?.allPurchaseOrderItems) return [];
+    if (!data?.inspectionAcceptanceReport.length) return [];
 
-    return data.allPurchaseOrderItems.map((po: any) => {
+    return data.inspectionAcceptanceReport.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
       const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
 
@@ -82,7 +84,7 @@ export default function InventoryPage() {
     <Stack spacing={3}  sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
       <Paper sx={{ width: "100%" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {data && data.allPurchaseOrderItems && (
+            {data && data.inspectionAcceptanceReport && (
               <DataGrid
                 rows={poRows}
                 columns={itemColumns}
@@ -105,7 +107,7 @@ export default function InventoryPage() {
           </div>
       </Paper>
     </Stack>
-    <PrintReportDialog
+    <PrintReportDialogForIAR
         open={openPrintModal}
         handleClose={handleClosePrintModal}
         reportData={printPOI}

@@ -27,7 +27,7 @@ export const createItemColumns = (
   {
     field: "PurchaseOrder",
     headerName: "P.O. #",
-    width: 150,
+    width: 80,
     valueGetter: (params: any) => params.poNumber,
   },
   { field: "description", headerName: "Description", width: 300, flex: 1 },
