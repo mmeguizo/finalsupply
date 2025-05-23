@@ -17,7 +17,6 @@ export const handleSavePurchaseOrder = async (
       const { __typename, iarId, ...cleanItem } = item;
       return cleanItem;
     });
-    console.log(cleanedItems, "cleanedItems");
     const { __typename, ...cleanFormData } = formData;
     cleanFormData.items = cleanedItems;
     let updatedPO: any;

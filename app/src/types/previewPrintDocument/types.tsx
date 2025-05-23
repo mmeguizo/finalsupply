@@ -32,6 +32,46 @@ interface InspectionAcceptanceReportProps {
 
 // ... existing code ...
 
+interface InspectionAcceptanceReportPropsForRIS {
+  reportData: [
+    {
+      id: string;
+      itemName: string;
+      purchaseOrderId: string;
+      description: string;
+      unit: string;
+      quantity: number;
+      unitCost: number;
+      amount: number;
+      actualQuantityReceived: number;
+      category: string;
+      isDeleted: boolean;
+      tag: string;
+      iarId: string;
+      risId: string;
+      formatAmount: string;
+      formatUnitCost: string;
+      PurchaseOrder: {
+        poNumber: string | number;
+        supplier: string;
+        address: string;
+        telephone: string;
+        placeOfDelivery: string;
+        dateOfDelivery: string;
+        dateOfPayment: string;
+        deliveryTerms: string;
+        paymentTerms: string;
+        category: string;
+        status: string;
+        amount: number;
+        invoice: string;
+      };
+    },
+  ];
+  signatories?: any;
+  onPrint?: () => void;
+  onClose?: () => void;
+}
 interface InspectionAcceptanceReportPropsForIAR {
   reportData: {
     id: string;
@@ -83,4 +123,5 @@ export type {
   InspectionAcceptanceReportProps,
   genericPreviewProps,
   InspectionAcceptanceReportPropsForIAR,
+  InspectionAcceptanceReportPropsForRIS,
 };

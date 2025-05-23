@@ -35,11 +35,8 @@ export default function icsLowHighVolume() {
   const [rowSelectionModel, setRowSelectionModel] =  React.useState<GridRowSelectionModel>([]);
   const [dataToPrint, setDataToPrint] = React.useState([])
   const handleOpenPrintModal = (item: any) => {
-    console.log({handleOpenPrintModal : item})
     const reportTitle = item[0].category.split(" ")
-    console.log({reportTitle})
     const reportTitleString = reportTitle.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-    console.log({reportTitleString})
     setReportType(reportTitle);
     setTitle(`${reportTitleString} Report`);
     setPrintItem(item);

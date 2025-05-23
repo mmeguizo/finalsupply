@@ -12,7 +12,7 @@ import {
   styled,
   Button,
 } from "@mui/material";
-import { InspectionAcceptanceReportProps } from "../../types/previewPrintDocument/types";
+import { InspectionAcceptanceReportPropsForRIS } from "../../types/previewPrintDocument/types";
 import useSignatoryStore from "../../stores/signatoryStore";
 import { Divider } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
@@ -69,11 +69,13 @@ export default function InspectionAcceptanceReport({
   reportData,
   onPrint,
   onClose,
-}: InspectionAcceptanceReportProps) {
-  console.log(reportData, "reportData");
+}: InspectionAcceptanceReportPropsForRIS) {
   const componentRef = useRef(null);
   // const { signatories, loading, error } = useSignatoryStore();
   // Get specific signatories by role
+
+  console.log("reportData", reportData);
+
   const InspectorOffice = useSignatoryStore((state) =>
     state.getSignatoryByRole("Inspector Officer")
   );
@@ -126,13 +128,17 @@ export default function InspectionAcceptanceReport({
     };
   }, []);
 
-  //   const handlePrint = () => {
-  //     if (onPrint) {
-  //       onPrint();
-  //     } else {
-  //       window.print();
-  //     }
-  //   };
+  const itemsArray = Array.isArray(reportData) 
+  ? reportData.filter(item => item !== null && item !== undefined) 
+  : (reportData ? [reportData] : []);
+    // Calculate total amount from all items
+    const totalAmount = itemsArray.reduce((sum, item) => {
+      return sum + (item?.amount || 0);
+    }, 0);
+    
+    // Format the total amount
+    const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
+  
 
   return (
     <>
@@ -239,7 +245,7 @@ export default function InspectionAcceptanceReport({
                           alignItems: "end",
                         }}
                       >
-                        No.
+                        No. {itemsArray[0]?.risId || ""}
                       </Box>
                       <Box
                         sx={{
@@ -274,7 +280,7 @@ export default function InspectionAcceptanceReport({
                   Supplier:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={6}>
-                  {reportData?.supplier || ""}
+                  {itemsArray[0]?.PurchaseOrder?.supplier || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -283,17 +289,17 @@ export default function InspectionAcceptanceReport({
                   PO # & Date:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.poNumber || ""}
+                  {itemsArray[0]?.PurchaseOrder?.poNumber || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.poDate || ""}
+                  {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>Invoice# & Date:</StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={2}>
-                  {reportData?.invoice || ""}
+                  {itemsArray[0]?.PurchaseOrder?.invoice || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.invoiceDate || ""}
+                  {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -302,7 +308,7 @@ export default function InspectionAcceptanceReport({
                   Requisitioning Office/Department:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={5}>
-                  {reportData?.department || ""}
+                  {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -319,8 +325,8 @@ export default function InspectionAcceptanceReport({
             </TableHead>
 
             <TableBody>
-              {reportData?.items?.length > 0 ? (
-                reportData.items.map((item, index) => (
+              {itemsArray?.length > 0 ? (
+                itemsArray.map((item : any, index : any) => (
                   <StyledTableRow key={index}>
                     <StyledTableCell>{index + 1}</StyledTableCell>
                     <StyledTableCell>{item.unit}</StyledTableCell>
@@ -349,7 +355,7 @@ export default function InspectionAcceptanceReport({
                 <StyledTableCell colSpan={4}></StyledTableCell>
                 <StyledTableCell>Total</StyledTableCell>
                 <StyledTableCell>
-                  {reportData?.formatAmount || ""}
+                {formatTotalAmount}
                 </StyledTableCell>
               </StyledTableRow>
 
@@ -362,7 +368,7 @@ export default function InspectionAcceptanceReport({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Inspected: {reportData?.dateInspected || ""}</Box>
+                    <Box>Date Inspected: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -422,7 +428,7 @@ export default function InspectionAcceptanceReport({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Received: {reportData?.dateReceived || ""}</Box>
+                    <Box>Date Received: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery  || ""}</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -446,7 +452,7 @@ export default function InspectionAcceptanceReport({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: reportData?.isComplete
+                            backgroundColor: itemsArray[0]?.PurchaseOrder?.status === "complete"
                               ? "#ccc"
                               : "transparent",
                           }}
@@ -465,7 +471,7 @@ export default function InspectionAcceptanceReport({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: !reportData?.isComplete
+                            backgroundColor: itemsArray[0]?.PurchaseOrder?.status !== "complete"
                               ? "#ccc"
                               : "transparent",
                           }}

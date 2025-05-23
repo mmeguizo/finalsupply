@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
+import useSignatoryStore from "../../stores/signatoryStore";
+import { capitalizeFirstLetter } from "../../utils/generalUtils";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -69,6 +71,16 @@ export default function PropertyAcknowledgementReceipt({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
+
+  const InspectorOffice = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Inspector Officer")
+  );
+  const supplyOffice = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Property And Supply Officer")
+  );
+  const receivedFrom = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Recieved From")
+  );
   // Create and inject print styles dynamically
   useEffect(() => {
     // Create a style element
@@ -111,6 +123,25 @@ export default function PropertyAcknowledgementReceipt({
       document.head.removeChild(style);
     };
   }, []);
+
+    // Check if reportData is an array, if not, convert it to an array for consistent handling
+    const itemsArray = Array.isArray(reportData) 
+    ? reportData.filter(item => item !== null && item !== undefined) 
+    : (reportData ? [reportData] : []);
+  
+  // Calculate total amount from all items
+  const totalAmount = itemsArray.reduce((sum, item) => {
+    return sum + (item?.amount || 0);
+  }, 0);
+  const totalUnitCost = itemsArray.reduce((sum, item) => {
+    return sum + (item?.unitCost || 0);
+  }, 0);
+  
+  // Format the total amount
+  // Format the total amount
+  const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
+  const formatTotalUnitCost = `₱${totalUnitCost.toFixed(2)}`;
+
 
   return (
     
@@ -210,7 +241,7 @@ export default function PropertyAcknowledgementReceipt({
                           fontWeight: 600
                         }}
                       >
-                        PAR#: {reportData?.poNumber || ""}
+                        PAR#: {reportData && reportData[0]?.parId || ""}
                       </Box>
                     </Box>
 
@@ -256,16 +287,17 @@ export default function PropertyAcknowledgementReceipt({
 
             <TableBody>
             
-              {reportData ? (
+            {reportData ? 
+                reportData.map((reportData : any, index : any) => (
                   <StyledTableRow key={reportData?.id}>
-                    <StyledTableCell  align="left">{reportData.quantity}</StyledTableCell>
-                    <StyledTableCell  align="left">{reportData.unit}</StyledTableCell>
-                    <StyledTableCell  align="right" colSpan={2}>{reportData.description}</StyledTableCell>
-                    <StyledTableCell  align="right">{reportData.unitCost}</StyledTableCell>
+                    <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
+                    <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
+                    <StyledTableCell align="right" colSpan={2}>{reportData.description}</StyledTableCell>
+                    <StyledTableCell align="right">{reportData.unitCost}</StyledTableCell>
                     <StyledTableCell align="right">{reportData.amount}</StyledTableCell>
                   </StyledTableRow>
-                )
-               : (
+                ))
+              : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
@@ -273,14 +305,14 @@ export default function PropertyAcknowledgementReceipt({
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
-              )}
+              )  }
 
               <StyledTableRow>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell align="right" colSpan={2} sx={{ paddingLeft: "14%", fontWeight: 600 }}>Total</StyledTableCell>
-                <StyledTableCell  align="right">{reportData?.formatUnitCost}</StyledTableCell>
-                <StyledTableCell align="right">{reportData?.formatAmount || reportData?.amount}</StyledTableCell>
+                <StyledTableCell  align="right">{formatTotalUnitCost}</StyledTableCell>
+                <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
@@ -316,7 +348,7 @@ export default function PropertyAcknowledgementReceipt({
                       }}
                     >
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{reportData?.supplier || ""}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{reportData?.PurchaseOrder?.supplier || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -328,7 +360,7 @@ export default function PropertyAcknowledgementReceipt({
                         gap: "3px"
                       }}
                     >
-                      Date: {reportData?.dateOfDelivery || ""}
+                      Date: {reportData?.PurchaseOrder?.dateOfDelivery || ""}
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -345,8 +377,8 @@ export default function PropertyAcknowledgementReceipt({
                       sx={{
                         display: "flex",
                         flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
+                        padding: "0px 40px",
+                        gap: "10px",
                         height: "125px",
                         marginTop: "5px",
                         alignContent: "stretch",
@@ -355,19 +387,23 @@ export default function PropertyAcknowledgementReceipt({
                         textAlign: "center"
                       }}
                     >
+                        {capitalizeFirstLetter(InspectorOffice?.name)}
+                      <Divider sx={{ width: "100%", margin: "0px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Signature over Printed Name</Typography>
+                      {capitalizeFirstLetter(InspectorOffice?.role)}
+                      <Divider sx={{ width: "100%", margin: "0px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Position / Office</Typography>
                     </Box>
                     <Box
                       sx={{
                         textAlign: "center",
-                        margin: "0 auto",
+                        margin: "0 0",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "3px"
+                        gap: "2px"
                       }}
                     >
-                      Date: {reportData?.dateOfPayment || ""}
+                      Date: {reportData?.PurchaseOrder?.dateOfPayment || ""}
                     </Box>
                   </Box>
                 </StyledTableCell>

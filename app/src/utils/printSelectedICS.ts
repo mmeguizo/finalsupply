@@ -7,9 +7,6 @@ export const printSelectedICS = (icsData: any) => {
         // put the array into an object
         data = icsData.icsData;
     }
-    
-    console.log(typeof icsData);
-    console.log(icsData);
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert("Please allow popups to print Inventory Custodian Slip.");

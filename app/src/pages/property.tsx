@@ -1,3 +1,14 @@
+// import * as React from "react";
+// import Typography from "@mui/material/Typography";
+// export default function PropertyPage() {
+//   return (
+//     <div>
+//       <Typography variant="h1" component="h2">
+//       PropertyPage
+//       </Typography>
+//     </div>
+//   );
+// }
 
 import * as React from "react";
 import { useQuery, useApolloClient } from "@apollo/client";
@@ -15,19 +26,19 @@ import {
 import { DataGrid, GridRowParams, GridToolbar, GridRowSelectionModel } from "@mui/x-data-grid";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import PreviewIcon from "@mui/icons-material/Preview";
-import PrintReportDialogForRIS from "../components/printReportModalForRIS";
-import { createItemColumns } from "./risFunctions/ris_gridColDef";
-import {CustomToolbarForTable } from "../layouts/ui/customtoolbarforris"
+import PrintReportDialogForPAR from "../components/printReportModalForPAR";
+import { createItemColumns } from "./parFunctions/par_gridColDef";
+import {CustomToolbarForTable } from "../layouts/ui/customtoolbarforpar"
 import useSignatoryStore from "../stores/signatoryStore";
 import { capitalizeFirstLetter } from "../utils/generalUtils";
 
 
 //@ts-ignore
 // import { GET_ALL_ICS_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query";
-import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
-export default function RequisitionPage() {
+import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
+export default function PropertyPage() {
   const client = useApolloClient();
-  const { data, loading, error, refetch } = useQuery(GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY);
+  const { data, loading, error, refetch } = useQuery(GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY);
   const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
   const [reportType, setReportType] = React.useState("");
@@ -74,8 +85,8 @@ export default function RequisitionPage() {
 
 
   const poRows = React.useMemo(() => {
-    if (!data?.requisitionIssueSlipForView) return [];
-    return data.requisitionIssueSlipForView.map((po: any) => {
+    if (!data?.propertyAcknowledgmentReportForView) return [];
+    return data.propertyAcknowledgmentReportForView.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
       const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
       const isPrinted = po.icsId ? true : false
@@ -127,7 +138,7 @@ export default function RequisitionPage() {
                   CustomToolbarForTable({
                     props: { 
                       ...props, 
-                      selectedItems: data?.requisitionIssueSlipForView.filter((item: any) => 
+                      selectedItems: data?.propertyAcknowledgmentReportForView.filter((item: any) => 
                         rowSelectionModel.includes(item.id)
                       ),
                     },
@@ -137,13 +148,13 @@ export default function RequisitionPage() {
               onRowSelectionModelChange={(newRowSelectionModel) => {
                 setRowSelectionModel(newRowSelectionModel);
               }}
-              isRowSelectable={(params: GridRowParams) => !params.row.risId }
+              isRowSelectable={(params: GridRowParams) => !params.row.parId }
               rowSelectionModel={rowSelectionModel}
             />
           </div>
         </Paper>
       </Stack>
-      <PrintReportDialogForRIS
+      <PrintReportDialogForPAR
         open={openPrintModal}
         handleClose={handleClosePrintModal}
         reportData={printItem}

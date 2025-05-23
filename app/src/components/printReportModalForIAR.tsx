@@ -42,11 +42,9 @@ export default function PrintReportDialogForIAR({
     receivedFrom: capitalizeFirstLetter(receivedFrom?.name),
   };
 
-  // console.log(reportType, "reportType");
   const [showPrintView, setShowPrintView] = useState(false);
 
   const getReportTemplate = (data: any) => {
-    console.log(reportType, "reportType");
     // Determine the report template based on reportType
     switch (reportType) {
       case "property":

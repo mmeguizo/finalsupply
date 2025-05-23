@@ -4,11 +4,13 @@ import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 //@ts-ignore
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
-import DrawIcon from '@mui/icons-material/Draw';
+import DrawIcon from "@mui/icons-material/Draw";
 //@ts-ignore
 import AddBusinessIcon from "@mui/icons-material/AddBusiness";
 import type { Navigation } from "@toolpad/core/AppProvider";
-import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
+import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
+//@ts-ignore
+import CabinIcon from '@mui/icons-material/Cabin';
 export const ALL_NAVIGATION: Navigation = [
   {
     kind: "header",
@@ -29,18 +31,23 @@ export const ALL_NAVIGATION: Navigation = [
     icon: React.createElement(ShowChartIcon),
   },
   {
-    segment: "signatories",
-    title: "Signatories",
-    icon: React.createElement(DrawIcon),
-  },
-  {
     segment: "ics-lv-hv",
     title: "Inventory Custodian Slip",
-    icon: React.createElement(AddBusinessIcon) ,
+    icon: React.createElement(AddBusinessIcon),
   },
   {
     segment: "requisition",
     title: "Requisition Issue Slip",
-    icon: React.createElement(DocumentScannerIcon) ,
+    icon: React.createElement(DocumentScannerIcon),
+  },
+  {
+    segment: "property",
+    title: "Property Acknowledgement Reciept",
+    icon: React.createElement(CabinIcon),
+  },
+  {
+    segment: "signatories",
+    title: "Signatories",
+    icon: React.createElement(DrawIcon),
   },
 ];

@@ -123,7 +123,6 @@ export default function PurchaseOrderModal({
           currentInput: 0,
         };
       });
-      // console.log(mappedItems);
 
       // Set the formData with the latest purchaseOrder values
       setFormData({

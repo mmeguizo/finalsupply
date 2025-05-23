@@ -1,6 +1,50 @@
-export const getRequisitionAndIssueSlip = (reportData: any) => `
+export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) => {
+  // Check if reportData is an array, if not, convert it to an array for consistent handling
+  const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
+  const totalAmount = itemsArray.reduce((sum, item) => {
+    return sum + (item?.amount || 0);
+  }, 0);
+  // Format the total amount
+  const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
+  
+  const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
+  
+  // Generate rows for each item
+  const itemRows = itemsArray.map((item, index) => {
+    return `
+                <tr>
+                    <td>${item?.id || ''}</td>
+                    <td>${item?.purchaseOrderId || ''}</td>
+                    <td>${item?.unit || ''}</td>
+                    <td colspan="2">${item?.description || ''}</td>
+                    <td>${item?.quantity || ''}</td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td>${item?.actualQuantityReceived || ''}</td>
+                    <td></td>
+                </tr>
+    `;
+  }).join('');
+  
+  // Fill remaining rows with empty rows to maintain layout
+  const emptyRows = Array(Math.max(0, 5 - itemsArray.length))
+    .fill('')
+    .map(() => `
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+    `).join('');
+  
+  return `
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,18 +57,9 @@ export const getRequisitionAndIssueSlip = (reportData: any) => `
   padding: 0;
   box-sizing: border-box;
   font-weight: normal;
-  font-family: serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   font-size: 14px;
 }
-
-/* A4 size dimensions in millimeters */
-/* .page {
-  width: 210mm;
-  height: 297mm;
-  margin: 0 auto;
-  border: 1px solid #000;
-  padding: 0.25in;
-} */
 
 table {
   width: 100%;
@@ -69,7 +104,7 @@ table {
   }
   & th,
   & td {
-    border: 1px solid color-mix(in srgb, black 25%, white);
+    border: 1px solid color-mix(in srgb, black 50%, white);
     padding: 2px;
   }
   & th {
@@ -82,7 +117,7 @@ thead {
     & > th {
       & > div {
         display: grid;
-        grid-template-columns: 1fr 3fr 1fr;
+        grid-template-columns: 1fr 1.75fr 1fr;
         & > div {
           &:nth-child(1) {
             display: grid;
@@ -98,18 +133,21 @@ thead {
             place-items: center;
             align-content: center;
             text-align: center;
-            padding: 3rem 0px;
+            padding: 1rem 0px 3rem 0px;
             & > span {
-              font-weight: bold;
               text-transform: uppercase;
               display: block;
               &:first-child {
-                font-size: 10px;
-                font-style: italic;
+                font-size: 14px;
+                font-weight: lighter;
               }
               &:nth-child(2) {
-                margin: 0.25rem 0px 0.5rem 0px;
-                font-style: italic;
+                font-size: 16px;
+              }
+              &:last-child {
+                font-size: 16px;
+                font-weight: 900;
+                line-height: 1;
               }
             }
           }
@@ -124,11 +162,12 @@ thead {
               flex-direction: column;
               & > span:first-child {
                 font-style: italic;
-                font-size: 16px;
+                font-size: 14px;
+                font-family: serif;
               }
               & > span:last-child {
                 text-align: center;
-                font-size: 14px;
+                font-size: 12px;
               }
             }
             & > div {
@@ -184,6 +223,8 @@ thead {
       padding-top: 4px;
       padding-bottom: 4px;
       font-size: 12px;
+      line-height: 1;
+      height: 14px;
     }
   }
 }
@@ -191,19 +232,25 @@ thead {
 tbody {
   & > tr {
     & > td {
-      padding: 2px 4px;
+      padding: 2px 0px;
       font-size: 12px;
-      height: 24px;
+      height: 14px;
+      line-height: 1;
     }
   }
 }
 
 tfoot {
   & > tr {
+    &:first-child {
+      & > td {
+        font-weight: lighter;
+      }
+    }
     & > td {
-      padding: 2px 4px;
       font-size: 12px;
-      height: 24px;
+      line-height: 1;
+      height: 14px;
     }
     &.footer-1st-row {
       & > td:first-child {
@@ -243,8 +290,6 @@ tfoot {
     }
   }
 }
-
-
 </style>
 
 <body>
@@ -268,7 +313,7 @@ tfoot {
                     <th colspan="11">
                         <div>
                             <div>
-                                  <img src="chmsu-logo.png" alt="CHMSU Logo" />
+                                <img src="chmsu-logo.png" alt="CHMSU Logo">
                             </div>
                             <div>
                                 <span>Republic of the PHILIPPINES</span>
@@ -278,6 +323,7 @@ tfoot {
                             <div>
                                 <span>
                                     <span>Appendix 63</span>
+                                    <span>page 1/1</span>
                                 </span>
                                 <div>
                                     <span>Fund Cluster :</span>
@@ -301,7 +347,7 @@ tfoot {
                     <th colspan="3">
                         <div>
                             <span>Responsibility Center Code : <span></span></span>
-                            <span>RIS No. : ${reportData?.PurchaseOrder?.poNumber || ''}</span>
+                            <span>RIS No. : ${itemsArray[0]?.risId || ''}</span>
                         </div>
                     </th>
                 </tr>
@@ -323,443 +369,93 @@ tfoot {
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>${reportData?.id || ''}</td>
-                    <td>${reportData?.purchaseOrderId || ''}</td>
-                    <td>${reportData?.unit || ''}</td>
-                    <td colspan="2">${reportData?.description || ''}</td>
-                    <td>${reportData?.quantity || ''}</td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td>${reportData?.actualQuantityReceived || ''}</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+                ${itemRows}
+                ${emptyRows}
             </tbody>
             <tfoot>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td>Total</td>
+                    <td>${formatTotalAmount}</td>
+                </tr>
                 <tr class="footer-1st-row">
-                    <td colspan="6">Purpose:</td>
+                    <td colspan="6">
+                        <div style="display: flex; flex-direction: column; padding: 2px;">
+                            <div style="font-weight: 600;">Requested by:</div>
+                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
+                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
+                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
+                                    <div>Signature over Printed Name</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
+                                ${receivedFrom || ''}
+                                <hr style="width: 100%; margin: 5px 0;" />
+                                Designation
+                            </div>
+                        </div>
+                    </td>
                     <td colspan="5">
-                        <div>
-                            <span></span>
-                            <span></span>
-                            <span></span>
+                        <div style="display: flex; flex-direction: column; padding: 2px;">
+                            <div style="font-weight: 600;">Approved by:</div>
+                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
+                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
+                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
+                                    <div>Signature over Printed Name</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
+                                ${inspectionOfficer || ''}
+                                <hr style="width: 100%; margin: 5px 0;" />
+                                Designation
+                            </div>
                         </div>
                     </td>
                 </tr>
                 <tr class="footer-2nd-row">
-                    <td colspan="11">Requested by:</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Signature:</td>
-                    <td colspan="4">Approved by:</td>
-                    <td colspan="4">Issued by:</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Printed Name:</td>
-                    <td colspan="4">Signature:</td>
-                    <td colspan="4">Signature:</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Designation:</td>
-                    <td colspan="4">Printed Name:</td>
-                    <td colspan="4">Printed Name: ${reportData?.PurchaseOrder?.supplier || ''}</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Date: ${reportData?.PurchaseOrder?.dateOfDelivery || ''}</td>
-                    <td colspan="4">Designation:</td>
-                    <td colspan="4">Designation:</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3"></td>
-                    <td colspan="4">Date: ${reportData?.PurchaseOrder?.dateOfPayment || ''}</td>
-                    <td colspan="4">Date: ${reportData?.PurchaseOrder?.dateOfDelivery || ''}</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="11">Received by:</td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Signature:</td>
-                    <td colspan="8"></td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Printed Name:</td>
-                    <td colspan="8"></td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Designation:</td>
-                    <td colspan="8"></td>
-                </tr>
-                <tr class="footer-last-rows">
-                    <td colspan="3">Date:</td>
-                    <td colspan="8"></td>
+                    <td colspan="6">
+                        <div style="display: flex; flex-direction: column; padding: 2px;">
+                            <div style="font-weight: 600;">Issued by:</div>
+                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
+                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
+                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
+                                    <div>Signature over Printed Name</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
+                                ${supplyOfficer || ''}
+                                <hr style="width: 100%; margin: 5px 0;" />
+                                Designation
+                            </div>
+                        </div>
+                    </td>
+                    <td colspan="5">
+                        <div style="display: flex; flex-direction: column; padding: 2px;">
+                            <div style="font-weight: 600;">Received by:</div>
+                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
+                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
+                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
+                                    <div>Signature over Printed Name</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
+                                ${receivedFrom || ''}
+                                <hr style="width: 100%; margin: 5px 0;" />
+                                Designation
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             </tfoot>
         </table>
     </div>
 </body>
-
 </html>
 `;
+};
