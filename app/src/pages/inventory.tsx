@@ -76,7 +76,7 @@ export default function InventoryPage() {
   }, [data]);
 
   const handleRowClick = (params: GridRowParams) => {
-    console.log("Row clicked", params);
+    // console.log("Row clicked", params);
   };
 
   return (

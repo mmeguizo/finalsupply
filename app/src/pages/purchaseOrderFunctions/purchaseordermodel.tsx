@@ -123,7 +123,6 @@ export default function PurchaseOrderModal({
           currentInput: 0,
         };
       });
-      // console.log(mappedItems);
 
       // Set the formData with the latest purchaseOrder values
       setFormData({
@@ -263,7 +262,6 @@ export default function PurchaseOrderModal({
 
     const { status, ...cleanData } = formattedData;
     setAddingItem(false);
-    console.log(cleanData);
     handleSave(cleanData);
   };
 

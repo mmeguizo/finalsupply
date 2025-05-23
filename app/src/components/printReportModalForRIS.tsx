@@ -7,20 +7,13 @@ import {
   Button,
 } from "@mui/material";
 import InspectionAcceptanceReport from "./previewDocumentFiles/InspectionAcceptanceReport";
-import PropertyAcknowledgementReceipt from "./previewDocumentFiles/propertyAcknowledgementReceipt";
-import RequisitionAndIssueSlip from "./previewDocumentFiles/requisitionAndIssueSlip";
-import InventoryCustodianSlip from "./previewDocumentFiles/inventoryCustodianSlip";
-import { getInspectionReportTemplate } from "./printDocumentFiles/inspectionAcceptanceRerport";
-import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/propertyAcknowledgementReceipt";
+import RequisitionReport from "./previewDocumentFiles/requisitionAndIssueSlip";
 import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
-import { getInventoryTemplateForICS } from "./printDocumentFiles/inventoryCustodianslipPrinting";
 import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import { UPDATE_ICSID } from "../graphql/mutations/inventoryIAR.mutation";
-import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from "../graphql/queries/inspectionacceptancereport.query";
-export default function PrintReportDialogForICS({
+import { UPDATE_RISID } from "../graphql/mutations/requisitionIS.mutation";
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
+export default function PrintReportDialogForRIS({
   open,
   handleClose,
   reportData,
@@ -28,14 +21,13 @@ export default function PrintReportDialogForICS({
   title,
   signatories,
 }: InspectionReportDialogPropsForIAR) {
-  const [updateICSid] = useMutation(UPDATE_ICSID, {
-    refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS }],
+  const [updateICSid] = useMutation(UPDATE_RISID, {
+    refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
    
   });
-
-
+  
   const getReportTemplate = (data: any) => {
-    return getInventoryTemplateForICS(signatories, data);
+    return getRequisitionAndIssueSlip(signatories, data);
   };
 
   const handlePrintReport = async () => {
@@ -44,7 +36,6 @@ export default function PrintReportDialogForICS({
       const itemIds = Array.isArray(reportData) 
         ? reportData.map(item => item.id) 
         : [reportData.id];
-      
       // Call the mutation with the correct input format
       const result = await updateICSid({
         variables: {
@@ -53,7 +44,6 @@ export default function PrintReportDialogForICS({
           }
         }
       });
-      
       // Continue with printing
       const printWindow = window.open("", "_blank");
       if (printWindow) {
@@ -73,7 +63,7 @@ export default function PrintReportDialogForICS({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <InventoryCustodianSlip
+        <RequisitionReport
           signatories={signatories}
           reportData={reportData}
         />

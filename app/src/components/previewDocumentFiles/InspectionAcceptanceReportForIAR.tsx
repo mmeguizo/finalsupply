@@ -70,7 +70,6 @@ export default function InspectionAcceptanceReportForIAR({
   onPrint,
   onClose,
 }: InspectionAcceptanceReportPropsForIAR) {
-  console.log(reportData, "reportDataxxxx");
   const componentRef = useRef(null);
   // const { signatories, loading, error } = useSignatoryStore();
   // Get specific signatories by role
@@ -217,7 +216,7 @@ export default function InspectionAcceptanceReportForIAR({
                           variant="h6"
                           sx={{ fontSize: "14px", fontWeight: "normal" }}
                         >
-                          INSPECTION & ACCEPTANCE REPORT11
+                          INSPECTION & ACCEPTANCE REPORT
                         </Typography>
                       </Box>
                       <Box></Box>

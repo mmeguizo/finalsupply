@@ -69,7 +69,6 @@ export default function InventoryCustodianSlip({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
-  console.log({signatories: signatories})
   // const { inspectionOfficer , supplyOfficer, receivedFrom } = signatories
   // Create and inject print styles dynamically
   useEffect(() => {

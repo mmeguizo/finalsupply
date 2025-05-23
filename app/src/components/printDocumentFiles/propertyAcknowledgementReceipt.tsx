@@ -1,4 +1,34 @@
-export const getPropertyAcknowledgementReciept = (reportData: any) =>`
+export const getPropertyAcknowledgementReciept = (signatories: any, reportData: any) => {
+  // Check if reportData is an array, if not, convert it to an array for consistent handling
+  const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
+  
+  // Generate rows for each item
+  const itemRows = itemsArray.map((item) => `
+    <tr>
+      <td>${item.quantity || ''}</td>
+      <td>${item.unit || ''}</td>
+      <td colspan="2">${item.description || ''}</td>
+      <td>${item.unitCost || ''}</td>
+      <td>${item.amount || ''}</td>
+    </tr>
+  `).join('');
+  
+  // Get the first item for header information
+  const firstItem = itemsArray[0] || {};
+  const poNumber = firstItem.PurchaseOrder?.poNumber || '';
+  const supplier = firstItem.PurchaseOrder?.supplier || '';
+  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || '';
+  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || '';
+  
+  // Calculate totals
+  const totalUnitCost = itemsArray.reduce((sum, item) => sum + (parseFloat(item.unitCost) || 0), 0);
+  const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  
+  // Format totals
+  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : totalUnitCost.toFixed(2);
+  const formatTotalAmount = isNaN(totalAmount) ? '' : totalAmount.toFixed(2);
+  
+  return `
 <html lang="en">
 
 <head>
@@ -250,7 +280,7 @@ table {
               <div>
                 <div></div>
                 <div></div>
-                <div>PAR#: ${reportData.PurchaseOrder.poNumber || ''}</div>
+                <div>PAR#: ${poNumber}</div>
               </div>
               <div>
                 <p>Appendix 71</p>
@@ -268,28 +298,15 @@ table {
         </tr>
       </thead>
       <tbody>
-     
-
-          ${reportData && (
-            `
-            <tr>
-            <td>${reportData.quantity || ''}</td>
-            <td>${reportData.unit || ''}</td>
-            <td colspan="2">${reportData.description || ''}</td>
-            <td>${reportData.unitCost || ''}</td>
-            <td>${reportData.amount || ''}</td>
-          </tr>
-          `
-          )}
-
+        ${itemRows}
       </tbody>
       <tfoot>
         <tr class="total-row">
           <td></td>
           <td></td>
           <td colspan="2">Total</td>
-          <td>${reportData?.formatUnitCost || reportData?.amount || ''}</td>
-          <td>${reportData?.formatAmount || reportData?.amount || ''}</td>
+          <td>${formatTotalUnitCost}</td>
+          <td>${formatTotalAmount}</td>
         </tr>
         <tr>
           <td colspan="6">Remarks:</td>
@@ -297,31 +314,32 @@ table {
         <tr>
           <td colspan="6"></td>
         </tr>
-        <td colspan="3">
-          <div>
-            <div>Received from:</div>
+        <tr>
+          <td colspan="3">
             <div>
-              <hr>
-              <p>${reportData?.PurchaseOrder?.supplier || ''}</p>
-              <hr>
+              <div>Received from:</div>
+              <div>
+                <hr>
+                <p>${supplier}</p>
+                <hr>
+              </div>
+              <div>
+                Date: ${dateOfDelivery}
+              </div>
             </div>
+          </td>
+          <td colspan="3">
             <div>
-              Date: ${reportData?.PurchaseOrder?.dateOfDelivery || ''}
+              <div>Received by:</div>
+              <div>
+                <p>Signature over Printed Name</p>
+                <p>Position / Office</p>
+              </div>
+              <div>
+                Date: ${dateOfPayment}
+              </div>
             </div>
-          </div>
-        </td>
-        <td colspan="3">
-          <div>
-            <div>Received by:</div>
-            <div>
-              <p>Signature over Printed Name</p>
-              <p>Position / Office</p>
-            </div>
-            <div>
-              Date: ${reportData?.PurchaseOrder?.dateOfPayment || ''}
-            </div>
-          </div>
-        </td>
+          </td>
         </tr>
       </tfoot>
     </table>
@@ -329,6 +347,5 @@ table {
 </body>
 
 </html>
-
-
 `;
+};

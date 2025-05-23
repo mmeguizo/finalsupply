@@ -6,4 +6,5 @@ export const ROUTE_ROLES = {
     inventory: ["user", "admin"],
     "ics-lv-hv": ["user", "admin"],
     requisition: ["user", "admin"],
+    property: ["user", "admin"],
   };
