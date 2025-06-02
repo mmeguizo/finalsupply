@@ -91,3 +91,34 @@ export const formatTimestampToDateTime = (timestampString: string | number): str
     // hour12: true, // Ensures AM/PM format
   });
 };
+export const formatTimestampToDateTimeForPrinting = (timestampString: string | number): string => {
+  console.log('timestampString', timestampString);
+  const timestamp = typeof timestampString === 'string'
+    ? parseInt(timestampString, 10)
+    : timestampString;
+
+  // Check for NaN after parsing, and also if the timestamp is a valid number
+  if (isNaN(timestamp) || typeof timestamp !== 'number') {
+    return 'Invalid Date';
+  }
+
+  const date = new Date(timestamp);
+
+  // Ensure the date object is valid before formatting
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date';
+  }
+
+  return date.toLocaleString('en-US', {
+    year : 'numeric',
+    month: '2-digit',
+    day: 'numeric',
+    // year: 'numeric',
+    // month: '2-digit',
+    // day: '2-digit',
+    // hour: '2-digit',
+    // minute: '2-digit',
+    // second: '2-digit',
+    // hour12: true, // Ensures AM/PM format
+  });
+};

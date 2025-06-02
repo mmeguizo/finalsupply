@@ -112,6 +112,55 @@ const inspectionAcceptanceReportResolver = {
         console.error("Error fetching unique inspection acceptance report data: ", error);
         throw new Error("Failed to retrieve unique inspection acceptance reports.");
       }
+    },
+    getIARItemsByIarId : async (_, { iarId }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+    
+        if (!iarId) {
+            throw new Error("IAR ID is required."); // Ensure an iarId is provided
+        }
+    
+        const iarItems = await inspectionAcceptanceReport.findAll({
+          where: {
+            iar_id: iarId, // Filter by the specific iar_id passed as an argument
+            isDeleted: false, // Ensure you only get active records
+          },
+          order: [
+            ['created_at', 'ASC'], // Order by creation date, maybe ascending for consistency
+            ['id', 'ASC']          // Secondary sort
+          ],
+          include: [
+            {
+              model: PurchaseOrder, // Include the associated PurchaseOrder details
+            }
+          ],
+          // If you don't want all fields for each item, you can specify them here:
+          // attributes: ['id', 'itemName', 'description', 'quantity', 'actualQuantityReceived', 'category', 'createdAt'],
+        });
+    
+        if (!iarItems || iarItems.length === 0) {
+          // You might want to throw an error if no items are found for the IAR ID,
+          // or simply return an empty array based on your frontend's expectation.
+          // Returning an empty array usually handles "not found" gracefully.
+          return [];
+        }
+        console.log("--- IAR ITEMS ---");
+        console.log(iarItems);
+        console.log("--- END IAR ITEMS ---");
+        // Sequelize automatically handles mapping snake_case database columns to camelCase
+        // JavaScript properties in the returned model instances (e.g., iar_id becomes iarId,
+        // created_at becomes createdAt), thanks to `underscored: true` in your model.
+        // The data grid is expecting the full item details (ItemWithPurchaseOrder),
+        // so you don't need to manually map to a simpler object unless specific fields are excluded.
+        return iarItems;
+    
+      } catch (error) {
+        console.error(`Error fetching items for IAR ID ${iarId}: `, error);
+        throw new Error(`Failed to retrieve items for IAR ID ${iarId}.`);
+      }
     }
   },
 
