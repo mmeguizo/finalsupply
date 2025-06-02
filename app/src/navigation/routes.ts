@@ -11,6 +11,7 @@ import type { Navigation } from "@toolpad/core/AppProvider";
 import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 //@ts-ignore
 import CabinIcon from '@mui/icons-material/Cabin';
+import SummarizeIcon from '@mui/icons-material/Summarize';
 export const ALL_NAVIGATION: Navigation = [
   {
     kind: "header",
@@ -49,5 +50,10 @@ export const ALL_NAVIGATION: Navigation = [
     segment: "signatories",
     title: "Signatories",
     icon: React.createElement(DrawIcon),
+  },
+  {
+    segment: "reports",
+    title: "Reports",
+    icon: React.createElement(SummarizeIcon),
   },
 ];

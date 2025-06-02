@@ -7,4 +7,5 @@ export const ROUTE_ROLES = {
     "ics-lv-hv": ["user", "admin"],
     requisition: ["user", "admin"],
     property: ["user", "admin"],
+    reports: ["user", "admin"],
   };
