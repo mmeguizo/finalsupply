@@ -59,6 +59,11 @@ type ItemWithPurchaseOrder {
     risId : String
     parId : String
 }
+type IARonly{
+    id: ID
+    createdAt : String
+    iarId : String
+}
 
 
 #INPUTS
@@ -90,6 +95,7 @@ input ICSUpdateInput {
 type Query {
     inspectionAcceptanceReport: [ItemWithPurchaseOrder!]
     inspectionAcceptanceReportForICS: [ItemWithPurchaseOrder!]
+    iarForReports: [IARonly]
 }
 
 type Mutation {

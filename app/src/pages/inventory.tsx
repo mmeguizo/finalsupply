@@ -20,21 +20,12 @@ import PrintReportDialogForIAR from "../components/printReportModalForIAR";
 import { createItemColumns } from "./inventoryFunctions/inventory_gridColDef";
 
 export default function InventoryPage() {
-  const client = useApolloClient();
   const { data, loading, error, refetch } = useQuery(GET_ALL_INSPECTION_ACCEPTANCE_REPORT);
   const { allPurchaseOrderItems } = data || {};
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
   const [reportType, setReportType] = React.useState("");
   const [title, setTitle] = React.useState("");
-  // Refresh data when component mounts
-  //aggressive refetch
-  // React.useEffect(() => {
-  //   // Clear cache and refetch when component mounts
-  //   client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'allPurchaseOrderItems' });
-  //   client.cache.gc();
-  //   refetch();
-  // }, []);
 
   const handleOpenPrintModal = (po: any) => {
     const reportTitle = po.category.split(" ")

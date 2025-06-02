@@ -23,6 +23,8 @@ export const AppContent = () => {
      if (session?.user?.role === 'admin') {
       fetchSignatories();
     }
+      // fetchSignatories();
+
   }, [fetchSignatories]);
 
   return (
