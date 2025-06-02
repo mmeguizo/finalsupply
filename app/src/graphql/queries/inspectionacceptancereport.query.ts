@@ -39,6 +39,44 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
   }
 `;
 
+const GET_IAR_ITEMS_BY_IAR_ID = gql`
+  query GetIARItemsByIarId($iarId: String!) {
+    getIARItemsByIarId(iarId: $iarId) {
+      id
+      itemName
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      PurchaseOrder {
+        poNumber
+        supplier
+        address
+        telephone
+        placeOfDelivery
+        dateOfDelivery
+        dateOfPayment
+        deliveryTerms
+        paymentTerms
+        category
+        status
+        amount
+        invoice
+      }
+    }
+  }
+`;
+
+
 const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
   query GetAllInspectionAcceptanceReportForICS {
     inspectionAcceptanceReportForICS {
@@ -91,5 +129,6 @@ const GET_ALL_IAR_FOR_REPORTS = gql`
 export {
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT,
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS,
-  GET_ALL_IAR_FOR_REPORTS
+  GET_ALL_IAR_FOR_REPORTS,
+  GET_IAR_ITEMS_BY_IAR_ID
 };

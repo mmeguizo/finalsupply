@@ -48,9 +48,9 @@ export default function PrintReportDialogForIAR({
     // Determine the report template based on reportType
     switch (reportType) {
       case "property":
-        return getPropertyAcknowledgementReciept(data);
+        return getPropertyAcknowledgementReciept([],data);
       case "requisition":
-        return getRequisitionAndIssueSlip(data);
+        return getRequisitionAndIssueSlip([],data);
       case "inventory":
         return getInventoryTemplate(data);
       case "inspection":

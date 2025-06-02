@@ -96,6 +96,7 @@ type Query {
     inspectionAcceptanceReport: [ItemWithPurchaseOrder!]
     inspectionAcceptanceReportForICS: [ItemWithPurchaseOrder!]
     iarForReports: [IARonly]
+    getIARItemsByIarId(iarId: String!): [ItemWithPurchaseOrder!]
 }
 
 type Mutation {
