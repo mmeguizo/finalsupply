@@ -35,6 +35,7 @@ export default function icsLowHighVolume() {
   const [rowSelectionModel, setRowSelectionModel] =  React.useState<GridRowSelectionModel>([]);
   const [dataToPrint, setDataToPrint] = React.useState([])
   const handleOpenPrintModal = (item: any) => {
+    console.log('printing ics')
     const reportTitle = item[0].category.split(" ")
     const reportTitleString = reportTitle.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
     setReportType(reportTitle);
@@ -101,7 +102,7 @@ export default function icsLowHighVolume() {
   };
 
   return (
-    <PageContainer title="High/Low Volume" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
+    <PageContainer title="High/Low Volume1" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       <Stack spacing={3} sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
         <Paper sx={{ width: "100%" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
