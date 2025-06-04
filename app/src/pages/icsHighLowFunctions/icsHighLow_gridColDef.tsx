@@ -59,6 +59,7 @@ export const createItemColumns = (
     headerName: "Printed",
     width: 100,
     renderCell: (params: GridRenderCellParams) => {
+      console.log({GridRenderCellParams :params.row.icsId})
       return (
         <div
           style={{

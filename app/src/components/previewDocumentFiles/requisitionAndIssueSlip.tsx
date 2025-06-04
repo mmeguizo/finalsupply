@@ -64,7 +64,6 @@ const PrintControls = styled(Box)({
   },
 });
 
-
 export default function RequisitionReport({
   signatories,
   reportData,
@@ -72,7 +71,7 @@ export default function RequisitionReport({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
-  
+
   console.log("reportData", reportData);
 
   const InspectorOffice = useSignatoryStore((state) =>
@@ -129,15 +128,17 @@ export default function RequisitionReport({
   }, []);
 
   // Check if reportData is an array, if not, convert it to an array for consistent handling
-  const itemsArray = Array.isArray(reportData) 
-    ? reportData.filter(item => item !== null && item !== undefined) 
-    : (reportData ? [reportData] : []);
-  
+  const itemsArray = Array.isArray(reportData)
+    ? reportData.filter((item) => item !== null && item !== undefined)
+    : reportData
+      ? [reportData]
+      : [];
+
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
     return sum + (item?.amount || 0);
   }, 0);
-  
+
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
 
@@ -278,7 +279,7 @@ export default function RequisitionReport({
                   </Box>
                 </HeaderTableCell>
               </TableRow>
-              
+
               <TableRow>
                 <StyledTableCellHeader colSpan={7}>
                   <Box sx={{ padding: "10px 0px 0px 0px" }}>
@@ -300,12 +301,16 @@ export default function RequisitionReport({
                         textAlign: "left",
                         fontSize: "12px",
                       }}
-                    > 
-                      <Typography>Office:  </Typography>
-                      
+                    >
+                      <Typography>Office: </Typography>
+
                       <Box
                         sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      > &nbsp;  &nbsp; {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}</Box> 
+                      >
+                        {" "}
+                        &nbsp; &nbsp;{" "}
+                        {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}
+                      </Box>
                     </Box>
                   </Box>
                 </StyledTableCellHeader>
@@ -331,17 +336,19 @@ export default function RequisitionReport({
                         fontSize: "12px",
                       }}
                     >
-                      <Typography>
-                        RIS No. : 
-                      </Typography>
+                      <Typography>RIS No. :</Typography>
                       <Box
                         sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      > &nbsp; &nbsp;{itemsArray[0]?.PurchaseOrder?.poNumber || ""}</Box>
+                      >
+                        {" "}
+                        &nbsp; &nbsp;
+                        {itemsArray[0]?.PurchaseOrder?.poNumber || ""}
+                      </Box>
                     </Box>
                   </Box>
                 </HeaderTableCell>
               </TableRow>
-              
+
               <TableRow>
                 <StyledTableCellHeader
                   colSpan={6}
@@ -374,14 +381,18 @@ export default function RequisitionReport({
                   Issue
                 </StyledTableCellHeader>
               </TableRow>
-              
+
               <TableRow sx={{ "& th": { padding: "1px 0px" } }}>
                 <StyledTableCell align="center">Stock No.</StyledTableCell>
                 <StyledTableCell align="center">Item No.</StyledTableCell>
                 <StyledTableCell align="center">Unit</StyledTableCell>
-                <StyledTableCell align="center" colSpan={2}>Description</StyledTableCell>
+                <StyledTableCell align="center" colSpan={2}>
+                  Description
+                </StyledTableCell>
                 <StyledTableCell align="center">Quantity</StyledTableCell>
-                <StyledTableCell align="center" colSpan={2}>Yes</StyledTableCell>
+                <StyledTableCell align="center" colSpan={2}>
+                  Yes
+                </StyledTableCell>
                 <StyledTableCell align="center">No</StyledTableCell>
                 <StyledTableCell align="center">Quantity</StyledTableCell>
                 <StyledTableCell align="center">Remarks</StyledTableCell>
@@ -390,16 +401,22 @@ export default function RequisitionReport({
 
             <TableBody>
               {itemsArray?.length > 0 ? (
-                itemsArray.map((item : any, index : any) => (
+                itemsArray.map((item: any, index: any) => (
                   <StyledTableRow key={index}>
                     <StyledTableCell>{item.id || ""}</StyledTableCell>
-                    <StyledTableCell>{item.purchaseOrderId || ""}</StyledTableCell>
+                    <StyledTableCell>
+                      {item.purchaseOrderId || ""}
+                    </StyledTableCell>
                     <StyledTableCell>{item.unit || ""}</StyledTableCell>
-                    <StyledTableCell colSpan={2}>{item.description || ""}</StyledTableCell>
+                    <StyledTableCell colSpan={2}>
+                      {item.description || ""}
+                    </StyledTableCell>
                     <StyledTableCell>{item.quantity || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
+                    <StyledTableCell>
+                      {item.actualQuantityReceived || ""}
+                    </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
                 ))
@@ -416,7 +433,7 @@ export default function RequisitionReport({
                   <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
               )}
-              
+
               <StyledTableRow>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
@@ -426,175 +443,85 @@ export default function RequisitionReport({
                 <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell align="right">Total</StyledTableCell>
-                <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell>
+                <StyledTableCell align="right">
+                  {formatTotalAmount}
+                </StyledTableCell>
               </StyledTableRow>
             </TableBody>
-            
+
             <TableBody>
               <StyledTableRow>
-                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 16px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px"
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Requested by:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center"
-                      }}
-                    >
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{capitalizeFirstLetter(receivedFrom?.name || "")}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 auto",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "3px"
-                      }}
-                    >
-                      Designation
-                    </Box>
-                  </Box>
-                </StyledTableCell>
-                <StyledTableCell colSpan={7} sx={{ padding: "1px 1px 16px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px"
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Approved by:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center"
-                      }}
-                    >
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{capitalizeFirstLetter(InspectorOffice?.name || "")}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 auto",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "3px"
-                      }}
-                    >
-                      Designation
-                    </Box>
+                <StyledTableCell colSpan={2}>Purpose:</StyledTableCell>
+                <StyledTableCell colSpan={9}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <Typography>________________________________</Typography>
                   </Box>
                 </StyledTableCell>
               </StyledTableRow>
-              
+
               <StyledTableRow>
-                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 16px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px"
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Issued by:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center"
-                      }}
-                    >
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{capitalizeFirstLetter(supplyOffice?.name || "")}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 auto",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "3px"
-                      }}
-                    >
-                      Designation
-                    </Box>
-                  </Box>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell>Requested by:</StyledTableCell>
+                <StyledTableCell colSpan={3}>Approved by:</StyledTableCell>
+                <StyledTableCell colSpan={3}>Issued by:</StyledTableCell>
+                <StyledTableCell>Received by:</StyledTableCell>
+              </StyledTableRow>
+
+              <StyledTableRow>
+                <StyledTableCell>Signature :</StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell colSpan={3}></StyledTableCell>
+                <StyledTableCell colSpan={3}></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+              </StyledTableRow>
+
+              <StyledTableRow>
+                <StyledTableCell colSpan={2}>Printed Name :</StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell>
+                  <Typography>
+                    {capitalizeFirstLetter(receivedFrom?.name || "")}
+                  </Typography>
                 </StyledTableCell>
-                <StyledTableCell colSpan={8} sx={{ padding: "1px 1px 16px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px"
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Received by:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center"
-                      }}
-                    >
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{capitalizeFirstLetter(receivedFrom?.name || "")}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 auto",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "3px"
-                      }}
-                    >
-                      Designation
-                    </Box>
-                  </Box>
+                <StyledTableCell colSpan={3}>
+                  <Typography>
+                    {capitalizeFirstLetter(supplyOffice?.name || "")}
+                  </Typography>
                 </StyledTableCell>
+                <StyledTableCell colSpan={3}>
+                  <Typography>
+                    {capitalizeFirstLetter(InspectorOffice?.name || "")}
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell>
+                  <Typography>
+                    {capitalizeFirstLetter(receivedFrom?.name || "")}
+                  </Typography>
+                </StyledTableCell>
+              </StyledTableRow>
+
+              <StyledTableRow>
+                <StyledTableCell>Designation :</StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell>End User </StyledTableCell>
+                <StyledTableCell colSpan={3}>AO V / Supply Officer</StyledTableCell>
+                <StyledTableCell colSpan={3}>Supply Officer Staff</StyledTableCell>
+                <StyledTableCell>End User</StyledTableCell>
+              </StyledTableRow>
+
+              <StyledTableRow>
+                <StyledTableCell>Date :</StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
+                <StyledTableCell colSpan={3}></StyledTableCell>
+                <StyledTableCell colSpan={3}></StyledTableCell>
+                <StyledTableCell></StyledTableCell>
               </StyledTableRow>
             </TableBody>
           </Table>

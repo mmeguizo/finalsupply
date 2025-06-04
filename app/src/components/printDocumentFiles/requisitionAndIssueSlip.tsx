@@ -373,6 +373,83 @@ tfoot {
                 ${emptyRows}
             </tbody>
             <tfoot>
+            <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td colspan="2"></td>
+                    <td></td>
+                    <td>Total</td>
+                    <td>${formatTotalAmount}</td>
+                </tr>
+                <tr class="footer-1st-row">
+                    <td colspan="2">
+                        Purpose:
+                    </td>
+                    <td colspan="9">
+                        <div>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="footer-2nd-row">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>Requested by:</td>
+                    <td colspan="3">Approved by:</td>
+                    <td colspan="3">Issued by:</td>
+                    <td>Received by:</td>
+                </tr>
+                <tr class="footer-last-rows">
+                    <td>Signiture :</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"></td>
+                    <td colspan="3"></td>
+                    <td></td>
+                </tr>
+                <tr class="footer-last-rows">
+                    <td colspan="2">Printed Name :</td>
+                    <td></td>
+                    <td> ${receivedFrom || ''}</td>
+                    <td colspan="3"> ${supplyOfficer || ''} </td>
+                    <td colspan="3">${inspectionOfficer || ''}</td>
+                    <td>${inspectionOfficer || ''}</td>
+                </tr>
+                <tr class="footer-last-rows">
+                    <td>Designation :</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"></td>
+                    <td colspan="3"></td>
+                    <td></td>
+                </tr>
+                <tr class="footer-last-rows">
+                    <td>Date :</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"></td>
+                    <td colspan="3"></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</body>
+</html>
+`;
+};
+
+/*
+<tfoot>
                 <tr>
                     <td></td>
                     <td></td>
@@ -453,9 +530,5 @@ tfoot {
                     </td>
                 </tr>
             </tfoot>
-        </table>
-    </div>
-</body>
-</html>
-`;
-};
+
+*/
