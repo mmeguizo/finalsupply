@@ -2,7 +2,7 @@ import { Outlet, Navigate, useLocation } from "react-router";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import React, { useContext } from "react";
-import { useSession } from "../SessionContext";
+import { useSession } from "../auth/SessionContext";
 
 export default function Layout() {
   // const { session } = useSession();

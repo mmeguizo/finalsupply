@@ -1,5 +1,5 @@
 import * as React from "react";
-import { PageContainer } from "@toolpad/core/PageContainer";
+import { useQuery, useApolloClient } from "@apollo/client";
 import {
   CircularProgress,
   Alert,
@@ -11,80 +11,55 @@ import {
   Tooltip,
   Backdrop,
 } from "@mui/material";
+import { DataGrid, GridRowParams, GridToolbar } from "@mui/x-data-grid";
+import { PageContainer } from "@toolpad/core/PageContainer";
+import PreviewIcon from "@mui/icons-material/Preview";
+//@ts-ignore
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
+import PrintReportDialogForIAR from "../components/printReportModalForIAR";
+import { createItemColumns } from "./inventoryFunctions/inventory_gridColDef";
 
-import { GridColDef, DataGrid, GridRowParams, GridToolbar } from "@mui/x-data-grid";
-import { useDemoData } from "@mui/x-data-grid-generator";
-import { useQuery } from "@apollo/client";
-// @ts-ignore
-import { GET_ALL_PURCHASEORDER_ITEMS  } from "../graphql/queries/purchaseorder.query.js";
-import { currencyFormat, formatCategory } from "../utils/generalUtils";
 export default function InventoryPage() {
-  const { data, loading, error } = useQuery(GET_ALL_PURCHASEORDER_ITEMS);
+  const { data, loading, error, refetch } = useQuery(GET_ALL_INSPECTION_ACCEPTANCE_REPORT);
   const { allPurchaseOrderItems } = data || {};
+  const [printPOI, setPrintPOI] = React.useState<any>(null);
+  const [openPrintModal, setOpenPrintModal] = React.useState(false);
+  const [reportType, setReportType] = React.useState("");
+  const [title, setTitle] = React.useState("");
 
-  const itemColumns: GridColDef[] = [
-    {
-      field: "category",
-      headerName: "Category",
-      width: 200,
-      // valueFormatter: (params) => formatCategory(params),
-      valueFormatter : (params : any) => {
-        let category;
-        category = params.split(" ")
-        return category.map((word : any) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
-      }
-    },
-    { 
-      field: "PurchaseOrder",
-      headerName: "P.O. #", 
-      width: 150,
-      valueGetter: (params : any) => params.poNumber,
-    },
-    { field: "itemName", headerName: "Item", width: 150 },
-    { field: "description", headerName: "Description", width: 300, flex: 1 },
-    { field: "unit", headerName: "Unit", width: 100 },
-    {
-      field: "actualQuantityReceived",
-      headerName: "Actual Recieved",
-      type: "number",
-      width: 50,
-    },
-    { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-    {
-      field: "formatUnitCost",
-      headerName: "Unit Cost",
-      type: "number",
-      width: 100,
-      // valueFormatter: (params) => params,
-    },
-    {
-      field: "formatAmount",
-      headerName: "Amount",
-      type: "number",
-      width: 120,
-    },
-  ];
+  const handleOpenPrintModal = (po: any) => {
+    const reportTitle = po.category.split(" ")
+    const reportTitleString = reportTitle.map((word : string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+    //TODO : add the inspectionslip report here
+    // manually set the report type and title
+    // setReportType("inspection");
+    setReportType("inspection");
+    setTitle(`${reportTitleString} Report`);
+    setPrintPOI(po);
+    setOpenPrintModal(true);
+  };
+
+  const handleClosePrintModal = () => {
+    setOpenPrintModal(false);
+    setPrintPOI(null);
+  };
+
+  // Use the imported column definitions with the handleOpenPrintModal function
+  const itemColumns = React.useMemo(
+    () => createItemColumns(handleOpenPrintModal),
+    [handleOpenPrintModal]
+  );
 
   const poRows = React.useMemo(() => {
-    if (!data?.allPurchaseOrderItems) return [];
+    if (!data?.inspectionAcceptanceReport.length) return [];
 
-    return data.allPurchaseOrderItems.map((po: any) => {
+    return data.inspectionAcceptanceReport.map((po: any) => {
       const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
       const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
-
-      // const formattedDeliveryDate = po.dateofdelivery
-      //   ? new Date(Number(po.dateofdelivery)).toLocaleDateString()
-      //   : "Not specified";
-
-      // const formattedPaymentDate = po.dateOfPayment
-      //   ? new Date(Number(po.dateOfPayment)).toLocaleDateString()
-      //   : "Not specified";
 
       return {
         id: po.id,
         ...po,
-        // formattedDeliveryDate,
-        // formattedPaymentDate,
         formatAmount,
         formatUnitCost
       };
@@ -92,17 +67,15 @@ export default function InventoryPage() {
   }, [data]);
 
   const handleRowClick = (params: GridRowParams) => {
-    console.log("Row clicked", params);
+    // console.log("Row clicked", params);
   };
 
   return (
-    <Stack spacing={3}>
-      <Box p={2} pb={0}></Box>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
+    <Stack spacing={3}  sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
       <Paper sx={{ width: "100%" }}>
-        <Box sx={{ width: "100%" }}>
-          <Stack direction="row" spacing={1} sx={{ mb: 1 }}></Stack>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {data?.allPurchaseOrderItems?.length !== 0 && (
+            {data && data.inspectionAcceptanceReport && (
               <DataGrid
                 rows={poRows}
                 columns={itemColumns}
@@ -123,8 +96,14 @@ export default function InventoryPage() {
               />
             )}
           </div>
-        </Box>
       </Paper>
     </Stack>
+    <PrintReportDialogForIAR
+        open={openPrintModal}
+        handleClose={handleClosePrintModal}
+        reportData={printPOI}
+        reportType={reportType}
+      />
+    </PageContainer>
   );
 }

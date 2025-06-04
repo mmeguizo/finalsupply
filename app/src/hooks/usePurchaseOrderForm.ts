@@ -113,6 +113,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
         Number(updatedItems[index].unitCost);
     }
 
+
     const allItemsComplete = updatedItems.every((item) => {
       return (
         Number(item.quantity) ===
@@ -137,7 +138,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
 
   const onSubmit = (handleSave: (formData: any) => void) => {
     const cleanedItems = formData.items.map((item) => {
-      const { __typename, ...cleanItem } = item;
+      const { ...cleanItem } = item;
       return cleanItem;
     });
 
@@ -150,8 +151,9 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       ponumber: parseInt(formData.ponumber),
     };
 
-    const { __typename, ...cleanData } = formattedData;
+    const { ...cleanData } = formattedData;
 
+    setHasSubmitted(true);
     setAddingItem(false);
     handleSave(cleanData);
   };

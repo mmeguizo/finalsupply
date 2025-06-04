@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db/connectDB.js"; // Assuming you have a Sequelize instance
+import InspectionAcceptanceReport from "./inspectionacceptancereport.js";
 
 const PurchaseOrderItems = sequelize.define(
   "PurchaseOrderItems",
@@ -8,6 +9,10 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+    },
+    iarId : {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     purchaseOrderId: {
       type: DataTypes.INTEGER,
@@ -58,6 +63,11 @@ const PurchaseOrderItems = sequelize.define(
       allowNull: true,
       defaultValue: "requisition issue slip", // Default value
     },
+    tag : {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "none", // Default value
+    },
     isDeleted: {
       type: DataTypes.TINYINT(1),
       allowNull: true,
@@ -72,5 +82,6 @@ const PurchaseOrderItems = sequelize.define(
 );
 
 // No association is needed here because ponumber is not a foreign key
+PurchaseOrderItems.hasMany(InspectionAcceptanceReport, { foreignKey: "purchaseOrderItemId" });
 
 export default PurchaseOrderItems;

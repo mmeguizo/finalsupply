@@ -61,7 +61,6 @@ export default function DashboardPage() {
         acc[category] = (acc[category] || 0) + 1;
         return acc;
       }, {});
-      console.log(categoryCounts)
       // Create pieChartData based on the counts
        pieChartData = [
         {
@@ -88,7 +87,6 @@ export default function DashboardPage() {
       });
     }
   }, [data, usersCountData]);
-  console.log(pieChartData)
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>

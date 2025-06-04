@@ -2,16 +2,18 @@ import { useNotifications } from "@toolpad/core/useNotifications";
 import * as React from "react";
 
 type NotificationDialogProps = {
+  open?: boolean;
   message: string;
   severity: "info" | "success" | "warning" | "error";
-  duration: number;
+  duration?: number;
   onClose?: () => void;
 };
 
 const NotificationDialog = ({
+  open,
   message,
   severity,
-  duration,
+  duration = 1500,
   onClose,
 }: NotificationDialogProps) => {
   const notifications = useNotifications();
