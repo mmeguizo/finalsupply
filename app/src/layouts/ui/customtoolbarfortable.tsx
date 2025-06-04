@@ -23,6 +23,7 @@ import {
 import PrintIcon from "@mui/icons-material/Print";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
+//@ts-ignore
 import AddIcon from "@mui/icons-material/Add";
 export function CustomToolbarForTable({
   props,

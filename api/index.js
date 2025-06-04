@@ -14,7 +14,7 @@ import passport from "passport";
 import session from "express-session";
 import connectMongo from "connect-mongodb-session";
 import { configurePassport } from "./passport/passport.config.js";
-import { connectDB, disconnectDB } from "./db/connectDB.js";
+import { connectDB, disconnectDB, syncTables} from "./db/connectDB.js";
 import MySQLSession from "express-mysql-session";
 const MySQLStore = MySQLSession(session);
 import { Sequelize } from "sequelize";
@@ -24,25 +24,6 @@ configurePassport();
 
 const app = express();
 const httpServer = http.createServer(app);
-
-// Initialize Sequelize with database credentials
-const sequelize = new Sequelize({
-    host: process.env.MYSQL_HOST,
-    dialect: "mysql",
-    username: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-});
-
-// Test the database connection
-try {
-    await sequelize.authenticate();
-    console.log("✅ MySQL Connection established successfully.");
-} catch (error) {
-    console.error("❌ Unable to connect to the MySQL database:", error);
-    process.exit(1);
-}
-
 
 const options = {
     host: process.env.MYSQL_HOST,
@@ -83,8 +64,7 @@ const server = new ApolloServer({
 
 // connect db mysql
 await connectDB();
-await sequelize.sync(); // Ensure tables exist in MySQL
-console.log("✅ MySQL Tables Synced");
+await syncTables(); // Ensure tables exist in MySQL
 
 // Ensure we wait for our server to start
 await server.start();

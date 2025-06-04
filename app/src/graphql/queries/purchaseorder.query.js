@@ -1,7 +1,6 @@
 import { gql } from "@apollo/client";
 
 const GET_PURCHASEORDERS = gql`
-
   query GetPurchaseOrders {
     purchaseOrders {
       id
@@ -28,6 +27,8 @@ const GET_PURCHASEORDERS = gql`
         category
         isDeleted
         actualQuantityReceived
+        tag
+        iarId
       }
       amount
       invoice
@@ -62,6 +63,7 @@ const GET_PURCHASEORDER = gql`
         category
         isDeleted
         actualQuantityReceived
+        tag
       }
       amount
       invoice
@@ -81,6 +83,7 @@ const GET_PURCHASEORDER_ITEMS = gql`
       amount
       isDeleted
       actualQuantityReceived
+      tag
     }
   }
 `;
@@ -99,8 +102,57 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
       actualQuantityReceived
       category
       isDeleted
-      PurchaseOrder  {
+      tag
+      iarId
+      PurchaseOrder {
         poNumber
+        supplier
+        address
+        poNumber
+        telephone
+        placeOfDelivery
+        dateOfDelivery
+        dateOfPayment
+        deliveryTerms
+        paymentTerms
+        category
+        status
+        amount
+        invoice
+      }
+    }
+  }
+`;
+const GET_ALL_ICS_PURCHASEORDER_ITEMS = gql`
+  query GetAllICSPurchaseOrderItems {
+    allICSPurchaseOrderItems {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      PurchaseOrder {
+        poNumber
+        supplier
+        address
+        poNumber
+        telephone
+        placeOfDelivery
+        dateOfDelivery
+        dateOfPayment
+        deliveryTerms
+        paymentTerms
+        category
+        status
+        amount
+        invoice
       }
     }
   }
@@ -113,7 +165,7 @@ const GET_ALL_DASHBOARD_DATA = gql`
     getAllTotalPurchaseOrderAmount
     getTotalPurchaseOrderItems
     getTotalPurchaseOrders
-    getPurchaseOrderForBarCharts  {
+    getPurchaseOrderForBarCharts {
       id
       supplier
       address
@@ -126,6 +178,7 @@ const GET_ALL_DASHBOARD_DATA = gql`
       paymentTerms
       category
       status
+      completed_status_date
       items {
         id
         itemName
@@ -149,10 +202,32 @@ const GET_ALL_DASHBOARD_DATA = gql`
   }
 `;
 
+const GET_ITEM_HISTORY = gql`
+  query GetPurchaseOrderHistory($purchaseOrderId: ID!) {
+    purchaseOrderHistory(purchaseOrderId: $purchaseOrderId) {
+      id
+      purchaseOrderItemId
+      previousQuantity
+      newQuantity
+      previousActualQuantityReceived
+      newActualQuantityReceived
+      previousAmount
+      newAmount
+      changeType
+      changedBy
+      changeReason
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export {
   GET_PURCHASEORDERS,
   GET_PURCHASEORDER,
   GET_PURCHASEORDER_ITEMS,
   GET_ALL_PURCHASEORDER_ITEMS,
-  GET_ALL_DASHBOARD_DATA
+  GET_ALL_DASHBOARD_DATA,
+  GET_ITEM_HISTORY,
+  GET_ALL_ICS_PURCHASEORDER_ITEMS
 };
