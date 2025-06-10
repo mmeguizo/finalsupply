@@ -54,35 +54,3 @@ export const filterNavigationByRole = (navigation: any[], userRole: string | und
     return true;
   });
 };
-
-
-//TODO clean up code in the future  
-// // Helper functions for session/authentication management
-
-// /**
-//  * Checks if user has access to a specific route
-//  */
-// export const hasRouteAccess = (userRole: string | undefined, routePath: string, routeRoles: Record<string, string[]>) => {
-//     if (!userRole) return false;
-//     const allowedRoles = routeRoles[routePath] || [];
-//     return allowedRoles.includes(userRole);
-//   };
-  
-//   /**
-//    * Clears all session data on logout
-//    */
-//   export const clearSession = () => {
-//     localStorage.removeItem("session");
-//     sessionStorage.clear();
-//     // Add any other cleanup needed
-//   };
-  
-//   /**
-//    * Checks if session is valid (not expired)
-//    */
-//   export const isSessionValid = (session: any) => {
-//     if (!session) return false;
-//     // Add expiration check if your sessions have expiry
-//     return true;
-//   };
-  

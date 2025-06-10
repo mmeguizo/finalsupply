@@ -12,6 +12,8 @@ import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 //@ts-ignore
 import CabinIcon from '@mui/icons-material/Cabin';
 import SummarizeIcon from '@mui/icons-material/Summarize';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+
 export const ALL_NAVIGATION: Navigation = [
   {
     kind: "header",
@@ -55,5 +57,10 @@ export const ALL_NAVIGATION: Navigation = [
     segment: "reports",
     title: "Reports",
     icon: React.createElement(SummarizeIcon),
+  },
+  {
+    segment: "users",
+    title: "Users",
+    icon: React.createElement(FingerprintIcon),
   },
 ];
