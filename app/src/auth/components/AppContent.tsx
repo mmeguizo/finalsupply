@@ -7,7 +7,7 @@ import { filterNavigationByRole } from '../authUtils';
 import { ALL_NAVIGATION } from '../../navigation/routes';
 import { BRANDING } from '../../utils/branding';
 import useSignatoryStore from '../../stores/signatoryStore';
-
+import "../../globalStyle/style.css"
 export const AppContent = () => {
   const { session, signIn, signOut } = useAuth();
   
