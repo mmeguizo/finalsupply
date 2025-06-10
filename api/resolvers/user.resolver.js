@@ -80,26 +80,182 @@ const userResolver = {
       }
     },
 
-    updateUser: async (_, { input }, context) => {
+    editUser: async (_, { input }, context) => {
       try {
-        const { userId, ...update } = input;
-
-        // Update user data in the database
-        const updatedUser = await User.update(update, {
-          where: { id: userId },
-          returning: true, // Fetch the updated user
-        });
-
-        if (!updatedUser[0]) {
-          throw new Error("User not found");
+        console.log("input editUser", input);
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
         }
 
-        return updatedUser[1][0]; // Return the updated user object
+        const { id, ...updateFields } = input;
+
+        if (!id) {
+          // Should be caught by GraphQL schema if id is ID!
+          throw new Error("User ID is required for an update.");
+        }
+
+        const userToUpdate = await User.findByPk(id);
+        if (!userToUpdate) {
+          throw new Error("User not found to update.");
+        }
+
+        const dataToUpdate = {};
+
+        // Handle email update and uniqueness
+        if (updateFields.email !== undefined) {
+          if (updateFields.email.trim() === "") {
+            throw new Error("Email cannot be empty.");
+          }
+          if (updateFields.email !== userToUpdate.email) {
+            const existingUserWithNewEmail = await User.findOne({ where: { email: updateFields.email } });
+            if (existingUserWithNewEmail) {
+              throw new Error("Email already in use by another account.");
+            }
+            dataToUpdate.email = updateFields.email;
+          }
+        }
+
+        // Handle password update
+        if (updateFields.password) {
+          if (!updateFields.confirm_password) {
+            throw new Error("Confirm password is required when changing password.");
+          }
+          if (updateFields.password !== updateFields.confirm_password) {
+            throw new Error("Passwords do not match.");
+          }
+          // Optional: Add password complexity validation here
+          const salt = bcrypt.genSaltSync(10);
+          dataToUpdate.password = bcrypt.hashSync(updateFields.password, salt);
+        } else if (updateFields.confirm_password && !updateFields.password) {
+          throw new Error("Password is required when confirm password is provided.");
+        }
+
+        // Prepare other updatable fields
+        ['name', 'last_name', 'employee_id', 'department', 'position', 'gender', 'role'].forEach(field => {
+          if (updateFields[field] !== undefined) {
+            if ((field === 'name' || field === 'gender') && String(updateFields[field]).trim() === "") {
+                 throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} cannot be empty.`);
+            }
+            dataToUpdate[field] = updateFields[field];
+          }
+        });
+
+        // Update profile picture if gender or email (used in URL) is changing
+        const finalEmailForAvatar = dataToUpdate.email || userToUpdate.email;
+        const finalGenderForAvatar = dataToUpdate.gender || userToUpdate.gender;
+        if (dataToUpdate.gender !== undefined || (dataToUpdate.email !== undefined && dataToUpdate.email !== userToUpdate.email)) {
+            const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${finalEmailForAvatar}`;
+            const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${finalEmailForAvatar}`;
+            const othersProfilePic = `https://avatar.iran.liara.run/public/boy?username=${finalEmailForAvatar}`;
+            dataToUpdate.profile_pic = finalGenderForAvatar === "male" ? boyProfilePic : finalGenderForAvatar === "female" ? girlProfilePic : othersProfilePic;
+        }
+
+        if (Object.keys(dataToUpdate).length === 0) {
+          // No actual changes submitted
+          return userToUpdate;
+        }
+
+        await User.update(dataToUpdate, { where: { id } });
+        return await User.findByPk(id); // Fetch and return the updated user
+
       } catch (error) {
         console.error("Error updating user, error: ", error);
         throw new Error(error.message || "Internal server error");
       }
     },
+    createUser: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const {
+          email,
+          name,
+          last_name,
+          password,
+          confirm_password,
+          gender,
+          employee_id,
+          department,
+          position,
+          role,
+        } = input;
+
+        // Basic validation
+        if (!email || !name || !last_name || !password || !confirm_password || !gender || !employee_id || !department || !position || !role) {
+          throw new Error("All fields are required.");
+        }
+
+        if (password !== confirm_password) {
+          throw new Error("Passwords do not match.");
+        }
+
+        // Optional: Add server-side password complexity validation here
+        // const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+        // if (!passwordRegex.test(password)) {
+        //   throw new Error("Password does not meet complexity requirements.");
+        // }
+
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+          throw new Error("User with this email already exists.");
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(password, salt);
+
+        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
+        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
+        const othersProfilePic = `https://avatar.iran.liara.run/public/boy?username=${email}`; // Or use a generic one
+
+        const newUser = await User.create({
+          email,
+          name,
+          last_name,
+          password: hashedPassword,
+          gender,
+          employee_id,
+          department,
+          position,
+          role,
+          profile_pic: gender === "male" ? boyProfilePic : gender === "female" ? girlProfilePic : othersProfilePic,
+          // is_active defaults to true in the model
+        });
+
+        return newUser;
+      } catch (error) {
+        console.error("Error creating user, error: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
+
+    deleteUser: async (_, { userId }, context) => {
+
+      console.log("userId", userId);
+
+      try {
+        // Check if the user is authenticated
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        // Find the user by ID
+        const user = await User.findByPk(userId);
+        if (!user) {
+          throw new Error("User not found");
+        }
+
+        // Soft delete the user by setting is_active to false
+        user.is_active = false;
+        await user.save();
+
+        return user; // Return the updated user object
+      } catch (error) {
+        console.error("Error deleting user, error: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    }
   },
 
   Query: {
@@ -110,7 +266,11 @@ const userResolver = {
       }
 
       // Fetch all users
-      return await User.findAll();
+      return await User.findAll({
+        where : {
+          is_active: true // Assuming you have an isActive field to filter active users
+        }
+      });
     },
 
     countAllUsers: async (_, __, context) => {

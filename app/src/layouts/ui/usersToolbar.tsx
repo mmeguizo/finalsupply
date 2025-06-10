@@ -5,44 +5,34 @@ import {
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
+  GridToolbarExport, 
 } from "@mui/x-data-grid";
 import { Button, Tooltip } from "@mui/material";
 //@ts-ignore
 import AddIcon from "@mui/icons-material/Add";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
-export function SignatoryToolbar({
+export function UserToolbar({
   props,
-  onAddSignatory,
-  onExportData,
+  onAddUser,
 }: any) {
   return (
     <GridToolbarContainer>
       <GridToolbarColumnsButton />
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
-      <Tooltip title="Add Signatory">
+      <GridToolbarExport  />
+      
+      <Tooltip title="Add User">
         <Button
           color="primary"
           startIcon={<AddIcon />}
-          onClick={() => onAddSignatory()}
+          onClick={() => onAddUser()}
           sx={{ ml: 1 }}
         >
-          Add Signatory
+          Add User
         </Button>
       </Tooltip>
-      {onExportData && (
-        <Tooltip title="Export">
-          <Button
-            color="primary"
-            startIcon={<FileDownloadIcon />}
-            onClick={() => onExportData(props.data)}
-            sx={{ ml: 1 }}
-          >
-            Export
-          </Button>
-        </Tooltip>
-      )}
        <GridToolbarQuickFilter />
     </GridToolbarContainer>
   );
