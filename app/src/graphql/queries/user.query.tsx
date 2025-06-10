@@ -11,6 +11,25 @@ const GET_AUTHENTICATED_USER = gql`
   }
 `;
 
+const GET_ALL_USERS = gql`
+  query GetAllUsers {
+    users {
+      id
+      email
+      name
+      last_name
+      employee_id
+      department
+      position
+      profile_pic
+      gender
+      role
+      is_active
+    }
+  }
+`;
+
+
 const GET_USERS_COUNT = gql`
   query CountAllUsers {
     countAllUsers
@@ -18,5 +37,5 @@ const GET_USERS_COUNT = gql`
 
 `
 
-export { GET_AUTHENTICATED_USER , GET_USERS_COUNT };
+export { GET_AUTHENTICATED_USER , GET_USERS_COUNT, GET_ALL_USERS };
 // Compare this snippet from backend/routes/user.routes.js:

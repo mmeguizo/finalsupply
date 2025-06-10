@@ -12,6 +12,7 @@ import InventoryPage from "../pages/inventory";
 import RequisitionPage from "../pages/requisition";
 import PropertyPage from "../pages/property";
 import ReportsPage from "../pages/reports";
+import { UsersPage } from "../pages/users";
 export const router = createBrowserRouter([
   {
     Component: App,
@@ -91,6 +92,16 @@ export const router = createBrowserRouter([
               {
                 path: "",
                 Component: ReportsPage,
+              },
+            ],
+          },
+          {
+            path: "/users",
+            element: <ProtectedRoute routePath="users" />,
+            children: [
+              {
+                path: "",
+                Component: UsersPage,
               },
             ],
           }

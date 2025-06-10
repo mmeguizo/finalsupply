@@ -8,4 +8,5 @@ export const ROUTE_ROLES = {
     requisition: ["user", "admin"],
     property: ["user", "admin"],
     reports: ["user", "admin"],
+    users: ["admin"],
   };
