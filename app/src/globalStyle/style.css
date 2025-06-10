@@ -1,0 +1,13 @@
+/* Remove max-width constraint from MUI Container */
+@media (min-width: 1200px) {
+  .MuiContainer-root.MuiContainer-maxWidthLg {
+    max-width: none !important;
+  }
+}
+
+/* Alternative: Set to full width */
+@media (min-width: 1200px) {
+  .MuiContainer-root.MuiContainer-maxWidthLg {
+    max-width: 100% !important;
+  }
+}
