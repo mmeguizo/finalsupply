@@ -33,4 +33,55 @@ const LOGOUT = gql`
   }
 `;
 
-export { SIGN_UP, LOGIN, LOGOUT };
+
+const EDIT_USER = gql`
+  mutation editUser($input: EditUserInput!) {
+    editUser(input: $input) {
+      id
+      email
+      name
+      last_name
+      employee_id
+      department
+      position
+      gender
+      role
+      profile_pic
+    }
+  }
+`;
+const CREATE_USER = gql`
+  mutation CreateUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+      id
+      email
+      name
+      last_name
+      employee_id
+      department
+      position
+      gender
+      role
+      profile_pic
+    }
+  }
+`;
+
+const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(userId: $id) {
+      id
+      email
+      name
+      last_name
+      employee_id
+      department
+      position
+      gender
+      role
+      profile_pic
+    }
+  }
+`;
+
+export { SIGN_UP, LOGIN, LOGOUT, EDIT_USER, CREATE_USER, DELETE_USER };

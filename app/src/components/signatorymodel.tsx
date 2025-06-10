@@ -19,6 +19,12 @@ import { useQuery } from "@apollo/client";
 //@ts-ignore
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
 
+interface SignatoryModalProps {
+ open: boolean;
+ onClose: () => void;
+ onSave: (formData: any) => void;
+ signatory: any | null;
+}
 const ROLE_OPTIONS = [
   "Inspector Officer",
   "Property And Supply Officer",
@@ -26,7 +32,7 @@ const ROLE_OPTIONS = [
   "Recieved By",
 ];
 
-const SignatoryModal = ({ open, onClose, onSave, signatory }) => {
+const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProps) => {
   // State for form fields
   const [formData, setFormData] = useState({
     name: "",
@@ -75,7 +81,7 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }) => {
     });
     
     // Clear error when field is updated
-    if (errors[name]) {
+ if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
         [name]: "",

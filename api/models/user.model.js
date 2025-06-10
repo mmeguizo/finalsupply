@@ -23,6 +23,22 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    last_name: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+    },
+    employee_id: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+    },
+    department : {
+      type: DataTypes.STRING,
+      defaultValue: "",
+    },
+    position : {
+      type: DataTypes.STRING,
+      defaultValue: "",
+    },
     profile_pic: {
       type: DataTypes.STRING,
       defaultValue: "",
