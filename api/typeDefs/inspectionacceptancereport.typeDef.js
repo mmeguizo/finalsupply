@@ -63,6 +63,7 @@ type IARonly{
     id: ID
     createdAt : String
     iarId : String
+    category : String
 }
 
 

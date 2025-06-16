@@ -284,7 +284,7 @@ export default function PurchaseOrderModal({
               name="poNumber"
               value={formData.poNumber}
               onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
+              // disabled={purchaseOrder ? true : false}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -294,7 +294,7 @@ export default function PurchaseOrderModal({
               name="invoice"
               value={formData.invoice}
               onChange={handleChange}
-              disabled={purchaseOrder?.invoice ? true : false}
+              // disabled={purchaseOrder?.invoice ? true : false}
               // disabled={isIndexFieldDisabled(formData.invoice)}
             />
           </Grid>
@@ -305,7 +305,7 @@ export default function PurchaseOrderModal({
               name="supplier"
               value={formData.supplier}
               onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
+              // disabled={purchaseOrder ? true : false}
             />
           </Grid>
          
@@ -316,11 +316,11 @@ export default function PurchaseOrderModal({
               name="placeOfDelivery"
               value={formData.placeOfDelivery}
               onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
+              // disabled={purchaseOrder ? true : false}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          {/* <Grid item xs={12} md={6}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name="dateOfPayment"
@@ -329,7 +329,7 @@ export default function PurchaseOrderModal({
                 onChange={(newValue) =>
                   handleDateChange(newValue, "dateOfPayment")
                 }
-                disabled={purchaseOrder ? true : false}
+                // disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
           </Grid>
@@ -342,10 +342,10 @@ export default function PurchaseOrderModal({
                 onChange={(newValue) =>
                   handleDateChange(newValue, "dateOfDelivery")
                 }
-                disabled={purchaseOrder ? true : false}
+                // disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
-          </Grid>
+          </Grid> */}
 
           {/* Items Section */}
           <Grid item xs={12}>
@@ -428,7 +428,7 @@ export default function PurchaseOrderModal({
                     value={item.category}
                     onChange={(e) => updateItem(index, "category", e.target.value)}
                     label="Category"
-                    disabled={isIndexFieldDisabled(item.category, 'category', index)}
+                    // disabled={isIndexFieldDisabled(item.category, 'category', index)}
                   >
                     <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
                     <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
@@ -445,7 +445,7 @@ export default function PurchaseOrderModal({
                       value={item.tag || ""}
                       onChange={(e) => updateItem(index, "tag", e.target.value)}
                       label="Tag"
-                      disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
+                      // disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
                     >
                       <MenuItem value={"low"}>Low Value</MenuItem>
                       <MenuItem value={"high"}>High Value</MenuItem>
@@ -588,193 +588,3 @@ export default function PurchaseOrderModal({
     </Dialog>
   );
 }
-
-/*
- {formData.items.map((item: any, index: any) => (
-              <Grid
-                container
-                spacing={1}
-                key={index}
-                sx={{
-                  mb: 1,
-                  p: 0.5,
-                  alignItems: "center",
-                  "&:hover": { backgroundColor: "action.hover" },
-                  borderBottom: 1,
-                  borderColor: "divider",
-                }}
-              >
-                <Grid item xs={1}>
-                  <Select
-                    fullWidth
-                    size="small"
-                    value={item.category}
-                    onChange={(e) => updateItem(index, "category", e.target.value)}
-                    label="Category"
-                    disabled={isIndexFieldDisabled(item.category, 'category', index)}
-                  >
-                    <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
-                    <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
-                    <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
-                  </Select>
-                </Grid>
-                {item.category === "inventory custodian slip" && (
-                  <Grid item xs={1}>
-                    <Select
-                      fullWidth
-                      size="small"
-                      value={item.tag || ""}
-                      onChange={(e) => updateItem(index, "tag", e.target.value)}
-                      label="Tag"
-                      disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
-                    >
-                      <MenuItem value={"low"}>Low Value</MenuItem>
-                      <MenuItem value={"high"}>High Value</MenuItem>
-                    </Select>
-                  </Grid>
-                )}
-                <Grid item xs={item.category === "inventory custodian slip" ? 2 : 3}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={(e) => updateItem(index, "description", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.description, 'description', index)}
-                  />
-                </Grid>
-
-                <Grid item xs={2}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={`left: ${
-                      Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0
-                    }`}
-                    type="number"
-                    placeholder={`${
-                      Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0
-                    }`}
-                    inputProps={{
-                      min: 0,
-                      max: Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0,
-                      style: { textAlign: "right" }
-                    }}
-                    value={item.currentInput || ""}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      const remaining = Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived));
-                      if (value >= 0 && value <= remaining) {
-                        updateItem(index, "currentInput", value);
-                      } else if (value > remaining) {
-                        updateItem(index, "currentInput", remaining);
-                      }
-                    }}
-                    disabled={Number(item.quantity) === Number(item.actualQuantityReceived) || !item.category}
-                    sx={{
-                      "& input": { textAlign: "right" },
-                      backgroundColor: Number(item.actualQuantityReceived) === Number(item.quantity) 
-                        ? "action.disabledBackground" 
-                        : "transparent"
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Qty"
-                    inputProps={{ min: 0, style: { textAlign: "right" } }}
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
-                  />
-                </Grid>
-
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Unit"
-                    value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.unit,"unit",index)}
-                  />
-                </Grid>
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Unit Cost"
-                    value={item.unitCost}
-                    onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
-                    InputProps={{
-                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-                <Grid item xs={1.5}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Amount"
-                    value={item.amount}
-                    disabled={true}
-                    InputProps={{
-                      readOnly: true,
-                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-              </Grid>
-            ))}
-*/
-
- {/* <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Mode of Procurement"
-              name="modeOfProcurement"
-              value={formData.modeOfProcurement}
-              placeholder="e.g direct contracting"
-              onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
-            />
-          </Grid> */}
-          {/* <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Delivery Terms"
-              name="deliveryTerms"
-              value={formData.deliveryTerms}
-              onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
-            />
-          </Grid> */}
-          {/* <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Payment Terms"
-              name="paymentTerms"
-              value={formData.paymentTerms}
-              placeholder="e.g not more than 30 days"
-              onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
-            />
-          </Grid> */}
-          {/* <Grid item xs={12} md={12}>
-            <TextField
-              fullWidth
-              label="Address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              disabled={purchaseOrder ? true : false}
-            />
-          </Grid> */}

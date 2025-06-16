@@ -10,8 +10,8 @@ import { useQuery,useLazyQuery  } from "@apollo/client";
 import { createItemColumns } from "./reportsFunctions/inventory_gridColDef";
 import ForPrintReporting from "../components/printingForReports";
 import { GET_IAR_ITEMS_BY_IAR_ID } from "../graphql/queries/inspectionacceptancereport.query"; // You'll need to define this GraphQL query
-
-
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 export default function ReportsPage() {
   const { data, loading, error, refetch } = useQuery(GET_ALL_IAR_FOR_REPORTS);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -58,8 +58,24 @@ export default function ReportsPage() {
     return data.iarForReports
   }, [data]);
 
+
+const CategoryOptions = [
+  { label: 'Inspection Acceptance Report', value: 'inspection acceptance report' },
+  { label: 'Inventory Custodian Slip', value: 'inventory custodian slip' },
+  { label: 'Requisition Issue Slip', value: 'requisition issue slip' },
+  { label: 'Property Acknowledgement Reciept', value: 'property acknowledgement reciept' },
+]
+
+  
   return (
+    
     <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
+       <Autocomplete
+      disablePortal
+      options={CategoryOptions}
+      sx={{ width: 300, mb: 2 }}
+      renderInput={(params) => <TextField {...params} label="Categories" />}
+    />
     <Stack spacing={3}  sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
       <Paper sx={{ width: "100%" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>

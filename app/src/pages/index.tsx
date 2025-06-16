@@ -89,7 +89,7 @@ export default function DashboardPage() {
   }, [data, usersCountData]);
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, borderStyle: "solid", borderWidth: 1, borderColor: "#cfe8fc" }} >
+    <Box sx={{ flexGrow: 1, p: 3, }} >
       {/* <Typography variant="h4" gutterBottom>
         Dashboard Overview
       </Typography> */}

@@ -1,11 +1,21 @@
 import { GridColDef } from "@mui/x-data-grid";
-import { formatTimestampToDateTime } from "../../utils/generalUtils";
+import { capitalizeFirstLetter, formatTimestampToDateTime } from "../../utils/generalUtils";
 import { Button } from "@mui/material";
 import PreviewIcon from '@mui/icons-material/Preview';
+
 // Define columns for inventory items
 export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
 ): GridColDef[] => [
+  //  {
+  //   field: "category",
+  //   headerName: "Category",
+  //   width: 250,
+  //   renderCell: (params) => {
+  //     const category = params.value as string;
+  //     return capitalizeFirstLetter(category);
+  //   }
+  // },
   {
     field: "createdAt",
     headerName: "Date",

@@ -64,7 +64,7 @@ const inspectionAcceptanceReportResolver = {
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           // Explicitly select only the attributes required by the IARonly GraphQL type
           // Using snake_case for database columns
-          attributes: ['id', 'created_at', 'iar_id'],
+          attributes: ['id', 'created_at', 'iar_id','category'],
           where: {
             isDeleted: false,
           },
@@ -81,6 +81,8 @@ const inspectionAcceptanceReportResolver = {
         }
     
         const uniqueIARs = new Map();
+       
+        // Iterate through the fetched data to filter out unique iar_id values
     
         inspectionAcceptanceReportdata.forEach(item => {
           // Access iar_id directly from dataValues
@@ -104,6 +106,7 @@ const inspectionAcceptanceReportResolver = {
           id: item.id,
           // CRITICAL FIX: Access created_at directly from dataValues
           createdAt: item.dataValues.created_at,
+          category: item.dataValues.category, // Assuming 'category' is the correct field
           // CRITICAL FIX: Access iar_id directly from dataValues
           iarId: item.dataValues.iar_id
         }));
