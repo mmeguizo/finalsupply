@@ -105,7 +105,7 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute routePath="users" />,
             children: [
               {
-                path: "",
+                path: "users",
                 Component: UsersPage,
               },
               {

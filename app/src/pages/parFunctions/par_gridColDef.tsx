@@ -5,6 +5,9 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
 import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
+import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+//@ts-ignore
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 // Define columns for inventory items
 export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
@@ -57,9 +60,9 @@ export const createItemColumns = (
           }}
         >
           {params.row.parId ? (
-            <PrintDisabledIcon color="disabled" />
+            <CheckBoxIcon color="success" />
           ) : (
-            <LocalPrintshopIcon color="success" />
+            <IndeterminateCheckBoxIcon color="info" />
           )}
         </div>
       );

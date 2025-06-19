@@ -76,6 +76,8 @@ export default function PurchaseOrderModal({
     invoice: purchaseOrder?.invoice || "",
   });
 
+  console.log("Purchase Order Modal Form Data:", purchaseOrder);
+
   // if adding item remove disabled in input
   const [addingItem, setAddingItem] = React.useState(false);
 
@@ -130,8 +132,8 @@ export default function PurchaseOrderModal({
         supplier: purchaseOrder.supplier || "",
         address: purchaseOrder.address || "",
         placeOfDelivery: purchaseOrder.placeOfDelivery || "",
-        dateOfPayment: dayjs(),
-        dateOfDelivery: dayjs(),
+        dateOfPayment: dayjs(purchaseOrder?.dateOfPayment) || dayjs(),
+       dateOfDelivery:  dayjs(purchaseOrder.dateOfDelivery) || dayjs(),
         deliveryTerms: purchaseOrder.deliveryTerms || "",
         paymentTerms: purchaseOrder.paymentTerms || "",
         modeOfProcurement: purchaseOrder.modeOfProcurement || "",
@@ -204,6 +206,16 @@ export default function PurchaseOrderModal({
     });
   };
 
+ // Remove item
+  const removeItem = (index: number) => {
+    const updatedItems = formData.items.filter((_ : any, i : any) => i !== index);
+    setFormData({
+      ...formData,
+      items: updatedItems,
+    });
+    if (updatedItems.length === 0) setAddingItem(false); // Reset if all items removed
+  };
+
 
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -240,7 +252,7 @@ export default function PurchaseOrderModal({
       // delete this since we will increment this on the backend no need an input here
       delete item.actualQuantityReceived;
       //remove later for test purposes
-      item.itemName = "";
+      // item.itemName = "";
       item.id = item.id ? item.id : "temp"
       const { __typename, ...cleanItem } = item;
       return cleanItem;
@@ -256,7 +268,8 @@ export default function PurchaseOrderModal({
       paymentTerms: formData.paymentTerms || "",
       address : formData.address || "",
       placeOfDelivery: formData.placeOfDelivery || "",
-      poNumber: parseInt(formData.poNumber),
+      poNumber: formData.poNumber,
+      // poNumber: parseInt(formData.poNumber),
     };
     // Remove __typename, status from the main object if it exists
 
@@ -308,7 +321,48 @@ export default function PurchaseOrderModal({
               // disabled={purchaseOrder ? true : false}
             />
           </Grid>
-         
+         <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Mode of Procurement"
+              name="modeOfProcurement"
+              value={formData.modeOfProcurement}
+              placeholder="e.g direct contracting"
+              onChange={handleChange}
+              // disabled={purchaseOrder ? true : false}
+            />
+          </Grid> 
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Delivery Terms"
+              name="deliveryTerms"
+              value={formData.deliveryTerms}
+              onChange={handleChange}
+              // disabled={purchaseOrder ? true : false}
+            />
+          </Grid> 
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Payment Terms"
+              name="paymentTerms"
+              value={formData.paymentTerms}
+              placeholder="e.g not more than 30 days"
+              onChange={handleChange}
+              // disabled={purchaseOrder ? true : false}
+            />
+          </Grid> 
+           <Grid item xs={12} md={12}>
+            <TextField
+              fullWidth
+              label="Address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              // disabled={purchaseOrder ? true : false}
+            />
+          </Grid> 
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -320,7 +374,7 @@ export default function PurchaseOrderModal({
             />
           </Grid>
 
-          {/* <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name="dateOfPayment"
@@ -345,7 +399,7 @@ export default function PurchaseOrderModal({
                 // disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
-          </Grid> */}
+          </Grid>
 
           {/* Items Section */}
           <Grid item xs={12}>
@@ -461,11 +515,11 @@ export default function PurchaseOrderModal({
                     placeholder="Description"
                     value={item.description}
                     onChange={(e) => updateItem(index, "description", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.description, 'description', index)}
+                    // disabled={isIndexFieldDisabled(item.description, 'description', index)}
                   />
                 </Grid>
 
-                <Grid item xs={2}>
+                <Grid item xs={1}>
                   <TextField
                     fullWidth
                     size="small"
@@ -500,7 +554,7 @@ export default function PurchaseOrderModal({
                     }}
                   />
                 </Grid>
-                <Grid item xs={1.5}>
+                <Grid item xs={1}>
                   <TextField
                     fullWidth
                     size="small"
@@ -565,6 +619,16 @@ export default function PurchaseOrderModal({
                     }}
                     sx={{ "& input": { textAlign: "right" } }}
                   />
+                </Grid>
+                <Grid item xs={1} sx={{ textAlign: "center" }}>
+                  <IconButton
+                    onClick={() => removeItem(index)}
+                    color="error"
+                    size="small"
+                    disabled={purchaseOrder && item.id && item.id !== "temp"} // Optional: Disable for persisted items
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </Grid>
               </Grid>
             ))}

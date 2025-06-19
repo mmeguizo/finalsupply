@@ -7,15 +7,11 @@ import PreviewIcon from '@mui/icons-material/Preview';
 export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
 ): GridColDef[] => [
-  //  {
-  //   field: "category",
-  //   headerName: "Category",
-  //   width: 250,
-  //   renderCell: (params) => {
-  //     const category = params.value as string;
-  //     return capitalizeFirstLetter(category);
-  //   }
-  // },
+   {
+    field: "poNumber",
+    headerName: "PO #",
+    width: 250,
+  },
   {
     field: "createdAt",
     headerName: "Date",

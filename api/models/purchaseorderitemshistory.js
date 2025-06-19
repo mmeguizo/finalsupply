@@ -46,7 +46,7 @@ const PurchaseOrderItemsHistory = sequelize.define(
       allowNull: false,
     },
     changeType: {
-      type: DataTypes.ENUM("quantity_update", "received_update", "amount_update", "marking_complete", "item_creation"),
+      type: DataTypes.ENUM("quantity_update", "received_update", "amount_update", "marking_complete", "item_creation", "po_completed", "item_details_update"),
       allowNull: false,
     },
     changedBy: {

@@ -148,7 +148,7 @@ export default function PropertyPage() {
               onRowSelectionModelChange={(newRowSelectionModel) => {
                 setRowSelectionModel(newRowSelectionModel);
               }}
-              isRowSelectable={(params: GridRowParams) => !params.row.parId }
+              // isRowSelectable={(params: GridRowParams) => !params.row.parId }
               rowSelectionModel={rowSelectionModel}
             />
           </div>

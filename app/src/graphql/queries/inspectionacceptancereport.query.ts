@@ -122,6 +122,7 @@ const GET_ALL_IAR_FOR_REPORTS = gql`
       createdAt
       iarId
       category
+      poNumber
     }
   }
 `;

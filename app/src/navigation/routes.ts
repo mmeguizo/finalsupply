@@ -69,7 +69,7 @@ export const ALL_NAVIGATION: Navigation = [
     icon: React.createElement(PeopleAltIcon),
     children: [
       {
-        segment: '',
+        segment: 'users',
         title: 'Users',
         icon: React.createElement(FingerprintIcon),
       },

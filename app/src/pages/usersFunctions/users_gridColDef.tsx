@@ -49,7 +49,7 @@ export const createItemColumns = (
       flex: 0.5,
       sortable: false,
       renderCell: (params) => (
-        <Stack direction="row" sx={{ marginTop: "6%" }} spacing={1}>
+        <Stack direction="row" sx={{ marginTop: "3%" }} spacing={1}>
           <Tooltip title="Edit">
             {/* <Button
               size="small"

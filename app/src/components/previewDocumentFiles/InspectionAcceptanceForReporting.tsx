@@ -331,7 +331,7 @@ export default function InspectionAcceptanceForReporting({
                     <StyledTableCell colSpan={3}>
                       {item.description}
                     </StyledTableCell>
-                    <StyledTableCell>{item.quantity}</StyledTableCell>
+                    <StyledTableCell>{item.actualQuantityReceived}</StyledTableCell>
                     <StyledTableCell>{item.unitCost}</StyledTableCell>
                     <StyledTableCell>{item.amount}</StyledTableCell>
                   </StyledTableRow>

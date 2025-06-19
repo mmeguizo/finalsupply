@@ -137,7 +137,7 @@ export default function RequisitionPage() {
               onRowSelectionModelChange={(newRowSelectionModel) => {
                 setRowSelectionModel(newRowSelectionModel);
               }}
-              isRowSelectable={(params: GridRowParams) => !params.row.risId }
+              // isRowSelectable={(params: GridRowParams) => !params.row.risId }
               rowSelectionModel={rowSelectionModel}
             />
           </div>

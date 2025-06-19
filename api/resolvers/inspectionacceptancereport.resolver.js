@@ -16,7 +16,7 @@ const inspectionAcceptanceReportResolver = {
         // Fetch a single purchase order by ID
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           where: { isDeleted: false },
-          order: [["createdAt", "DESC"]],
+          order: [["id", "DESC"]],
           include: [PurchaseOrder],
         });
 
@@ -64,7 +64,7 @@ const inspectionAcceptanceReportResolver = {
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           // Explicitly select only the attributes required by the IARonly GraphQL type
           // Using snake_case for database columns
-          attributes: ['id', 'created_at', 'iar_id','category'],
+          attributes: ['id', 'created_at', 'iar_id','category','purchase_order_id'],
           where: {
             isDeleted: false,
           },
@@ -72,7 +72,15 @@ const inspectionAcceptanceReportResolver = {
             ['created_at', 'DESC'], // Order by created_at (snake_case)
             ['id', 'DESC']          // Secondary sort for consistency
           ],
-          // No need to include PurchaseOrder for the IARonly type
+          include : [
+            {
+              model : PurchaseOrder, // Include the associated PurchaseOrder details
+              attributes: [ 'po_number'], // Assuming 'po_number' is the correct
+              // required : true // Ensures that only IARs with associated POs are returned
+            }
+
+
+          ]
         });
     
         if (!inspectionAcceptanceReportdata || inspectionAcceptanceReportdata.length === 0) {
@@ -87,6 +95,7 @@ const inspectionAcceptanceReportResolver = {
         inspectionAcceptanceReportdata.forEach(item => {
           // Access iar_id directly from dataValues
           const iarIdValue = item.dataValues.iar_id;
+          console.log(item.dataValues.PurchaseOrder.dataValues.po_number);
     
           if (iarIdValue) {
             if (!uniqueIARs.has(iarIdValue)) {
@@ -108,7 +117,8 @@ const inspectionAcceptanceReportResolver = {
           createdAt: item.dataValues.created_at,
           category: item.dataValues.category, // Assuming 'category' is the correct field
           // CRITICAL FIX: Access iar_id directly from dataValues
-          iarId: item.dataValues.iar_id
+          iarId: item.dataValues.iar_id,
+          poNumber: item.dataValues.PurchaseOrder.dataValues.po_number // Assuming 'po_number' is the correct field
         }));
     
       } catch (error) {
