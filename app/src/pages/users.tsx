@@ -151,7 +151,6 @@ export const UsersPage = () => {
               gender: user.gender,
               password: user.password,
               confirm_password: user.confirm_password,
-              location: user.location,
             },
           },
         });
@@ -176,7 +175,6 @@ export const UsersPage = () => {
               gender: user.gender,
               password: user.password,
               confirm_password: user.confirm_password,
-              location: user.location,
             },
           },
         });
@@ -186,9 +184,9 @@ export const UsersPage = () => {
       setselectedUser(updateUserData);
       setEditingUser(null);
       handleCloseModal();
-    } catch (error : any) {
+    } catch (error) {
       console.error("Error saving user:", error);
-      setNotificationMessage("Error saving user " + error?.message);
+      setNotificationMessage("Error saving user");
       setNotificationSeverity("error");
       setShowNotification(true);
     } finally {
@@ -280,10 +278,6 @@ export const UsersPage = () => {
                 <Typography>
                   <strong>Role:</strong>{" "}
                   {capitalizeFirstLetter(selectedUser.role)}
-                </Typography>
-                <Typography>
-                  <strong>Location:</strong>{" "}
-                  {capitalizeFirstLetter(selectedUser.location)}
                 </Typography>
               </Box>
             </Paper>

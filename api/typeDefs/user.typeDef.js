@@ -12,7 +12,6 @@ type User {
     gender: String!
     role: String!
     is_active: Boolean!
-    location: String
 }
 
 type Query {
@@ -48,7 +47,6 @@ input EditUserInput {
     role: String
     password: String
     confirm_password: String
-    location: String
 }
 
 input CreateUserInput {
@@ -62,7 +60,6 @@ input CreateUserInput {
     role: String!
     password: String!
     confirm_password: String!
-    location: String
 }
 input UpdateUserInput {
     userId: ID!
@@ -77,7 +74,6 @@ input UpdateUserInput {
     email: String
     role: String
     is_active: Boolean
-    location: String
 }
 
 input SignUpInput {

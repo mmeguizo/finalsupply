@@ -10,7 +10,7 @@ export const createItemColumns = (
   {
     field: "iarId",
     headerName: "IAR#",
-    width: 130, 
+    width: 100, 
   },
   {
     field: "category",
@@ -49,12 +49,12 @@ export const createItemColumns = (
     field: "formatAmount",
     headerName: "Amount",
     type: "number",
-    width: 100,
+    width: 120,
   },
   {
     field: "print",
     headerName: "Print",
-    width: 80,
+    width: 100,
     renderCell: (params) => (
         <Button
           size="small"

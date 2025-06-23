@@ -1,6 +1,6 @@
 import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
 import { Op, Sequelize } from 'sequelize'; // Import Sequelize for literal
-
+  
 /**
  * Generates a new IAR ID in the format "MMDDYY-XXX-CC".
  * MMDDYY: Month, Day, Year (last two digits) of generation.

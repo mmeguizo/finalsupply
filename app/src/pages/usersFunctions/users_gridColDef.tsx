@@ -11,7 +11,7 @@ export const createItemColumns = (
   {
     field: "id",
     headerName: " ID",
-    width: 50,
+    width: 100,
   },
   {
     field: "email",
@@ -41,11 +41,6 @@ export const createItemColumns = (
   {
     field: "role",
     headerName: "Role",
-    width: 100,
-  },
-  {
-    field: "location",
-    headerName: "Location",
     width: 150,
   },
     {
