@@ -5,8 +5,14 @@ import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js"
 import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
 import { sequelize } from "../db/connectDB.js"; // Import sequelize connection
-
+import { generateNewIarId } from "../utils/iarIdGenerator.js"; // Import the new generator
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
+
+// const nanoid = customAlphabet("1234567890meguizomarkoliver", 10); // We'll replace this with the new format
+
+
+
+
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
@@ -211,6 +217,7 @@ const purchaseorderResolver = {
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
       const batchIarId = nanoid();
+      const generateNewIarIds = await generateNewIarId(context.req.user.location); // Generate a new IAR ID based on user location
       // Define valid categories at a higher scope if used for both PO and POItems
       const validCategories = [
         "property acknowledgement reciept",
@@ -323,7 +330,7 @@ const purchaseorderResolver = {
               await inspectionAcceptanceReport.create(
                 {
                   ...cleanedItems,
-                  iarId: batchIarId, // Use the same IAR ID for all items in this batch
+                  iarId: generateNewIarIds || batchIarId, // Use the same IAR ID for all items in this batch
                   actualQuantityReceived: item.currentInput, // Already checked it's > 0
                   purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
                   purchaseOrderItemId: newPOI.id, // Link items to the new purchase order

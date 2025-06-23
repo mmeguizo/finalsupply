@@ -55,6 +55,10 @@ const User = sequelize.define(
       type: DataTypes.ENUM("admin", "user"),
       defaultValue: "user",
     },
+    location : {
+      type: DataTypes.ENUM("Talisay", "Fortune Town", "Alijis", "Binalbagan",),
+      defaultValue: "Talisay",
+    }
   },
   {
     // Add some additional settings
