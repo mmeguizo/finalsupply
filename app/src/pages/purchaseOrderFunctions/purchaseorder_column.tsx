@@ -44,7 +44,7 @@ export const createPoColumns = (
   {
     field: "formatAmount",
     headerName: "Amount",
-    type: "number",
+    type: "string",
     width: 150,
     align: "right",
     headerAlign: "right",
@@ -73,7 +73,8 @@ export const createPoColumns = (
             await updatePurchaseOrder({
               variables: {
                 input: {
-                  id: parseInt(params.row.id),
+                  id: params.row.id,
+                  // id: parseInt(params.row.id),
                   status: "completed",
                   completed_status_date: new Date().toISOString(),
                   markingComplete : true,
@@ -197,13 +198,13 @@ export const itemColumns: GridColDef[] = [
   {
     field: "formatUnitCost",
     headerName: "Unit Cost",
-    type: "number",
+    type: "string",
     width: 120,
   },
   {
     field: "formatAmount",
     headerName: "Amount",
-    type: "number",
+    type: "string",
     width: 120,
   },
 ];

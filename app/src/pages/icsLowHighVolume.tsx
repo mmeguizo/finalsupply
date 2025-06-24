@@ -138,7 +138,7 @@ export default function icsLowHighVolume() {
               onRowSelectionModelChange={(newRowSelectionModel) => {
                 setRowSelectionModel(newRowSelectionModel);
               }}
-              isRowSelectable={(params: GridRowParams) => !params.row.icsId }
+             // isRowSelectable={(params: GridRowParams) => !params.row.icsId }
               rowSelectionModel={rowSelectionModel}
             />
           </div>

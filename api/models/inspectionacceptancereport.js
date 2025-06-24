@@ -95,6 +95,14 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       defaultValue: 0,
     },
+    createdBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    updatedBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
   },
   {
     tableName: "inspection_acceptance_report", // Specify the table name

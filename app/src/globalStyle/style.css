@@ -1,0 +1,19 @@
+/* Remove max-width constraint from MUI Container */
+@media (min-width: 1200px) {
+  .MuiContainer-root.MuiContainer-maxWidthLg {
+    max-width: none !important;
+  }
+}
+
+/* Alternative: Set to full width */
+@media (min-width: 1200px) {
+  .MuiContainer-root.MuiContainer-maxWidthLg {
+    max-width: 100% !important;
+  }
+}
+
+
+  .MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation24.MuiDialog-paper.MuiDialog-paperScrollPaper.MuiDialog-paperWidthMd.MuiDialog-paperFullWidth {
+    max-width: 100% !important;
+  }
+
