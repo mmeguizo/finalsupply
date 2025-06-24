@@ -42,7 +42,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     role: "",
     password: "",
     confirm_password: "",
-     location: "",
+    location: "",
   });
 
   // State for validation errors
@@ -57,10 +57,9 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     role: "",
     password: "",
     confirm_password: "",
-     location: "",
+    location: "",
   });
 
-  
   const [showPassword, setShowPassword] = useState(true);
   // Set initial form data when editing
   useEffect(() => {
@@ -371,7 +370,9 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.location && <FormHelperText>{errors.location}</FormHelperText>}
+                {errors.location && (
+                  <FormHelperText>{errors.location}</FormHelperText>
+                )}
               </FormControl>
             </Grid>
 

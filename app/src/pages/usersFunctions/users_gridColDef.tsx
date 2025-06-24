@@ -48,29 +48,29 @@ export const createItemColumns = (
     headerName: "Location",
     width: 150,
   },
-    {
-      field: "actions",
-      headerName: "Actions",
-      flex: 0.5,
-      sortable: false,
-      renderCell: (params) => (
-        <Stack direction="row" sx={{ marginTop: "3%" }} spacing={1}>
-          <Tooltip title="Edit">
-            {/* <Button
+  {
+    field: "actions",
+    headerName: "Actions",
+    flex: 0.5,
+    sortable: false,
+    renderCell: (params) => (
+      <Stack direction="row" sx={{ marginTop: "3%" }} spacing={1}>
+        <Tooltip title="Edit">
+          {/* <Button
               size="small"
               onClick={() => handleOpenEditModal(params.row)}
               variant="outlined"
             >
               Edit
             </Button> */}
-            <DrawIcon
-              color="warning"
-              sx={{ cursor: "pointer" }}
-              onClick={() => handleOpenEditModal(params.row)}
-            />
-          </Tooltip>
-          <Tooltip title="Delete">
-            {/* <Button
+          <DrawIcon
+            color="warning"
+            sx={{ cursor: "pointer" }}
+            onClick={() => handleOpenEditModal(params.row)}
+          />
+        </Tooltip>
+        <Tooltip title="Delete">
+          {/* <Button
               size="small"
               onClick={() => handleDeleteModal(params.row)}
               variant="outlined"
@@ -78,14 +78,13 @@ export const createItemColumns = (
             >
               Delete
             </Button> */}
-            <DeleteForeverIcon
-              color="error"
-              sx={{ cursor: "pointer" }}
-              onClick={() => handleDeleteModal(params.row)}
-            />
-          </Tooltip>
-        </Stack>
-      ),
-    },
-
+          <DeleteForeverIcon
+            color="error"
+            sx={{ cursor: "pointer" }}
+            onClick={() => handleDeleteModal(params.row)}
+          />
+        </Tooltip>
+      </Stack>
+    ),
+  },
 ];
