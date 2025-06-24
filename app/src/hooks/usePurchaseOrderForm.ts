@@ -148,7 +148,8 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       dateofpayment: formData.dateofpayment
         ? formData.dateofpayment.getTime().toString()
         : null,
-      ponumber: parseInt(formData.ponumber),
+      // ponumber: parseInt(formData.ponumber),
+      // ponumber: parseInt(formData.ponumber),
     };
 
     const { ...cleanData } = formattedData;

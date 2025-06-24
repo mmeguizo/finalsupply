@@ -7,6 +7,7 @@ const GET_AUTHENTICATED_USER = gql`
       name
       profile_pic
       role
+      location
     }
   }
 `;
@@ -25,6 +26,7 @@ const GET_ALL_USERS = gql`
       gender
       role
       is_active
+      location
     }
   }
 `;

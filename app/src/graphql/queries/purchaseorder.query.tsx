@@ -15,6 +15,7 @@ const GET_PURCHASEORDERS = gql`
       paymentTerms
       category
       status
+      modeOfProcurement
       items {
         id
         itemName

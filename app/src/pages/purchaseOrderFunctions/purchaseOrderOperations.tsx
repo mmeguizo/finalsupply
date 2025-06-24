@@ -13,6 +13,36 @@ export const handleSavePurchaseOrder = async (
   setIsSubmitting(true);
   try {
       //remove id , typname and iarId
+
+     // Validate that if items are provided, at least one item has meaningful data
+    if (formData.items && Array.isArray(formData.items) && formData.items.length > 0) {
+      // const hasAtLeastOneValidItem = formData.items.some((item: any) => {
+      //   const itemNameIsValid = item.itemName && item.itemName.trim() !== '';
+      //   const quantityIsValid = typeof item.quantity === 'number' && item.quantity > 0;
+      //   // Add more checks here if needed (e.g., for unitCost)
+      //   return itemNameIsValid || quantityIsValid;
+      // });
+      for (const [index, item] of formData.items.entries()) {
+        const itemNameIsValid = item.itemName && item.itemName.trim() !== '';
+        const quantityIsValid = typeof item.quantity === 'number' && item.quantity > 0;
+
+         const categoryIsValid = item.category && item.category.trim() !== ''
+
+        if (!categoryIsValid) {
+          return { success: false, message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have a category selected.` };
+        }
+
+        // An item is considered invalid if it has a category but lacks both a name and a positive quantity.
+        if (!itemNameIsValid && !quantityIsValid) {
+          return { success: false, message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have an item name or a quantity greater than 0.` };
+        }
+      }
+
+      // if (!hasAtLeastOneValidItem) {
+      //   return { success: false, message: "Cannot save purchase order: provided items are empty or invalid. Please ensure at least one item has a Name or Quantity." };
+      // }
+    }
+
     const cleanedItems = formData.items.map((item: any) => {
       const { __typename, iarId, ...cleanItem } = item;
       return cleanItem;

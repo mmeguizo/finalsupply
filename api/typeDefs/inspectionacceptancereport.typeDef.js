@@ -21,7 +21,7 @@ type Item {
 }
 
 type PurchaseOrderType {
-    poNumber: Int
+    poNumber: String
     supplier: String
     address: String
     modeOfProcurement: String
@@ -63,6 +63,8 @@ type IARonly{
     id: ID
     createdAt : String
     iarId : String
+    category : String
+    poNumber : String
 }
 
 

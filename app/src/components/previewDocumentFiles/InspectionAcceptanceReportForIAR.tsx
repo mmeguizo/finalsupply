@@ -70,6 +70,9 @@ export default function InspectionAcceptanceReportForIAR({
   onPrint,
   onClose,
 }: InspectionAcceptanceReportPropsForIAR) {
+
+  console.log(reportData);
+
   const componentRef = useRef(null);
   // const { signatories, loading, error } = useSignatoryStore();
   // Get specific signatories by role
@@ -325,7 +328,7 @@ export default function InspectionAcceptanceReportForIAR({
                     <StyledTableCell colSpan={3}>
                       {reportData.description}
                     </StyledTableCell>
-                    <StyledTableCell>{reportData.quantity}</StyledTableCell>
+                    <StyledTableCell>{reportData.actualQuantityReceived}</StyledTableCell>
                     <StyledTableCell>{reportData.unitCost}</StyledTableCell>
                     <StyledTableCell>{reportData.amount}</StyledTableCell>
                   </StyledTableRow>

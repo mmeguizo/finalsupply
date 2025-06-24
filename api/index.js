@@ -71,10 +71,16 @@ await server.start();
 
 // Set up our Express middleware to handle CORS, body parsing,
 // and our expressMiddleware function.
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://192.168.156.105:3000",
+];
+
 app.use(
     "/graphql",
     cors({
-        origin: "http://localhost:3000",
+        // origin: "http://localhost:3000",
+        origin: allowedOrigins,
         credentials: true,
     }),
     express.json(),

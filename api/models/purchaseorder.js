@@ -11,7 +11,7 @@ const PurchaseOrder = sequelize.define(
       autoIncrement: true,
     },
     poNumber: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     modeOfProcurement: {

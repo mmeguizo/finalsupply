@@ -6,11 +6,21 @@ export const formatCategory = (value: string) => {
     .join(""); // Join the initials
 };
 
-export const currencyFormat = (value: number) => {
+export const currencyFormat = (value: number | string | null | undefined): string => {
+  const numericValue = Number(value);
+
+  if (isNaN(numericValue)) {
+    // Handle cases where value is not a number, or null/undefined
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(0);
+  }
+
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-  }).format(value);
+  }).format(numericValue);
 };
 
 export const currencyFormatWithRoundingSymbol = (value: number) => {

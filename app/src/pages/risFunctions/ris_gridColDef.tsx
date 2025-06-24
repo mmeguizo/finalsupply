@@ -4,6 +4,9 @@ import Tooltip from "@mui/material/Tooltip";
 import PreviewIcon from "@mui/icons-material/Preview";
 import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
+import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+//@ts-ignore
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 // Define columns for inventory items
 export const createItemColumns = (
@@ -57,9 +60,9 @@ export const createItemColumns = (
           }}
         >
           {params.row.risId ? (
-            <PrintDisabledIcon color="disabled" />
+            <CheckBoxIcon color="success" />
           ) : (
-            <LocalPrintshopIcon color="success" />
+            <IndeterminateCheckBoxIcon color="info" />
           )}
         </div>
       );

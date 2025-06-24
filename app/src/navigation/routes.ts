@@ -13,6 +13,11 @@ import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 import CabinIcon from '@mui/icons-material/Cabin';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import EngineeringIcon from '@mui/icons-material/Engineering';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+//@ts-ignore
+import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+
 
 export const ALL_NAVIGATION: Navigation = [
   {
@@ -61,6 +66,23 @@ export const ALL_NAVIGATION: Navigation = [
   {
     segment: "users",
     title: "Users",
-    icon: React.createElement(FingerprintIcon),
+    icon: React.createElement(PeopleAltIcon),
+    children: [
+      {
+        segment: 'users',
+        title: 'Users',
+        icon: React.createElement(FingerprintIcon),
+      },
+      {
+        segment: 'role',
+        title: 'Role',
+       icon: React.createElement(EngineeringIcon),
+      },
+      {
+        segment: 'department',
+        title: 'Department',
+       icon: React.createElement(CorporateFareIcon),
+      },
+    ],
   },
 ];

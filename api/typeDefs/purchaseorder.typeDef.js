@@ -5,7 +5,7 @@ type PurchaseOrder {
     id: ID!
     supplier: String
     address: String
-    poNumber: Int
+    poNumber: String
     modeOfProcurement: String
     email: String
     telephone: String
@@ -27,7 +27,7 @@ type InspectionAcceptanceReport {
     id: ID!
     supplier: String
     address: String
-    poNumber: Int
+    poNumber: String
     modeOfProcurement: String
     email: String
     telephone: String
@@ -88,7 +88,7 @@ type ItemWithPurchaseOrder {
 }
 
 type PurchaseOrderType {
-    poNumber: Int
+    poNumber: String
     supplier: String
     address: String
     modeOfProcurement: String
@@ -106,7 +106,7 @@ type PurchaseOrderType {
 }
 
 type InspectionAcceptanceReportType {
-    poNumber: Int
+    poNumber: String
     supplier: String
     address: String
     modeOfProcurement: String
@@ -168,7 +168,7 @@ input UpdatePurchaseOrderInput {
     id: Int
     supplier: String
     address: String
-    poNumber: Int
+    poNumber: String
     modeOfProcurement: String
     email: String
     telephone: String
@@ -188,7 +188,7 @@ input UpdatePurchaseOrderInput {
 input PurchaseOrderInput {
     supplier: String
     address: String
-    poNumber: Int
+    poNumber: String
     modeOfProcurement: String
     email: String
     telephone: String

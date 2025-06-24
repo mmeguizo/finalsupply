@@ -267,7 +267,7 @@ table {
             <td>${1}</td>
             <td>${reportData.unit || ''}</td>
             <td colspan="3">${reportData.description || ''}</td>
-            <td>${reportData.quantity || ''}</td>
+            <td>${reportData.actualQuantityReceived || ''}</td>
             <td>${reportData.unitCost || ''}</td>
             <td>${reportData.amount || ''}</td>
           </tr>

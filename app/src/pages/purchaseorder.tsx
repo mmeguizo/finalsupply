@@ -3,7 +3,7 @@ import * as React from "react";
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
 // @ts-ignore
 import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query";
-import { useQuery, useMutation , useApolloClient  } from "@apollo/client";
+import { useQuery, useMutation, useApolloClient } from "@apollo/client";
 import {
   CircularProgress,
   Alert,
@@ -40,18 +40,25 @@ import {
 } from "../graphql/mutations/purchaseorder.mutation";
 import ConfirmDialog from "../components/confirmationdialog";
 import NotificationDialog from "../components/notifications";
-import { formatCategory } from "../utils/generalUtils";
+import { formatCategory, currencyFormat } from "../utils/generalUtils";
 import { exportPurchaseOrdersWithItems } from "../utils/exportCsvpurchaseorderwithItems";
 import { printPurchaseOrdersWithItems } from "../utils/printPurchaseOrderWithItems";
 import { printSelectedPurchaseOrdersWithItems } from "../utils/printSelectedPurchaseOrder";
 import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
 import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
-import { createPoColumns, itemColumns } from './purchaseOrderFunctions/purchaseorder_column';
-import { handleSavePurchaseOrder, } from './purchaseOrderFunctions/purchaseOrderOperations';
+import {
+  createPoColumns,
+  itemColumns,
+} from "./purchaseOrderFunctions/purchaseorder_column";
+import { handleSavePurchaseOrder } from "./purchaseOrderFunctions/purchaseOrderOperations";
 import PurchaseOrderPrintModal from "../components/printReportModal";
 import PrintReportDialog from "../components/printReportModal";
-
-
+// @ts-ignore
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
+// @ts-ignore
+import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
+// @ts-ignore
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
 
 export default function PurchaseOrder() {
   //for submit loading
@@ -73,16 +80,44 @@ export default function PurchaseOrder() {
     "success" | "error" | "info" | "warning"
   >("success");
 
-
   const client = useApolloClient(); // ADD THIS LINE!
   const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
-      refetchQueries: [{ query: GET_PURCHASEORDERS  },
-      {query : GET_ALL_PURCHASEORDER_ITEMS}],
+    refetchQueries: [
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_PURCHASEORDER_ITEMS },
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY },
+      { query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY },
+    ],
     onCompleted: () => {
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReport' });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReportForICS' });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "getPurchaseOrderForBarCharts",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "inspectionAcceptanceReport",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "inspectionAcceptanceReportForICS",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "allPurchaseOrderItems",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllPropertyAcknowledgementReportForView",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllInspectionAcceptanceReport",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllRequisitionIssueSlipView",
+      });
       client.cache.evict({ fieldName: "getAllCategory" });
       client.cache.gc();
     },
@@ -95,14 +130,43 @@ export default function PurchaseOrder() {
     refetchQueries: [{ query: GET_PURCHASEORDERS }],
   });
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
-     refetchQueries: [{ query: GET_PURCHASEORDERS  },
-      {query : GET_ALL_PURCHASEORDER_ITEMS}],
+    refetchQueries: [
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_PURCHASEORDER_ITEMS },
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY },
+      { query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY },
+    ],
     onCompleted: () => {
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'getPurchaseOrderForBarCharts' });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "getPurchaseOrderForBarCharts",
+      });
       client.cache.evict({ fieldName: "getAllCategory" });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'allPurchaseOrderItems' });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReport' });
-      client.cache.evict({  id: 'ROOT_QUERY',fieldName: 'inspectionAcceptanceReportForICS' });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "allPurchaseOrderItems",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "inspectionAcceptanceReport",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "inspectionAcceptanceReportForICS",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllPropertyAcknowledgementReportForView",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllInspectionAcceptanceReport",
+      });
+      client.cache.evict({
+        id: "ROOT_QUERY",
+        fieldName: "GetAllRequisitionIssueSlipView",
+      });
       client.cache.gc();
     },
   });
@@ -115,13 +179,13 @@ export default function PurchaseOrder() {
     if (!data?.purchaseOrders) return [];
 
     return data.purchaseOrders.map((po: any) => {
-      const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
+      // const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
       return {
         id: po._id,
         ...po,
         // formattedDeliveryDate,
         // formattedPaymentDate,
-        formatAmount,
+        formatAmount: currencyFormat(po.amount),
       };
     });
   }, [data]);
@@ -131,10 +195,12 @@ export default function PurchaseOrder() {
     if (!selectedPO?.items) return [];
 
     return selectedPO.items.map((item: any) => ({
-      formatUnitCost: item.unitCost ? `₱${item.unitCost.toFixed(2)}` : "0.00",
-      formatAmount: item.amount ? `₱${item.amount.toFixed(2)}` : "0.00",
+      // formatUnitCost: item.unitCost ? `₱${item.unitCost.toFixed(2)}` : "0.00",
+      // formatAmount: item.amount ? `₱${item.amount.toFixed(2)}` : "0.00",
       id: item._id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
+      formatUnitCost: currencyFormat(item.unitCost),
+      formatAmount: currencyFormat(item.amount),
     }));
   }, [selectedPO]);
 
@@ -215,13 +281,12 @@ export default function PurchaseOrder() {
       handleCloseModal,
       setIsSubmitting
     );
-    
+
     // Display notification based on the result
     setNotificationMessage(result.message);
     setNotificationSeverity(result.success ? "success" : "error");
     setShowNotification(true);
   };
-
 
   // Show notification when purchase order is deleted
   React.useEffect(() => {
@@ -234,12 +299,17 @@ export default function PurchaseOrder() {
   }, [showNotification]);
 
   const poColumns = React.useMemo(
-    () => createPoColumns(handleOpenEditModal, handleOpenHistoryModal, handleOpenPrintModal),
+    () =>
+      createPoColumns(
+        handleOpenEditModal,
+        handleOpenHistoryModal,
+        handleOpenPrintModal
+      ),
     [handleOpenEditModal, handleOpenHistoryModal, handleOpenPrintModal]
   );
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
@@ -261,8 +331,15 @@ export default function PurchaseOrder() {
         </Alert>
       )}
       {data && data.purchaseOrders && (
-        <Stack spacing={3} sx={{ width: '100%', overflow: 'auto', maxHeight: 'calc(100vh - 100px)'}}>
-          <Paper sx={{ width: '100%' }}>
+        <Stack
+          spacing={3}
+          sx={{
+            width: "100%",
+            overflow: "auto",
+            maxHeight: "calc(100vh - 100px)",
+          }}
+        >
+          <Paper sx={{ width: "100%" }}>
             <DataGrid
               rows={poRows}
               columns={poColumns}
@@ -296,14 +373,14 @@ export default function PurchaseOrder() {
           </Paper>
 
           {selectedPO && (
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+            <Paper sx={{ width: "100%", overflow: "hidden" }}>
               <Box p={2} pb={0}>
                 <Typography variant="subtitle1" fontWeight="bold">
                   Items for Purchase Order #{selectedPO.poNumber} -{" "}
                   {selectedPO.supplier}
                 </Typography>
               </Box>
-              <Box sx={{ width: '100%', overflow: 'hidden' }}>
+              <Box sx={{ width: "100%", overflow: "hidden" }}>
                 <DataGrid
                   rows={itemRows}
                   columns={itemColumns}

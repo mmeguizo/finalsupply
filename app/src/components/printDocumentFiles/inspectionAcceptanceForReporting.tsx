@@ -307,7 +307,7 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
                 <td>${index + 1}</td>
                 <td>${item.unit || ''}</td>
                 <td colspan="3">${item.description || ''}</td>
-                <td>${item.quantity || ''}</td>
+                <td>${item.actualQuantityReceived || ''}</td>
                 <td>${item.unitCost || ''}</td>
                 <td>${item.amount || ''}</td>
               </tr>
