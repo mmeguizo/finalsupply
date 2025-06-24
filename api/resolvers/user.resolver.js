@@ -131,7 +131,7 @@ const userResolver = {
         }
 
         // Prepare other updatable fields
-        ['name', 'last_name', 'employee_id', 'department', 'position', 'gender', 'role'].forEach(field => {
+        ['name', 'last_name', 'employee_id', 'department', 'position', 'gender', 'role', 'location' ].forEach(field => {
           if (updateFields[field] !== undefined) {
             if ((field === 'name' || field === 'gender') && String(updateFields[field]).trim() === "") {
                  throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} cannot be empty.`);
@@ -180,10 +180,12 @@ const userResolver = {
           department,
           position,
           role,
+          location
         } = input;
 
         // Basic validation
-        if (!email || !name || !last_name || !password || !confirm_password || !gender || !employee_id || !department || !position || !role) {
+        if (!email || !name || !last_name || !password || !confirm_password || !gender || !employee_id || !department || !position || !role|| !location) {
+
           throw new Error("All fields are required.");
         }
 
@@ -221,6 +223,7 @@ const userResolver = {
           role,
           profile_pic: gender === "male" ? boyProfilePic : gender === "female" ? girlProfilePic : othersProfilePic,
           // is_active defaults to true in the model
+          location
         });
 
         return newUser;

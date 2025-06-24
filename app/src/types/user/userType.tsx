@@ -14,6 +14,7 @@ interface UserTypes {
   is_active?: boolean;
   password?: string;
   confirm_password?: string;
+  location?: string;
 }
 
 

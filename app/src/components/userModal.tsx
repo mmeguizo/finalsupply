@@ -28,7 +28,7 @@ interface UserModalProps {
 
 const ROLE_OPTIONS = ["admin", "user"];
 const GenderOptions = ["male", "female", "others"];
-
+const LOCATION_OPTIONS = ["Talisay", "Alijis", "Binalbagan", "Fortune Town"];
 const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
   // State for form fields
   const [formData, setFormData] = useState({
@@ -42,6 +42,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     role: "",
     password: "",
     confirm_password: "",
+     location: "",
   });
 
   // State for validation errors
@@ -56,6 +57,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     role: "",
     password: "",
     confirm_password: "",
+     location: "",
   });
 
   
@@ -74,6 +76,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
         role: user.role || "",
         password: "",
         confirm_password: "",
+        location: user.location || "",
       });
     } else {
       // Reset form for new signatory
@@ -88,6 +91,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
         role: "",
         password: "Password123!",
         confirm_password: "Password123!",
+        location: "",
       });
     }
     // Reset errors
@@ -102,6 +106,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
       role: "",
       password: "",
       confirm_password: "",
+      location: "",
     });
   }, [user, open]);
 
@@ -138,6 +143,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
       role: "",
       password: "",
       confirm_password: "",
+      location: "",
     };
 
     if (!formData.name.trim()) {
@@ -162,6 +168,11 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
 
     if (!formData.position.trim()) {
       newErrors.position = "Position is required";
+      valid = false;
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.role = "Location is required";
       valid = false;
     }
 
@@ -343,6 +354,25 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                 helperText={errors.position}
                 required
               />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth error={!!errors.location} required>
+                <InputLabel id="role-label">Location</InputLabel>
+                <Select
+                  labelId="location-label"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  label="Location"
+                >
+                  {LOCATION_OPTIONS.map((loc) => (
+                    <MenuItem key={loc} value={loc}>
+                      {loc}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.location && <FormHelperText>{errors.location}</FormHelperText>}
+              </FormControl>
             </Grid>
 
             <Grid item xs={12}>

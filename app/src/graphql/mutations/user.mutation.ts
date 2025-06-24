@@ -47,6 +47,7 @@ const EDIT_USER = gql`
       gender
       role
       profile_pic
+      location
     }
   }
 `;
@@ -63,6 +64,7 @@ const CREATE_USER = gql`
       gender
       role
       profile_pic
+      location
     }
   }
 `;

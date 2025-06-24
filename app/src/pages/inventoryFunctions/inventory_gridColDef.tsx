@@ -2,6 +2,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import PreviewIcon from "@mui/icons-material/Preview";
+import { currencyFormat } from "../../utils/generalUtils";
 
 // Define columns for inventory items
 export const createItemColumns = (
@@ -10,7 +11,7 @@ export const createItemColumns = (
   {
     field: "iarId",
     headerName: "IAR#",
-    width: 100, 
+    width: 130, 
   },
   {
     field: "category",
@@ -27,7 +28,7 @@ export const createItemColumns = (
   {
     field: "PurchaseOrder",
     headerName: "P.O. #",
-    width: 80,
+    width: 100,
     valueGetter: (params: any) => params.poNumber,
   },
   { field: "description", headerName: "Description", width: 300, flex: 1 },
@@ -49,12 +50,16 @@ export const createItemColumns = (
     field: "formatAmount",
     headerName: "Amount",
     type: "number",
-    width: 120,
+    width: 100,
+    valueFormatter: (params: any) => {
+      return currencyFormat(params.value);
+    },
+
   },
   {
     field: "print",
     headerName: "Print",
-    width: 100,
+    width: 80,
     renderCell: (params) => (
         <Button
           size="small"
