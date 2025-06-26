@@ -40,21 +40,24 @@ export const createItemColumns = (
     width: 70,
   },
   { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-  {
-    field: "formatUnitCost",
+   {
+    field: "unitCost",
     headerName: "Unit Cost",
     type: "number",
     width: 80,
+    valueGetter: (params: any) => {
+      return currencyFormat(params);
+    },
+    
   },
   {
-    field: "formatAmount",
+    field: "amount",
     headerName: "Amount",
     type: "number",
-    width: 100,
-    valueFormatter: (params: any) => {
-      return currencyFormat(params.value);
+    width: 120,
+    valueGetter: (params: any) => {
+      return currencyFormat(params );
     },
-
   },
   {
     field: "print",

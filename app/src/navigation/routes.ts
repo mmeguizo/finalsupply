@@ -50,7 +50,7 @@ export const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "property",
-    title: "Property Acknowledgement Reciept",
+    title: "Property Acknowledgement",
     icon: React.createElement(CabinIcon),
   },
   {

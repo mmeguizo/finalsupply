@@ -6,6 +6,8 @@ import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
 import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+import { currencyFormat } from "../../utils/generalUtils";
+
 //@ts-ignore
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 // Define columns for inventory items
@@ -33,17 +35,24 @@ export const createItemColumns = (
     width: 70,
   },
   { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-  {
-    field: "formatUnitCost",
+    {
+    field: "unitCost",
     headerName: "Unit Cost",
     type: "number",
     width: 80,
+    valueGetter: (params: any) => {
+      return currencyFormat(params);
+    },
+    
   },
   {
-    field: "formatAmount",
+    field: "amount",
     headerName: "Amount",
     type: "number",
     width: 120,
+    valueGetter: (params: any) => {
+      return currencyFormat(params );
+    },
   },
   {
     field: "print",

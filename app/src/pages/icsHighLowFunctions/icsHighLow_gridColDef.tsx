@@ -6,6 +6,8 @@ import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
 import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+import { currencyFormat } from "../../utils/generalUtils";
+
 //@ts-ignore
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 // Define columns for inventory items
@@ -15,13 +17,13 @@ export const createItemColumns = (
   {
     field: "icsId",
     headerName: "ICS ID",
-    width: 100,
+    width: 150,
     // valueGetter: (params: any) => params.poNumber,
   },
   {
     field: "tag",
     headerName: "Tag",
-    width: 80,
+    width: 50,
     valueFormatter: (params: any) => {
       let category;
       category = params.split(" ");
@@ -33,7 +35,7 @@ export const createItemColumns = (
   {
     field: "PurchaseOrder",
     headerName: "P.O. #",
-    width: 150,
+    width: 120,
     valueGetter: (params: any) => params.poNumber,
   },
   { field: "description", headerName: "Description", width: 300, flex: 1 },
@@ -46,16 +48,23 @@ export const createItemColumns = (
   },
   { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
   {
-    field: "formatUnitCost",
+    field: "unitCost",
     headerName: "Unit Cost",
     type: "number",
     width: 80,
+    valueGetter: (params: any) => {
+      return currencyFormat(params);
+    },
+    
   },
   {
-    field: "formatAmount",
+    field: "amount",
     headerName: "Amount",
     type: "number",
     width: 120,
+    valueGetter: (params: any) => {
+      return currencyFormat(params );
+    },
   },
   {
     field: "print",

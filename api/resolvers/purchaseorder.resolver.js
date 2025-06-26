@@ -372,6 +372,7 @@ const purchaseorderResolver = {
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
       const batchIarId = nanoid();
+        const autoIiarIds = await generateNewIarId(context.req.user.location);
       // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
         "property acknowledgement reciept",
@@ -531,7 +532,7 @@ const purchaseorderResolver = {
                   const iarItemData = { ...currentItem.get(), ...itemUpdates }; // Use currentItem and apply updates for IAR
                   await inspectionAcceptanceReport.create({
                     ...omitId(iarItemData), // omitId on the merged data for IAR
-                    iarId: batchIarId,
+                    iarId:autoIiarIds || batchIarId,
                     actualQuantityReceived: actualQuantityReceivedIncrement, // Log only the increment
                     purchaseOrderId: poId,
                     purchaseOrderItemId: currentItem.id,
@@ -603,7 +604,7 @@ const purchaseorderResolver = {
                  //add entry to inspection acceptance report
               await inspectionAcceptanceReport.create({
                 ...cleanedItems,
-                iarId: batchIarId, //=> "4f90d13a42"
+                iarId: autoIiarIds || batchIarId, //=> "4f90d13a42"
                 actualQuantityReceived: item?.currentInput
                   ? item.currentInput
                   : 0,

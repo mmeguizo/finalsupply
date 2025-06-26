@@ -2,7 +2,8 @@ import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize 
 import inspectionAcceptanceReportResolver from "../models/inspectionacceptancereport.js";
 import { customAlphabet } from 'nanoid'
 import { Op } from 'sequelize'
-const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
+// const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
+import { generateNewParId } from "../utils/parIdGenerator.js";
 const propertyAcknowledgmentReportResolver = {
   Query: {
     propertyAcknowledgmentReport: async (_, __, context) => {
@@ -60,8 +61,9 @@ const propertyAcknowledgmentReportResolver = {
         }
         
         // Generate a single batch ICS ID for all items
-        const batchParId = nanoid();
-        console.log("Updating items with IDs:", input.ids);
+        // const batchParId = nanoid();
+        const batchParId = await generateNewParId();
+        // console.log("Updating items with IDs:", input.ids);
         console.log("Generated batch ICS ID:", batchParId);
         
         // Find all items by their IDs and update them with the same ICS ID
@@ -74,7 +76,8 @@ const propertyAcknowledgmentReportResolver = {
             returning: true
           }
         );
-        console.log({updatedItems});
+        // console.log({updatedItems});
+        // console.log({batchParId});
         
         // Fetch the updated items to return them
         const items = await inspectionAcceptanceReportResolver.findAll({
@@ -84,7 +87,7 @@ const propertyAcknowledgmentReportResolver = {
           include: [PurchaseOrder]
         });
 
-        console.log("Updated items:", items);
+        // console.log("Updated items:", items);
         
         return items;
       } catch (error) {

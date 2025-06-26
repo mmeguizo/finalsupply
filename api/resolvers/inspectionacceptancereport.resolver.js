@@ -2,9 +2,11 @@ import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize 
 import PurchaseOrderItems from "../models/purchaseorderitems.js"; // Import the Sequelize models
 import PurchaseOrderItemsHistory from "../models/purchaseorderitemshistory.js"; // Import history model
 import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
+import { sequelize } from "../db/connectDB.js";
 import { customAlphabet } from 'nanoid'
 import { omitId } from '../utils/helper.js';
 import { Op, Sequelize } from 'sequelize'
+import { generateNewIcsId } from '../utils/icsIdGenerator.js'; // Import the ICS ID generator function
 const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
 const inspectionAcceptanceReportResolver = {
   Query: {
@@ -179,28 +181,50 @@ const inspectionAcceptanceReportResolver = {
 
   Mutation: {
     updateICSInventoryIDs: async (_, { input }, context) => {
+      const t = await sequelize.transaction();
       try {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        
-        // Generate a single batch ICS ID for all items
-        const batchIcsId = nanoid();
-        console.log("Updating items with IDs:", input.ids);
-        console.log("Generated batch ICS ID:", batchIcsId);
-        
-        // Find all items by their IDs and update them with the same ICS ID
-        const updatedItems = await inspectionAcceptanceReport.update(
-          { icsId: batchIcsId },
-          { 
-            where: { 
-              id: { [Op.in]: input.ids } 
-            },
-            returning: true
+
+        // 1. Fetch items to determine their tags
+        const itemsToUpdate = await inspectionAcceptanceReport.findAll({
+          where: { id: { [Op.in]: input.ids } },
+          attributes: ['id', 'tag'],
+          transaction: t
+        });
+
+        // 2. Group items by their tag ('low', 'high', etc.)
+        const groupedByTag = itemsToUpdate.reduce((acc, item) => {
+          const tag = item.tag || ''; // Handle items without a tag
+          if (!acc[tag]) {
+            acc[tag] = [];
           }
-        );
-        console.log({updatedItems});
-        
+          acc[tag].push(item.id);
+          return acc;
+        }, {});
+
+        // 3. Generate a unique ICS ID for each tag group and update the items
+        for (const tag of Object.keys(groupedByTag)) {
+          if (tag === 'low' || tag === 'high') {
+            const idsInGroup = groupedByTag[tag];
+            console.log(`Processing tag: ${tag} with items: [${idsInGroup.join(', ')}]`);
+
+            const newIcsId = await generateNewIcsId(tag);
+            console.log(`Generated ICS ID: ${newIcsId} for tag "${tag}" and items: [${idsInGroup.join(', ')}]`);
+          
+            await inspectionAcceptanceReport.update(
+              { icsId: newIcsId },
+              {
+                where: { id: { [Op.in]: idsInGroup } },
+                transaction: t
+              }
+            );
+          }
+        }
+
+        await t.commit();
+
         // Fetch the updated items to return them
         const items = await inspectionAcceptanceReport.findAll({
           where: { 
@@ -208,11 +232,10 @@ const inspectionAcceptanceReportResolver = {
           },
           include: [PurchaseOrder]
         });
-
-        console.log("Updated items:", items);
         
         return items;
       } catch (error) {
+        await t.rollback();
         console.error("Error updating ICS IDs:", error);
         throw new Error(error.message || "Failed to update ICS IDs");
       }

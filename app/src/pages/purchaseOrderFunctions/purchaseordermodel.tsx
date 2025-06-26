@@ -563,7 +563,7 @@ export default function PurchaseOrderModal({
                     inputProps={{ min: 0, style: { textAlign: "right" } }}
                     value={item.quantity}
                     onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
+                    // disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
                   />
                 </Grid>
 
@@ -574,7 +574,7 @@ export default function PurchaseOrderModal({
                     placeholder="Unit"
                     value={item.unit}
                     onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.unit,"unit",index)}
+                    // disabled={isIndexFieldDisabled(item.unit,"unit",index)}
                   />
                 </Grid>
 
@@ -597,7 +597,7 @@ export default function PurchaseOrderModal({
                     placeholder="Unit Cost"
                     value={item.unitCost}
                     onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
+                    // disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
                     InputProps={{
                       startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
                     }}

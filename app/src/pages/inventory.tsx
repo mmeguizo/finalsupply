@@ -54,14 +54,14 @@ export default function InventoryPage() {
     if (!data?.inspectionAcceptanceReport.length) return [];
 
     return data.inspectionAcceptanceReport.map((po: any) => {
-      const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
-      const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
+      // const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
+      // const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
 
       return {
         id: po.id,
         ...po,
-        formatAmount,
-        formatUnitCost
+        // formatAmount,
+        // formatUnitCost
       };
     });
   }, [data]);
