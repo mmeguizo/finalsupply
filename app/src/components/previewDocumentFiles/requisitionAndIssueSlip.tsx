@@ -405,7 +405,7 @@ export default function RequisitionReport({
                   <StyledTableRow key={index}>
                     <StyledTableCell>{item.id || ""}</StyledTableCell>
                     <StyledTableCell>
-                      {item.purchaseOrderId || ""}
+                      {index + 1 || ""}
                     </StyledTableCell>
                     <StyledTableCell>{item.unit || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}>

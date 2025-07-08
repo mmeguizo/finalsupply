@@ -19,6 +19,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       icsId
       risId
       parId
+      createdAt
       PurchaseOrder {
         poNumber
         supplier

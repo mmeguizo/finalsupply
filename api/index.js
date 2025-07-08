@@ -83,7 +83,7 @@ app.use(
         origin: allowedOrigins,
         credentials: true,
     }),
-    express.json(),
+    express.json({ limit: '50mb' }),
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
     expressMiddleware(server, {
@@ -92,7 +92,15 @@ app.use(
     })
 );
 
-// After your existing server setup code
+// Add this after your other middleware but before starting the server
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Bad JSON', err);
+    return res.status(400).send({ status: 404, message: "Bad JSON" });
+  }
+  next();
+});
+
 const gracefulShutdown = async () => {
     console.log("Received shutdown signal");
     try {

@@ -58,6 +58,7 @@ type ItemWithPurchaseOrder {
     icsId : String
     risId : String
     parId : String
+    createdAt : String
 }
 type IARonly{
     id: ID

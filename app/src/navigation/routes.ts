@@ -73,11 +73,11 @@ export const ALL_NAVIGATION: Navigation = [
         title: 'Users',
         icon: React.createElement(FingerprintIcon),
       },
-      {
-        segment: 'role',
-        title: 'Role',
-       icon: React.createElement(EngineeringIcon),
-      },
+      // {
+      //   segment: 'role',
+      //   title: 'Role',
+      //  icon: React.createElement(EngineeringIcon),
+      // },
       {
         segment: 'department',
         title: 'Department',

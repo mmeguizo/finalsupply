@@ -9,6 +9,8 @@ import inspectionAcceptanceReportTypeDef from "./inspectionacceptancereport.type
 import propertyAcknowledgementReportTypeDef from "./propertyacknowledgmentreport.typeDef.js";
 import requisitionIssueSlipTypeDef from "./requisitionissueslip.typeDef.js";
 import roleTypeDef from "./role.typeDef.js";
+import departmentTypeDef from "./department.typeDef.js";
+
 const mergedTypeDefs = mergeTypeDefs([
   userTypeDef,
   purchaseorderTypeDef,
@@ -16,7 +18,8 @@ const mergedTypeDefs = mergeTypeDefs([
   inspectionAcceptanceReportTypeDef,
   propertyAcknowledgementReportTypeDef,
   requisitionIssueSlipTypeDef,
-  roleTypeDef
+  roleTypeDef,
+  departmentTypeDef
 ]);
 
 export default mergedTypeDefs;

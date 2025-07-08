@@ -14,7 +14,7 @@ import PropertyPage from "../pages/property";
 import ReportsPage from "../pages/reports";
 import { UsersPage } from "../pages/users";
 import GenericPageTemplate from "../pages/genericPageTemplate";
-import RolePage from "../pages/role";
+// import RolePage from "../pages/role";
 import DepartmentPage from "../pages/department";
 
 
@@ -108,10 +108,10 @@ export const router = createBrowserRouter([
                 path: "users",
                 Component: UsersPage,
               },
-              {
-                path: "role",
-                Component: RolePage,
-              },
+              // {
+              //   path: "role",
+              //   Component: RolePage,
+              // },
               {
                 path: "department",
                 Component: DepartmentPage,

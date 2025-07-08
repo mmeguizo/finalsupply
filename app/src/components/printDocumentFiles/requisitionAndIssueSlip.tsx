@@ -14,7 +14,7 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
     return `
                 <tr>
                     <td>${item?.id || ''}</td>
-                    <td>${item?.purchaseOrderId || ''}</td>
+                    <td>${index + 1}</td>
                     <td>${item?.unit || ''}</td>
                     <td colspan="2">${item?.description || ''}</td>
                     <td>${item?.quantity || ''}</td>
@@ -447,88 +447,3 @@ tfoot {
 </html>
 `;
 };
-
-/*
-<tfoot>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td>Total</td>
-                    <td>${formatTotalAmount}</td>
-                </tr>
-                <tr class="footer-1st-row">
-                    <td colspan="6">
-                        <div style="display: flex; flex-direction: column; padding: 2px;">
-                            <div style="font-weight: 600;">Requested by:</div>
-                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
-                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
-                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
-                                    <div>Signature over Printed Name</div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
-                                ${receivedFrom || ''}
-                                <hr style="width: 100%; margin: 5px 0;" />
-                                Designation
-                            </div>
-                        </div>
-                    </td>
-                    <td colspan="5">
-                        <div style="display: flex; flex-direction: column; padding: 2px;">
-                            <div style="font-weight: 600;">Approved by:</div>
-                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
-                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
-                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
-                                    <div>Signature over Printed Name</div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
-                                ${inspectionOfficer || ''}
-                                <hr style="width: 100%; margin: 5px 0;" />
-                                Designation
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                <tr class="footer-2nd-row">
-                    <td colspan="6">
-                        <div style="display: flex; flex-direction: column; padding: 2px;">
-                            <div style="font-weight: 600;">Issued by:</div>
-                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
-                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
-                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
-                                    <div>Signature over Printed Name</div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
-                                ${supplyOfficer || ''}
-                                <hr style="width: 100%; margin: 5px 0;" />
-                                Designation
-                            </div>
-                        </div>
-                    </td>
-                    <td colspan="5">
-                        <div style="display: flex; flex-direction: column; padding: 2px;">
-                            <div style="font-weight: 600;">Received by:</div>
-                            <div style="display: flex; flex-direction: column; padding: 20px 35px; gap: 20px; align-items: flex-start; height: 150px; margin-top: 5px;">
-                                <div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; width: 100%; gap: 4px;">
-                                    <div style="width: 50px; height: 50px; border: 1px dotted black;"></div>
-                                    <div>Signature over Printed Name</div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 10px; width: 75%; text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
-                                ${receivedFrom || ''}
-                                <hr style="width: 100%; margin: 5px 0;" />
-                                Designation
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </tfoot>
-
-*/
