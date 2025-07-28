@@ -30,59 +30,59 @@ export const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "purchaseorder",
-    title: "Purchase Order",
+    title: "PO Monitoring",
     icon: React.createElement(BusinessCenterIcon),
   },
   {
     segment: "inventory",
-    title: "Inspection Acceptance Report ",
+    title: "Generate IAR",
     icon: React.createElement(ShowChartIcon),
   },
-  {
-    segment: "ics-lv-hv",
-    title: "Inventory Custodian Slip",
-    icon: React.createElement(AddBusinessIcon),
-  },
-  {
-    segment: "requisition",
-    title: "Requisition Issue Slip",
-    icon: React.createElement(DocumentScannerIcon),
-  },
-  {
-    segment: "property",
-    title: "Property Acknowledgement",
-    icon: React.createElement(CabinIcon),
-  },
-  {
-    segment: "signatories",
-    title: "Signatories",
-    icon: React.createElement(DrawIcon),
-  },
-  {
-    segment: "reports",
-    title: "Reports",
-    icon: React.createElement(SummarizeIcon),
-  },
-  {
-    segment: "users",
-    title: "Users",
-    icon: React.createElement(PeopleAltIcon),
-    children: [
-      {
-        segment: 'users',
-        title: 'Users',
-        icon: React.createElement(FingerprintIcon),
-      },
-      // {
-      //   segment: 'role',
-      //   title: 'Role',
-      //  icon: React.createElement(EngineeringIcon),
-      // },
-      {
-        segment: 'department',
-        title: 'Department',
-       icon: React.createElement(CorporateFareIcon),
-      },
-    ],
-  },
+  // {
+  //   segment: "ics-lv-hv",
+  //   title: "Inventory Custodian Slip",
+  //   icon: React.createElement(AddBusinessIcon),
+  // },
+  // {
+  //   segment: "requisition",
+  //   title: "Requisition Issue Slip",
+  //   icon: React.createElement(DocumentScannerIcon),
+  // },
+  // {
+  //   segment: "property",
+  //   title: "Property Acknowledgement",
+  //   icon: React.createElement(CabinIcon),
+  // },
+  // {
+  //   segment: "signatories",
+  //   title: "Signatories",
+  //   icon: React.createElement(DrawIcon),
+  // },
+  // {
+  //   segment: "reports",
+  //   title: "Reports",
+  //   icon: React.createElement(SummarizeIcon),
+  // },
+  // {
+  //   segment: "users",
+  //   title: "Users",
+  //   icon: React.createElement(PeopleAltIcon),
+  //   children: [
+  //     {
+  //       segment: 'users',
+  //       title: 'Users',
+  //       icon: React.createElement(FingerprintIcon),
+  //     },
+  //     // {
+  //     //   segment: 'role',
+  //     //   title: 'Role',
+  //     //  icon: React.createElement(EngineeringIcon),
+  //     // },
+  //     {
+  //       segment: 'department',
+  //       title: 'Department',
+  //      icon: React.createElement(CorporateFareIcon),
+  //     },
+  //   ],
+  // },
 ];

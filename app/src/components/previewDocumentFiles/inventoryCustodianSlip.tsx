@@ -296,7 +296,7 @@ export default function InventoryCustodianSlip({
                       {item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}
                     </StyledTableCell>
                     <StyledTableCell colSpan={2} align="left">{item?.description || ''}</StyledTableCell>
-                    <StyledTableCell align="center">{item?.id || ''}</StyledTableCell>
+                    <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell>
                     <StyledTableCell align="center">5 years</StyledTableCell>
                   </StyledTableRow>
                 ))

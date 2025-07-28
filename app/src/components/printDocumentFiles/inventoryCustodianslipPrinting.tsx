@@ -19,7 +19,7 @@ export const getInventoryTemplateForICS = (signatories : any,reportData: any) =>
                     <td>${item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : '')}</td>
                     <td>${item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}</td>
                     <td colspan="2">${item?.description || ''}</td>
-                    <td>${item?.id || ''}</td>
+                    <td style="text-align: center">${item?.inventoryNumber || ''}</td>
                     <td>5 years</td>
                 </tr>
     `;

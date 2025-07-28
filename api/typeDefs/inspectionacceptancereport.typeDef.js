@@ -52,6 +52,7 @@ type ItemWithPurchaseOrder {
     isDeleted: Boolean
     actualQuantityReceived: Int
     currentInput: Int
+    inventoryNumber: String
     PurchaseOrder: PurchaseOrderType
     tag : String
     iarId : String

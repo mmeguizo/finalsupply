@@ -472,7 +472,7 @@ const purchaseorderResolver = {
               let hasChanges = false;
 
               // Check for updates to standard fields
-              ["itemName", "description", "unit", "category", "tag"].forEach(
+              ["itemName", "description", "unit", "category", "tag", "inventoryNumber"].forEach(
                 (field) => {
                   if (
                     item[field] !== undefined &&
@@ -592,6 +592,7 @@ const purchaseorderResolver = {
                 amount: item.amount ? item.amount : 0,
                 category: item.category || "requisition issue slip", // Default category
                 tag: item.tag || "none",
+                inventoryNumber : item.inventoryNumber || "none",
                 actualQuantityReceived: item?.currentInput
                   ? item.currentInput
                   : 0,

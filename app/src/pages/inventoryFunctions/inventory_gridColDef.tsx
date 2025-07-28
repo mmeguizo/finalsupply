@@ -4,7 +4,7 @@ import Tooltip from "@mui/material/Tooltip";
 import PreviewIcon from "@mui/icons-material/Preview";
 import { currencyFormat } from "../../utils/generalUtils";
 
-// Define columns for inventory items
+// Keep the original columns for DataGrid
 export const createItemColumns = (
   handleOpenPrintModal: (item: any) => void
 ): GridColDef[] => [
@@ -56,7 +56,7 @@ export const createItemColumns = (
     type: "number",
     width: 120,
     valueGetter: (params: any) => {
-      return currencyFormat(params );
+      return currencyFormat(params);
     },
   },
   {

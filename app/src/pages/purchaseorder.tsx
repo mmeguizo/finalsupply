@@ -242,6 +242,12 @@ export default function PurchaseOrder() {
   };
 
   const handleOpenHistoryModal = (po: any) => {
+    if (!po.items || po.items.length === 0) {
+      setNotificationMessage("There are no items yet for this Purchase Order.");
+      setNotificationSeverity("warning"); // or 'warning' if preferred
+      setShowNotification(true);
+      return;
+    }
     setHistoryPO(po);
     setOpenHistoryModal(true);
   };
@@ -271,6 +277,7 @@ export default function PurchaseOrder() {
 
   //for saving the po or submitting
   const handleSavePO = async (formData: any) => {
+    console.log({handleSavePO :formData})
     const result = await handleSavePurchaseOrder(
       formData,
       editingPO,

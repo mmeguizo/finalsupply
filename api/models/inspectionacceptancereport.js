@@ -103,6 +103,10 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    inventoryNumber : {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    }
   },
   {
     tableName: "inspection_acceptance_report", // Specify the table name

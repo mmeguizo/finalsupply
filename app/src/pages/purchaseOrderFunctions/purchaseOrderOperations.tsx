@@ -49,8 +49,10 @@ export const handleSavePurchaseOrder = async (
     });
     const { __typename, ...cleanFormData } = formData;
     cleanFormData.items = cleanedItems;
+    console.log({CLEANEDFORMDATA : cleanFormData})
     let updatedPO: any;
     if (editingPO) {
+      console.log(editingPO.id)
       try {
         const results = await updatePurchaseOrder({
           variables: {

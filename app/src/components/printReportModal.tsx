@@ -35,6 +35,8 @@ export default function PrintReportDialog({
     state.getSignatoryByRole("Recieved From")
   );
 
+  console.log(reportData)
+
   //add the signatories to the data to be send
   let signatories = {
     inspectionOfficer: capitalizeFirstLetter(InspectorOffice?.name),

@@ -71,7 +71,7 @@ export default function PropertyAcknowledgementReceipt({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
-
+  console.log(reportData)
   const InspectorOffice = useSignatoryStore((state) =>
     state.getSignatoryByRole("Inspector Officer")
   );
@@ -164,7 +164,7 @@ export default function PropertyAcknowledgementReceipt({
                 <TableCell sx={{ width: "14%" }}></TableCell>
               </TableRow>
               <TableRow>
-                <HeaderTableCell colSpan={6}>
+                <HeaderTableCell colSpan={7}>
                   <Box
                     sx={{
                       display: "flex",
@@ -190,8 +190,8 @@ export default function PropertyAcknowledgementReceipt({
                           src="chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
-                            width: "40%",
-                            height: "40%",
+                            width: "30%",
+                            height: "30%",
                             marginTop: "10%",
                             objectFit: "contain"
                           }}
@@ -277,9 +277,10 @@ export default function PropertyAcknowledgementReceipt({
               </TableRow>
 
               <TableRow sx={{ "& th": { padding: "1px 0px" } }}>
+                <StyledTableCell align="left">Inventory Number</StyledTableCell>
                 <StyledTableCell align="left">Quantity</StyledTableCell>
                 <StyledTableCell align="left">Unit</StyledTableCell>
-                <StyledTableCell align="center" colSpan={2}>Description and Property Number</StyledTableCell>
+                <StyledTableCell align="center">Description and Property Number</StyledTableCell>
                 <StyledTableCell align="right">Unit Price</StyledTableCell>
                 <StyledTableCell align="right">Total Price</StyledTableCell>
               </TableRow>
@@ -290,9 +291,10 @@ export default function PropertyAcknowledgementReceipt({
             {reportData ? 
                 reportData.map((reportData : any, index : any) => (
                   <StyledTableRow key={reportData?.id}>
+                    <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
-                    <StyledTableCell align="right" colSpan={2}>{reportData.description}</StyledTableCell>
+                    <StyledTableCell align="right" >{reportData.description}</StyledTableCell>
                     <StyledTableCell align="right">{reportData.unitCost}</StyledTableCell>
                     <StyledTableCell align="right">{reportData.amount}</StyledTableCell>
                   </StyledTableRow>
@@ -301,7 +303,7 @@ export default function PropertyAcknowledgementReceipt({
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
-                  <StyledTableCell colSpan={2}></StyledTableCell>
+                  <StyledTableCell ></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
@@ -316,11 +318,11 @@ export default function PropertyAcknowledgementReceipt({
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell colSpan={6}>Remarks:</StyledTableCell>
+                <StyledTableCell colSpan={7}>Remarks:</StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell colSpan={6}></StyledTableCell>
+                <StyledTableCell colSpan={7}></StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
@@ -364,7 +366,7 @@ export default function PropertyAcknowledgementReceipt({
                     </Box>
                   </Box>
                 </StyledTableCell>
-                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 16px 1px" }}>
+                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 16px 1px" }}>
                   <Box
                     sx={{
                       display: "flex",

@@ -23,6 +23,7 @@ export const ADD_PURCHASEORDER = gql`
         category
         isDeleted
         actualQuantityReceived
+        inventoryNumber
       }
     }
   }
@@ -54,6 +55,7 @@ export const UPDATE_PURCHASEORDER = gql`
         category
         isDeleted
         actualQuantityReceived
+        inventoryNumber
       }
       amount
       invoice
