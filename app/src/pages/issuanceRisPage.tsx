@@ -26,25 +26,20 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PreviewIcon from "@mui/icons-material/Preview";
 import SearchIcon from "@mui/icons-material/Search";
-import NotificationDialog from "../components/notifications";
-//@ts-ignore
-import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
-import PrintReportDialogForIAR from "../components/printReportModalForIAR";
+import PrintReportDialogForRIS from "../components/printReportModalForRIS";
 import {
   formatTimestampToDateTime,
   currencyFormat,
+  capitalizeFirstLetter,
+  formatDateString,
 } from "../utils/generalUtils";
-import { Select, MenuItem, Chip } from "@mui/material";
-import { useMutation } from "@apollo/client";
-import { UPDATE_IAR_STATUS } from "../graphql/mutations/inventoryIAR.mutation";
-
+import useSignatoryStore from "../stores/signatoryStore";
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
+import SignatoriesComponent from "../pages/issuanceRisPageFunctions/SignatorySelectionContainer";
+import { risIssuanceSignatories } from "../types/user/userType";
 // Row component for collapsible table
-function Row(props: {
-  row: any;
-  handleOpenPrintModal: (item: any) => void;
-  onStatusUpdate: (iarId: string, status: string) => void;
-}) {
-  const { row, handleOpenPrintModal, onStatusUpdate } = props;
+function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
+  const { row, handleOpenPrintModal } = props;
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -60,63 +55,52 @@ function Row(props: {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.po}
+          {row.poNumber}
         </TableCell>
-        <TableCell component="th" scope="row">
-          {row.iarId}
-        </TableCell>
-        <TableCell>{formatTimestampToDateTime(row.createdAt)}</TableCell>
-        <TableCell component="th" scope="row">
-          <Select
-            value={row.iarStatus || "none"}
-            onChange={(e) => onStatusUpdate(row.id, e.target.value)}
-            size="small"
-            variant="outlined"
-            sx={{ minWidth: 120 }}
-          >
-            <MenuItem value="none">None</MenuItem>
-            <MenuItem value="partial">Partial</MenuItem>
-            <MenuItem value="complete">Complete</MenuItem>
-          </Select>
-        </TableCell>
+        <TableCell>{row.supplier}</TableCell>
+        <TableCell>{formatDateString(row.dateOfDelivery)}</TableCell>
+        <TableCell>{row.itemCount} items</TableCell>
         <TableCell>
           <Button
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items[0]); // Use the first item for printing
+              handleOpenPrintModal(row.items);
             }}
+            disabled={!row.items.some((item: any) => item.risId)}
           >
             <PreviewIcon fontSize="medium" />
           </Button>
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
-                Details
+                RIS Items Details
               </Typography>
-              <Table size="small" aria-label="details">
+              <Table size="small" aria-label="ris-details">
                 <TableHead>
                   <TableRow>
+                    <TableCell>RIS ID</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Unit</TableCell>
                     <TableCell align="right">Actual Received</TableCell>
                     <TableCell align="right">Quantity</TableCell>
                     <TableCell align="right">Unit Cost</TableCell>
                     <TableCell align="right">Amount</TableCell>
-                    {/* <TableCell>P.O. #</TableCell> */}
                     <TableCell>Category</TableCell>
+                    <TableCell>Tag</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {row.items.map((item: any) => (
                     <TableRow key={item.id}>
                       <TableCell component="th" scope="row">
-                        {item.description}
+                        {item.risId || "Not Generated"}
                       </TableCell>
+                      <TableCell>{item.description}</TableCell>
                       <TableCell>{item.unit}</TableCell>
                       <TableCell align="right">
                         {item.actualQuantityReceived}
@@ -128,7 +112,6 @@ function Row(props: {
                       <TableCell align="right">
                         {currencyFormat(item.amount)}
                       </TableCell>
-                      {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
                       <TableCell>
                         {item.category
                           ?.split(" ")
@@ -137,6 +120,15 @@ function Row(props: {
                               word.charAt(0).toUpperCase() + word.slice(1)
                           )
                           .join(" ")}
+                      </TableCell>
+                      <TableCell>
+                        {item.tag
+                          ?.split(" ")
+                          .map(
+                            (word: string) =>
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                          )
+                          .join(" ") || "N/A"}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -165,12 +157,12 @@ function EnhancedTableToolbar(props: {
         id="tableTitle"
         component="div"
       >
-        Inventory
+        Requisition Issue Slip (RIS)
       </Typography>
       <TextField
         variant="outlined"
         size="small"
-        placeholder="Search IAR#, description..."
+        placeholder="Search PO#, RIS ID, description..."
         value={searchQuery}
         onChange={onSearchChange}
         InputProps={{
@@ -184,75 +176,55 @@ function EnhancedTableToolbar(props: {
     </Toolbar>
   );
 }
-// InventoryPage component
-export default function InventoryPage() {
+
+// IssuanceRisPage component
+export default function IssuanceRisPage() {
   const { data, loading, error, refetch } = useQuery(
-    GET_ALL_INSPECTION_ACCEPTANCE_REPORT
+    GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY
   );
-  const [printPOI, setPrintPOI] = React.useState<any>(null);
+  const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
   const [reportType, setReportType] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [updateIARStatus] = useMutation(UPDATE_IAR_STATUS, {
-    refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
-  });
+
   // Pagination state
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
-  // Notifications state
-  const [showNotification, setShowNotification] = React.useState(false);
-  const [notificationMessage, setNotificationMessage] = React.useState("");
-  const [notificationSeverity, setNotificationSeverity] = React.useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
-
-  const handleOpenPrintModal = (po: any) => {
-    const reportTitle = po.category.split(" ");
+  // Signatory store
+  const InspectorOffice = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Inspector Officer")
+  );
+  const supplyOffice = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Property And Supply Officer")
+  );
+  const receivedFrom = useSignatoryStore((state) =>
+    state.getSignatoryByRole("Recieved From")
+  );
+  
+  // Updated signatory state to use proper type
+  const [signatories, setSignatories] = React.useState<risIssuanceSignatories>({
+    requested_by: "",
+    approved_by: "",
+    issued_by: "",
+    recieved_by: ""
+  });
+ 
+  const handleOpenPrintModal = (items: any) => {
+    const reportTitle = items[0]?.category?.split(" ") || [];
     const reportTitleString = reportTitle
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
-    setReportType("inspection");
+    setReportType(reportTitle);
     setTitle(`${reportTitleString} Report`);
-    setPrintPOI(po);
+    setPrintItem(items);
     setOpenPrintModal(true);
   };
 
   const handleClosePrintModal = () => {
     setOpenPrintModal(false);
-    setPrintPOI(null);
-  };
-
-  // Add this function after handleClosePrintModal (around line 177)
-  const handleStatusUpdate = async (iarId: string, newStatus: string) => {
-    try {
-      // TODO: Replace with your actual mutation
-      // await updateIARStatus({ variables: { iarId, status: newStatus } });
-      console.log(`Updating IAR ${iarId} to status: ${newStatus}`);
-      const results = await updateIARStatus({
-        variables: {
-          id: iarId,
-          iarStatus: newStatus,
-        },
-      });
-      if (results.data?.updateIARStatus) {
-        console.log({updateIARStatus :results.data.updateIARStatus});
-        setNotificationMessage(results.data.updateIARStatus.message);
-        setNotificationSeverity("success"); // Always success if we get here
-        setShowNotification(true);
-        console.log("Status updated successfully");
-        refetch(); // Don't forget to refetch to update the UI
-      } else {
-        console.error("Failed to update status");
-        setNotificationSeverity("error");
-      }
-
-      // Refetch data to update UI
-      // refetch();
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
+    setPrintItem(null);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,31 +244,31 @@ export default function InventoryPage() {
     setPage(0);
   };
 
-  // Group rows by iarId
+  // Group rows by PO Number
   const groupedRows = React.useMemo(() => {
-    if (!data?.inspectionAcceptanceReport?.length) return [];
+    if (!data?.requisitionIssueSlipForView?.length) return [];
 
-    // Group by iarId
-    const groups = data.inspectionAcceptanceReport.reduce(
+    // Group by PO Number
+    const groups = data.requisitionIssueSlipForView.reduce(
       (acc: any, item: any) => {
-        const iarId = item.iarId;
-        if (!acc[iarId]) {
-          acc[iarId] = [];
+        const poNumber = item.PurchaseOrder?.poNumber;
+        if (!acc[poNumber]) {
+          acc[poNumber] = [];
         }
-        acc[iarId].push(item);
+        acc[poNumber].push(item);
         return acc;
       },
       {}
     );
 
-    // Create one row per iarId with all items
-    return Object.entries(groups).map(([id, items]: any) => ({
-      id: items[0].id,
-      po: items[0].PurchaseOrder?.poNumber,
-      iarId: items[0].iarId,
-      iarStatus: items[0].iarStatus,
-      createdAt: items[0].createdAt,
-      items: items, // Store all items for this iarId
+    // Create one row per PO Number with all items
+    return Object.entries(groups).map(([poNumber, items]: any) => ({
+      id: items[0].PurchaseOrder?.id || items[0].id,
+      poNumber: poNumber,
+      supplier: items[0].PurchaseOrder?.supplier,
+      dateOfDelivery: items[0].PurchaseOrder?.dateOfDelivery,
+      itemCount: items.length,
+      items: items, // Store all items for this PO
     }));
   }, [data]);
 
@@ -307,9 +279,13 @@ export default function InventoryPage() {
     const lowerCaseQuery = searchQuery.toLowerCase();
 
     return groupedRows.filter((row) => {
-      console.log(row);
-      // Check if IAR ID matches
-      if (row.iarId.toLowerCase().includes(lowerCaseQuery)) {
+      // Check if PO Number matches
+      if (row.poNumber?.toLowerCase().includes(lowerCaseQuery)) {
+        return true;
+      }
+
+      // Check if supplier matches
+      if (row.supplier?.toLowerCase().includes(lowerCaseQuery)) {
         return true;
       }
 
@@ -317,17 +293,22 @@ export default function InventoryPage() {
       return row.items.some((item: any) => {
         return (
           // Search in various fields
+          (item.risId && item.risId.toLowerCase().includes(lowerCaseQuery)) ||
           (item.description &&
             item.description.toLowerCase().includes(lowerCaseQuery)) ||
           (item.unit && item.unit.toLowerCase().includes(lowerCaseQuery)) ||
           (item.category &&
             item.category.toLowerCase().includes(lowerCaseQuery)) ||
-          (item.PurchaseOrder?.poNumber &&
-            item.PurchaseOrder.poNumber.toLowerCase().includes(lowerCaseQuery))
+          (item.tag && item.tag.toLowerCase().includes(lowerCaseQuery))
         );
       });
     });
   }, [groupedRows, searchQuery]);
+
+
+  const onSignatoriesChange = (selectedSignatories: risIssuanceSignatories) => {
+    setSignatories(selectedSignatories);
+  }
 
   // Apply pagination to the filtered rows
   const paginatedRows = React.useMemo(() => {
@@ -343,14 +324,6 @@ export default function InventoryPage() {
 
   return (
     <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
-      {showNotification && (
-        <NotificationDialog
-          message={notificationMessage}
-          severity={notificationSeverity}
-          duration={2000}
-          onClose={() => setShowNotification(false)}
-        />
-      )}
       <Stack
         spacing={3}
         sx={{
@@ -370,24 +343,20 @@ export default function InventoryPage() {
                 <TableRow>
                   <TableCell />
                   <TableCell>PO#</TableCell>
-                  <TableCell>IAR#</TableCell>
+                  <TableCell>Supplier</TableCell>
                   <TableCell>Delivery Date</TableCell>
-                  <TableCell>IAR</TableCell>
+                  <TableCell>Items</TableCell>
                   <TableCell>Print</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedRows.map((row) => {
-                  console.log(row);
-                  return (
-                    <Row
-                      key={row.id}
-                      row={row}
-                      handleOpenPrintModal={handleOpenPrintModal}
-                      onStatusUpdate={handleStatusUpdate}
-                    />
-                  );
-                })}
+                {paginatedRows.map((row) => (
+                  <Row
+                    key={row.id}
+                    row={row}
+                    handleOpenPrintModal={handleOpenPrintModal}
+                  />
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -401,12 +370,21 @@ export default function InventoryPage() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
+        
+        {/* Signatory Selection Component */}
+        <SignatoriesComponent
+          signatories={signatories}
+          onSignatoriesChange={onSignatoriesChange}
+        />
       </Stack>
-      <PrintReportDialogForIAR
+      
+      <PrintReportDialogForRIS
         open={openPrintModal}
         handleClose={handleClosePrintModal}
-        reportData={printPOI}
+        reportData={printItem}
         reportType={reportType}
+        title={title}
+        signatories={signatories}
       />
     </PageContainer>
   );

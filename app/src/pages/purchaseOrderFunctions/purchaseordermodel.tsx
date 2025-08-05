@@ -1,4 +1,5 @@
 /*eslint no-unused-vars: "off"*/
+/* eslint-disable */
 import React from "react";
 import {
   Dialog,
@@ -10,7 +11,6 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 // @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -23,9 +23,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 // import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-import { Unstable_NumberInput as NumberInput } from "@mui/base/Unstable_NumberInput";
 // @ts-ignore
-import NumberInputBasic from "./numberInput";
 import dayjs from "dayjs";
 import { Dayjs } from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -724,7 +722,6 @@ export default function PurchaseOrderModal({
                     size="small"
                     type="number"
                     placeholder={`${item.id && item.id !== "temp" ? Math.max(0, Number(item.quantity)) - Number(item.actualQuantityReceived) : Number(item.quantity)} ${item.unit}`}
-                    disabled={false}
                     onClick={(e) => {
                       console.log(
                         Number(item.quantity) -
@@ -741,6 +738,7 @@ export default function PurchaseOrderModal({
                           ? "action.disabledBackground"
                           : "transparent",
                     }}
+                    disabled={true}
                   />
                 </Grid>
 

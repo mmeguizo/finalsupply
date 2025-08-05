@@ -17,7 +17,14 @@ interface UserTypes {
   location?: string;
 }
 
+interface risIssuanceSignatories {
+  requested_by : string
+  approved_by : string,
+  issued_by : string,
+  recieved_by : string
+}
 
 
 
-export type {UserTypes };
+
+export type {UserTypes, risIssuanceSignatories}

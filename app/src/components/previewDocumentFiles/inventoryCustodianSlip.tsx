@@ -170,7 +170,7 @@ export default function InventoryCustodianSlip({
                       <Box sx={{ display: "grid", placeItems: "center" }}>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "90px",

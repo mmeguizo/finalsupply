@@ -89,6 +89,7 @@ interface InspectionAcceptanceReportPropsForIAR {
     iarId: string;
     formatAmount: string;
     formatUnitCost: string;
+    iarStatus: string,
     PurchaseOrder: {
       poNumber: string | number;
       supplier: string;

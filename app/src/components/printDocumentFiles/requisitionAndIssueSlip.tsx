@@ -313,7 +313,7 @@ tfoot {
                     <th colspan="11">
                         <div>
                             <div>
-                                <img src="chmsu-logo.png" alt="CHMSU Logo">
+                                <img src="/chmsu-logo.png" alt="CHMSU Logo">
                             </div>
                             <div>
                                 <span>Republic of the PHILIPPINES</span>
@@ -417,10 +417,10 @@ tfoot {
                 <tr class="footer-last-rows">
                     <td colspan="2">Printed Name :</td>
                     <td></td>
-                    <td> ${receivedFrom || ''}</td>
-                    <td colspan="3"> ${supplyOfficer || ''} </td>
-                    <td colspan="3">${inspectionOfficer || ''}</td>
-                    <td>${inspectionOfficer || ''}</td>
+                    <td> ${signatories?.requested_by || ''}</td>
+                    <td colspan="3"> ${signatories?.approved_by || ''} </td>
+                    <td colspan="3">${signatories?.issued_by || ''}</td>
+                    <td>${signatories?.recieved_by || ''}</td>
                 </tr>
                 <tr class="footer-last-rows">
                     <td>Designation :</td>

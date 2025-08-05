@@ -187,7 +187,7 @@ export default function InspectionAcceptanceReportForIAR({
                       <Box>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "40%",
@@ -447,11 +447,18 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: reportData?.PurchaseOrder.status
+                            backgroundColor: reportData?.iarStatus === "complete"
                               ? "#ccc"
                               : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "16px",
+                            fontWeight: "bold",
                           }}
-                        ></Box>
+                        >
+                          {reportData?.iarStatus === "complete" ? "✓" : ""}
+                        </Box>
                         <Typography sx={{ width: "65px" }}>Complete</Typography>
                       </Box>
                       <Box
@@ -466,11 +473,18 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: !reportData?.PurchaseOrder.status
+                            backgroundColor: reportData?.iarStatus === "partial"
                               ? "#ccc"
                               : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "16px",
+                            fontWeight: "bold",
                           }}
-                        ></Box>
+                        >
+                          {reportData?.iarStatus === "partial" ? "✓" : ""}
+                        </Box>
                         <Typography sx={{ width: "65px" }}>Partial</Typography>
                       </Box>
                     </Box>

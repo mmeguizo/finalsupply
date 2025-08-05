@@ -18,6 +18,7 @@ type Item {
     actualQuantityReceived: Int
     tag : String
     iarId : String
+     iarStatus : String
 }
 
 type PurchaseOrderType {
@@ -60,6 +61,7 @@ type ItemWithPurchaseOrder {
     risId : String
     parId : String
     createdAt : String
+    iarStatus : String
 }
 type IARonly{
     id: ID
@@ -67,6 +69,12 @@ type IARonly{
     iarId : String
     category : String
     poNumber : String
+}
+
+type updateIARStatusPayload{
+    id: ID
+    iarStatus: String
+    message : String
 }
 
 
@@ -106,6 +114,7 @@ type Query {
 type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
+  updateIARStatus(id: ID!, iarStatus: String!): updateIARStatusPayload
 }
 
 

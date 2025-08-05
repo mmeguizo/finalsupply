@@ -5,7 +5,7 @@ import Layout from "../layouts/dashboard";
 import DashboardPage from "../pages";
 import SignatoriesPage from "../pages/signatories";
 import SignInPage from "../pages/signIn";
-import icsLowHighVolume from "../pages/icsLowHighVolume";
+import iIcsLowHighVolume from "../pages/icsLowHighVolume";
 import { ProtectedRoute } from "../auth/protected";
 import PurchaseOrder from "../pages/purchaseorder";
 import InventoryPage from "../pages/inventory";
@@ -16,7 +16,8 @@ import { UsersPage } from "../pages/users";
 import GenericPageTemplate from "../pages/genericPageTemplate";
 // import RolePage from "../pages/role";
 import DepartmentPage from "../pages/department";
-
+import IssuancePage from "../pages/issuance";
+import IssuanceRisPage from "../pages/issuanceRisPage";
 
 export const router = createBrowserRouter([
   {
@@ -48,7 +49,22 @@ export const router = createBrowserRouter([
                 Component: InventoryPage,
               },
             ],
-            element: <ProtectedRoute routePath="inventory" />,
+            element: <ProtectedRoute routePath="issuance" />,
+          },
+          {
+            path: "/issuance",
+            children: [
+              {
+                path: "issuance",
+                Component: IssuancePage,
+                
+              },
+              {
+                path: "issuance-ris",
+                Component: IssuanceRisPage,
+              }
+            ],
+            element: <ProtectedRoute routePath="issuance" />,
           },
           {
             path: "/signatories",
@@ -66,7 +82,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: "",
-                Component: icsLowHighVolume,
+                Component: iIcsLowHighVolume,
               },
             ],
           },

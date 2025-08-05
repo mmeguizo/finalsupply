@@ -52,7 +52,7 @@ export const printSelectedICS = (icsData: any) => {
       <div class="ics-section">
         <div class="header">
           <div class="header-left">
-            <img src="chmsu-logo.png" alt="CHMSU Logo" style="width: 90px; height: 90px; object-fit: contain;">
+            <img src="/chmsu-logo.png" alt="CHMSU Logo" style="width: 90px; height: 90px; object-fit: contain;">
           </div>
           <div class="header-center">
             <p class="uppercase" style="font-size: 14px; margin-bottom: 5px;">Republic of the Philippines</p>

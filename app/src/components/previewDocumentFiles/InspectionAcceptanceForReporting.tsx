@@ -189,7 +189,7 @@ export default function InspectionAcceptanceForReporting({
                       <Box>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "40%",

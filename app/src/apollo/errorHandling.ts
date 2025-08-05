@@ -20,13 +20,26 @@ export const handleUnauthorized = () => {
 };
 
 // Create an error link that catches unauthorized errors
-export const errorLink = onError(({ graphQLErrors, networkError }) => {
+export const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors) {
     for (let err of graphQLErrors) {
+      // Add detailed logging to see which operation is failing
+      console.log('🚨 GraphQL Error Details:', {
+        message: err.message,
+        operationName: operation.operationName,
+        operationType: operation.query.definitions[0]?.kind,
+        variables: operation.variables
+      });
+      
       if (err.message === 'Unauthorized') {
-        console.log('Unauthorized error detected, redirecting to sign-in page');
+        console.log('❌ Unauthorized error detected, redirecting to sign-in page');
+        console.log('🔍 Failed operation:', operation.operationName);
         handleUnauthorized();
       }
     }
+  }
+  
+  if (networkError) {
+    console.log('🌐 Network Error:', networkError);
   }
 });

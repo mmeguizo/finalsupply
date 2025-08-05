@@ -298,7 +298,7 @@ tfoot {
                     <th colspan="8">
                         <div>
                             <div>
-                                <img src="chmsu-logo.png" alt="CHMSU Logo">
+                                <img src="/chmsu-logo.png" alt="CHMSU Logo">
                             </div>
                             <div>
                                 <span>Republic of the PHILIPPINES</span>

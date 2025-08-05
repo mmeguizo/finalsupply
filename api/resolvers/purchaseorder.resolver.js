@@ -5,8 +5,11 @@ import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js"
 import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
 import { sequelize } from "../db/connectDB.js"; // Import sequelize connection
-import { generateNewIarId } from "../utils/iarIdGenerator.js"; 
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
+import { generateNewIarId } from "../utils/iarIdGenerator.js";
+import { generateNewRisId } from "../utils/risIdGenerator.js";
+import { generateNewParId } from "../utils/parIdGenerator.js";
+import { generateNewIcsId } from "../utils/icsIdGenerator.js";
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
@@ -80,6 +83,7 @@ const purchaseorderResolver = {
 
     getAllTotalPurchaseOrderAmount: async (_, __, context) => {
       try {
+        console.log({getAllTotalPurchaseOrderAmount :context})
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
@@ -211,7 +215,7 @@ const purchaseorderResolver = {
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
       const batchIarId = nanoid();
-       const autoIiarIds = await generateNewIarId(context.req.user.location);
+      const autoIiarIds = await generateNewIarId(context.req.user.location);
       // Define valid categories at a higher scope if used for both PO and POItems
       const validCategories = [
         "property acknowledgement reciept",
@@ -258,7 +262,6 @@ const purchaseorderResolver = {
           { transaction: t }
         ); // Use transaction
 
-
         // If items exist, create purchase order items
         if (items && Array.isArray(items) && items.length > 0) {
           // Validate that if items are provided, at least one item has meaningful data
@@ -276,10 +279,10 @@ const purchaseorderResolver = {
               "Cannot process purchase order: provided items are empty or invalid. Please ensure at least one item has a name or quantity."
             );
           }
+          //generate ids right away
 
           for (const item of items) {
             const { id: poId, ...cleanedItems } = item;
-          
 
             // Validate and set default for item category if necessary
             if (!validCategories.includes(cleanedItems.category)) {
@@ -295,32 +298,23 @@ const purchaseorderResolver = {
               { transaction: t }
             ); // Use transaction
 
-            //if item.currentInput is not provided do not create a Iar entry and purchaseOrderItemsHistory entry
-            // await inspectionAcceptanceReport.create({
-            //   ...cleanedItems,
-            //   iarId: batchIarId, // Use the same IAR ID for all items in this batch
-            //   actualQuantityReceived: item?.currentInput ? item.currentInput : 0,
-            //   purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
-            //   purchaseOrderItemId: newPOI.id, // Link items to the new purchase order
-            //   createdBy: user.name || user.id, // Track who created the IAR
-            //   updatedBy: user.name || user.id, // Track who updated the IAR
-            // }, { transaction: t }); // Use transaction
-
-            // await PurchaseOrderItemsHistory.create({
-            //   purchaseOrderItemId: newPOI.id,
-            //   previousQuantity: 0,
-            //   newQuantity: item.quantity,
-            //   previousActualQuantityReceived: 0,
-            //   newActualQuantityReceived: item?.currentInput ? item.currentInput : 0,
-            //   previousAmount: 0,
-            //   newAmount: item.amount,
-            //   changeType: "quantity_update",
-            //   changedBy: user.name || user.id,
-            //   changeReason: "Initial item creation",
-            // }, { transaction: t });
-
             // Only create IAR and History if currentInput is provided and greater than 0
             if (item.currentInput && Number(item.currentInput) > 0) {
+              let icsId = "";
+              let parId = "";
+              let risId = "";
+              if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
+                icsId = await generateNewIcsId(cleanedItems.tag);
+              }
+              if (
+                cleanedItems.category === "property acknowledgement reciept"
+              ) {
+                parId = await generateNewParId();
+              }
+              if (cleanedItems.category === "requisition issue slip") {
+                risId = await generateNewRisId();
+              }
+
               await inspectionAcceptanceReport.create(
                 {
                   ...cleanedItems,
@@ -330,6 +324,9 @@ const purchaseorderResolver = {
                   purchaseOrderItemId: newPOI.id, // Link items to the new purchase order
                   createdBy: user.name || user.id, // Track who created the IAR
                   updatedBy: user.name || user.id, // Track who updated the IAR
+                  parId: parId || "", // Use the same PAR ID for all items in this batch
+                  icsId: icsId || "",
+                  risId: risId || "",
                 },
                 { transaction: t }
               ); // Use transaction
@@ -372,7 +369,7 @@ const purchaseorderResolver = {
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
       const batchIarId = nanoid();
-        const autoIiarIds = await generateNewIarId(context.req.user.location);
+      const autoIiarIds = await generateNewIarId(context.req.user.location);
       // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
         "property acknowledgement reciept",
@@ -472,17 +469,22 @@ const purchaseorderResolver = {
               let hasChanges = false;
 
               // Check for updates to standard fields
-              ["itemName", "description", "unit", "category", "tag", "inventoryNumber"].forEach(
-                (field) => {
-                  if (
-                    item[field] !== undefined &&
-                    item[field] !== currentItem[field]
-                  ) {
-                    itemUpdates[field] = item[field];
-                    hasChanges = true;
-                  }
+              [
+                "itemName",
+                "description",
+                "unit",
+                "category",
+                "tag",
+                "inventoryNumber",
+              ].forEach((field) => {
+                if (
+                  item[field] !== undefined &&
+                  item[field] !== currentItem[field]
+                ) {
+                  itemUpdates[field] = item[field];
+                  hasChanges = true;
                 }
-              );
+              });
               if (
                 item.quantity !== undefined &&
                 Number(item.quantity) !== currentItem.quantity
@@ -526,26 +528,25 @@ const purchaseorderResolver = {
                 await PurchaseOrderItems.update(itemUpdates, {
                   where: { id: item.id, purchaseOrderId: poId },
                 });
+                //lets create and id if there is none if there is an id existing we skip it
 
                 // Create IAR entry only if new quantity was received
                 if (actualQuantityReceivedIncrement > 0) {
                   const iarItemData = { ...currentItem.get(), ...itemUpdates }; // Use currentItem and apply updates for IAR
+                  console.log({ iarItemData });
                   await inspectionAcceptanceReport.create({
                     ...omitId(iarItemData), // omitId on the merged data for IAR
-                    iarId:autoIiarIds || batchIarId,
+                    iarId: autoIiarIds || batchIarId,
                     actualQuantityReceived: actualQuantityReceivedIncrement, // Log only the increment
                     purchaseOrderId: poId,
                     purchaseOrderItemId: currentItem.id,
                     createdBy: user.name || user.id, // Track who created the IAR
                     updatedBy: user.name || user.id, // Track who updated the IAR
+                    parId: parId || "teste", // Use the same PAR ID for all items in this batch
+                    icsId: icsId || "teste",
+                    risId: risId || "teste",
                   });
 
-                  // // Create history record
-                  // await PurchaseOrderItems.increment(
-                  //   { actualQuantityReceived: item.currentInput }, // Increment field
-                  //   { where: { id: item.id, purchaseOrderId: poId } } // Condition to match the item
-                  
-                  // );
                   await PurchaseOrderItemsHistory.create({
                     purchaseOrderItemId: item.id,
                     previousQuantity: currentItem.quantity,
@@ -592,7 +593,7 @@ const purchaseorderResolver = {
                 amount: item.amount ? item.amount : 0,
                 category: item.category || "requisition issue slip", // Default category
                 tag: item.tag || "none",
-                inventoryNumber : item.inventoryNumber || "none",
+                inventoryNumber: item.inventoryNumber || "none",
                 actualQuantityReceived: item?.currentInput
                   ? item.currentInput
                   : 0,
@@ -602,33 +603,57 @@ const purchaseorderResolver = {
               // If item.currentInput is not provided do not create a Iar entry and purchaseOrderItemsHistory entry
               // Only create IAR and History if currentInput is provided and greater than 0
               if (item.currentInput && Number(item.currentInput) > 0) {
-                 //add entry to inspection acceptance report
-              await inspectionAcceptanceReport.create({
-                ...cleanedItems,
-                iarId: autoIiarIds || batchIarId, //=> "4f90d13a42"
-                actualQuantityReceived: item?.currentInput
-                  ? item.currentInput
-                  : 0,
-                purchaseOrderId: poId, // Link items to the new purchase order
-                purchaseOrderItemId: newPOI.id,
-                createdBy: user.name || user.id, // Track who created the IAR
-                updatedBy: user.name || user.id, // Track who updated the IAR
-              });
+                //add entry to inspection acceptance report
 
-              await PurchaseOrderItemsHistory.create({
-                purchaseOrderItemId: newPOI.id,
-                previousQuantity: 0,
-                newQuantity: item.quantity ? item.quantity : 0,
-                previousActualQuantityReceived: 0,
-                newActualQuantityReceived: item?.currentInput
-                  ? item.currentInput
-                  : 0,
-                previousAmount: 0,
-                newAmount: item.amount ? item.amount : 0,
-                changeType: "item_creation", // More specific
-                changedBy: user.name || user.id,
-                changeReason: "Initial item creation",
-              });
+                let icsId = "";
+                let parId = "";
+                let risId = "";
+                // Use currentItem or itemUpdates to get the tag and category values
+
+                if (item.tag) {
+                  icsId = await generateNewIcsId(cleanedItems.tag);
+                }
+                if (item.category === "property acknowledgement reciept") {
+                  parId = await generateNewParId();
+                }
+                if (item.category === "requisition issue slip") {
+                  risId = await generateNewRisId();
+                }
+                console.log({item})
+                console.log('=====================')
+                console.log({cleanedItems})
+                console.log('=====================')
+                console.log({ icsId, parId, risId });
+
+                await inspectionAcceptanceReport.create({
+                  ...cleanedItems,
+                  iarId: autoIiarIds || batchIarId, //=> "4f90d13a42"
+                  actualQuantityReceived: item?.currentInput
+                    ? item.currentInput
+                    : 0,
+                  purchaseOrderId: poId, // Link items to the new purchase order
+                  purchaseOrderItemId: newPOI.id,
+                  createdBy: user.name || user.id, // Track who created the IAR
+                  updatedBy: user.name || user.id, // Track who updated the IAR
+                  parId: parId || "", // Use the same PAR ID for all items in this batch
+                  icsId: icsId || "",
+                  risId: risId || "",
+                });
+
+                await PurchaseOrderItemsHistory.create({
+                  purchaseOrderItemId: newPOI.id,
+                  previousQuantity: 0,
+                  newQuantity: item.quantity ? item.quantity : 0,
+                  previousActualQuantityReceived: 0,
+                  newActualQuantityReceived: item?.currentInput
+                    ? item.currentInput
+                    : 0,
+                  previousAmount: 0,
+                  newAmount: item.amount ? item.amount : 0,
+                  changeType: "item_creation", // More specific
+                  changedBy: user.name || user.id,
+                  changeReason: "Initial item creation",
+                });
               }
             }
           }

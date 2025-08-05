@@ -132,3 +132,28 @@ export const formatTimestampToDateTimeForPrinting = (timestampString: string | n
     // hour12: true, // Ensures AM/PM format
   });
 };
+
+/**
+ * Formats a date string (e.g., "2025-07-30", "2025/07/30") into a human-readable date string.
+ *
+ * @param {string} dateString The date string in formats like "YYYY-MM-DD" or "YYYY/MM/DD".
+ * @returns {string} The formatted date string (e.g., "July 30, 2025") or "Invalid Date" if parsing fails.
+ */
+export const formatDateString = (dateString: string): string => {
+  if (!dateString || typeof dateString !== 'string') {
+    return 'Invalid Date';
+  }
+
+  const date = new Date(dateString);
+
+  // Ensure the date object is valid before formatting
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date';
+  }
+
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};

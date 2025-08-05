@@ -17,6 +17,10 @@ import EngineeringIcon from '@mui/icons-material/Engineering';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 //@ts-ignore
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+//@ts-ignore
+import ApprovalIcon from '@mui/icons-material/Approval';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import InsertPageBreakIcon from '@mui/icons-material/InsertPageBreak';
 
 
 export const ALL_NAVIGATION: Navigation = [
@@ -38,6 +42,23 @@ export const ALL_NAVIGATION: Navigation = [
     title: "Generate IAR",
     icon: React.createElement(ShowChartIcon),
   },
+  {
+    segment: "issuance",
+    title: "Issuance",
+    icon: React.createElement(ApprovalIcon),
+    children: [
+      // {
+      //   segment: 'issuance',
+      //   title: 'Issuance',
+      //   icon: React.createElement(InsertPageBreakIcon),
+      // },
+      {
+        segment: 'issuance-ris',
+        title: 'Issuance RIS',
+        icon: React.createElement(ReceiptLongIcon),
+      },
+    ]
+  },
   // {
   //   segment: "ics-lv-hv",
   //   title: "Inventory Custodian Slip",
@@ -53,36 +74,36 @@ export const ALL_NAVIGATION: Navigation = [
   //   title: "Property Acknowledgement",
   //   icon: React.createElement(CabinIcon),
   // },
-  // {
-  //   segment: "signatories",
-  //   title: "Signatories",
-  //   icon: React.createElement(DrawIcon),
-  // },
+  {
+    segment: "signatories",
+    title: "Signatories",
+    icon: React.createElement(DrawIcon),
+  },
   // {
   //   segment: "reports",
   //   title: "Reports",
   //   icon: React.createElement(SummarizeIcon),
   // },
-  // {
-  //   segment: "users",
-  //   title: "Users",
-  //   icon: React.createElement(PeopleAltIcon),
-  //   children: [
-  //     {
-  //       segment: 'users',
-  //       title: 'Users',
-  //       icon: React.createElement(FingerprintIcon),
-  //     },
-  //     // {
-  //     //   segment: 'role',
-  //     //   title: 'Role',
-  //     //  icon: React.createElement(EngineeringIcon),
-  //     // },
-  //     {
-  //       segment: 'department',
-  //       title: 'Department',
-  //      icon: React.createElement(CorporateFareIcon),
-  //     },
-  //   ],
-  // },
+  {
+    segment: "users",
+    title: "Users",
+    icon: React.createElement(PeopleAltIcon),
+    children: [
+      {
+        segment: 'users',
+        title: 'Users',
+        icon: React.createElement(FingerprintIcon),
+      },
+      // {
+      //   segment: 'role',
+      //   title: 'Role',
+      //  icon: React.createElement(EngineeringIcon),
+      // },
+      {
+        segment: 'department',
+        title: 'Department',
+       icon: React.createElement(CorporateFareIcon),
+      },
+    ],
+  },
 ];

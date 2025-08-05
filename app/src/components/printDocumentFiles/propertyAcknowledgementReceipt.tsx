@@ -274,7 +274,7 @@ table {
             <div>
               <div>
                 <div>
-                  <img src="chmsu-logo.png" alt="CHMSU Logo" />
+                  <img src="/chmsu-logo.png" alt="CHMSU Logo" />
                 </div>
                 <div>
                   <h4>REPUBLIC OF THE PHILIPPINES</h4>
