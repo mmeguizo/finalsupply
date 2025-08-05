@@ -42,13 +42,16 @@ store.on("error", function (error) {
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
-        resave: false, // don't save session if unmodified. false is recommended
-        store: store, // store sessions on mongodb
+        resave: false,
+        store: store,
         saveUninitialized: false,
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-            httpOnly: true, // prevent cross scripting attacks
-        },    
+            httpOnly: true,
+            secure: false, // Set to false for development (HTTP)
+            sameSite: 'lax' // Add this for better cross-origin support
+        },
+        name: 'connect.sid' // Explicitly set session name
     })
 );
 
@@ -74,6 +77,7 @@ await server.start();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://192.168.156.105:3000",
+  'http://localhost:4173'
 ];
 
 app.use(
@@ -83,16 +87,31 @@ app.use(
         origin: allowedOrigins,
         credentials: true,
     }),
-    express.json(),
+    express.json({ limit: '50mb' }),
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
     expressMiddleware(server, {
-        // context: async ({ req }) => ({ token: req.headers.token }),
-        context: ({ req, res }) => buildContext({ req, res }),
+        context: ({ req, res }) => {
+            // Add debugging for session
+            console.log("🔍 Session ID:", req.sessionID);
+            console.log("🔍 Session Data:", req.session);
+            console.log("🔍 User in session:", req.user);
+            console.log("🔍 Is Authenticated:", req.isAuthenticated ? req.isAuthenticated() : 'No isAuthenticated method');
+            
+            return buildContext({ req, res });
+        },
     })
 );
 
-// After your existing server setup code
+// Add this after your other middleware but before starting the server
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Bad JSON', err);
+    return res.status(400).send({ status: 404, message: "Bad JSON" });
+  }
+  next();
+});
+
 const gracefulShutdown = async () => {
     console.log("Received shutdown signal");
     try {

@@ -4,7 +4,7 @@ import { Op, Sequelize } from 'sequelize'; // Import Sequelize for literal
 /**
  * Generates a new IAR ID in the format "MMDDYY-XXX-CC".
  * MMDDYY: Month, Day, Year (last two digits) of generation.
- * XXX: Sequential series number for the current year and campus (e.g., 001, 002).
+ * XXX: Sequential series number for the current year across all campuses (e.g., 001, 002).
  * CC: Campus code based on user's location.
  *
  * @param {string} userLocation The location of the user (e.g., 'Talisay', 'Fortune Town').
@@ -33,19 +33,16 @@ export async function generateNewIarId(userLocation) {
       break;
     default:
       // Fallback for unknown locations, or throw an error if strict
-      console.warn(`Unknown user location: ${userLocation}. Using default campus code 'XX'.`);
-      campusCode = 'XX';
+      console.warn(`Unknown user location: ${userLocation}. Using default campus code 'TI'.`);
+      campusCode = 'TI'; // talisay as default
   }
 
-  // Find the latest IAR for the current year and campus code
+  // Find the latest IAR for the current year to determine the next series number
   const latestIarEntry = await inspectionAcceptanceReport.findOne({
     where: {
       createdAt: {
         [Op.gte]: new Date(`${currentYearFull}-01-01T00:00:00.000Z`),
         [Op.lt]: new Date(`${currentYearFull + 1}-01-01T00:00:00.000Z`)
-      },
-      iarId: {
-        [Op.like]: `%-${campusCode}` // Matches any iarId ending with -[campusCode]
       }
     }, // Order by the numeric part of the IAR series number in descending order
     order: [

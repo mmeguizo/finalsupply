@@ -44,7 +44,6 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
           <tbody>
             <tr><td><strong>Supplier:</strong></td><td>${po.supplier}</td></tr>
             <tr><td><strong>Address:</strong></td><td>${po.address}</td></tr>
-            <tr><td><strong>Telephone:</strong></td><td>${po.telephone}</td></tr>
             <tr><td><strong>Place of Delivery:</strong></td><td>${po.placeOfDelivery}</td></tr>
             <tr><td><strong>Delivery Date:</strong></td><td>${new Date(po.dateOfDelivery).toLocaleDateString()}</td></tr>
             <tr><td><strong>Payment Date:</strong></td><td>${new Date(po.dateOfPayment).toLocaleDateString()}</td></tr>
@@ -75,9 +74,9 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
             <tbody>
               ${po.items
                 .map(
-                  (item: any) => `
+                  (item: any, index : number) => `
                 <tr>
-                  <td>${item.itemName}</td>
+                  <td>${index + 1}</td>
                   <td>${item.description}</td>
                   <td>${item.unit}</td>
                   <td>${item.quantity}</td>

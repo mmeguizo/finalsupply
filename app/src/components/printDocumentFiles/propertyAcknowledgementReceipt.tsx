@@ -5,6 +5,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   // Generate rows for each item
   const itemRows = itemsArray.map((item) => `
     <tr>
+      <td>${item.inventoryNumber || ''}</td>
       <td>${item.quantity || ''}</td>
       <td>${item.unit || ''}</td>
       <td colspan="2">${item.description || ''}</td>
@@ -89,15 +90,20 @@ table {
     padding: 0px;
   }
   & th {
-    white-space: nowrap;
+    white-space: normal; /* Change from nowrap to normal */
+    word-wrap: break-word; /* Add this to ensure long words break */
   }
 
   & thead {
     & .tbl-headings th {
       padding: 1px 0px;
       font-weight: 600;
+      font-size: 12px; /* Adjust size if needed */
+      text-align: center; /* Center the text */
+      vertical-align: middle; /* Vertically center the text */
+      height: auto; /* Allow height to adjust to content */
     }
-    & tr > th[colspan="6"] > div {
+    & tr > th[colspan="7"] > div {
       display: flex;
       flex-direction: column;
       padding: 4px 0px;
@@ -264,11 +270,11 @@ table {
           <td></td>
         </tr>
         <tr>
-          <th colspan="6">
+          <th colspan="7">
             <div>
               <div>
                 <div>
-                  <img src="chmsu-logo.png" alt="CHMSU Logo" />
+                  <img src="/chmsu-logo.png" alt="CHMSU Logo" />
                 </div>
                 <div>
                   <h4>REPUBLIC OF THE PHILIPPINES</h4>
@@ -290,6 +296,7 @@ table {
           </th>
         </tr>
         <tr class="tbl-headings">
+          <th>Inventory Number</th>
           <th>Quantity</th>
           <th>Unit</th>
           <th colspan="2">Description and Property Number</th>
@@ -309,10 +316,10 @@ table {
           <td>${formatTotalAmount}</td>
         </tr>
         <tr>
-          <td colspan="6">Remarks:</td>
+          <td colspan="7">Remarks:</td>
         </tr>
         <tr>
-          <td colspan="6"></td>
+          <td colspan="7"></td>
         </tr>
         <tr>
           <td colspan="3">
@@ -328,7 +335,7 @@ table {
               </div>
             </div>
           </td>
-          <td colspan="3">
+          <td colspan="4">
             <div>
               <div>Received by:</div>
               <div>

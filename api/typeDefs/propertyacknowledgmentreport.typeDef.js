@@ -53,6 +53,7 @@ type ItemWithPurchaseOrder {
     actualQuantityReceived: Int
     currentInput: Int
     PurchaseOrder: PurchaseOrderType
+    inventoryNumber : String
     tag : String
     iarId : String
     icsId : String

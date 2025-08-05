@@ -1,4 +1,7 @@
-export const getInspectionReportTemplateForIAR = (signatories :any, reportData: any) =>`
+export const getInspectionReportTemplateForIAR = (
+  signatories: any,
+  reportData: any
+) => `
        <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -218,7 +221,7 @@ table {
               <div>
                 <div>
                   <div>
-                    <img src="chmsu-logo.png" style="margin-top:10px" alt="CHMSU Logo" />
+                    <img src="/chmsu-logo.png" style="margin-top:10px" alt="CHMSU Logo" />
                   </div>
                   <div>
                     <h4>REPUBLIC OF THE PHILIPPINES</h4>
@@ -238,19 +241,19 @@ table {
           </tr>
           <tr>
             <th colspan="2">Supplier:</th>
-            <th colspan="6">${reportData?.PurchaseOrder?.supplier || ''}</th>
+            <th colspan="6">${reportData?.PurchaseOrder?.supplier || ""}</th>
           </tr>
           <tr>
             <th colspan="2">PO # & Date:</th>
-             <th>${reportData?.PurchaseOrder?.poNumber || ''}</th>
-            <th>${reportData?.PurchaseOrder?.dateOfDelivery || ''}</th>
+             <th>${reportData?.PurchaseOrder?.poNumber || ""}</th>
+            <th>${reportData?.PurchaseOrder?.dateOfDelivery || ""}</th>
             <th>Invoice# & Date:</th>
-            <th colspan="2">${reportData?.PurchaseOrder?.invoice || ''} </th>
-             <th> ${reportData?.PurchaseOrder?.dateOfPayment || ''}</th>
+            <th colspan="2">${reportData?.PurchaseOrder?.invoice || ""} </th>
+             <th> ${reportData?.PurchaseOrder?.dateOfPayment || ""}</th>
           </tr>
           <tr>
             <th colspan="3">Requisitioning Office/Department:</th>
-            <th colspan="5">${reportData?.PurchaseOrder?.placeOfDelivery || ''}</th>
+            <th colspan="5">${reportData?.PurchaseOrder?.placeOfDelivery || ""}</th>
           </tr>
           <tr class="tbl-headings">
             <th>Item #</th>
@@ -265,11 +268,11 @@ table {
        
           <tr>
             <td>${1}</td>
-            <td>${reportData.unit || ''}</td>
-            <td colspan="3">${reportData.description || ''}</td>
-            <td>${reportData.actualQuantityReceived || ''}</td>
-            <td>${reportData.unitCost || ''}</td>
-            <td>${reportData.amount || ''}</td>
+            <td>${reportData.unit || ""}</td>
+            <td colspan="3">${reportData.description || ""}</td>
+            <td>${reportData.actualQuantityReceived || ""}</td>
+            <td>${reportData.unitCost || ""}</td>
+            <td>${reportData.amount || ""}</td>
           </tr>
         
         </tbody>
@@ -279,7 +282,7 @@ table {
             <td></td>
             <td colspan="4"></td>
             <td>Total</td>
-           <td>${reportData?.formatAmount || ''}</td>
+           <td>${reportData?.formatAmount || ""}</td>
           </tr>
           <tr>
            <td colspan="4">
@@ -292,7 +295,7 @@ table {
                   </div>
                 </div>
                 <div>
-                ${signatories?.inspectionOfficer || 'Inspection Officer'}
+                ${signatories?.inspectionOfficer || "Inspection Officer"}
                   <hr />
                   Inspection Officer
                 </div>
@@ -300,19 +303,19 @@ table {
             </td>
             <td colspan="4">
               <div>
-                <div>Date Received: ${reportData?.PurchaseOrder?.dateOfDelivery || ''}</div>
+                <div>Date Received: ${reportData?.PurchaseOrder?.dateOfDelivery || ""}</div>
                 <div>
-                  <div>
-                    <div class="sm-box" style="background-color: ${reportData?.PurchaseOrder?.status === 'complete' ? '#000' : 'transparent'}"></div>
+                    <div>
+                    <div class="sm-box" style="background-color: ${reportData?.iarStatus === "complete" ? "#000" : "transparent"}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${reportData?.iarStatus === "complete" ? "✓" : ""}</div>
                     <p>Complete</p>
                   </div>
                   <div>
-                    <div class="sm-box" style="background-color: ${reportData?.PurchaseOrder?.status !== 'complete' ? '#000' : 'transparent'}"></div>
+                    <div class="sm-box" style="background-color: ${reportData?.iarStatus === "partial" ? "#000" : "transparent"}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${reportData?.iarStatus === "partial" ? "✓" : ""}</div>
                     <p>Partial</p>
                   </div>
                 </div>
                 <div>
-                ${signatories?.supplyOfficer || 'Property and Supply Management Officer'}
+                ${signatories?.supplyOfficer || "Property and Supply Management Officer"}
                   <hr />
                    Property and Supply Management Officer
                 </div>
@@ -325,4 +328,4 @@ table {
   </body>
 </html>
 
-      `
+      `;

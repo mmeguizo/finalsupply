@@ -170,7 +170,7 @@ export default function InventoryCustodianSlip({
                       <Box sx={{ display: "grid", placeItems: "center" }}>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "90px",
@@ -296,7 +296,7 @@ export default function InventoryCustodianSlip({
                       {item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}
                     </StyledTableCell>
                     <StyledTableCell colSpan={2} align="left">{item?.description || ''}</StyledTableCell>
-                    <StyledTableCell align="center">{item?.id || ''}</StyledTableCell>
+                    <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell>
                     <StyledTableCell align="center">5 years</StyledTableCell>
                   </StyledTableRow>
                 ))

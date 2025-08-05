@@ -87,15 +87,15 @@ export default function PropertyPage() {
   const poRows = React.useMemo(() => {
     if (!data?.propertyAcknowledgmentReportForView) return [];
     return data.propertyAcknowledgmentReportForView.map((po: any) => {
-      const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
-      const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
+      // const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
+      // const formatUnitCost = po.unitCost ? `₱${po.unitCost.toFixed(2)}` : "0.00";
       const isPrinted = po.icsId ? true : false
 
       return {
         id: po.id,
         ...po,
-        formatAmount,
-        formatUnitCost,
+        // formatAmount,
+        // formatUnitCost,
         print : isPrinted
       };
     });

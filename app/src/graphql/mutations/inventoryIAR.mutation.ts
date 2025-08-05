@@ -47,6 +47,7 @@ export const UPDATE_ICSID = gql`
       icsId
       risId
       parId
+      iarStatus
     }
   }
 `;
@@ -57,6 +58,16 @@ export const DELETE_PURCHASEORDER = gql`
       id
       poNumber
       supplier
+    }
+  }
+`;
+
+export const UPDATE_IAR_STATUS = gql`
+  mutation UpdateIARStatus($id: ID!, $iarStatus: String!) {
+    updateIARStatus(id: $id, iarStatus: $iarStatus) {
+      id
+      iarStatus
+      message
     }
   }
 `;

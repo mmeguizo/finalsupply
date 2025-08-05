@@ -19,6 +19,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       icsId
       risId
       parId
+      iarStatus
+      createdAt
       PurchaseOrder {
         poNumber
         supplier
@@ -57,6 +59,7 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
       icsId
       risId
       parId
+      iarStatus
       PurchaseOrder {
         poNumber
         supplier
@@ -96,6 +99,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       icsId
       risId
       parId
+      iarStatus
+      inventoryNumber
       PurchaseOrder {
         poNumber
         supplier

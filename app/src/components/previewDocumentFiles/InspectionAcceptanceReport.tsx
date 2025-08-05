@@ -69,7 +69,7 @@ export default function InspectionAcceptanceReport({
   reportData,
   onPrint,
   onClose,
-}: InspectionAcceptanceReportPropsForRIS) {
+}: any) {
   const componentRef = useRef(null);
   // const { signatories, loading, error } = useSignatoryStore();
   // Get specific signatories by role
@@ -138,7 +138,7 @@ export default function InspectionAcceptanceReport({
     
     // Format the total amount
     const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
-  
+  console.log("itemsArray", itemsArray);
 
   return (
     <>
@@ -191,7 +191,7 @@ export default function InspectionAcceptanceReport({
                       <Box>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "40%",
@@ -325,15 +325,15 @@ export default function InspectionAcceptanceReport({
             </TableHead>
 
             <TableBody>
-              {itemsArray?.length > 0 ? (
-                itemsArray.map((item : any, index : any) => (
+              {itemsArray[0]?.items?.length > 0 ? (
+                itemsArray[0]?.items.map((item : any, index : any) => (
                   <StyledTableRow key={index}>
                     <StyledTableCell>{index + 1}</StyledTableCell>
                     <StyledTableCell>{item.unit}</StyledTableCell>
                     <StyledTableCell colSpan={3}>
                       {item.description}
                     </StyledTableCell>
-                    <StyledTableCell>{item.quantity}</StyledTableCell>
+                    <StyledTableCell>{item.actualQuantityReceived}</StyledTableCell>
                     <StyledTableCell>{item.unitCost}</StyledTableCell>
                     <StyledTableCell>{item.amount}</StyledTableCell>
                   </StyledTableRow>

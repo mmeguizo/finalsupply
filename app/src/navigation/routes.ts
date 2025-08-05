@@ -17,6 +17,10 @@ import EngineeringIcon from '@mui/icons-material/Engineering';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 //@ts-ignore
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+//@ts-ignore
+import ApprovalIcon from '@mui/icons-material/Approval';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import InsertPageBreakIcon from '@mui/icons-material/InsertPageBreak';
 
 
 export const ALL_NAVIGATION: Navigation = [
@@ -30,39 +34,56 @@ export const ALL_NAVIGATION: Navigation = [
   },
   {
     segment: "purchaseorder",
-    title: "Purchase Order",
+    title: "PO Monitoring",
     icon: React.createElement(BusinessCenterIcon),
   },
   {
     segment: "inventory",
-    title: "Inspection Acceptance Report ",
+    title: "Generate IAR",
     icon: React.createElement(ShowChartIcon),
   },
   {
-    segment: "ics-lv-hv",
-    title: "Inventory Custodian Slip",
-    icon: React.createElement(AddBusinessIcon),
+    segment: "issuance",
+    title: "Issuance",
+    icon: React.createElement(ApprovalIcon),
+    children: [
+      // {
+      //   segment: 'issuance',
+      //   title: 'Issuance',
+      //   icon: React.createElement(InsertPageBreakIcon),
+      // },
+      {
+        segment: 'issuance-ris',
+        title: 'Issuance RIS',
+        icon: React.createElement(ReceiptLongIcon),
+      },
+    ]
   },
-  {
-    segment: "requisition",
-    title: "Requisition Issue Slip",
-    icon: React.createElement(DocumentScannerIcon),
-  },
-  {
-    segment: "property",
-    title: "Property Acknowledgement Reciept",
-    icon: React.createElement(CabinIcon),
-  },
+  // {
+  //   segment: "ics-lv-hv",
+  //   title: "Inventory Custodian Slip",
+  //   icon: React.createElement(AddBusinessIcon),
+  // },
+  // {
+  //   segment: "requisition",
+  //   title: "Requisition Issue Slip",
+  //   icon: React.createElement(DocumentScannerIcon),
+  // },
+  // {
+  //   segment: "property",
+  //   title: "Property Acknowledgement",
+  //   icon: React.createElement(CabinIcon),
+  // },
   {
     segment: "signatories",
     title: "Signatories",
     icon: React.createElement(DrawIcon),
   },
-  {
-    segment: "reports",
-    title: "Reports",
-    icon: React.createElement(SummarizeIcon),
-  },
+  // {
+  //   segment: "reports",
+  //   title: "Reports",
+  //   icon: React.createElement(SummarizeIcon),
+  // },
   {
     segment: "users",
     title: "Users",
@@ -73,11 +94,11 @@ export const ALL_NAVIGATION: Navigation = [
         title: 'Users',
         icon: React.createElement(FingerprintIcon),
       },
-      {
-        segment: 'role',
-        title: 'Role',
-       icon: React.createElement(EngineeringIcon),
-      },
+      // {
+      //   segment: 'role',
+      //   title: 'Role',
+      //  icon: React.createElement(EngineeringIcon),
+      // },
       {
         segment: 'department',
         title: 'Department',

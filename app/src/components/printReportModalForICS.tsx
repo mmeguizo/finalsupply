@@ -33,6 +33,7 @@ export default function PrintReportDialogForICS({
    
   });
 
+  console.log(reportData)
 
   const getReportTemplate = (data: any) => {
     return getInventoryTemplateForICS(signatories, data);
