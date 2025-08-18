@@ -63,8 +63,8 @@ export const DELETE_PURCHASEORDER = gql`
 `;
 
 export const UPDATE_IAR_STATUS = gql`
-  mutation UpdateIARStatus($id: ID!, $iarStatus: String!) {
-    updateIARStatus(id: $id, iarStatus: $iarStatus) {
+  mutation UpdateIARStatus($airId: String!, $iarStatus: String!) {
+    updateIARStatus(airId: $airId, iarStatus: $iarStatus) {
       id
       iarStatus
       message

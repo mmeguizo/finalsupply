@@ -38,6 +38,23 @@ type PurchaseOrderType {
     invoice: String
 }
 
+type PurchaseOrderItemType {
+    id: ID!
+    purchaseOrderId: String!
+    itemName: String!
+    description: String
+    generalDescription : String
+    specification: String
+    unit: String
+    quantity: Int
+    unitCost: Float
+    amount: Float
+    category: String
+    isDeleted: Boolean
+    actualQuantityReceived: Int
+    currentInput: Int
+}
+
 
 type ItemWithPurchaseOrder {
     id: ID
@@ -53,6 +70,7 @@ type ItemWithPurchaseOrder {
     actualQuantityReceived: Int
     currentInput: Int
     PurchaseOrder: PurchaseOrderType
+    PurchaseOrderItem: PurchaseOrderItemType
     inventoryNumber : String
     tag : String
     iarId : String

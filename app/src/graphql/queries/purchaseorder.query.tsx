@@ -12,6 +12,7 @@ const GET_PURCHASEORDERS = gql`
       dateOfDelivery
       dateOfPayment
       deliveryTerms
+      dateOfConformity
       paymentTerms
       category
       status
@@ -21,6 +22,8 @@ const GET_PURCHASEORDERS = gql`
         itemName
         purchaseOrderId
         description
+        generalDescription
+        specification
         unit
         quantity
         unitCost

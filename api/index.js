@@ -18,7 +18,12 @@ import { connectDB, disconnectDB, syncTables} from "./db/connectDB.js";
 import MySQLSession from "express-mysql-session";
 const MySQLStore = MySQLSession(session);
 import { Sequelize } from "sequelize";
+import "./models/purchaseorder.js";
+import "./models/purchaseorderitems.js";
+import "./models/inspectionacceptancereport.js";
+import { initAssociations } from "./models/associations.js";
 dotenv.config();
+
 // call passport config
 configurePassport();
 
@@ -69,6 +74,14 @@ const server = new ApolloServer({
 await connectDB();
 await syncTables(); // Ensure tables exist in MySQL
 
+// Initialize model relations after all models are imported
+// initAssociations();
+
+// Optional: verify
+// import inspectionAcceptanceReport from "./models/inspectionacceptancereport.js";
+// console.log("IAR associations at boot:", Object.keys(inspectionAcceptanceReport.associations));
+// Expect: ['PurchaseOrder', 'PurchaseOrderItem']
+
 // Ensure we wait for our server to start
 await server.start();
 
@@ -93,10 +106,10 @@ app.use(
     expressMiddleware(server, {
         context: ({ req, res }) => {
             // Add debugging for session
-            console.log("🔍 Session ID:", req.sessionID);
-            console.log("🔍 Session Data:", req.session);
-            console.log("🔍 User in session:", req.user);
-            console.log("🔍 Is Authenticated:", req.isAuthenticated ? req.isAuthenticated() : 'No isAuthenticated method');
+            // console.log("🔍 Session ID:", req.sessionID);
+            // console.log("🔍 Session Data:", req.session);
+            // console.log("🔍 User in session:", req.user);
+            // console.log("🔍 Is Authenticated:", req.isAuthenticated ? req.isAuthenticated() : 'No isAuthenticated method');
             
             return buildContext({ req, res });
         },

@@ -30,6 +30,10 @@ const PurchaseOrder = sequelize.define(
       type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
       allowNull: false,
     },
+    dateOfConformity : {
+      type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
+      allowNull: true, // Allow null for optional date of conformity
+    },
     deliveryTerms: {
       type: DataTypes.TEXT,
       allowNull: true,

@@ -1,18 +1,48 @@
 export const getPropertyAcknowledgementReciept = (signatories: any, reportData: any) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
+  console.log("getPropertyAcknowledgementReciept", signatories, reportData);
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
+
+  const  { recieved_from, recieved_by, metadata } = signatories;
+  const { position: recievedFromPosition, role: recievedFromRole } = metadata?.recieved_from || {};
+  const { position: recievedByPosition, role: recievedByRole } = metadata?.recieved_by || {};
+
+  const escapeHtml = (str: any) =>
+    String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   
-  // Generate rows for each item
-  const itemRows = itemsArray.map((item) => `
-    <tr>
-      <td>${item.inventoryNumber || ''}</td>
-      <td>${item.quantity || ''}</td>
-      <td>${item.unit || ''}</td>
-      <td colspan="2">${item.description || ''}</td>
-      <td>${item.unitCost || ''}</td>
-      <td>${item.amount || ''}</td>
-    </tr>
-  `).join('');
+  const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, "<br/>");
+  
+  // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
+  const itemRows = itemsArray
+    .map((item) => {
+      const desc = escapeHtml(item.description || item.PurchaseOrderItem?.description || "");
+      const spec = item.PurchaseOrderItem?.specification || item.specification || "";
+      const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || "";
+  
+      const specHtml = spec ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
+      const genHtml = gen ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
+  
+      return `
+        <tr>
+          <td>${escapeHtml(item.inventoryNumber || "")}</td>
+          <td>${escapeHtml(item.quantity || "")}</td>
+          <td>${escapeHtml(item.unit || "")}</td>
+          <td colspan="2">
+            ${desc}
+            ${specHtml}
+            ${genHtml}
+          </td>
+          <td>${escapeHtml(item.unitCost || "")}</td>
+          <td>${escapeHtml(item.amount || "")}</td>
+        </tr>
+      `;
+    })
+    .join("");
   
   // Get the first item for header information
   const firstItem = itemsArray[0] || {};
@@ -327,8 +357,9 @@ table {
               <div>Received from:</div>
               <div>
                 <hr>
-                <p>${supplier}</p>
+                <p>${recieved_from }</p>
                 <hr>
+                <p>Position</p>
               </div>
               <div>
                 Date: ${dateOfDelivery}
@@ -339,7 +370,9 @@ table {
             <div>
               <div>Received by:</div>
               <div>
+                <p>${recieved_by}</p>
                 <p>Signature over Printed Name</p>
+                ${recievedByPosition}
                 <p>Position / Office</p>
               </div>
               <div>
@@ -356,3 +389,15 @@ table {
 </html>
 `;
 };
+
+/*
+
+ {
+    recieved_from: 'ram buyco',
+    recieved_by: 'test',
+    metadata: {
+      recieved_from: { position: '', role: 'Recieved From' },
+      recieved_by: { position: 'supply tester', role: '' }
+    }
+  }
+*/

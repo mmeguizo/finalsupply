@@ -69,7 +69,7 @@ function Row(props: {
         <TableCell component="th" scope="row">
           <Select
             value={row.iarStatus || "none"}
-            onChange={(e) => onStatusUpdate(row.id, e.target.value)}
+            onChange={(e) => onStatusUpdate(row.iarId, e.target.value)}
             size="small"
             variant="outlined"
             sx={{ minWidth: 120 }}
@@ -84,7 +84,7 @@ function Row(props: {
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items[0]); // Use the first item for printing
+              handleOpenPrintModal(row.items); // Use the first item for printing
             }}
           >
             <PreviewIcon fontSize="medium" />
@@ -209,12 +209,15 @@ export default function InventoryPage() {
   >("success");
 
   const handleOpenPrintModal = (po: any) => {
-    const reportTitle = po.category.split(" ");
-    const reportTitleString = reportTitle
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+
+    console.log({handleOpenPrintModal :po});  
+
+    // const reportTitle = po.category.split(" ");
+    // const reportTitleString = reportTitle
+    //   .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    //   .join(" ");
     setReportType("inspection");
-    setTitle(`${reportTitleString} Report`);
+    // setTitle(`${reportTitleString} Report`);
     setPrintPOI(po);
     setOpenPrintModal(true);
   };
@@ -232,7 +235,7 @@ export default function InventoryPage() {
       console.log(`Updating IAR ${iarId} to status: ${newStatus}`);
       const results = await updateIARStatus({
         variables: {
-          id: iarId,
+          airId: iarId, // <-- send the variable name your mutation expects
           iarStatus: newStatus,
         },
       });
@@ -275,7 +278,6 @@ export default function InventoryPage() {
   // Group rows by iarId
   const groupedRows = React.useMemo(() => {
     if (!data?.inspectionAcceptanceReport?.length) return [];
-
     // Group by iarId
     const groups = data.inspectionAcceptanceReport.reduce(
       (acc: any, item: any) => {
@@ -307,7 +309,7 @@ export default function InventoryPage() {
     const lowerCaseQuery = searchQuery.toLowerCase();
 
     return groupedRows.filter((row) => {
-      console.log(row);
+      // console.log(row);
       // Check if IAR ID matches
       if (row.iarId.toLowerCase().includes(lowerCaseQuery)) {
         return true;
@@ -381,7 +383,7 @@ export default function InventoryPage() {
                   console.log(row);
                   return (
                     <Row
-                      key={row.id}
+                      key={row.iarId}
                       row={row}
                       handleOpenPrintModal={handleOpenPrintModal}
                       onStatusUpdate={handleStatusUpdate}

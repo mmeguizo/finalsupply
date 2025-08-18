@@ -1,7 +1,8 @@
 export const getInventoryTemplateForICS = (signatories : any,reportData: any) => {
+
+  console.log({signatories})
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
- const { inspectionOfficer , supplyOfficer, receivedFrom } = signatories
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
     return sum + (item?.amount || 0);
@@ -366,7 +367,7 @@ tfoot {
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600;">Received from:</div>
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
-                             <span> ${receivedFrom} </span>
+                                <span> ${signatories?.recieved_from} </span>
                                 <hr style="width: 100%; margin: 5px 0;" />
                                 <span style="font-weight: 600;">${itemsArray[0]?.PurchaseOrder?.supplier || ''}</span>
                                 <hr style="width: 100%; margin: 5px 0;" />
@@ -382,7 +383,7 @@ tfoot {
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600;">Received by:</div>
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
-                                <span> ${supplyOfficer} </span>
+                                <span> ${signatories?.recieved_by} </span>
                                 <hr style="width: 100%; margin: 5px 0;" />
                                 <span style="font-weight: 600;">Custodian</span>
                                 <hr style="width: 100%; margin: 5px 0;" />

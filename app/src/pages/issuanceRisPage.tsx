@@ -275,15 +275,12 @@ export default function IssuanceRisPage() {
   // Filter rows based on search query
   const filteredRows = React.useMemo(() => {
     if (!searchQuery.trim()) return groupedRows;
-
     const lowerCaseQuery = searchQuery.toLowerCase();
-
     return groupedRows.filter((row) => {
       // Check if PO Number matches
       if (row.poNumber?.toLowerCase().includes(lowerCaseQuery)) {
         return true;
       }
-
       // Check if supplier matches
       if (row.supplier?.toLowerCase().includes(lowerCaseQuery)) {
         return true;
@@ -341,7 +338,7 @@ export default function IssuanceRisPage() {
             <Table aria-label="collapsible table">
               <TableHead>
                 <TableRow>
-                  <TableCell />
+                  <TableCell>Expand</TableCell>
                   <TableCell>PO#</TableCell>
                   <TableCell>Supplier</TableCell>
                   <TableCell>Delivery Date</TableCell>

@@ -352,7 +352,7 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
-                        <span>{signatories.receivedFrom}</span> 
+                        <span>{signatories?.recieved_from}</span> 
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
@@ -395,7 +395,7 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
-                       <span>{signatories.supplyOfficer}</span>
+                       <span>{signatories?.recieved_by}</span>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Custodian</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />

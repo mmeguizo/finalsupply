@@ -20,13 +20,13 @@ export default function PrintReportDialogForPAR({
   title,
   signatories,
 }: InspectionReportDialogPropsForIAR) {
-  const [updateICSid] = useMutation(UPDATE_PARID, {
-    refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
-  });
+  // const [updateICSid] = useMutation(UPDATE_PARID, {
+  //   refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
+  // });
   const getReportTemplate = (data: any) => {
     return getPropertyAcknowledgementReciept(signatories, data);
   };
-
+  console.log("PrintReportDialogForPAR", signatories);
   const handlePrintReport = async () => {
     try {
       // Extract just the IDs from the reportData
@@ -34,13 +34,13 @@ export default function PrintReportDialogForPAR({
         ? reportData.map(item => item.id) 
         : [reportData.id];
       // Call the mutation with the correct input format
-      const result = await updateICSid({
-        variables: {
-          input: {
-            ids: itemIds
-          }
-        }
-      });
+      // const result = await updateICSid({
+      //   variables: {
+      //     input: {
+      //       ids: itemIds
+      //     }
+      //   }
+      // });
       // Continue with printing
       const printWindow = window.open("", "_blank");
       if (printWindow) {

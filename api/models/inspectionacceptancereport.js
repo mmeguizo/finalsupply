@@ -29,23 +29,23 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchaseOrders", // Assuming the table for purchase orders is named 'purchaseOrders'
-        key: "id", // The referenced column in the 'purchaseOrders' table
+        model: "purchase_orders", // FIX: table name
+        key: "id",
       },
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
-      index: true, // Index for optimization
+      index: true,
     },
     purchaseOrderItemId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchaseOrdersItems", // Assuming the table for purchase orders is named 'purchaseOrders'
-        key: "id", // The referenced column in the 'purchaseOrders' table
+        model: "purchase_order_items", // FIX: table name
+        key: "id",
       },
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
-      index: true, // Index for optimization
+      index: true,
     },
     iarStatus: {
       type: DataTypes.ENUM('partial', 'complete','none'),

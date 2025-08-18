@@ -21,7 +21,8 @@ import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import ApprovalIcon from '@mui/icons-material/Approval';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import InsertPageBreakIcon from '@mui/icons-material/InsertPageBreak';
-
+//@ts-ignore
+import ArticleIcon from '@mui/icons-material/Article';
 
 export const ALL_NAVIGATION: Navigation = [
   {
@@ -47,16 +48,21 @@ export const ALL_NAVIGATION: Navigation = [
     title: "Issuance",
     icon: React.createElement(ApprovalIcon),
     children: [
-      // {
-      //   segment: 'issuance',
-      //   title: 'Issuance',
-      //   icon: React.createElement(InsertPageBreakIcon),
-      // },
+      {
+        segment: 'issuance-par',
+        title: 'Issuance Par',
+        icon: React.createElement(InsertPageBreakIcon),
+      },
       {
         segment: 'issuance-ris',
         title: 'Issuance RIS',
         icon: React.createElement(ReceiptLongIcon),
       },
+      {
+        segment: 'issuance-ics',
+        title: 'Issuance ICS',
+        icon: React.createElement(ArticleIcon),
+      }
     ]
   },
   // {

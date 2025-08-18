@@ -33,12 +33,30 @@ type PurchaseOrderType {
     dateOfPayment: String
     deliveryTerms: String
     paymentTerms: String
+    dateOfConformity : String
     amount: Float
     category: String
     status: String
     invoice: String
 }
 
+
+type PurchaseOrderItemType {
+    id: ID!
+    purchaseOrderId: String!
+    itemName: String!
+    description: String
+    generalDescription : String
+    specification: String
+    unit: String
+    quantity: Int
+    unitCost: Float
+    amount: Float
+    category: String
+    isDeleted: Boolean
+    actualQuantityReceived: Int
+    currentInput: Int
+}
 
 type ItemWithPurchaseOrder {
     id: ID
@@ -54,7 +72,10 @@ type ItemWithPurchaseOrder {
     actualQuantityReceived: Int
     currentInput: Int
     inventoryNumber: String
+    generalDescription: String
+    specification: String
     PurchaseOrder: PurchaseOrderType
+    PurchaseOrderItem: PurchaseOrderItemType
     tag : String
     iarId : String
     icsId : String
@@ -114,7 +135,7 @@ type Query {
 type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
-  updateIARStatus(id: ID!, iarStatus: String!): updateIARStatusPayload
+  updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
 }
 
 

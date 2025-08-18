@@ -277,7 +277,9 @@ export default function PurchaseOrder() {
 
   //for saving the po or submitting
   const handleSavePO = async (formData: any) => {
-    console.log({handleSavePO :formData})
+
+    console.log({ handleSavePO: formData })
+
     const result = await handleSavePurchaseOrder(
       formData,
       editingPO,

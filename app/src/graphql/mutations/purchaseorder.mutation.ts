@@ -11,10 +11,13 @@ export const ADD_PURCHASEORDER = gql`
       dateOfPayment
       category
       invoice
+      dateOfConformity
       completed_status_date
       items {
         id
         description
+        generalDescription
+        specification   
         purchaseOrderId
         unit
         quantity
@@ -41,6 +44,7 @@ export const UPDATE_PURCHASEORDER = gql`
       dateOfDelivery
       dateOfPayment
       deliveryTerms
+      dateOfConformity
       paymentTerms
       category
       status

@@ -46,18 +46,19 @@ export default function PrintReportDialogForIAR({
 
   const getReportTemplate = (data: any) => {
     // Determine the report template based on reportType
-    switch (reportType) {
-      case "property":
-        return getPropertyAcknowledgementReciept([],data);
-      case "requisition":
-        return getRequisitionAndIssueSlip([],data);
-      case "inventory":
-        return getInventoryTemplate(data);
-      case "inspection":
-        return getInspectionReportTemplateForIAR(signatories, data);
-      default:
-        return getInspectionReportTemplateForIAR(signatories, data);
-    }
+   return getInspectionReportTemplateForIAR(signatories,data);
+    // switch (reportType) {
+    //   case "property":
+    //     return getPropertyAcknowledgementReciept([],data);
+    //   case "requisition":
+    //     return getRequisitionAndIssueSlip([],data);
+    //   case "inventory":
+    //     return getInventoryTemplate(data);
+    //   case "inspection":
+    //     return getInspectionReportTemplateForIAR(signatories, data);
+    //   default:
+    //     return getInspectionReportTemplateForIAR(signatories, data);
+    // }
   };
 
   const handleClosePrintView = () => {
@@ -117,15 +118,7 @@ export default function PrintReportDialogForIAR({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        {reportType === "requisition" ? (
-          <RequisitionAndIssueSlip reportData={reportData} />
-        ) : reportType === "inspection" ? (
-          <InspectionAcceptanceReportForIAR reportData={reportData} />
-        ) : reportType === "inventory" ? (
-          <InventoryCustodianSlip reportData={reportData} />
-        ) : (
-          <PropertyAcknowledgementReceipt reportData={reportData} />
-        )}
+        <InspectionAcceptanceReportForIAR reportData={reportData} />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>
@@ -136,3 +129,17 @@ export default function PrintReportDialogForIAR({
     </Dialog>
   );
 }
+
+
+/*
+ {reportType === "requisition" ? (
+          <RequisitionAndIssueSlip reportData={reportData} />
+        ) : reportType === "inspection" ? (
+          <InspectionAcceptanceReportForIAR reportData={reportData} />
+        ) : reportType === "inventory" ? (
+          <InventoryCustodianSlip reportData={reportData} />
+        ) : (
+          <PropertyAcknowledgementReceipt reportData={reportData} />
+        )}
+
+*/

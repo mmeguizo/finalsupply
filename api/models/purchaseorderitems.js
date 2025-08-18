@@ -33,6 +33,14 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    generalDescription: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    specification: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     unit: {
       type: DataTypes.STRING(50),
       allowNull: true,
@@ -90,5 +98,9 @@ const PurchaseOrderItems = sequelize.define(
 PurchaseOrderItems.hasMany(InspectionAcceptanceReport, {
   foreignKey: "purchaseOrderItemId",
 });
+ InspectionAcceptanceReport.belongsTo(PurchaseOrderItems, {
+    foreignKey: "purchaseOrderItemId", // maps to purchase_order_item_id
+    as: "PurchaseOrderItem",
+  });
 
 export default PurchaseOrderItems;

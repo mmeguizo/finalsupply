@@ -472,6 +472,8 @@ const purchaseorderResolver = {
               [
                 "itemName",
                 "description",
+                "generalDescription",
+                "specification",
                 "unit",
                 "category",
                 "tag",
@@ -534,46 +536,42 @@ const purchaseorderResolver = {
                 if (actualQuantityReceivedIncrement > 0) {
                   const iarItemData = { ...currentItem.get(), ...itemUpdates }; // Use currentItem and apply updates for IAR
                   console.log({ iarItemData });
+
+                  // Generate IDs only when receiving new quantity (existing item path)
+                  const effectiveCategory =
+                    itemUpdates.category !== undefined
+                      ? itemUpdates.category
+                      : currentItem.category;
+                  const effectiveTag =
+                    itemUpdates.tag !== undefined
+                      ? itemUpdates.tag
+                      : currentItem.tag;
+
+                  let parIdGen = "";
+                  let risIdGen = "";
+                  let icsIdGen = "";
+
+                  if (effectiveCategory === "property acknowledgement reciept") {
+                    parIdGen = await generateNewParId();
+                  }
+                  if (effectiveCategory === "requisition issue slip") {
+                    risIdGen = await generateNewRisId();
+                  }
+                  if (effectiveTag === "high" || effectiveTag === "low") {
+                    icsIdGen = await generateNewIcsId(effectiveTag);
+                  }
+
                   await inspectionAcceptanceReport.create({
-                    ...omitId(iarItemData), // omitId on the merged data for IAR
+                    ...omitId(iarItemData),
                     iarId: autoIiarIds || batchIarId,
-                    actualQuantityReceived: actualQuantityReceivedIncrement, // Log only the increment
+                    actualQuantityReceived: actualQuantityReceivedIncrement,
                     purchaseOrderId: poId,
                     purchaseOrderItemId: currentItem.id,
-                    createdBy: user.name || user.id, // Track who created the IAR
-                    updatedBy: user.name || user.id, // Track who updated the IAR
-                    parId: parId || "teste", // Use the same PAR ID for all items in this batch
-                    icsId: icsId || "teste",
-                    risId: risId || "teste",
-                  });
-
-                  await PurchaseOrderItemsHistory.create({
-                    purchaseOrderItemId: item.id,
-                    previousQuantity: currentItem.quantity,
-                    newQuantity:
-                      itemUpdates.quantity !== undefined
-                        ? itemUpdates.quantity
-                        : currentItem.quantity,
-                    previousActualQuantityReceived:
-                      currentItem.actualQuantityReceived,
-                    newActualQuantityReceived:
-                      itemUpdates.actualQuantityReceived !== undefined
-                        ? itemUpdates.actualQuantityReceived
-                        : currentItem.actualQuantityReceived,
-                    previousAmount: currentItem.amount,
-                    newAmount:
-                      itemUpdates.amount !== undefined
-                        ? itemUpdates.amount
-                        : currentItem.amount,
-                    changeType:
-                      actualQuantityReceivedIncrement > 0
-                        ? "received_update"
-                        : "item_details_update",
-                    changedBy: user.name || user.id,
-                    changeReason:
-                      actualQuantityReceivedIncrement > 0
-                        ? "Quantity received/Item details updated"
-                        : "Item details updated",
+                    createdBy: user.name || user.id,
+                    updatedBy: user.name || user.id,
+                    parId: parIdGen,
+                    icsId: icsIdGen,
+                    risId: risIdGen,
                   });
                 } // End of hasChanges check
               }
@@ -587,6 +585,8 @@ const purchaseorderResolver = {
               const newPOI = await PurchaseOrderItems.create({
                 itemName: item.itemName || "",
                 description: item.description || "",
+                generalDescription: item.generalDescription || "",
+                specification: item.specification || "",
                 unit: item.unit || "",
                 quantity: item.quantity ? item.quantity : 0,
                 unitCost: item.unitCost ? item.unitCost : 0,

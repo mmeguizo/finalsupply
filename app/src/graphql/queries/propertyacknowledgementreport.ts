@@ -74,6 +74,24 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
         status
         amount
         invoice
+      },
+        PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }

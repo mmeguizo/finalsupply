@@ -7,6 +7,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       itemName
       purchaseOrderId
       description
+      generalDescription
+      specification
       unit
       quantity
       unitCost
@@ -31,11 +33,30 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         dateOfDelivery
         dateOfPayment
         deliveryTerms
+        dateOfConformity
         paymentTerms
         category
         status
         amount
         invoice
+      },
+      PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }

@@ -12,6 +12,7 @@ type PurchaseOrder {
     placeOfDelivery: String
     dateOfDelivery: String
     dateOfPayment: String
+    dateOfConformity : String
     deliveryTerms: String
     paymentTerms: String
     items: [Item!]
@@ -51,6 +52,8 @@ type Item {
     itemName: String
     purchaseOrderId: String
     description: String
+    generalDescription : String
+    specification: String
     unit: String
     quantity: Int
     unitCost: Float
@@ -155,6 +158,8 @@ input ItemInput {
     itemName: String
     purchaseOrderId: String
     description: String
+    generalDescription : String
+    specification: String
     unit: String
     quantity: Int
     unitCost: Float
@@ -178,6 +183,7 @@ input UpdatePurchaseOrderInput {
     placeOfDelivery: String
     dateOfDelivery: String
     dateOfPayment: String
+    dateOfConformity : String
     deliveryTerms: String
     paymentTerms: String
     items: [ItemInput!]
@@ -204,6 +210,7 @@ input PurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    dateOfConformity : String
     completed_status_date : String
 }
 
