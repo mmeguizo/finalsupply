@@ -79,7 +79,15 @@ const inspectionAcceptanceReportResolver = {
               },
             },
             order: [["createdAt", "DESC"]],
-            include: [PurchaseOrder],
+            include: [
+              { model: PurchaseOrder },
+              // include PurchaseOrderItems using the alias used in your models / code
+              {
+                model: PurchaseOrderItems,
+                as: "PurchaseOrderItem",
+                required: false,
+              },
+            ],
           });
 
         if (!inspectionAcceptanceReportdata) {
@@ -292,7 +300,6 @@ const inspectionAcceptanceReportResolver = {
       }
     },
     updateIARStatus: async (_, { airId, iarStatus }, context) => {
-
       console.log("Updating IAR status:", { airId, iarStatus });
 
       const t = await sequelize.transaction();

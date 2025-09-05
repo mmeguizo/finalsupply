@@ -93,7 +93,7 @@ const SignatoriesComponent = ({
     
     const updatedSignatories = {
       ...selectedSignatories,
-      [role]: newValue?.name || "",
+      [role]: ((newValue?.name || " ") + " " +  (newValue?.last_name || " ")) || "",
       metadata: updatedMetadata
     };
     

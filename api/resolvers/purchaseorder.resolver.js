@@ -83,7 +83,6 @@ const purchaseorderResolver = {
 
     getAllTotalPurchaseOrderAmount: async (_, __, context) => {
       try {
-        console.log({getAllTotalPurchaseOrderAmount :context})
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }

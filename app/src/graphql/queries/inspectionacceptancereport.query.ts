@@ -137,6 +137,24 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
         status
         amount
         invoice
+      },
+       PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }

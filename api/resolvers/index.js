@@ -6,6 +6,8 @@ import inspectionAcceptanceReportResolver from "./inspectionacceptancereport.res
 import propertyAcknowledgmentReportResolver from "./propertyacknowledgementrepoert.resolver.js";
 import requisitionIssueSlipResolver from "./requisitionissueslip.resolver.js";
 import departmentResolver from "./department.resolver.js";
+import roleResolver from "./role.resolver.js";
+
 const mergedResolvers = mergeResolvers([
   userResolver,
   purchaseorderResolver,
@@ -13,7 +15,8 @@ const mergedResolvers = mergeResolvers([
   inspectionAcceptanceReportResolver,
   propertyAcknowledgmentReportResolver,
   requisitionIssueSlipResolver,
-  departmentResolver
+  departmentResolver,
+  roleResolver
 ]); 
 
 export default mergedResolvers;

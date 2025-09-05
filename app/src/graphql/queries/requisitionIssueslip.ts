@@ -73,6 +73,24 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
         status
         amount
         invoice
+      },
+       PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }

@@ -1,3 +1,5 @@
+import { escapeHtml, nl2br } from "../../utils/textHelpers";
+
 export const getInventoryTemplateForICS = (signatories : any,reportData: any) => {
 
   console.log({signatories})
@@ -12,19 +14,40 @@ export const getInventoryTemplateForICS = (signatories : any,reportData: any) =>
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
   
   // Generate rows for each item
-  const itemRows = itemsArray.map((item, index) => {
-    return `
+  const itemRows = itemsArray
+    .map((item, index) => {
+      const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || "");
+      const spec = item?.PurchaseOrderItem?.specification || item?.specification || "";
+      const gen = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "";
+      
+      const specHtml = spec
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(
+            escapeHtml(spec)
+          )}</div>`
+        : "";
+      
+      const genHtml = gen
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(
+            escapeHtml(gen)
+          )}</div>`
+        : "";
+      
+      const unitCostDisplay = item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : "");
+      const amountDisplay = item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : "");
+      
+      return `
                 <tr>
-                    <td>${item?.quantity || ''}</td>
-                    <td>${item?.unit || ''}</td>
-                    <td>${item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : '')}</td>
-                    <td>${item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}</td>
-                    <td colspan="2">${item?.description || ''}</td>
-                    <td style="text-align: center">${item?.inventoryNumber || ''}</td>
+                    <td>${escapeHtml(item?.quantity || "")}</td>
+                    <td>${escapeHtml(item?.unit || "")}</td>
+                    <td>${unitCostDisplay}</td>
+                    <td>${amountDisplay}</td>
+                    <td colspan="2">${desc}${specHtml}${genHtml}</td>
+                    <td style="text-align: center">${escapeHtml(item?.inventoryNumber || "")}</td>
                     <td>5 years</td>
                 </tr>
-    `;
-  }).join('');
+      `;
+    })
+    .join("");
   
   // Fill remaining rows with empty rows to maintain layout
   const emptyRows = Array(Math.max(0, 5 - itemsArray.length))
@@ -375,7 +398,7 @@ tfoot {
                             <div style="text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
                                 <span>Signature over Printed Name</span>
                                 <span>Position/Office</span>
-                                <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
+                                <span>Date:________________</span>
                             </div>
                         </div>
                     </td>
@@ -391,7 +414,7 @@ tfoot {
                             <div style="text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
                                 <span>Signature over Printed Name</span>
                                 <span>Position/Office</span>
-                                <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfPayment || ''}</span>
+                                <span>Date:________________</span>
                             </div>
                         </div>
                     </td>
@@ -408,3 +431,9 @@ tfoot {
 </html>
 `;
 };
+
+/*
+<span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
+<span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfPayment || ''}</span>
+
+*/

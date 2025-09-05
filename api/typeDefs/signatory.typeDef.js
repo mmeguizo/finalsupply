@@ -2,17 +2,20 @@ const signatoryTypeDef = `#graphql
   type Signatory {
     id: ID!
     name: String!
-    role: String!
+    role: String        # keep role string for backward compatibility
+    roleId: Int        # foreign key reference to Role table
     purchaseOrderId: Int
     isDeleted: Boolean
     createdAt: String
     updatedAt: String
     purchaseOrder: PurchaseOrder
+    roleDetail: Role   # optional populated Role object (requires resolver to include)
   }
 
   input SignatoryInput {
     name: String!
-    role: String!
+    role: String      # optional; can be set from selected Role
+    roleId: Int       # prefer sending roleId from client
     purchaseOrderId: Int
   }
 
@@ -20,6 +23,7 @@ const signatoryTypeDef = `#graphql
     id: Int!
     name: String
     role: String
+    roleId: Int
     purchaseOrderId: Int
   }
 

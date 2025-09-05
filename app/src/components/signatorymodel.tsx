@@ -18,6 +18,7 @@ import {
 import { useQuery } from "@apollo/client";
 //@ts-ignore
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
+import { GET_ROLES } from "../graphql/queries/role.query"; // Make sure this import exists
 
 interface SignatoryModalProps {
  open: boolean;
@@ -25,12 +26,6 @@ interface SignatoryModalProps {
  onSave: (formData: any) => void;
  signatory: any | null;
 }
-const ROLE_OPTIONS = [
-  "Inspector Officer",
-  "Property And Supply Officer",
-  "Recieved From",
-  "Recieved By",
-];
 
 const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProps) => {
   // State for form fields
@@ -48,6 +43,9 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
 
   // Get purchase orders for dropdown
   const { data: poData } = useQuery(GET_PURCHASEORDERS);
+
+  // Fetch roles for dropdown
+  const { data: rolesData, loading: rolesLoading, error: rolesError } = useQuery(GET_ROLES);
 
   // Set initial form data when editing
   useEffect(() => {
@@ -158,10 +156,26 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
                   value={formData.role}
                   onChange={handleChange}
                   label="Role"
+                  disabled={rolesLoading}
                 >
-                  {ROLE_OPTIONS.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
+                  {rolesLoading && (
+                    <MenuItem value="">
+                      <em>Loading roles...</em>
+                    </MenuItem>
+                  )}
+                  {rolesError && (
+                    <MenuItem value="">
+                      <em>Error loading roles</em>
+                    </MenuItem>
+                  )}
+                  {rolesData?.roles?.length === 0 && (
+                    <MenuItem value="">
+                      <em>No roles found</em>
+                    </MenuItem>
+                  )}
+                  {rolesData?.roles?.map((role: any) => (
+                    <MenuItem key={role.id} value={role.name}>
+                      {role.name}
                     </MenuItem>
                   ))}
                 </Select>

@@ -62,14 +62,35 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
         });
     }, [signatories]);
 
-    const handleSignatoryChange = (role: keyof risIssuanceSignatories, value: string) => {
-        const updatedSignatories = {
-            ...selectedSignatories,
-            [role]: value
-        };
-        setSelectedSignatories(updatedSignatories);
-        onSignatoriesChange(updatedSignatories);
+    // const handleSignatoryChange = (role: keyof risIssuanceSignatories, value: string) => {
+    //     const updatedSignatories = {
+    //         ...selectedSignatories,
+    //         [role]: value
+    //     };
+    //     setSelectedSignatories(updatedSignatories);
+    //     onSignatoriesChange(updatedSignatories);
+    // };
+
+const handleSignatoryChange = (role: keyof risIssuanceSignatories, newValue: UserOption | string | null) => {
+
+
+    let fullName = '';
+    if (!newValue) {
+        fullName = '';
+    } else if (typeof newValue === 'string') {
+        fullName = newValue;
+    } else {
+        fullName = [newValue.name, newValue.last_name].filter(Boolean).join(' ');
+    }
+    console.log(`Selected full name for role ${role}:`, fullName);
+
+    const updatedSignatories = {
+        ...selectedSignatories,
+        [role]: fullName
     };
+    setSelectedSignatories(updatedSignatories);
+    onSignatoriesChange(updatedSignatories);
+};
 
     // Get dropdown options based on role and format them for Autocomplete
     const getDropdownOptions = (roleKey: keyof risIssuanceSignatories): UserOption[] => {
@@ -101,7 +122,20 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
 
     // Find the selected option object based on name
     const findSelectedOption = (options: UserOption[], name: string) => {
-        return options.find(option => option.name === name) || null;
+        // if there's no stored name, nothing to match
+        if (!name) return null;
+
+        // Try matching by common possibilities:
+        // - exact label (e.g. "First Last (Position)")
+        // - combined name + last_name ("First Last")
+        // - name only ("First")
+        return (
+            options.find(option =>
+                option.label === name ||
+                `${option.name} ${option.last_name || ''}`.trim() === name ||
+                option.name === name
+            ) || null
+        );
     };
 
     const signatoryRoles = [
@@ -161,7 +195,7 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
                                             <Autocomplete
                                                 value={selectedOption}
                                                 onChange={(event, newValue) => {
-                                                    handleSignatoryChange(role.key, newValue?.name || '');
+                                                    handleSignatoryChange(role.key, newValue || null);
                                                 }}
                                                 options={options}
                                                 getOptionLabel={(option) => option.label}
@@ -174,7 +208,7 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
                                                     />
                                                 )}
                                                 sx={{ minWidth: 250 }}
-                                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                                isOptionEqualToValue={(option, value) => option?.id === value?.id}
                                                 filterOptions={(options, state) => {
                                                     const inputValue = state.inputValue.toLowerCase().trim();
                                                     return options.filter(option => 

@@ -156,25 +156,25 @@ export const createPoColumns = (
       </Tooltip>
     ),
   },
-  {
-    field: "print",
-    headerName: "Print",
-    width: 100,
-    renderCell: (params) => (
-      <Tooltip title="Print" placement="right">
-        <Button
-          size="small"
-          onClick={(e: any) => {
-            e.stopPropagation(); // Prevent row selection
-            // @ts-ignore
-            handleOpenPrintModal(params.row);
-          }}
-        >
-          <PreviewIcon fontSize="large" />
-        </Button>
-      </Tooltip>
-    ),
-  },
+  // {
+  //   field: "print",
+  //   headerName: "Print",
+  //   width: 100,
+  //   renderCell: (params) => (
+  //     <Tooltip title="Print" placement="right">
+  //       <Button
+  //         size="small"
+  //         onClick={(e: any) => {
+  //           e.stopPropagation(); // Prevent row selection
+  //           // @ts-ignore
+  //           handleOpenPrintModal(params.row);
+  //         }}
+  //       >
+  //         <PreviewIcon fontSize="large" />
+  //       </Button>
+  //     </Tooltip>
+  //   ),
+  // },
 ];
 
 // Define columns for items

@@ -1,3 +1,5 @@
+import { escapeHtml, nl2br } from "../../utils/textHelpers";
+
 export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
@@ -9,25 +11,43 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
   
   const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
   
-  // Generate rows for each item
-  const itemRows = itemsArray.map((item, index) => {
-    return `
+  // Generate rows for each item (supports array input). description, specification and generalDescription are escaped;
+  // specification and generalDescription preserve newlines via nl2br.
+  const itemRows = itemsArray
+    .map((item, index) => {
+      const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || "");
+      const specRaw = item?.PurchaseOrderItem?.specification || item?.specification || "";
+      const genRaw = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "";
+
+      const specHtml = specRaw
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>`
+        : "";
+      const genHtml = genRaw
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>`
+        : "";
+
+      return `
                 <tr>
-                    <td>${item?.id || ''}</td>
+                    <td>${escapeHtml(item?.id ?? "")}</td>
                     <td>${index + 1}</td>
-                    <td>${item?.unit || ''}</td>
-                    <td colspan="2">${item?.description || ''}</td>
-                    <td>${item?.quantity || ''}</td>
+                    <td>${escapeHtml(item?.unit ?? "")}</td>
+                    <td colspan="2">
+                      ${desc}
+                      ${specHtml}
+                      ${genHtml}
+                    </td>
+                    <td>${escapeHtml(String(item?.quantity ?? ""))}</td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td>${item?.actualQuantityReceived || ''}</td>
+                    <td>${escapeHtml(String(item?.actualQuantityReceived ?? ""))}</td>
                     <td></td>
                 </tr>
-    `;
-  }).join('');
+      `;
+    })
+    .join("");
   
   // Fill remaining rows with empty rows to maintain layout
-  const emptyRows = Array(Math.max(0, 5 - itemsArray.length))
+  const emptyRows = Array(Math.max(0,2 - itemsArray.length))
     .fill('')
     .map(() => `
                 <tr>

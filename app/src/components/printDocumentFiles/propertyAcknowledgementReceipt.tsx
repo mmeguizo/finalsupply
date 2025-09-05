@@ -259,16 +259,20 @@ table {
             align-items: stretch;
             justify-content: flex-end;
             text-align: center;
-            & > p {
-              font-weight: 600;
-            }
-            & hr {
-              height: calc(1rem - 2px);
-              border: none;
-              border-bottom: 2px solid #000;
-              &:last-child {
-                margin-top: 0.25rem;
-                margin-bottom: 1.25rem;
+            & > div {
+              display: flex;
+              flex-direction: column;
+              &  p {
+                font-weight: 600;
+              }
+              & hr {
+                height: calc(1rem - 2px);
+                border: none;
+                border-bottom: 2px solid #000;
+                &:last-child {
+                  margin-top: 0.25rem;
+                  margin-bottom: 1.25rem;
+                }
               }
             }
           }
@@ -356,13 +360,19 @@ table {
             <div>
               <div>Received from:</div>
               <div>
-                <hr>
-                <p>${recieved_from }</p>
-                <hr>
-                <p>Position</p>
+                <div>
+                  <p>${recieved_from}</p>
+                   <hr>
+                  <p>Signature over Printed Name</p>
+                </div>
+                <div>
+               ${recievedFromRole}
+                   <hr>
+                  <p>Position / Office</p>
+                </div>
               </div>
               <div>
-                Date: ${dateOfDelivery}
+                Date:___________
               </div>
             </div>
           </td>
@@ -370,13 +380,19 @@ table {
             <div>
               <div>Received by:</div>
               <div>
-                <p>${recieved_by}</p>
-                <p>Signature over Printed Name</p>
-                ${recievedByPosition}
-                <p>Position / Office</p>
+                <div>
+                  <p>${recieved_by}</p>
+                   <hr>
+                  <p>Signature over Printed Name</p>
+                </div>
+                <div>
+                  ${recievedByPosition}
+                   <hr>
+                  <p>Position / Office</p>
+                </div>
               </div>
               <div>
-                Date: ${dateOfPayment}
+                Date: ____________
               </div>
             </div>
           </td>

@@ -72,7 +72,7 @@ const Row = (props: {
                     <Table size="small" aria-label="ris-details">
                       <TableHead>
                         <TableRow>
-                          <TableCell>RIS ID</TableCell>
+                          <TableCell>ICS ID</TableCell>
                           <TableCell>Description</TableCell>
                           <TableCell>Unit</TableCell>
                           <TableCell align="right">Actual Received</TableCell>
@@ -87,7 +87,7 @@ const Row = (props: {
                         {row.items.map((item: any) => (
                           <TableRow key={item.id}>
                             <TableCell component="th" scope="row">
-                              {item.risId || "Not Generated"}
+                              {item.icsId || "Not Generated"}
                             </TableCell>
                             <TableCell>{item.description}</TableCell>
                             <TableCell>{item.unit}</TableCell>

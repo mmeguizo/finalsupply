@@ -55,6 +55,9 @@ export const getInspectionReportTemplateForIAR = (
   const overallComplete = items.length && items.every((i) => i.iarStatus === "complete");
   const overallPartial = items.some((i) => i.iarStatus === "partial");
 
+
+  console.log("Overall Complete:", reportData,overallComplete);
+
   return `
     <html lang="en">
     <head>
@@ -286,7 +289,7 @@ export const getInspectionReportTemplateForIAR = (
                   </div>
                   <div>
                     <div></div>
-                    <div>No. ${reportData?.iarId} </div>
+                    <div>No. ${reportData[0]?.iarId} </div>
                     <div>Page 1 of 1</div>
                   </div>
                   <div>Appendix 62</div>
@@ -295,19 +298,19 @@ export const getInspectionReportTemplateForIAR = (
             </tr>
             <tr>
               <th colspan="2">Supplier:</th>
-              <th colspan="6">${reportData?.PurchaseOrder?.supplier || ""}</th>
+              <th colspan="6">${reportData[0]?.PurchaseOrder?.supplier || ""}</th>
             </tr>
             <tr>
               <th colspan="2">PO # & Date:</th>
-               <th>${reportData?.PurchaseOrder?.poNumber || ""}</th>
-              <th>${reportData?.PurchaseOrder?.dateOfDelivery || ""}</th>
+               <th>${reportData[0]?.PurchaseOrder?.poNumber || ""}</th>
+              <th>${reportData[0]?.PurchaseOrder?.dateOfDelivery || ""}</th>
               <th>Invoice# & Date:</th>
-              <th colspan="2">${reportData?.PurchaseOrder?.invoice || ""} </th>
-               <th> ${reportData?.PurchaseOrder?.dateOfPayment || ""}</th>
+              <th colspan="2">${reportData[0]?.PurchaseOrder?.invoice || ""} </th>
+               <th> ${reportData[0]?.PurchaseOrder?.dateOfPayment || ""}</th>
             </tr>
             <tr>
               <th colspan="3">Requisitioning Office/Department:</th>
-              <th colspan="5">${reportData?.PurchaseOrder?.placeOfDelivery || ""}</th>
+              <th colspan="5">${reportData[0]?.PurchaseOrder?.placeOfDelivery || ""}</th>
             </tr>
             <tr class="tbl-headings">
               <th>Item #</th>

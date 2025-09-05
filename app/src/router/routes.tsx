@@ -21,6 +21,8 @@ import IssuancePage from "../pages/issuance";
 import IssuanceRisPage from "../pages/issuanceRisPage";
 import IssuanceParPage from "../pages/issueanceParPage";
 import IssuanceIcsPage from "../pages/issuanceIcsPage";
+import RolePage from "../pages/role";
+
 
 export const router = createBrowserRouter([
   {
@@ -135,10 +137,10 @@ export const router = createBrowserRouter([
                 path: "users",
                 Component: UsersPage,
               },
-              // {
-              //   path: "role",
-              //   Component: RolePage,
-              // },
+              {
+                path: "roles",
+                Component: RolePage,
+              },
               {
                 path: "department",
                 Component: DepartmentPage,

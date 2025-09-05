@@ -376,7 +376,7 @@ export default function PropertyAcknowledgementReceipt({
                         display: "flex",
                         flexDirection: "column",
                         padding: "1px 75px",
-                        gap: "20px",
+                        gap: "13px",
                         height: "125px",
                         marginTop: "5px",
                         alignContent: "stretch",
@@ -385,11 +385,11 @@ export default function PropertyAcknowledgementReceipt({
                         textAlign: "center"
                       }}
                     >
-                      <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
+                    <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
+                      <Typography sx={{ fontWeight: 600 }}>{signatories?.metadata?.recieved_from?.role || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Position</Typography>
-                      {/* <Typography sx={{ fontWeight: 600 }}>{signatories?.metadata?.recieved_from?.role || ""}</Typography> */}
                     </Box>
                     <Box
                       sx={{

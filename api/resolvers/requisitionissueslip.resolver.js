@@ -2,7 +2,7 @@ import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize 
 import requisitionIssueSlip from "../models/inspectionacceptancereport.js";
 import { Op } from 'sequelize'
 import { generateNewRisId } from "../utils/risIdGenerator.js";
-
+import PurchaseOrderItems from "../models/purchaseorderitems.js";
 const requisitionIssueSlipResolver = {
   Query: {
     requisitionIssueSlip: async (_, __, context) => {
@@ -38,7 +38,11 @@ const requisitionIssueSlipResolver = {
             category: "requisition issue slip"
           },
           order: [["createdAt", "DESC"]],
-          include: [PurchaseOrder],
+          include: [
+             { model: PurchaseOrder },
+            // include PurchaseOrderItems using the alias used in your models / code
+            { model: PurchaseOrderItems, as: "PurchaseOrderItem", required: false }
+          ],
         });
 
         if (!requisitionIssueSlipReportdata) {
