@@ -69,13 +69,17 @@ export const UsersPage = () => {
       client.cache.gc();
     },
   });
+  // const [createUser] = useMutation(CREATE_USER, {
+  //   refetchQueries: [{ query: GET_ALL_USERS }],
+  //   onCompleted: () => {
+  //     client.cache.evict({ id: "ROOT_QUERY", fieldName: "users" });
+  //     client.cache.gc();
+  //   },
+  // });
   const [createUser] = useMutation(CREATE_USER, {
-    refetchQueries: [{ query: GET_ALL_USERS }],
-    onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "users" });
-      client.cache.gc();
-    },
-  });
+  refetchQueries: [{ query: GET_ALL_USERS }],
+  awaitRefetchQueries: true,
+});
 
   const handleOpenAddModal = (item: any) => {
     // Implement your logic to open the print modal

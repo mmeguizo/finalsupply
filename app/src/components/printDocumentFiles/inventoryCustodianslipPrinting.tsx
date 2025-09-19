@@ -343,7 +343,7 @@ tfoot {
                             </div>
                             <div></div>
                             <div>
-                                <span>ISC No. ${itemsArray[0]?.icsId || ''}</span>
+                                <span>ICS No. ${itemsArray[0]?.icsId || ''}</span>
                                 <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
                             </div>
                         </div>

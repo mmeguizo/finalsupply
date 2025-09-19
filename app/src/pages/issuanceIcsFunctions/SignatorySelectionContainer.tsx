@@ -45,10 +45,10 @@ const SignatoriesComponent = ({
   const [selectedSignatories, setSelectedSignatories] = useState<any>({
     recieved_from: signatories.recieved_from || "",
     recieved_by: signatories.recieved_by || "",
-    // Store additional metadata
+    // Store additional metadata (now includes id)
     metadata: {
-      recieved_from: { position: "", role: "" },
-      recieved_by: { position: "", role: "" }
+      recieved_from: { id: signatories?.metadata?.recieved_from?.id || "", position: "", role: "" },
+      recieved_by: { id: signatories?.metadata?.recieved_by?.id || "", position: "", role: "" }
     }
   });
 
@@ -57,14 +57,30 @@ const SignatoriesComponent = ({
   const fetchSignatories = useSignatoryStore((state) => state.fetchSignatories);
 
   // Get users from GraphQL query (for requested_by and recieved_by)
-  const { data: usersData, loading: usersLoading, error: usersError } = useQuery(GET_ALL_USERS);
+  const {
+    data: usersData,
+    loading: usersLoading,
+    error: usersError,
+    refetch: refetchUsers,
+  } = useQuery(GET_ALL_USERS, {
+    fetchPolicy: "cache-and-network",
+    nextFetchPolicy: "cache-first",
+    notifyOnNetworkStatusChange: true,
+  });
 
-  // Fetch signatories on component mount
+  // Fetch signatories on component mount and on window focus
   useEffect(() => {
-    if (allSignatories.length === 0) {
+    fetchSignatories();
+  }, [fetchSignatories]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      refetchUsers();
       fetchSignatories();
-    }
-  }, [allSignatories.length, fetchSignatories]);
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refetchUsers, fetchSignatories]);
 
   // Update local state when props change
   useEffect(() => {
@@ -72,31 +88,35 @@ const SignatoriesComponent = ({
       recieved_from: signatories.recieved_from || "",
       recieved_by: signatories.recieved_by || "",
       metadata: signatories.metadata || {
-        recieved_from: { position: "", role: "" },
-        recieved_by: { position: "", role: "" }
+        recieved_from: { id: "", position: "", role: "" },
+        recieved_by: { id: "", position: "", role: "" }
       }
     });
   }, [signatories]);
 
   const handleSignatoryChange = (role: string, newValue: UserOption | null) => {
     const updatedMetadata = { ...selectedSignatories.metadata };
-    
+
     if (newValue) {
-      // Update the metadata with position and role information
       updatedMetadata[role] = {
+        id: newValue.id,
         position: newValue.position || "",
         role: newValue.role || ""
       };
     } else {
-      updatedMetadata[role] = { position: "", role: "" };
+      updatedMetadata[role] = { id: "", position: "", role: "" };
     }
-    
+
+    const displayName = newValue
+      ? [newValue.name, newValue.last_name].filter(Boolean).join(" ")
+      : "";
+
     const updatedSignatories = {
       ...selectedSignatories,
-      [role]: ((newValue?.name || " ") + " " +  (newValue?.last_name || " ")) || "",
+      [role]: displayName,
       metadata: updatedMetadata
     };
-    
+
     setSelectedSignatories(updatedSignatories);
     onSignatoriesChange(updatedSignatories);
   };
@@ -129,9 +149,19 @@ const SignatoriesComponent = ({
     }
   };
 
-  // Find the selected option object based on name
-  const findSelectedOption = (options: UserOption[], name: string) => {
-    return options.find(option => option.name === name) || null;
+  // Find the selected option object using id first, fallback to name when id is missing
+  const findSelectedOption = (roleKey: string, options: UserOption[]) => {
+    const meta = selectedSignatories?.metadata?.[roleKey];
+    if (meta?.id) {
+      return options.find(o => o.id === meta.id) || null;
+    }
+    const value = (selectedSignatories?.[roleKey] || "").trim().toLowerCase();
+    return (
+      options.find(option => {
+        const optionFullName = [option.name, option.last_name].filter(Boolean).join(" ").trim().toLowerCase();
+        return optionFullName === value || option.name.toLowerCase() === value;
+      }) || null
+    );
   };
 
   const signatoryRoles = [
@@ -180,9 +210,8 @@ const SignatoriesComponent = ({
             <TableBody>
               {signatoryRoles.map((role) => {
                 const options = getDropdownOptions(role.key);
-                const isUserRole = role.key === "requested_by" || role.key === "recieved_by";
-                const selectedValue = selectedSignatories[role.key] || "";
-                const selectedOption = findSelectedOption(options, selectedValue);
+                const isUserRole = role.key === "recieved_by";
+                const selectedOption = findSelectedOption(role.key, options);
 
                 return (
                   <TableRow key={role.key}>

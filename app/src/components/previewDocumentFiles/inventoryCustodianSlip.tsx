@@ -238,7 +238,7 @@ export default function InventoryCustodianSlip({
                           }}
                         >
                           <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                            ISC No: 
+                            ICS No: 
                           </Typography>
                           <Box sx={{ borderBottom: "1px solid #000" }}>
                             {itemsArray[0]?.icsId || ""}

@@ -46,14 +46,15 @@ export default function PrintReportDialogForICS({
         ? reportData.map(item => item.id) 
         : [reportData.id];
       
+        // no need to increment the ics its need to be fixed value
       // Call the mutation with the correct input format
-      const result = await updateICSid({
-        variables: {
-          input: {
-            ids: itemIds
-          }
-        }
-      });
+      // const result = await updateICSid({
+      //   variables: {
+      //     input: {
+      //       ids: itemIds
+      //     }
+      //   }
+      // });
       
       // Continue with printing
       const printWindow = window.open("", "_blank");

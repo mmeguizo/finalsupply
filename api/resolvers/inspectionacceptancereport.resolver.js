@@ -216,9 +216,9 @@ const inspectionAcceptanceReportResolver = {
           // Returning an empty array usually handles "not found" gracefully.
           return [];
         }
-        console.log("--- IAR ITEMS ---");
-        console.log(iarItems);
-        console.log("--- END IAR ITEMS ---");
+        // console.log("--- IAR ITEMS ---");
+        // console.log(iarItems);
+        // console.log("--- END IAR ITEMS ---");
         // Sequelize automatically handles mapping snake_case database columns to camelCase
         // JavaScript properties in the returned model instances (e.g., iar_id becomes iarId,
         // created_at becomes createdAt), thanks to `underscored: true` in your model.

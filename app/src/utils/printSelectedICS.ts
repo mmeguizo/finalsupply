@@ -63,7 +63,7 @@ export const printSelectedICS = (icsData: any) => {
             <p class="italic bold" style="font-size: 14px; margin-bottom: 5px;">Appendix 59</p>
             <p style="font-size: 12px; margin-bottom: 15px;">page 1/1</p>
             <div>
-              <span class="bold" style="font-size: 12px;">ISC No: </span>
+              <span class="bold" style="font-size: 12px;">ICS No: </span>
               <span style="border-bottom: 1px solid #000; padding-bottom: 2px;">${ics.PurchaseOrder.poNumber || ""}</span>
             </div>
           </div>
