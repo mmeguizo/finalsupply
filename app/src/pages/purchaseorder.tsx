@@ -3,6 +3,8 @@ import * as React from "react";
 import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
 // @ts-ignore
 import { GET_ALL_PURCHASEORDER_ITEMS } from "../graphql/queries/purchaseorder.query";
+// @ts-ignore
+import { GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client";
 import {
   CircularProgress,
@@ -82,45 +84,12 @@ export default function PurchaseOrder() {
 
   const client = useApolloClient(); // ADD THIS LINE!
   const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
+    awaitRefetchQueries: true,
     refetchQueries: [
+      // Refresh the main list and dashboard aggregates
       { query: GET_PURCHASEORDERS },
-      { query: GET_ALL_PURCHASEORDER_ITEMS },
-      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
-      { query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY },
-      { query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY },
+      { query: GET_ALL_DASHBOARD_DATA },
     ],
-    onCompleted: () => {
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "getPurchaseOrderForBarCharts",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "inspectionAcceptanceReport",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "inspectionAcceptanceReportForICS",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "allPurchaseOrderItems",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllPropertyAcknowledgementReportForView",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllInspectionAcceptanceReport",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllRequisitionIssueSlipView",
-      });
-      client.cache.evict({ fieldName: "getAllCategory" });
-      client.cache.gc();
-    },
   });
   // const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
   //   refetchQueries: [{ query: GET_PURCHASEORDERS  },
@@ -130,45 +99,12 @@ export default function PurchaseOrder() {
     refetchQueries: [{ query: GET_PURCHASEORDERS }],
   });
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+    awaitRefetchQueries: true,
     refetchQueries: [
+      // Refresh the main list and dashboard aggregates
       { query: GET_PURCHASEORDERS },
-      { query: GET_ALL_PURCHASEORDER_ITEMS },
-      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
-      { query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY },
-      { query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY },
+      { query: GET_ALL_DASHBOARD_DATA },
     ],
-    onCompleted: () => {
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "getPurchaseOrderForBarCharts",
-      });
-      client.cache.evict({ fieldName: "getAllCategory" });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "allPurchaseOrderItems",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "inspectionAcceptanceReport",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "inspectionAcceptanceReportForICS",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllPropertyAcknowledgementReportForView",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllInspectionAcceptanceReport",
-      });
-      client.cache.evict({
-        id: "ROOT_QUERY",
-        fieldName: "GetAllRequisitionIssueSlipView",
-      });
-      client.cache.gc();
-    },
   });
   // const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
   //   refetchQueries: [{ query: GET_PURCHASEORDERS }],
@@ -181,7 +117,8 @@ export default function PurchaseOrder() {
     return data.purchaseOrders.map((po: any) => {
       // const formatAmount = po.amount ? `₱${po.amount.toFixed(2)}` : "0.00";
       return {
-        id: po._id,
+        // Use the GraphQL id for consistency with cache normalization
+        id: po.id,
         ...po,
         // formattedDeliveryDate,
         // formattedPaymentDate,
@@ -197,7 +134,8 @@ export default function PurchaseOrder() {
     return selectedPO.items.map((item: any) => ({
       // formatUnitCost: item.unitCost ? `₱${item.unitCost.toFixed(2)}` : "0.00",
       // formatAmount: item.amount ? `₱${item.amount.toFixed(2)}` : "0.00",
-      id: item._id || `item-${Math.random().toString(36).substr(2, 9)}`,
+      // Use the GraphQL id; fall back to a stable synthetic id only if necessary
+      id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
       formatUnitCost: currencyFormat(item.unitCost),
       formatAmount: currencyFormat(item.amount),
