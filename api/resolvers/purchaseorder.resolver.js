@@ -4,7 +4,8 @@ import PurchaseOrderItemsHistory from "../models/purchaseorderitemshistory.js"; 
 import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
 import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
-import { sequelize } from "../db/connectDB.js"; // Import sequelize connection
+import { sequelize } from "../db/connectDB.js";
+import { Op } from "sequelize"; // add if not present
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 import { generateNewIarId } from "../utils/iarIdGenerator.js";
 import { generateNewRisId } from "../utils/risIdGenerator.js";
@@ -698,6 +699,102 @@ const purchaseorderResolver = {
       } catch (error) {
         console.error("Error adding purchase order item: ", error);
         throw new Error(error.message || "Internal server error");
+      }
+    },
+    // Add this new mutation to revert all receipts for a batch (iarId)
+    async revertIARBatch(_, { iarId, reason }, context) {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const user = context.req.user;
+
+        // Load all IAR rows for this batch
+        const iars = await inspectionAcceptanceReport.findAll({
+          where: { iarId, isDeleted: false },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+
+        if (!iars || iars.length === 0) {
+          throw new Error("IAR batch not found or already reverted");
+        }
+
+        console.log(`[revertIARBatch] Found ${iars.length} IAR rows for iarId=${iarId}`);
+
+        // Group by purchaseOrderItemId to minimize updates
+        const grouped = iars.reduce((acc, iar) => {
+          const key = iar.purchaseOrderItemId;
+          acc[key] = acc[key] || { rows: [], total: 0 };
+          acc[key].rows.push(iar);
+          acc[key].total += Number(iar.actualQuantityReceived || 0);
+          return acc;
+        }, {});
+
+        // For each item, reduce actualQuantityReceived and log history
+        for (const [poiId, info] of Object.entries(grouped)) {
+          const poi = await PurchaseOrderItems.findByPk(poiId, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+          });
+          if (!poi) continue;
+
+          const beforeAqr = Number(poi.actualQuantityReceived || 0);
+          const delta = Math.min(beforeAqr, Number(info.total || 0));
+          const afterAqr = Math.max(0, beforeAqr - delta);
+
+          // Update item AQR
+          const [poiUpdated] = await PurchaseOrderItems.update(
+            { actualQuantityReceived: afterAqr },
+            { where: { id: poi.id }, transaction: t }
+          );
+          console.log(`[revertIARBatch] Updated PO Item ${poi.id}: AQR ${beforeAqr} -> ${afterAqr} (rows=${poiUpdated})`);
+
+          // History
+          await PurchaseOrderItemsHistory.create(
+            {
+              purchaseOrderItemId: poi.id,
+              previousQuantity: poi.quantity,
+              newQuantity: poi.quantity,
+              previousActualQuantityReceived: beforeAqr,
+              newActualQuantityReceived: afterAqr,
+              previousAmount: poi.amount,
+              newAmount: poi.amount,
+              // Use existing ENUM value to avoid DB error
+              changeType: "received_update",
+              changedBy: user.name || user.id,
+              changeReason: reason || `Reverted IAR batch ${iarId}`,
+            },
+            { transaction: t }
+          );
+        }
+
+        // Soft-delete IAR rows and clear doc IDs (par/ics/ris)
+        const [iarUpdated] = await inspectionAcceptanceReport.update(
+          {
+            isDeleted: 1, // explicit tinyint for MySQL
+            actualQuantityReceived: 0,
+            parId: null,
+            icsId: null,
+            risId: null,
+            updatedBy: user.name || user.id,
+          },
+          { where: { iarId, isDeleted: 0 }, transaction: t }
+        );
+        console.log(`[revertIARBatch] Soft-deleted IAR rows for iarId=${iarId} (rows=${iarUpdated})`);
+
+        await t.commit();
+        return {
+          success: true,
+          message: `IAR batch ${iarId} reverted.`,
+          iarId,
+          affectedCount: iars.length,
+        };
+      } catch (e) {
+        await t.rollback();
+        console.error("revertIARBatch error:", e);
+        throw new Error(e.message || "Failed to revert IAR batch");
       }
     },
   },

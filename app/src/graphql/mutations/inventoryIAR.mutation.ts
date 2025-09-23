@@ -65,9 +65,19 @@ export const DELETE_PURCHASEORDER = gql`
 export const UPDATE_IAR_STATUS = gql`
   mutation UpdateIARStatus($airId: String!, $iarStatus: String!) {
     updateIARStatus(airId: $airId, iarStatus: $iarStatus) {
-      id
-      iarStatus
+      success
       message
+    }
+  }
+`;
+
+export const REVERT_IAR_BATCH = gql`
+  mutation RevertIARBatch($iarId: String!, $reason: String) {
+    revertIARBatch(iarId: $iarId, reason: $reason) {
+      success
+      message
+      iarId
+      affectedCount
     }
   }
 `;

@@ -27,6 +27,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PreviewIcon from "@mui/icons-material/Preview";
 import SearchIcon from "@mui/icons-material/Search";
 import NotificationDialog from "../components/notifications";
+import ConfirmDialog from "../components/confirmationdialog";
 //@ts-ignore
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
 import PrintReportDialogForIAR from "../components/printReportModalForIAR";
@@ -36,16 +37,23 @@ import {
 } from "../utils/generalUtils";
 import { Select, MenuItem, Chip } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { UPDATE_IAR_STATUS } from "../graphql/mutations/inventoryIAR.mutation";
+import { UPDATE_IAR_STATUS, REVERT_IAR_BATCH } from "../graphql/mutations/inventoryIAR.mutation";
+// @ts-ignore
+import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query";
 
 // Row component for collapsible table
 function Row(props: {
   row: any;
   handleOpenPrintModal: (item: any) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
+  onRevert: (iarId: string) => void; // add
 }) {
-  const { row, handleOpenPrintModal, onStatusUpdate } = props;
+  const { row, handleOpenPrintModal, onStatusUpdate, onRevert } = props;
   const [open, setOpen] = React.useState(false);
+  const canRevert = React.useMemo(() => {
+    if (!row?.items?.length) return false;
+    return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
+  }, [row]);
 
   return (
     <React.Fragment>
@@ -84,11 +92,25 @@ function Row(props: {
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items); // Use the first item for printing
+              handleOpenPrintModal(row.items);
             }}
+            sx={{ mr: 1 }}
           >
             <PreviewIcon fontSize="medium" />
           </Button>
+          {canRevert && (
+            <Button
+            size="small"
+            color="error"
+            variant="outlined"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRevert(row.iarId);
+            }}
+            >
+              Revert
+            </Button>
+          )}
         </TableCell>
       </TableRow>
       <TableRow>
@@ -187,7 +209,12 @@ function EnhancedTableToolbar(props: {
 // InventoryPage component
 export default function InventoryPage() {
   const { data, loading, error, refetch } = useQuery(
-    GET_ALL_INSPECTION_ACCEPTANCE_REPORT
+    GET_ALL_INSPECTION_ACCEPTANCE_REPORT,
+    {
+      fetchPolicy: "cache-and-network",
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
+    }
   );
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -197,6 +224,16 @@ export default function InventoryPage() {
   const [updateIARStatus] = useMutation(UPDATE_IAR_STATUS, {
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
   });
+  const [revertIARBatch] = useMutation(REVERT_IAR_BATCH, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      // Also refresh purchase orders and dashboard aggregates so all views update
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
   // Pagination state
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -208,16 +245,12 @@ export default function InventoryPage() {
     "success" | "error" | "info" | "warning"
   >("success");
 
+  // Confirm dialog state for revert
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<string | null>(null);
+
   const handleOpenPrintModal = (po: any) => {
-
-    console.log({handleOpenPrintModal :po});  
-
-    // const reportTitle = po.category.split(" ");
-    // const reportTitleString = reportTitle
-    //   .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    //   .join(" ");
     setReportType("inspection");
-    // setTitle(`${reportTitleString} Report`);
     setPrintPOI(po);
     setOpenPrintModal(true);
   };
@@ -255,6 +288,40 @@ export default function InventoryPage() {
       // refetch();
     } catch (error) {
       console.error("Error updating status:", error);
+    }
+  };
+
+  const handleRevertIAR = (iarId: string) => {
+    setPendingIarToRevert(iarId);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmClose = async (confirmed: boolean) => {
+    const iarId = pendingIarToRevert;
+    setConfirmOpen(false);
+    if (!confirmed || !iarId) {
+      setPendingIarToRevert(null);
+      return;
+    }
+    try {
+      const res = await revertIARBatch({ variables: { iarId, reason: "User requested revert" } });
+      if (res.data?.revertIARBatch?.success) {
+        setNotificationMessage(res.data.revertIARBatch.message);
+        setNotificationSeverity("success");
+        setShowNotification(true);
+        await refetch();
+      } else {
+        setNotificationMessage("Failed to revert IAR batch.");
+        setNotificationSeverity("error");
+        setShowNotification(true);
+      }
+    } catch (e: any) {
+      console.error(e);
+      setNotificationMessage(e.message || "Error reverting IAR batch");
+      setNotificationSeverity("error");
+      setShowNotification(true);
+    } finally {
+      setPendingIarToRevert(null);
     }
   };
 
@@ -379,17 +446,15 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedRows.map((row) => {
-                  console.log(row);
-                  return (
-                    <Row
-                      key={row.iarId}
-                      row={row}
-                      handleOpenPrintModal={handleOpenPrintModal}
-                      onStatusUpdate={handleStatusUpdate}
-                    />
-                  );
-                })}
+                {paginatedRows.map((row) => (
+                  <Row
+                    key={row.iarId}
+                    row={row}
+                    handleOpenPrintModal={handleOpenPrintModal}
+                    onStatusUpdate={handleStatusUpdate}
+                    onRevert={handleRevertIAR} // pass handler
+                  />
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -404,6 +469,11 @@ export default function InventoryPage() {
           />
         </Paper>
       </Stack>
+      <ConfirmDialog
+        open={confirmOpen}
+        message={`Are you sure you want to revert IAR batch ${pendingIarToRevert || ""}? This will roll back received quantities and hide IAR entries.`}
+        onClose={handleConfirmClose}
+      />
       <PrintReportDialogForIAR
         open={openPrintModal}
         handleClose={handleClosePrintModal}

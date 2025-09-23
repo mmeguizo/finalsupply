@@ -20,6 +20,7 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT = gql`
       risId
       parId
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -60,6 +61,7 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
       parId
       inventoryNumber
       PurchaseOrder {
+        id
         poNumber
         supplier
         address

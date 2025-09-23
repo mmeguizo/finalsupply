@@ -29,7 +29,12 @@ import PrintReportDialogForPAR from "../components/printReportModalForPAR";
 
 export default function IssuanceParPage() {
   const { data, loading, error, refetch } = useQuery(
-    GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY
+    GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY,
+    {
+      fetchPolicy: "cache-and-network",
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
+    }
   );
 
   const [searchQuery, setSearchQuery] = React.useState("");

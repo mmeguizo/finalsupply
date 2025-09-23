@@ -56,11 +56,11 @@ import { handleSavePurchaseOrder } from "./purchaseOrderFunctions/purchaseOrderO
 import PurchaseOrderPrintModal from "../components/printReportModal";
 import PrintReportDialog from "../components/printReportModal";
 // @ts-ignore
-import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
-// @ts-ignore
 import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
 // @ts-ignore
 import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
+// @ts-ignore Add IAR list so inventory can refresh after PO updates
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
 
 export default function PurchaseOrder() {
   //for submit loading
@@ -89,6 +89,8 @@ export default function PurchaseOrder() {
       // Refresh the main list and dashboard aggregates
       { query: GET_PURCHASEORDERS },
       { query: GET_ALL_DASHBOARD_DATA },
+      // Also refresh inventory IAR list because PO fields show up there
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
     ],
   });
   // const [addPurchaseOrder] = useMutation(ADD_PURCHASEORDER, {
@@ -96,7 +98,12 @@ export default function PurchaseOrder() {
   //     {query : GET_ALL_PURCHASEORDER_ITEMS}],
   // });
   const [deletePurchaseOrder] = useMutation(DELETE_PURCHASEORDER, {
-    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+    ],
   });
   const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
     awaitRefetchQueries: true,
@@ -104,6 +111,8 @@ export default function PurchaseOrder() {
       // Refresh the main list and dashboard aggregates
       { query: GET_PURCHASEORDERS },
       { query: GET_ALL_DASHBOARD_DATA },
+      // Keep inventory in sync without manual reload
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
     ],
   });
   // const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {

@@ -24,6 +24,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       iarStatus
       createdAt
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -82,6 +83,7 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
       parId
       iarStatus
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -123,6 +125,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       iarStatus
       inventoryNumber
       PurchaseOrder {
+        id
         poNumber
         supplier
         address

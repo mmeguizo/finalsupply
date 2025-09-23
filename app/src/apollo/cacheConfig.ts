@@ -14,6 +14,13 @@ export const cache = new InMemoryCache({
         },
       },
     },
+    // Normalize types returned by IAR queries
+    PurchaseOrderType: {
+      keyFields: ["id"],
+    },
+    PurchaseOrderItemType: {
+      keyFields: ["id"],
+    },
     PurchaseOrderItem: {
       keyFields: ["id"],
     },
@@ -21,6 +28,19 @@ export const cache = new InMemoryCache({
       fields: {
         // Make the purchaseOrders field replace the list whenever refetched
         purchaseOrders: {
+          keyArgs: false,
+          merge(existing = [], incoming = []) {
+            return incoming;
+          },
+        },
+        // Ensure IAR list also fully replaces on refetch to avoid stale groups
+        inspectionAcceptanceReport: {
+          keyArgs: false,
+          merge(existing = [], incoming = []) {
+            return incoming;
+          },
+        },
+        inspectionAcceptanceReportForICS: {
           keyArgs: false,
           merge(existing = [], incoming = []) {
             return incoming;

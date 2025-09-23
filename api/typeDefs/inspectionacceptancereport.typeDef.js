@@ -22,6 +22,7 @@ type Item {
 }
 
 type PurchaseOrderType {
+    id: ID
     poNumber: String
     supplier: String
     address: String
@@ -96,6 +97,9 @@ type updateIARStatusPayload{
     id: ID
     iarStatus: String
     message : String
+    success: Boolean
+    updatedCount: Int
+    ids: [ID!]
 }
 
 
@@ -136,6 +140,14 @@ type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
+    revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
+}
+
+type RevertIARBatchPayload {
+    success: Boolean!
+    message: String!
+    iarId: String!
+    affectedCount: Int!
 }
 
 
