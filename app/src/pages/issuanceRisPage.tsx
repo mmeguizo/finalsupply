@@ -179,8 +179,14 @@ function EnhancedTableToolbar(props: {
 
 // IssuanceRisPage component
 export default function IssuanceRisPage() {
-  const { data, loading, error, refetch } = useQuery(
-    GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY
+  const { data, loading, error, refetch, networkStatus } = useQuery(
+    GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY,
+    {
+      fetchPolicy: "cache-and-network",
+      nextFetchPolicy: "cache-first",
+      pollInterval: 4000,
+      notifyOnNetworkStatusChange: true,
+    }
   );
   const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -231,6 +237,23 @@ export default function IssuanceRisPage() {
     setSearchQuery(event.target.value);
     setPage(0); // Reset to first page when searching
   };
+
+  // Refetch on window focus/online/visibility change
+  React.useEffect(() => {
+    const onFocus = () => refetch();
+    const onOnline = () => refetch();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refetch]);
 
   // Pagination handlers
   const handleChangePage = (event: unknown, newPage: number) => {

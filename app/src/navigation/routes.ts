@@ -112,4 +112,9 @@ export const ALL_NAVIGATION: Navigation = [
       },
     ],
   },
+  {
+    segment: 'histories',
+    title: 'Histories',
+    icon: React.createElement(SummarizeIcon),
+  },
 ];

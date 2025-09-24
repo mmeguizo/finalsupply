@@ -10,6 +10,10 @@ const PurchaseOrderItemsHistory = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    purchaseOrderId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     purchaseOrderItemId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -20,6 +24,15 @@ const PurchaseOrderItemsHistory = sequelize.define(
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
       index: true,
+    },
+    itemName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "",
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     previousQuantity: {
       type: DataTypes.INTEGER,
@@ -44,6 +57,22 @@ const PurchaseOrderItemsHistory = sequelize.define(
     newAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+    },
+    iarId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    parId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    risId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    icsId: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     changeType: {
       type: DataTypes.ENUM("quantity_update", "received_update", "amount_update", "marking_complete", "item_creation", "po_completed", "item_details_update"),

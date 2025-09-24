@@ -155,10 +155,6 @@ const SignatoriesComponent = ({
     if (meta?.id) {
       return options.find(o => o.id === meta.id) || null;
     }
-    // Do not auto-select "Received From" based on name; require explicit choice (id)
-    if (roleKey === "recieved_from") {
-      return null;
-    }
     const value = (selectedSignatories?.[roleKey] || "").trim().toLowerCase();
     return (
       options.find(option => {

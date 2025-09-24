@@ -22,6 +22,7 @@ import IssuanceRisPage from "../pages/issuanceRisPage";
 import IssuanceParPage from "../pages/issueanceParPage";
 import IssuanceIcsPage from "../pages/issuanceIcsPage";
 import RolePage from "../pages/role";
+import HistoriesPage from "../pages/histories";
 
 
 export const router = createBrowserRouter([
@@ -144,6 +145,21 @@ export const router = createBrowserRouter([
               {
                 path: "department",
                 Component: DepartmentPage,
+              },
+            ],
+          },
+          // Legacy path redirect: keep old deep-link working after moving Histories
+          {
+            path: "/users/histories",
+            element: <Navigate to="/histories" replace />,
+          },
+          {
+            path: "/histories",
+            element: <ProtectedRoute routePath="histories" />,
+            children: [
+              {
+                path: "",
+                Component: HistoriesPage,
               },
             ],
           },

@@ -18,7 +18,7 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchaseOrders", // Assuming the table for purchase orders is named 'purchaseOrders'
+        model: "purchase_orders", // Correct table name matches PurchaseOrder model's tableName
         key: "id", // The referenced column in the 'purchaseOrders' table
       },
       onUpdate: "CASCADE",

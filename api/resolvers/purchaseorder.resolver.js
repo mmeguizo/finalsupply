@@ -188,6 +188,20 @@ const purchaseorderResolver = {
         throw new Error(error.message || "Internal server error");
       }
     },
+    purchaseOrderItemsHistoryAll: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const history = await PurchaseOrderItemsHistory.findAll({
+          order: [["createdAt", "DESC"]],
+        });
+        return history;
+      } catch (error) {
+        console.error("Error fetching all purchase order items history: ", error);
+        throw new Error(error.message || "Internal server error");
+      }
+    },
     inspectionAcceptanceReport: async (_, __, context) => {
       try {
         if (!context.isAuthenticated()) {
@@ -211,6 +225,7 @@ const purchaseorderResolver = {
       }
     },
   },
+  PurchaseOrderItemHistory: {},
 
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
@@ -315,7 +330,7 @@ const purchaseorderResolver = {
                 risId = await generateNewRisId();
               }
 
-              await inspectionAcceptanceReport.create(
+              const iarRow = await inspectionAcceptanceReport.create(
                 {
                   ...cleanedItems,
                   iarId: autoIiarIds || batchIarId, // Use the same IAR ID for all items in this batch
@@ -334,12 +349,19 @@ const purchaseorderResolver = {
               await PurchaseOrderItemsHistory.create(
                 {
                   purchaseOrderItemId: newPOI.id,
+                  purchaseOrderId: newPurchaseorder.id,
+                  itemName: cleanedItems.itemName || "",
+                  description: cleanedItems.description || "",
                   previousQuantity: 0,
                   newQuantity: item.quantity,
                   previousActualQuantityReceived: 0,
                   newActualQuantityReceived: item.currentInput, // Already checked it's > 0
                   previousAmount: 0,
                   newAmount: item.amount,
+                  iarId: iarRow.iarId || null,
+                  parId: iarRow.parId || null,
+                  risId: iarRow.risId || null,
+                  icsId: iarRow.icsId || null,
                   changeType: "quantity_update", // Or "received_update" if more appropriate for initial
                   changedBy: user.name || user.id,
                   changeReason: "Initial item creation with received quantity",
@@ -561,7 +583,7 @@ const purchaseorderResolver = {
                     icsIdGen = await generateNewIcsId(effectiveTag);
                   }
 
-                  await inspectionAcceptanceReport.create({
+                  const iarRow = await inspectionAcceptanceReport.create({
                     ...omitId(iarItemData),
                     iarId: autoIiarIds || batchIarId,
                     actualQuantityReceived: actualQuantityReceivedIncrement,
@@ -572,6 +594,26 @@ const purchaseorderResolver = {
                     parId: parIdGen,
                     icsId: icsIdGen,
                     risId: risIdGen,
+                  });
+
+                  await PurchaseOrderItemsHistory.create({
+                    purchaseOrderItemId: currentItem.id,
+                    purchaseOrderId: poId,
+                    itemName: (iarItemData.itemName || currentItem.itemName || ""),
+                    description: (iarItemData.description || currentItem.description || null),
+                    previousQuantity: currentItem.quantity,
+                    newQuantity: newQuantity,
+                    previousActualQuantityReceived: currentItem.actualQuantityReceived,
+                    newActualQuantityReceived: currentItem.actualQuantityReceived + actualQuantityReceivedIncrement,
+                    previousAmount: currentItem.amount,
+                    newAmount: newAmount,
+                    iarId: (autoIiarIds || batchIarId),
+                    parId: parIdGen || null,
+                    risId: risIdGen || null,
+                    icsId: icsIdGen || null,
+                    changeType: "received_update",
+                    changedBy: user.name || user.id,
+                    changeReason: item.changeReason || "Received quantity update",
                   });
                 } // End of hasChanges check
               }
@@ -625,7 +667,7 @@ const purchaseorderResolver = {
                 console.log('=====================')
                 console.log({ icsId, parId, risId });
 
-                await inspectionAcceptanceReport.create({
+                const iarRow = await inspectionAcceptanceReport.create({
                   ...cleanedItems,
                   iarId: autoIiarIds || batchIarId, //=> "4f90d13a42"
                   actualQuantityReceived: item?.currentInput
@@ -642,6 +684,9 @@ const purchaseorderResolver = {
 
                 await PurchaseOrderItemsHistory.create({
                   purchaseOrderItemId: newPOI.id,
+                  purchaseOrderId: poId,
+                  itemName: cleanedItems.itemName || "",
+                  description: cleanedItems.description || "",
                   previousQuantity: 0,
                   newQuantity: item.quantity ? item.quantity : 0,
                   previousActualQuantityReceived: 0,
@@ -650,6 +695,10 @@ const purchaseorderResolver = {
                     : 0,
                   previousAmount: 0,
                   newAmount: item.amount ? item.amount : 0,
+                  iarId: iarRow.iarId || null,
+                  parId: iarRow.parId || null,
+                  risId: iarRow.risId || null,
+                  icsId: iarRow.icsId || null,
                   changeType: "item_creation", // More specific
                   changedBy: user.name || user.id,
                   changeReason: "Initial item creation",
@@ -744,6 +793,13 @@ const purchaseorderResolver = {
           const delta = Math.min(beforeAqr, Number(info.total || 0));
           const afterAqr = Math.max(0, beforeAqr - delta);
 
+          // Capture latest doc IDs before we null them out on IAR table
+          const latestIar = await inspectionAcceptanceReport.findOne({
+            where: { purchaseOrderItemId: poi.id, isDeleted: false },
+            order: [["createdAt", "DESC"]],
+            transaction: t,
+          });
+
           // Update item AQR
           const [poiUpdated] = await PurchaseOrderItems.update(
             { actualQuantityReceived: afterAqr },
@@ -755,12 +811,19 @@ const purchaseorderResolver = {
           await PurchaseOrderItemsHistory.create(
             {
               purchaseOrderItemId: poi.id,
+              purchaseOrderId: poi.purchaseOrderId,
+              itemName: poi.itemName,
+              description: poi.description,
               previousQuantity: poi.quantity,
               newQuantity: poi.quantity,
               previousActualQuantityReceived: beforeAqr,
               newActualQuantityReceived: afterAqr,
               previousAmount: poi.amount,
               newAmount: poi.amount,
+              iarId: latestIar?.iarId || null,
+              parId: latestIar?.parId || null,
+              risId: latestIar?.risId || null,
+              icsId: latestIar?.icsId || null,
               // Use existing ENUM value to avoid DB error
               changeType: "received_update",
               changedBy: user.name || user.id,

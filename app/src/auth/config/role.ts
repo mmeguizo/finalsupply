@@ -10,6 +10,7 @@ export const ROUTE_ROLES = {
     property: ["user", "admin"],
     reports: ["user", "admin"],
     users: ["admin"],
+  histories: ["admin"],
     issuance: ["user", "admin"],
     "issuance-ris": ["user", "admin"],
     "issuance-par": ["user", "admin"],

@@ -46,6 +46,13 @@ export const cache = new InMemoryCache({
             return incoming;
           },
         },
+        // Ensure RIS view also fully replaces on refetch
+        requisitionIssueSlipForView: {
+          keyArgs: false,
+          merge(existing = [], incoming = []) {
+            return incoming;
+          },
+        },
       },
     },
   },

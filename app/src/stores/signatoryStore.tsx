@@ -33,6 +33,26 @@ const useSignatoryStore = create<SignatoryStore>()(
         const signatory = get().signatories.find(s => s.id === id) || null;
         set({ selectedSignatory: signatory });
       },
+      // Add or update a signatory in the persisted signatory list
+      addOrUpdateSignatory: (signatory: Signatory) => {
+        try {
+          const current = get().signatories || [];
+          const matchIndex = current.findIndex((s: Signatory) =>
+            (signatory.id && s.id === signatory.id) ||
+            (s.name === signatory.name && s.role === signatory.role)
+          );
+          if (matchIndex !== -1) {
+            const next = [...current];
+            next[matchIndex] = { ...next[matchIndex], ...signatory };
+            set({ signatories: next });
+          } else {
+            set({ signatories: [...current, signatory] });
+          }
+        } catch (e) {
+          // swallow for now
+          console.error('Failed to addOrUpdateSignatory', e);
+        }
+      },
       
       clearSelectedSignatory: () => set({ selectedSignatory: null })
     }),

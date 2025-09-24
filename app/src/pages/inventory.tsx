@@ -98,7 +98,10 @@ function Row(props: {
           >
             <PreviewIcon fontSize="medium" />
           </Button>
-          {canRevert && (
+         
+        </TableCell>
+        <TableCell>
+             {canRevert && (
             <Button
             size="small"
             color="error"
@@ -114,7 +117,7 @@ function Row(props: {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
@@ -236,7 +239,7 @@ export default function InventoryPage() {
 
   // Pagination state
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(6);
 
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
@@ -443,6 +446,7 @@ export default function InventoryPage() {
                   <TableCell>Delivery Date</TableCell>
                   <TableCell>IAR</TableCell>
                   <TableCell>Print</TableCell>
+                  <TableCell>Revert</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

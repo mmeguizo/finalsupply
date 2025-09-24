@@ -35,7 +35,16 @@
   }
 
   export default function IssuanceIcsPage() {
-    const { data, loading, error } = useQuery(GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS);
+    const { data, loading, error, refetch, networkStatus } = useQuery(
+      GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS,
+      {
+        fetchPolicy: "cache-and-network",
+        nextFetchPolicy: "cache-first",
+        // pollInterval can cause repeated updates; disable if it leads to loops
+        // pollInterval: 4000,
+        notifyOnNetworkStatusChange: true,
+      }
+    );
     
     const [searchQuery, setSearchQuery] = React.useState("");
     const [page, setPage] = React.useState(0);
@@ -45,18 +54,18 @@
     const [reportType, setReportType] = React.useState("");
     const [title, setTitle] = React.useState("");
 
-    // Signatory store access
-    const InspectorOffice = useSignatoryStore((state) =>
-      state.getSignatoryByRole("Inspector Officer")
+    // Signatory store access - derive stable primitives to avoid creating new object refs each render
+    const inspectorSig = useSignatoryStore((s) =>
+      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "inspector officer") || null
     );
-    const supplyOffice = useSignatoryStore((state) =>
-      state.getSignatoryByRole("Property And Supply Officer")
+    const supplySig = useSignatoryStore((s) =>
+      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "property and supply officer") || null
     );
-    const receivedFrom = useSignatoryStore((state) =>
-      state.getSignatoryByRole("Recieved From")
+    const recievedFromSig = useSignatoryStore((s) =>
+      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "recieved from") || null
     );
-    
-    // Initialize signatories state
+
+    // Initialize signatories state (kept local and only updated when underlying signatory records change)
     const [signatories, setSignatories] = React.useState<icsIssuanceSignatories>({
       recieved_from: "",
       recieved_by: "",
@@ -66,15 +75,30 @@
       }
     });
 
+    // Only update local signatories when the underlying signatory primitives change
+    const signatoriesSnapshotRef = React.useRef<string>("");
+    React.useEffect(() => {
+      const next = {
+        recieved_from: recievedFromSig?.name || "",
+        recieved_by: inspectorSig?.name || "",
+        metadata: {
+          recieved_from: { position: "", role: recievedFromSig?.role || "" },
+          recieved_by: { position: "", role: inspectorSig?.role || "" },
+        },
+      } as icsIssuanceSignatories;
+
+      const serialized = JSON.stringify(next);
+      if (signatoriesSnapshotRef.current !== serialized) {
+        signatoriesSnapshotRef.current = serialized;
+        setSignatories(next);
+      }
+      // depend on stable primitive properties only
+  }, [inspectorSig?.id, inspectorSig?.name, inspectorSig?.role, supplySig?.id, supplySig?.name, recievedFromSig?.id, recievedFromSig?.name, recievedFromSig?.role]);
+
     // Safer derived list
     const icsList = data?.inspectionAcceptanceReportForICS ?? [];
 
-    // Log only when data actually arrives (skips initial undefined + StrictMode double render)
-    React.useEffect(() => {
-      if (icsList.length) {
-        console.log('ICS items length:', icsList.length);
-      }
-    }, [icsList.length]);
+    // Removed verbose logging
 
     // Group ICS items by PO number
     const groupedRows = React.useMemo(() => {
@@ -115,7 +139,6 @@
 
     // Handle opening print modal
     const handleOpenPrintModal = (items: any) => {
-      console.log('Printing ICS items', items);
       const reportTitle = items[0].category.split(" ");
       const reportTitleString = reportTitle
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -131,6 +154,23 @@
       setOpenPrintModal(false);
       setPrintItem(null);
     };
+
+    // Refetch on window focus/online/visibility change
+    React.useEffect(() => {
+      const onFocus = () => refetch();
+      const onOnline = () => refetch();
+      const onVisibility = () => {
+        if (document.visibilityState === "visible") refetch();
+      };
+      window.addEventListener("focus", onFocus);
+      window.addEventListener("online", onOnline);
+      document.addEventListener("visibilitychange", onVisibility);
+      return () => {
+        window.removeEventListener("focus", onFocus);
+        window.removeEventListener("online", onOnline);
+        document.removeEventListener("visibilitychange", onVisibility);
+      };
+    }, [refetch]);
 
     // Handle search change
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,7 +226,6 @@
                 </TableHead>
                 <TableBody>
                   {paginatedRows.map((row: any) => (
-                    console.log("Rendering row:", row),
                     <Row
                       key={row.id}
                       row={row}

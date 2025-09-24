@@ -130,13 +130,20 @@ type InspectionAcceptanceReportType {
 
 type PurchaseOrderItemHistory {
   id: ID!
+    purchaseOrderId: Int
   purchaseOrderItemId: Int!
+    itemName: String
+    description: String
   previousQuantity: Int!
   newQuantity: Int!
   previousActualQuantityReceived: Int!
   newActualQuantityReceived: Int!
   previousAmount: Float!
   newAmount: Float!
+    iarId: String
+    parId: String
+    risId: String
+    icsId: String
   changeType: String!
   changedBy: String!
   changeReason: String!
@@ -230,6 +237,7 @@ type Query {
     getPurchaseOrderForBarCharts : [PurchaseOrder]
     getAllCategory : [Item]
     purchaseOrderHistory(purchaseOrderId: ID!): [PurchaseOrderItemHistory!]
+    purchaseOrderItemsHistoryAll: [PurchaseOrderItemHistory!]
    
 }
 
