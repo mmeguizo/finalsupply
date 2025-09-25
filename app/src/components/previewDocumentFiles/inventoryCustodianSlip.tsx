@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
+import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -237,7 +238,7 @@ export default function InventoryCustodianSlip({
                           }}
                         >
                           <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                            ISC No: 
+                            ICS No: 
                           </Typography>
                           <Box sx={{ borderBottom: "1px solid #000" }}>
                             {itemsArray[0]?.icsId || ""}
@@ -295,7 +296,39 @@ export default function InventoryCustodianSlip({
                     <StyledTableCell align="right">
                       {item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}
                     </StyledTableCell>
-                    <StyledTableCell colSpan={2} align="left">{item?.description || ''}</StyledTableCell>
+                    <StyledTableCell colSpan={2} align="left">
+                      <Box>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {item?.description || item?.PurchaseOrderItem?.description || ""}
+                        </Typography>
+
+                        {/* specification (escaped + newline -> <br/>) */}
+                        {(item?.PurchaseOrderItem?.specification || item?.specification) && (
+                          <Typography
+                            component="div"
+                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                            dangerouslySetInnerHTML={{
+                              __html: nl2br(
+                                escapeHtml(item?.PurchaseOrderItem?.specification || item?.specification || "")
+                              ),
+                            }}
+                          />
+                        )}
+
+                        {/* general description (escaped + newline -> <br/>) */}
+                        {(item?.PurchaseOrderItem?.generalDescription || item?.generalDescription) && (
+                          <Typography
+                            component="div"
+                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                            dangerouslySetInnerHTML={{
+                              __html: nl2br(
+                                escapeHtml(item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "")
+                              ),
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </StyledTableCell>
                     <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell>
                     <StyledTableCell align="center">5 years</StyledTableCell>
                   </StyledTableRow>
@@ -352,7 +385,7 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
-                        <span>{signatories.receivedFrom}</span> 
+                        <span>{signatories?.recieved_from}</span> 
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
@@ -368,7 +401,7 @@ export default function InventoryCustodianSlip({
                     >
                       <Typography>Signature over Printed Name</Typography>
                       <Typography>Position/Office</Typography>
-                      <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
+                      <Typography>Date:________________</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -395,7 +428,7 @@ export default function InventoryCustodianSlip({
                         textAlign: "center"
                       }}
                     >
-                       <span>{signatories.supplyOfficer}</span>
+                       <span>{signatories?.recieved_by}</span>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Custodian</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
@@ -411,7 +444,7 @@ export default function InventoryCustodianSlip({
                     >
                       <Typography>Signature over Printed Name</Typography>
                       <Typography>Position/Office</Typography>
-                      <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}</Typography>
+                      <Typography>Date:________________</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -432,3 +465,9 @@ export default function InventoryCustodianSlip({
     </>
   );
 }
+
+/*
+
+ <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}</Typography>
+ <Typography>Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
+ */

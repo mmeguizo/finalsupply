@@ -22,6 +22,7 @@ type Item {
 }
 
 type PurchaseOrderType {
+    id: ID
     poNumber: String
     supplier: String
     address: String
@@ -33,12 +34,30 @@ type PurchaseOrderType {
     dateOfPayment: String
     deliveryTerms: String
     paymentTerms: String
+    dateOfConformity : String
     amount: Float
     category: String
     status: String
     invoice: String
 }
 
+
+type PurchaseOrderItemType {
+    id: ID!
+    purchaseOrderId: String!
+    itemName: String!
+    description: String
+    generalDescription : String
+    specification: String
+    unit: String
+    quantity: Int
+    unitCost: Float
+    amount: Float
+    category: String
+    isDeleted: Boolean
+    actualQuantityReceived: Int
+    currentInput: Int
+}
 
 type ItemWithPurchaseOrder {
     id: ID
@@ -54,7 +73,10 @@ type ItemWithPurchaseOrder {
     actualQuantityReceived: Int
     currentInput: Int
     inventoryNumber: String
+    generalDescription: String
+    specification: String
     PurchaseOrder: PurchaseOrderType
+    PurchaseOrderItem: PurchaseOrderItemType
     tag : String
     iarId : String
     icsId : String
@@ -75,6 +97,9 @@ type updateIARStatusPayload{
     id: ID
     iarStatus: String
     message : String
+    success: Boolean
+    updatedCount: Int
+    ids: [ID!]
 }
 
 
@@ -114,7 +139,15 @@ type Query {
 type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
-  updateIARStatus(id: ID!, iarStatus: String!): updateIARStatusPayload
+  updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
+    revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
+}
+
+type RevertIARBatchPayload {
+    success: Boolean!
+    message: String!
+    iarId: String!
+    affectedCount: Int!
 }
 
 

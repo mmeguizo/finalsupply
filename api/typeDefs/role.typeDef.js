@@ -1,37 +1,38 @@
+
+
 const roleTypeDef = `#graphql
-
-type Role {
-    id: ID!  # Changed _id to id for Sequelize
+  type Role {
+    id: ID!
     name: String!
     description: String
-    is_active: Boolean!
-}
+    isDeleted: Boolean
+    createdAt: String
+    updatedAt: String
+  }
 
-input CreateRoleInput {
+  input AddRoleInput {
     name: String!
     description: String
-}   
+  }
 
-input UpdateRoleInput {
+  input UpdateRoleInput {
     id: ID!
     name: String
     description: String
-    is_active: Boolean
-}
+    isDeleted: Boolean
+  }
 
-type Query {
-    roles: [Role!]
+  extend type Query {
+    roles: [Role!]!
     role(id: ID!): Role
-    countAllRoles : Int
-}
+    countAllRoles: Int!   # add this to match resolver
+  }
 
-type Mutation {
-    createRole(input: CreateRoleInput!): Role
-    updateRole(input: UpdateRoleInput!): Role
-    deleteRole(id: ID!): Role
-}
-
-
+  extend type Mutation {
+    addRole(input: AddRoleInput!): Role!
+    updateRole(input: UpdateRoleInput!): Role!
+    deleteRole(id: ID!): Boolean!
+  }
 `;
 
 export default roleTypeDef;

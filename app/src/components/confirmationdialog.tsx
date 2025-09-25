@@ -39,8 +39,8 @@ export default function ConfirmDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel}>No</Button>
-        <Button onClick={handleConfirm} autoFocus>
+        <Button variant="outlined" color="primary" onClick={handleCancel}>No</Button>
+        <Button variant="outlined" color="success" onClick={handleConfirm} autoFocus>
           Yes
         </Button>
       </DialogActions>

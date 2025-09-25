@@ -6,10 +6,15 @@ export const ADD_SIGNATORY = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
       createdAt
       updatedAt
+      roleDetail {
+        id
+        name
+      }
     }
   }
 `;
@@ -20,10 +25,15 @@ export const UPDATE_SIGNATORY = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
       createdAt
       updatedAt
+      roleDetail {
+        id
+        name
+      }
     }
   }
 `;
@@ -34,6 +44,7 @@ export const DELETE_SIGNATORY = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
     }
   }
@@ -45,6 +56,7 @@ export const REACTIVATE_SIGNATORY = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
     }

@@ -7,6 +7,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       itemName
       purchaseOrderId
       description
+      generalDescription
+      specification
       unit
       quantity
       unitCost
@@ -22,6 +24,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       iarStatus
       createdAt
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -31,11 +34,30 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         dateOfDelivery
         dateOfPayment
         deliveryTerms
+        dateOfConformity
         paymentTerms
         category
         status
         amount
         invoice
+      },
+      PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }
@@ -61,6 +83,7 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
       parId
       iarStatus
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -102,6 +125,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       iarStatus
       inventoryNumber
       PurchaseOrder {
+        id
         poNumber
         supplier
         address
@@ -116,6 +140,24 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
         status
         amount
         invoice
+      },
+       PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
       }
     }
   }

@@ -6,6 +6,7 @@ const GET_SIGNATORIES = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
       createdAt
@@ -14,6 +15,11 @@ const GET_SIGNATORIES = gql`
         id
         poNumber
         supplier
+      }
+      roleDetail {
+        id
+        name
+        description
       }
     }
   }
@@ -25,6 +31,7 @@ const GET_SIGNATORY = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
       createdAt
@@ -33,6 +40,11 @@ const GET_SIGNATORY = gql`
         id
         poNumber
         supplier
+      }
+      roleDetail {
+        id
+        name
+        description
       }
     }
   }
@@ -44,10 +56,15 @@ const GET_SIGNATORIES_BY_PURCHASE_ORDER = gql`
       id
       name
       role
+      roleId
       purchaseOrderId
       isDeleted
       createdAt
       updatedAt
+      roleDetail {
+        id
+        name
+      }
     }
   }
 `;

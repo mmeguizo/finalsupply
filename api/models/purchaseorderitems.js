@@ -18,7 +18,7 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchaseOrders", // Assuming the table for purchase orders is named 'purchaseOrders'
+        model: "purchase_orders", // Correct table name matches PurchaseOrder model's tableName
         key: "id", // The referenced column in the 'purchaseOrders' table
       },
       onUpdate: "CASCADE",
@@ -30,6 +30,14 @@ const PurchaseOrderItems = sequelize.define(
       allowNull: false,
     },
     description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    generalDescription: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    specification: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
@@ -90,5 +98,9 @@ const PurchaseOrderItems = sequelize.define(
 PurchaseOrderItems.hasMany(InspectionAcceptanceReport, {
   foreignKey: "purchaseOrderItemId",
 });
+ InspectionAcceptanceReport.belongsTo(PurchaseOrderItems, {
+    foreignKey: "purchaseOrderItemId", // maps to purchase_order_item_id
+    as: "PurchaseOrderItem",
+  });
 
 export default PurchaseOrderItems;

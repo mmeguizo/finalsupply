@@ -14,9 +14,7 @@ import { getInspectionReportTemplateForIAR } from "./printDocumentFiles/inspecti
 import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/propertyAcknowledgementReceipt";
 import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
 import { getInventoryTemplate } from "./printDocumentFiles/inventoryCustodianslip";
-import { InspectionReportDialogProps } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
+import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
 
 export default function PrintReportDialogForIAR({
   open,
@@ -24,40 +22,13 @@ export default function PrintReportDialogForIAR({
   reportData,
   reportType = "inspection",
   title,
-}: InspectionReportDialogProps) {
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
-  );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
-
-  //add the signatories to the data to be send
-  let signatories = {
-    inspectionOfficer: capitalizeFirstLetter(InspectorOffice?.name),
-    supplyOfficer: capitalizeFirstLetter(supplyOffice?.name),
-    receivedFrom: capitalizeFirstLetter(receivedFrom?.name),
-  };
+  signatories = {},
+}: InspectionReportDialogPropsForIAR) {
 
   const [showPrintView, setShowPrintView] = useState(false);
 
   const getReportTemplate = (data: any) => {
-    // Determine the report template based on reportType
-    switch (reportType) {
-      case "property":
-        return getPropertyAcknowledgementReciept([],data);
-      case "requisition":
-        return getRequisitionAndIssueSlip([],data);
-      case "inventory":
-        return getInventoryTemplate(data);
-      case "inspection":
-        return getInspectionReportTemplateForIAR(signatories, data);
-      default:
-        return getInspectionReportTemplateForIAR(signatories, data);
-    }
+    return getInspectionReportTemplateForIAR(signatories, data);
   };
 
   const handleClosePrintView = () => {
@@ -117,15 +88,7 @@ export default function PrintReportDialogForIAR({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        {reportType === "requisition" ? (
-          <RequisitionAndIssueSlip reportData={reportData} />
-        ) : reportType === "inspection" ? (
-          <InspectionAcceptanceReportForIAR reportData={reportData} />
-        ) : reportType === "inventory" ? (
-          <InventoryCustodianSlip reportData={reportData} />
-        ) : (
-          <PropertyAcknowledgementReceipt reportData={reportData} />
-        )}
+  <InspectionAcceptanceReportForIAR signatories={signatories} reportData={reportData} />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>
@@ -136,3 +99,17 @@ export default function PrintReportDialogForIAR({
     </Dialog>
   );
 }
+
+
+/*
+ {reportType === "requisition" ? (
+          <RequisitionAndIssueSlip reportData={reportData} />
+        ) : reportType === "inspection" ? (
+          <InspectionAcceptanceReportForIAR reportData={reportData} />
+        ) : reportType === "inventory" ? (
+          <InventoryCustodianSlip reportData={reportData} />
+        ) : (
+          <PropertyAcknowledgementReceipt reportData={reportData} />
+        )}
+
+*/

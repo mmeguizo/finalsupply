@@ -16,6 +16,7 @@ import {
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import useSignatoryStore from "../../stores/signatoryStore";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
+import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -72,7 +73,7 @@ export default function RequisitionReport({
 }: genericPreviewProps) {
   const componentRef = useRef(null);
 
-  console.log("reportData", reportData);
+  console.log("signatories", signatories);
 
  
 
@@ -396,19 +397,43 @@ export default function RequisitionReport({
                 itemsArray.map((item: any, index: any) => (
                   <StyledTableRow key={index}>
                     <StyledTableCell>{item.id || ""}</StyledTableCell>
-                    <StyledTableCell>
-                      {index + 1 || ""}
-                    </StyledTableCell>
+                    <StyledTableCell>{index + 1 || ""}</StyledTableCell>
                     <StyledTableCell>{item.unit || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}>
-                      {item.description || ""}
+                      <Box>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {item.description || item.PurchaseOrderItem?.description || ""}
+                        </Typography>
+
+                        {(item.PurchaseOrderItem?.specification || item.specification) && (
+                          <Typography
+                            component="div"
+                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                            dangerouslySetInnerHTML={{
+                              __html: nl2br(
+                                escapeHtml(item.PurchaseOrderItem?.specification || item.specification || "")
+                              ),
+                            }}
+                          />
+                        )}
+
+                        {(item.PurchaseOrderItem?.generalDescription || item.generalDescription) && (
+                          <Typography
+                            component="div"
+                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                            dangerouslySetInnerHTML={{
+                              __html: nl2br(
+                                escapeHtml(item.PurchaseOrderItem?.generalDescription || item.generalDescription || "")
+                              ),
+                            }}
+                          />
+                        )}
+                      </Box>
                     </StyledTableCell>
                     <StyledTableCell>{item.quantity || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell>
-                      {item.actualQuantityReceived || ""}
-                    </StyledTableCell>
+                    <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
                 ))

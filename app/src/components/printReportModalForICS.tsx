@@ -15,9 +15,7 @@ import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/property
 import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
 import { getInventoryTemplateForICS } from "./printDocumentFiles/inventoryCustodianslipPrinting";
 import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { UPDATE_ICSID } from "../graphql/mutations/inventoryIAR.mutation";
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from "../graphql/queries/inspectionacceptancereport.query";
 export default function PrintReportDialogForICS({
@@ -33,8 +31,6 @@ export default function PrintReportDialogForICS({
    
   });
 
-  console.log(reportData)
-
   const getReportTemplate = (data: any) => {
     return getInventoryTemplateForICS(signatories, data);
   };
@@ -46,14 +42,15 @@ export default function PrintReportDialogForICS({
         ? reportData.map(item => item.id) 
         : [reportData.id];
       
+        // no need to increment the ics its need to be fixed value
       // Call the mutation with the correct input format
-      const result = await updateICSid({
-        variables: {
-          input: {
-            ids: itemIds
-          }
-        }
-      });
+      // const result = await updateICSid({
+      //   variables: {
+      //     input: {
+      //       ids: itemIds
+      //     }
+      //   }
+      // });
       
       // Continue with printing
       const printWindow = window.open("", "_blank");

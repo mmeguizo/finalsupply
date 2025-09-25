@@ -71,7 +71,7 @@ export default function PropertyAcknowledgementReceipt({
   onClose,
 }: genericPreviewProps) {
   const componentRef = useRef(null);
-  console.log(reportData)
+  console.log({PropertyAcknowledgementReceipt :reportData})
   const InspectorOffice = useSignatoryStore((state) =>
     state.getSignatoryByRole("Inspector Officer")
   );
@@ -294,7 +294,43 @@ export default function PropertyAcknowledgementReceipt({
                     <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
-                    <StyledTableCell align="right" >{reportData.description}</StyledTableCell>
+                    <StyledTableCell align="left">
+                      <Box>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {reportData.description || reportData.PurchaseOrderItem?.description || ""}
+                        </Typography>
+
+                        {/* specification: preserve newlines */}
+                        {(reportData.PurchaseOrderItem?.specification || reportData.specification) && (
+                          <Typography
+                            sx={{
+                              whiteSpace: "pre-line",
+                              fontSize: "12px",
+                              color: "text.secondary",
+                              mt: 0.5,
+                              textAlign: "left",
+                            }}
+                          >
+                            {reportData.PurchaseOrderItem?.specification || reportData.specification}
+                          </Typography>
+                        )}
+
+                        {/* general description: preserve newlines and add small gap */}
+                        {(reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription) && (
+                          <Typography
+                            sx={{
+                              whiteSpace: "pre-line",
+                              fontSize: "12px",
+                              color: "text.secondary",
+                              mt: 0.75,
+                              textAlign: "left",
+                            }}
+                          >
+                            {reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription}
+                          </Typography>
+                        )}
+                      </Box>
+                    </StyledTableCell>
                     <StyledTableCell align="right">{reportData.unitCost}</StyledTableCell>
                     <StyledTableCell align="right">{reportData.amount}</StyledTableCell>
                   </StyledTableRow>
@@ -326,7 +362,7 @@ export default function PropertyAcknowledgementReceipt({
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 16px 1px" }}>
+                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 1px 1px" }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -339,8 +375,8 @@ export default function PropertyAcknowledgementReceipt({
                       sx={{
                         display: "flex",
                         flexDirection: "column",
-                        padding: "22px 75px",
-                        gap: "20px",
+                        padding: "1px 75px",
+                        gap: "13px",
                         height: "125px",
                         marginTop: "5px",
                         alignContent: "stretch",
@@ -349,9 +385,11 @@ export default function PropertyAcknowledgementReceipt({
                         textAlign: "center"
                       }}
                     >
+                    <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{reportData?.PurchaseOrder?.supplier || ""}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{signatories?.metadata?.recieved_from?.role || ""}</Typography>
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
+                      <Typography sx={{ fontWeight: 600 }}>Position</Typography>
                     </Box>
                     <Box
                       sx={{
@@ -389,10 +427,10 @@ export default function PropertyAcknowledgementReceipt({
                         textAlign: "center"
                       }}
                     >
-                        {capitalizeFirstLetter(InspectorOffice?.name)}
+                        {capitalizeFirstLetter(signatories?.recieved_by)}
                       <Divider sx={{ width: "100%", margin: "0px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Signature over Printed Name</Typography>
-                      {capitalizeFirstLetter(InspectorOffice?.role)}
+                      {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.position)}
                       <Divider sx={{ width: "100%", margin: "0px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Position / Office</Typography>
                     </Box>

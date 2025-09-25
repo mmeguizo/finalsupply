@@ -2,8 +2,10 @@ import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize 
 import inspectionAcceptanceReportResolver from "../models/inspectionacceptancereport.js";
 import { customAlphabet } from 'nanoid'
 import { Op } from 'sequelize'
+
 // const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
 import { generateNewParId } from "../utils/parIdGenerator.js";
+import PurchaseOrderItems from "../models/purchaseorderitems.js";
 const propertyAcknowledgmentReportResolver = {
   Query: {
     propertyAcknowledgmentReport: async (_, __, context) => {
@@ -39,7 +41,11 @@ const propertyAcknowledgmentReportResolver = {
             category: "property acknowledgement reciept"
           },
           order: [["createdAt", "DESC"]],
-          include: [PurchaseOrder],
+          include: [
+            { model: PurchaseOrder },
+            // include PurchaseOrderItems using the alias used in your models / code
+            { model: PurchaseOrderItems, as: "PurchaseOrderItem", required: false }
+          ],
         });
 
         if (!propertyAcknowledgmentReportdata) {

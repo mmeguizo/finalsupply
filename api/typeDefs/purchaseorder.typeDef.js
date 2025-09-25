@@ -12,6 +12,7 @@ type PurchaseOrder {
     placeOfDelivery: String
     dateOfDelivery: String
     dateOfPayment: String
+    dateOfConformity : String
     deliveryTerms: String
     paymentTerms: String
     items: [Item!]
@@ -51,6 +52,8 @@ type Item {
     itemName: String
     purchaseOrderId: String
     description: String
+    generalDescription : String
+    specification: String
     unit: String
     quantity: Int
     unitCost: Float
@@ -127,13 +130,20 @@ type InspectionAcceptanceReportType {
 
 type PurchaseOrderItemHistory {
   id: ID!
+    purchaseOrderId: Int
   purchaseOrderItemId: Int!
+    itemName: String
+    description: String
   previousQuantity: Int!
   newQuantity: Int!
   previousActualQuantityReceived: Int!
   newActualQuantityReceived: Int!
   previousAmount: Float!
   newAmount: Float!
+    iarId: String
+    parId: String
+    risId: String
+    icsId: String
   changeType: String!
   changedBy: String!
   changeReason: String!
@@ -155,6 +165,8 @@ input ItemInput {
     itemName: String
     purchaseOrderId: String
     description: String
+    generalDescription : String
+    specification: String
     unit: String
     quantity: Int
     unitCost: Float
@@ -178,6 +190,7 @@ input UpdatePurchaseOrderInput {
     placeOfDelivery: String
     dateOfDelivery: String
     dateOfPayment: String
+    dateOfConformity : String
     deliveryTerms: String
     paymentTerms: String
     items: [ItemInput!]
@@ -204,6 +217,7 @@ input PurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    dateOfConformity : String
     completed_status_date : String
 }
 
@@ -223,6 +237,7 @@ type Query {
     getPurchaseOrderForBarCharts : [PurchaseOrder]
     getAllCategory : [Item]
     purchaseOrderHistory(purchaseOrderId: ID!): [PurchaseOrderItemHistory!]
+    purchaseOrderItemsHistoryAll: [PurchaseOrderItemHistory!]
    
 }
 

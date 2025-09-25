@@ -9,17 +9,25 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import useSignatoryStore from '../../stores/signatoryStore';
 import { GET_ALL_USERS } from '../../graphql/queries/user.query';
 
 interface RisPageProps {
     signatories: risIssuanceSignatories;
     onSignatoriesChange: (signatories: risIssuanceSignatories) => void;
+}
+
+interface UserOption {
+    id: string;
+    name: string;
+    last_name?: string;
+    position?: string;
+    role?: string;
+    label: string;
 }
 
 const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps) => {
@@ -54,24 +62,80 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
         });
     }, [signatories]);
 
-    const handleSignatoryChange = (role: keyof risIssuanceSignatories, value: string) => {
-        const updatedSignatories = {
-            ...selectedSignatories,
-            [role]: value
-        };
-        setSelectedSignatories(updatedSignatories);
-        onSignatoriesChange(updatedSignatories);
-    };
+    // const handleSignatoryChange = (role: keyof risIssuanceSignatories, value: string) => {
+    //     const updatedSignatories = {
+    //         ...selectedSignatories,
+    //         [role]: value
+    //     };
+    //     setSelectedSignatories(updatedSignatories);
+    //     onSignatoriesChange(updatedSignatories);
+    // };
 
-    // Get dropdown options based on role
-    const getDropdownOptions = (roleKey: keyof risIssuanceSignatories) => {
+const handleSignatoryChange = (role: keyof risIssuanceSignatories, newValue: UserOption | string | null) => {
+
+
+    let fullName = '';
+    if (!newValue) {
+        fullName = '';
+    } else if (typeof newValue === 'string') {
+        fullName = newValue;
+    } else {
+        fullName = [newValue.name, newValue.last_name].filter(Boolean).join(' ');
+    }
+    console.log(`Selected full name for role ${role}:`, fullName);
+
+    const updatedSignatories = {
+        ...selectedSignatories,
+        [role]: fullName
+    };
+    setSelectedSignatories(updatedSignatories);
+    onSignatoriesChange(updatedSignatories);
+};
+
+    // Get dropdown options based on role and format them for Autocomplete
+    const getDropdownOptions = (roleKey: keyof risIssuanceSignatories): UserOption[] => {
         if (roleKey === 'requested_by' || roleKey === 'recieved_by') {
             // Use users for end users (requested_by and recieved_by)
-            return usersData?.users?.filter((user: any) => user.is_active) || [];
+            const users = usersData?.users?.filter((user: any) => user.is_active) || [];
+            return users.map((user: any) => {
+                const displayName = `${user.name} ${user.last_name || ''} ${
+                    user.position ? `(${user.position})` : ''
+                }`.trim();
+                return {
+                    id: user.id,
+                    name: user.name,
+                    last_name: user.last_name,
+                    position: user.position,
+                    label: displayName
+                };
+            });
         } else {
             // Use signatories for approved_by and issued_by
-            return allSignatories || [];
+            return (allSignatories || []).map((signatory: any) => ({
+                id: signatory.id,
+                name: signatory.name,
+                role: signatory.role,
+                label: `${signatory.name} (${signatory.role})`
+            }));
         }
+    };
+
+    // Find the selected option object based on name
+    const findSelectedOption = (options: UserOption[], name: string) => {
+        // if there's no stored name, nothing to match
+        if (!name) return null;
+
+        // Try matching by common possibilities:
+        // - exact label (e.g. "First Last (Position)")
+        // - combined name + last_name ("First Last")
+        // - name only ("First")
+        return (
+            options.find(option =>
+                option.label === name ||
+                `${option.name} ${option.last_name || ''}`.trim() === name ||
+                option.name === name
+            ) || null
+        );
     };
 
     const signatoryRoles = [
@@ -117,6 +181,8 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
                             {signatoryRoles.map((role) => {
                                 const options = getDropdownOptions(role.key);
                                 const isUserRole = role.key === 'requested_by' || role.key === 'recieved_by';
+                                const selectedValue = selectedSignatories[role.key] || '';
+                                const selectedOption = findSelectedOption(options, selectedValue);
                                 
                                 return (
                                     <TableRow key={role.key}>
@@ -126,29 +192,30 @@ const SignatoriesComponent = ({ signatories, onSignatoriesChange }: RisPageProps
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <FormControl fullWidth size="small">
-                                                <Select
-                                                    value={selectedSignatories[role.key] || ''}
-                                                    onChange={(e) => handleSignatoryChange(role.key, e.target.value)}
-                                                    displayEmpty
-                                                    sx={{ minWidth: 200 }}
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>Select a {isUserRole ? 'user' : 'signatory'}</em>
-                                                    </MenuItem>
-                                                    {options.map((option: any) => (
-                                                        <MenuItem key={option.id} value={option.name}>
-                                                            {isUserRole ? (
-                                                                // For users, show name and position/department
-                                                                `${option.name} ${option.last_name || ''} ${option.position ? `(${option.position})` : ''}`
-                                                            ) : (
-                                                                // For signatories, show name and role
-                                                                `${option.name} (${option.role})`
-                                                            )}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
+                                            <Autocomplete
+                                                value={selectedOption}
+                                                onChange={(event, newValue) => {
+                                                    handleSignatoryChange(role.key, newValue || null);
+                                                }}
+                                                options={options}
+                                                getOptionLabel={(option) => option.label}
+                                                renderInput={(params) => (
+                                                    <TextField 
+                                                        {...params} 
+                                                        placeholder={`Search ${isUserRole ? 'user' : 'signatory'}...`}
+                                                        size="small"
+                                                        fullWidth
+                                                    />
+                                                )}
+                                                sx={{ minWidth: 250 }}
+                                                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                                                filterOptions={(options, state) => {
+                                                    const inputValue = state.inputValue.toLowerCase().trim();
+                                                    return options.filter(option => 
+                                                        option.label.toLowerCase().includes(inputValue)
+                                                    );
+                                                }}
+                                            />
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2" color="text.secondary">

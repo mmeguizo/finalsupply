@@ -16,17 +16,49 @@ const inspectionAcceptanceReportResolver = {
           throw new Error("Unauthorized");
         }
         // Fetch a single purchase order by ID
-        const inspectionAcceptanceReportdata =
-          await inspectionAcceptanceReport.findAll({
-            where: { isDeleted: false },
-            order: [["id", "DESC"]],
-            include: [PurchaseOrder],
-          });
+        // const inspectionAcceptanceReportdata =
+        //   await inspectionAcceptanceReport.findAll({
+        //     where: { isDeleted: false },
+        //     order: [["id", "DESC"]],
+        //     include: [PurchaseOrder],
+        //   });
+        const rows = await inspectionAcceptanceReport.findAll({
+          where: { isDeleted: false },
+          order: [["id", "DESC"]],
+          include: [
+            { model: PurchaseOrder, required: true },
+            {
+              model: PurchaseOrderItems,
+              as: "PurchaseOrderItem",
+              // Include all fields you need in the client shape
+              attributes: [
+                "id",
+                "purchaseOrderId",
+                "itemName",
+                "description",
+                "generalDescription",
+                "specification",
+                "unit",
+                "quantity",
+                "unitCost",
+                "amount",
+                "category",
+                "isDeleted",
+                "actualQuantityReceived",
+                "tag",
+                "inventoryNumber",
+              ],
+              required: false, // LEFT JOIN
+            },
+          ],
+        });
 
-        if (!inspectionAcceptanceReportdata) {
-          throw new Error("Purchase order not found");
-        }
-        return inspectionAcceptanceReportdata;
+        // Debug first few
+        rows.slice(0, 5).forEach((r) => {
+          const it = r.PurchaseOrderItem;
+        });
+
+        return rows;
       } catch (error) {
         console.error("Error fetching purchase order: ", error);
         throw new Error(error.message || "Internal server error");
@@ -47,7 +79,15 @@ const inspectionAcceptanceReportResolver = {
               },
             },
             order: [["createdAt", "DESC"]],
-            include: [PurchaseOrder],
+            include: [
+              { model: PurchaseOrder },
+              // include PurchaseOrderItems using the alias used in your models / code
+              {
+                model: PurchaseOrderItems,
+                as: "PurchaseOrderItem",
+                required: false,
+              },
+            ],
           });
 
         if (!inspectionAcceptanceReportdata) {
@@ -176,9 +216,9 @@ const inspectionAcceptanceReportResolver = {
           // Returning an empty array usually handles "not found" gracefully.
           return [];
         }
-        console.log("--- IAR ITEMS ---");
-        console.log(iarItems);
-        console.log("--- END IAR ITEMS ---");
+        // console.log("--- IAR ITEMS ---");
+        // console.log(iarItems);
+        // console.log("--- END IAR ITEMS ---");
         // Sequelize automatically handles mapping snake_case database columns to camelCase
         // JavaScript properties in the returned model instances (e.g., iar_id becomes iarId,
         // created_at becomes createdAt), thanks to `underscored: true` in your model.
@@ -259,27 +299,42 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to update ICS IDs");
       }
     },
-    updateIARStatus: async (_, { id, iarStatus }, context) => {
+    updateIARStatus: async (_, { airId, iarStatus }, context) => {
+      console.log("Updating IAR status:", { airId, iarStatus });
+
       const t = await sequelize.transaction();
       try {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
 
-        const iar = await inspectionAcceptanceReport.findByPk(id, {
+        if (!airId) {
+          throw new Error("IAR ID is required.");
+        }
+
+        // Update all records that match the iar_id (snake_case column)
+        const [updatedCount] = await inspectionAcceptanceReport.update(
+          { iarStatus },
+          {
+            where: { iar_id: airId },
+            transaction: t,
+          }
+        );
+
+        // Fetch updated rows to return
+        const updatedRows = await inspectionAcceptanceReport.findAll({
+          where: { iar_id: airId },
           transaction: t,
         });
-        if (!iar) {
-          throw new Error("IAR not found");
-        }
-        iar.iarStatus = iarStatus;
-        await iar.save({ transaction: t });
+
         await t.commit();
+
         return {
-          id: iar.id,
-          iarStatus: iar.iarStatus,
-          message: "Status updated successfully",
-          success: true, // Add this field
+          ids: updatedRows.map((r) => r.id),
+          iarStatus,
+          updatedCount,
+          message: "Status updated successfully for matching IAR records",
+          success: true,
         };
       } catch (error) {
         await t.rollback();

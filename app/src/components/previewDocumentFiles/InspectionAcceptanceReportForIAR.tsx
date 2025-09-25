@@ -13,7 +13,6 @@ import {
   Button,
 } from "@mui/material";
 import { InspectionAcceptanceReportPropsForIAR } from "../../types/previewPrintDocument/types";
-import useSignatoryStore from "../../stores/signatoryStore";
 import { Divider } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
 
@@ -71,20 +70,27 @@ export default function InspectionAcceptanceReportForIAR({
   onClose,
 }: InspectionAcceptanceReportPropsForIAR) {
 
-  console.log(reportData);
-
   const componentRef = useRef(null);
-  // const { signatories, loading, error } = useSignatoryStore();
-  // Get specific signatories by role
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
+  // Use signatories provided by parent (Inventory page)
+  // --- ADDED: normalize reportData to an array and compute totals ---
+
+  console.log({reportData});
+
+  const items: any[] = Array.isArray(reportData)
+    ? reportData
+    : reportData
+    ? [reportData]
+    : [];
+
+  // purchase order info (use first item if array)
+  const purchaseOrder = items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
+
+  const totalAmount = items.reduce(
+    (sum, it) => sum + Number(it?.amount ?? 0),
+    0
   );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  // --- end added ---
+
   // Create and inject print styles dynamically
   useEffect(() => {
     // Create a style element
@@ -241,7 +247,7 @@ export default function InspectionAcceptanceReportForIAR({
                           alignItems: "end",
                         }}
                       >
-                        No. {reportData?.iarId}
+                        No. {items[0]?.iarId ?? ""}
                       </Box>
                       <Box
                         sx={{
@@ -276,7 +282,7 @@ export default function InspectionAcceptanceReportForIAR({
                   Supplier:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={6}>
-                  {reportData?.PurchaseOrder?.supplier || ""}
+                  {purchaseOrder?.supplier || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -285,17 +291,17 @@ export default function InspectionAcceptanceReportForIAR({
                   PO # & Date:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.PurchaseOrder?.poNumber || ""}
+                  {purchaseOrder?.poNumber || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.PurchaseOrder?.dateOfDelivery || ""}
+                  {purchaseOrder?.dateOfDelivery || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>Invoice# & Date:</StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={2}>
-                  {reportData?.PurchaseOrder?.invoice || ""}
+                  {purchaseOrder?.invoice || ""}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {reportData?.PurchaseOrder?.dateOfPayment || ""}
+                  {purchaseOrder?.dateOfPayment || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -304,7 +310,7 @@ export default function InspectionAcceptanceReportForIAR({
                   Requisitioning Office/Department:
                 </StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={5}>
-                  {reportData?.PurchaseOrder?.placeOfDelivery || ""}
+                  {purchaseOrder?.placeOfDelivery || ""}
                 </StyledTableCellHeader>
               </TableRow>
 
@@ -321,18 +327,50 @@ export default function InspectionAcceptanceReportForIAR({
             </TableHead>
 
             <TableBody>
-              {reportData ? (
-                  <StyledTableRow key={reportData.id}>
-                    <StyledTableCell>{1}</StyledTableCell>
-                    <StyledTableCell>{reportData.unit}</StyledTableCell>
-                    <StyledTableCell colSpan={3}>
-                      {reportData.description}
+              {items.length ? (
+                items.map((rd, idx) => (
+                  <StyledTableRow key={rd.id ?? idx}>
+                    <StyledTableCell>{idx + 1}</StyledTableCell>
+                    <StyledTableCell>{rd.unit || ""}</StyledTableCell>
+                    <StyledTableCell colSpan={3} sx={{ textAlign: "left", verticalAlign: "top", padding: "6px" }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 500, mb: 0.5 }}>
+                          {rd.description || rd.PurchaseOrderItem?.description || ""}
+                        </Typography>
+
+                        {rd.PurchaseOrderItem?.specification ? (
+                          <Typography
+                            sx={{
+                              whiteSpace: "pre-line",
+                              fontSize: "12px",
+                              color: "text.secondary",
+                              mb: 0.5,
+                              textAlign: "left",
+                            }}
+                          >
+                            {rd.PurchaseOrderItem.specification}
+                          </Typography>
+                        ) : null}
+
+                        {rd.PurchaseOrderItem?.generalDescription ? (
+                          <Typography
+                            sx={{
+                              whiteSpace: "pre-line",
+                              fontSize: "12px",
+                              color: "text.secondary",
+                              textAlign: "left",
+                            }}
+                          >
+                            {rd.PurchaseOrderItem.generalDescription}
+                          </Typography>
+                        ) : null}
+                      </Box>
                     </StyledTableCell>
-                    <StyledTableCell>{reportData.actualQuantityReceived}</StyledTableCell>
-                    <StyledTableCell>{reportData.unitCost}</StyledTableCell>
-                    <StyledTableCell>{reportData.amount}</StyledTableCell>
+                    <StyledTableCell>{rd.actualQuantityReceived ?? ""}</StyledTableCell>
+                    <StyledTableCell>{rd.unitCost ?? ""}</StyledTableCell>
+                    <StyledTableCell>{rd.amount ?? ""}</StyledTableCell>
                   </StyledTableRow>
-                
+                ))
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
@@ -350,7 +388,7 @@ export default function InspectionAcceptanceReportForIAR({
                 <StyledTableCell colSpan={4}></StyledTableCell>
                 <StyledTableCell>Total</StyledTableCell>
                 <StyledTableCell>
-                  {reportData?.formatAmount || ""}
+                  {totalAmount || ""}
                 </StyledTableCell>
               </StyledTableRow>
 
@@ -363,7 +401,7 @@ export default function InspectionAcceptanceReportForIAR({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Inspected: {reportData?.PurchaseOrder?.dateOfDelivery || ""}</Box>
+                    <Box>Date Inspected: _____</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -409,7 +447,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(InspectorOffice?.name)}
+                      {capitalizeFirstLetter(signatories?.inspectionOfficer || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Inspection Officer
                     </Box>
@@ -423,7 +461,7 @@ export default function InspectionAcceptanceReportForIAR({
                       padding: "2px",
                     }}
                   >
-                    <Box>Date Received: {reportData?.PurchaseOrder?.dateOfDelivery || ""}</Box>
+                    <Box>Date Received: _____</Box>
                     <Box
                       sx={{
                         display: "flex",
@@ -447,7 +485,7 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: reportData?.iarStatus === "complete"
+                            backgroundColor: items.every(i => i.iarStatus === "complete")
                               ? "#ccc"
                               : "transparent",
                             display: "flex",
@@ -457,7 +495,7 @@ export default function InspectionAcceptanceReportForIAR({
                             fontWeight: "bold",
                           }}
                         >
-                          {reportData?.iarStatus === "complete" ? "✓" : ""}
+                          {items.every(i => i.iarStatus === "complete") ? "✓" : ""}
                         </Box>
                         <Typography sx={{ width: "65px" }}>Complete</Typography>
                       </Box>
@@ -473,7 +511,7 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: reportData?.iarStatus === "partial"
+                            backgroundColor: items.some(i => i.iarStatus === "partial")
                               ? "#ccc"
                               : "transparent",
                             display: "flex",
@@ -483,7 +521,7 @@ export default function InspectionAcceptanceReportForIAR({
                             fontWeight: "bold",
                           }}
                         >
-                          {reportData?.iarStatus === "partial" ? "✓" : ""}
+                          {items.some(i => i.iarStatus === "partial") ? "✓" : ""}
                         </Box>
                         <Typography sx={{ width: "65px" }}>Partial</Typography>
                       </Box>
@@ -499,7 +537,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(supplyOffice?.name)}
+                      {capitalizeFirstLetter(signatories?.supplyOfficer || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Property and Supply Management Officer
                     </Box>

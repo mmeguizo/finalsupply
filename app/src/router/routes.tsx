@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createBrowserRouter } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import App from "../App";
 import Layout from "../layouts/dashboard";
 import DashboardPage from "../pages";
@@ -18,6 +19,11 @@ import GenericPageTemplate from "../pages/genericPageTemplate";
 import DepartmentPage from "../pages/department";
 import IssuancePage from "../pages/issuance";
 import IssuanceRisPage from "../pages/issuanceRisPage";
+import IssuanceParPage from "../pages/issueanceParPage";
+import IssuanceIcsPage from "../pages/issuanceIcsPage";
+import RolePage from "../pages/role";
+import HistoriesPage from "../pages/histories";
+
 
 export const router = createBrowserRouter([
   {
@@ -55,14 +61,22 @@ export const router = createBrowserRouter([
             path: "/issuance",
             children: [
               {
-                path: "issuance",
-                Component: IssuancePage,
-                
+                index: true,
+                element: <Navigate to="issuance-par" replace />,
+              },
+              {
+                path: "issuance-par",
+                Component: IssuanceParPage,
+                element: <ProtectedRoute routePath="issuance" />,
               },
               {
                 path: "issuance-ris",
                 Component: IssuanceRisPage,
-              }
+              },
+              {
+                path: "issuance-ics",
+                Component: IssuanceIcsPage,
+              },
             ],
             element: <ProtectedRoute routePath="issuance" />,
           },
@@ -124,16 +138,31 @@ export const router = createBrowserRouter([
                 path: "users",
                 Component: UsersPage,
               },
-              // {
-              //   path: "role",
-              //   Component: RolePage,
-              // },
+              {
+                path: "roles",
+                Component: RolePage,
+              },
               {
                 path: "department",
                 Component: DepartmentPage,
               },
             ],
-          }
+          },
+          // Legacy path redirect: keep old deep-link working after moving Histories
+          {
+            path: "/users/histories",
+            element: <Navigate to="/histories" replace />,
+          },
+          {
+            path: "/histories",
+            element: <ProtectedRoute routePath="histories" />,
+            children: [
+              {
+                path: "",
+                Component: HistoriesPage,
+              },
+            ],
+          },
         ],
       },
       {

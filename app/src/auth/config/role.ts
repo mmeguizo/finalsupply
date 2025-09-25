@@ -2,6 +2,7 @@
 export const ROUTE_ROLES = {
     "": ["admin", "user"], // Dashboard (default route)
     signatories: ["admin"],
+    roles: ["admin"],
     purchaseorder: ["user","admin"],
     inventory: ["user", "admin"],
     "ics-lv-hv": ["user", "admin"],
@@ -9,6 +10,9 @@ export const ROUTE_ROLES = {
     property: ["user", "admin"],
     reports: ["user", "admin"],
     users: ["admin"],
+  histories: ["admin"],
     issuance: ["user", "admin"],
     "issuance-ris": ["user", "admin"],
+    "issuance-par": ["user", "admin"],
+    "issuance-ics": ["user", "admin"],
   };
