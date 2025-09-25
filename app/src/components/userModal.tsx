@@ -19,6 +19,8 @@ import { useQuery } from "@apollo/client";
 //@ts-ignore
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { InputAdornment, IconButton } from "@mui/material";
+import { GET_ALL_DEPARTMENTS } from "../graphql/queries/department.query";
+
 interface UserModalProps {
   open: boolean;
   onClose: () => void;
@@ -30,6 +32,9 @@ const ROLE_OPTIONS = ["admin", "user"];
 const GenderOptions = ["male", "female", "others"];
 const LOCATION_OPTIONS = ["Talisay", "Alijis", "Binalbagan", "Fortune Town"];
 const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
+  // Fetch departments for dropdown
+  const { data: departmentsData, loading: departmentsLoading } = useQuery(GET_ALL_DEPARTMENTS);
+  
   // State for form fields
   const [formData, setFormData] = useState({
     name: "",
@@ -284,16 +289,26 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Department Name"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                error={!!errors.department}
-                helperText={errors.department}
-                required
-              />
+              <FormControl fullWidth error={!!errors.department} required>
+                <InputLabel id="department-label">Department</InputLabel>
+                <Select
+                  labelId="department-label"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  label="Department"
+                  disabled={departmentsLoading}
+                >
+                  {departmentsData?.departments?.map((dept: any) => (
+                    <MenuItem key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.department && (
+                  <FormHelperText>{errors.department}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField

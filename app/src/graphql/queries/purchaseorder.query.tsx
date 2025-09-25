@@ -30,6 +30,7 @@ const GET_PURCHASEORDERS = gql`
         actualQuantityReceived
         tag
         iarId
+        inventoryNumber
       }
       amount
       invoice
@@ -65,6 +66,7 @@ const GET_PURCHASEORDER = gql`
         isDeleted
         actualQuantityReceived
         tag
+        inventoryNumber
       }
       amount
       invoice
@@ -85,6 +87,7 @@ const GET_PURCHASEORDER_ITEMS = gql`
       isDeleted
       actualQuantityReceived
       tag
+      inventoryNumber
     }
   }
 `;
@@ -104,6 +107,7 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
       category
       isDeleted
       tag
+      inventoryNumber
       iarId
       PurchaseOrder {
         poNumber
@@ -139,6 +143,7 @@ const GET_ALL_ICS_PURCHASEORDER_ITEMS = gql`
       category
       isDeleted
       tag
+      inventoryNumber
       PurchaseOrder {
         poNumber
         supplier
@@ -192,6 +197,7 @@ const GET_ALL_DASHBOARD_DATA = gql`
         category
         isDeleted
         actualQuantityReceived
+        inventoryNumber
       }
       amount
       invoice

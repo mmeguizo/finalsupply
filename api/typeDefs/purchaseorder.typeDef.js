@@ -60,6 +60,7 @@ type Item {
     date: String
     actualQuantityReceived: Int
     tag : String
+    inventoryNumber : String
     iarId : String
 }
 
@@ -84,6 +85,7 @@ type ItemWithPurchaseOrder {
     currentInput: Int
     PurchaseOrder: PurchaseOrderType
     tag : String
+     inventoryNumber : String
     iarId : String
 }
 
@@ -162,6 +164,7 @@ input ItemInput {
     actualQuantityReceived: Int
     currentInput: Int
     tag : String
+    inventoryNumber : String
 }
 
 input UpdatePurchaseOrderInput {
@@ -235,8 +238,5 @@ type Mutation {
 
 
 `;
-
-
-
 
 export default purchaseorderTypeDef;

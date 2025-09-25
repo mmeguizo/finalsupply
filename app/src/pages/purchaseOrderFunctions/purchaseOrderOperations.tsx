@@ -32,6 +32,12 @@ export const handleSavePurchaseOrder = async (
           return { success: false, message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have a category selected.` };
         }
 
+        if(item.category === "inventory custodian slip"){
+            if(item.tag === "" || !item.tag){
+                return { success: false, message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have a tag selected.` };
+            }
+        }
+
         // An item is considered invalid if it has a category but lacks both a name and a positive quantity.
         if (!itemNameIsValid && !quantityIsValid) {
           return { success: false, message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have an item name or a quantity greater than 0.` };
@@ -49,8 +55,10 @@ export const handleSavePurchaseOrder = async (
     });
     const { __typename, ...cleanFormData } = formData;
     cleanFormData.items = cleanedItems;
+    console.log({CLEANEDFORMDATA : cleanFormData})
     let updatedPO: any;
     if (editingPO) {
+      console.log(editingPO.id)
       try {
         const results = await updatePurchaseOrder({
           variables: {

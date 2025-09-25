@@ -35,6 +35,8 @@ export default function PrintReportDialog({
     state.getSignatoryByRole("Recieved From")
   );
 
+  console.log(reportData)
+
   //add the signatories to the data to be send
   let signatories = {
     inspectionOfficer: capitalizeFirstLetter(InspectorOffice?.name),
@@ -48,9 +50,9 @@ export default function PrintReportDialog({
     // Determine the report template based on reportType
     switch (reportType) {
       case "property":
-        return getPropertyAcknowledgementReciept(data);
+        return getPropertyAcknowledgementReciept(signatories,data);
       case "requisition":
-        return getRequisitionAndIssueSlip(data);
+        return getRequisitionAndIssueSlip(signatories,data);
       case "inventory":
         return getInventoryTemplate(data);
       case "inspection":

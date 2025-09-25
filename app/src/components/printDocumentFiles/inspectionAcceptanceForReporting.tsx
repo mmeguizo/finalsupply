@@ -258,7 +258,7 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
                 <div>
                   <div>
                     <div>
-                      <img src="chmsu-logo.png" class="chmsu-logo-print" style="margin-top:20px" alt="CHMSU Logo" />
+                      <img src="/chmsu-logo.png" class="chmsu-logo-print" style="margin-top:20px" alt="CHMSU Logo" />
                     </div>
                     <div>
                       <h4>REPUBLIC OF THE PHILIPPINES</h4>

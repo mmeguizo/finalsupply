@@ -33,17 +33,17 @@ export default function PrintReportDialogForRIS({
   const handlePrintReport = async () => {
     try {
       // Extract just the IDs from the reportData
-      const itemIds = Array.isArray(reportData) 
-        ? reportData.map(item => item.id) 
-        : [reportData.id];
-      // Call the mutation with the correct input format
-      const result = await updateICSid({
-        variables: {
-          input: {
-            ids: itemIds
-          }
-        }
-      });
+      // const itemIds = Array.isArray(reportData) 
+      //   ? reportData.map(item => item.id) 
+      //   : [reportData.id];
+      // // Call the mutation with the correct input format
+      // const result = await updateICSid({
+      //   variables: {
+      //     input: {
+      //       ids: itemIds
+      //     }
+      //   }
+      // });
       // Continue with printing
       const printWindow = window.open("", "_blank");
       if (printWindow) {

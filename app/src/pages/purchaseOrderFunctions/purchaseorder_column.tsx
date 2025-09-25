@@ -26,7 +26,7 @@ export const createPoColumns = (
   {
     field: "supplier",
     headerName: "Supplier",
-    width: 250,
+    width: 100,
     flex: 1,
   },
   {
@@ -73,8 +73,8 @@ export const createPoColumns = (
             await updatePurchaseOrder({
               variables: {
                 input: {
-                  id: params.row.id,
-                  // id: parseInt(params.row.id),
+                  // id: params.row.id,
+                  id: parseInt(params.row.id),
                   status: "completed",
                   completed_status_date: new Date().toISOString(),
                   markingComplete : true,
@@ -119,7 +119,7 @@ export const createPoColumns = (
   },
   {
     field: "update",
-    headerName: "Update",
+    headerName: "Views Item",
     width: 100,
     renderCell: (params) => (
         <Tooltip title="Edit" placement="top">
@@ -138,7 +138,7 @@ export const createPoColumns = (
   },
   {
     field: "viewHistory",
-    headerName: "History",
+    headerName: "Item History",
     width: 100,
     renderCell: (params) => (
         <Tooltip title="Item History" placement="top">

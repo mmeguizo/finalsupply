@@ -47,9 +47,10 @@ const inspectionAcceptanceReport = sequelize.define(
       onDelete: "CASCADE",
       index: true, // Index for optimization
     },
-    itemName: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
+    iarStatus: {
+      type: DataTypes.ENUM('partial', 'complete','none'),
+      defaultValue: 'none',
+      allowNull: true,
     },
     description: {
       type: DataTypes.TEXT,
@@ -103,6 +104,16 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    inventoryNumber : {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    itemName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "",
+    },
+
   },
   {
     tableName: "inspection_acceptance_report", // Specify the table name

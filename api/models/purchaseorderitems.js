@@ -10,7 +10,7 @@ const PurchaseOrderItems = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    iarId : {
+    iarId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -63,7 +63,12 @@ const PurchaseOrderItems = sequelize.define(
       allowNull: true,
       defaultValue: "requisition issue slip", // Default value
     },
-    tag : {
+    tag: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "none", // Default value
+    },
+    inventoryNumber: {
       type: DataTypes.STRING(255),
       allowNull: true,
       defaultValue: "none", // Default value
@@ -82,6 +87,8 @@ const PurchaseOrderItems = sequelize.define(
 );
 
 // No association is needed here because ponumber is not a foreign key
-PurchaseOrderItems.hasMany(InspectionAcceptanceReport, { foreignKey: "purchaseOrderItemId" });
+PurchaseOrderItems.hasMany(InspectionAcceptanceReport, {
+  foreignKey: "purchaseOrderItemId",
+});
 
 export default PurchaseOrderItems;

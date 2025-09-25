@@ -74,15 +74,7 @@ export default function RequisitionReport({
 
   console.log("reportData", reportData);
 
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
-  );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+ 
 
   // Create and inject print styles dynamically
   useEffect(() => {
@@ -160,17 +152,17 @@ export default function RequisitionReport({
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
-                <TableCell sx={{ width: "17%" }}></TableCell>
-                <TableCell sx={{ width: "13%" }}></TableCell>
-                <TableCell sx={{ width: "13%" }}></TableCell>
-                <TableCell sx={{ width: "34%" }}></TableCell>
-                <TableCell sx={{ width: "19%" }}></TableCell>
-                <TableCell sx={{ width: "16%" }}></TableCell>
-                <TableCell sx={{ width: "3%" }}></TableCell>
-                <TableCell sx={{ width: "6%" }}></TableCell>
-                <TableCell sx={{ width: "14%" }}></TableCell>
-                <TableCell sx={{ width: "14%" }}></TableCell>
-                <TableCell sx={{ width: "34%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "40%" }}></TableCell>
+                <TableCell sx={{ width: "12%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "4%" }}></TableCell>
+                <TableCell sx={{ width: "4%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "12%" }}></TableCell>
+                <TableCell sx={{ width: "20%" }}></TableCell>
               </TableRow>
               <TableRow>
                 <HeaderTableCell colSpan={11}>
@@ -196,7 +188,7 @@ export default function RequisitionReport({
                       <Box>
                         <Box
                           component="img"
-                          src="chmsu-logo.png"
+                          src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
                             width: "40%",
@@ -405,7 +397,7 @@ export default function RequisitionReport({
                   <StyledTableRow key={index}>
                     <StyledTableCell>{item.id || ""}</StyledTableCell>
                     <StyledTableCell>
-                      {item.purchaseOrderId || ""}
+                      {index + 1 || ""}
                     </StyledTableCell>
                     <StyledTableCell>{item.unit || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}>
@@ -460,46 +452,42 @@ export default function RequisitionReport({
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
+                <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell>Requested by:</StyledTableCell>
-                <StyledTableCell colSpan={3}>Approved by:</StyledTableCell>
+                <StyledTableCell colSpan={2}>Approved by:</StyledTableCell>
                 <StyledTableCell colSpan={3}>Issued by:</StyledTableCell>
-                <StyledTableCell>Received by:</StyledTableCell>
+                <StyledTableCell colSpan={3}>Received by:</StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
                 <StyledTableCell>Signature :</StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
+                <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell colSpan={3}></StyledTableCell>
                 <StyledTableCell colSpan={3}></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
                 <StyledTableCell colSpan={2}>Printed Name :</StyledTableCell>
-                <StyledTableCell></StyledTableCell>
                 <StyledTableCell>
                   <Typography>
-                    {capitalizeFirstLetter(receivedFrom?.name || "")}
+                    {capitalizeFirstLetter(signatories?.requested_by || "")}
+                  </Typography>
+                </StyledTableCell>
+                <StyledTableCell colSpan={2}>
+                  <Typography>
+                    {capitalizeFirstLetter(signatories?.approved_by || "")}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
                   <Typography>
-                    {capitalizeFirstLetter(supplyOffice?.name || "")}
+                    {capitalizeFirstLetter(signatories?.issued_by || "")}
                   </Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
                   <Typography>
-                    {capitalizeFirstLetter(InspectorOffice?.name || "")}
-                  </Typography>
-                </StyledTableCell>
-                <StyledTableCell>
-                  <Typography>
-                    {capitalizeFirstLetter(receivedFrom?.name || "")}
+                    {capitalizeFirstLetter(signatories?.recieved_by || "")}
                   </Typography>
                 </StyledTableCell>
               </StyledTableRow>
@@ -507,21 +495,19 @@ export default function RequisitionReport({
               <StyledTableRow>
                 <StyledTableCell>Designation :</StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
                 <StyledTableCell>End User </StyledTableCell>
-                <StyledTableCell colSpan={3}>AO V / Supply Officer</StyledTableCell>
+                <StyledTableCell colSpan={2}>AO V / Supply Officer</StyledTableCell>
                 <StyledTableCell colSpan={3}>Supply Officer Staff</StyledTableCell>
-                <StyledTableCell>End User</StyledTableCell>
+                <StyledTableCell colSpan={3}>End User</StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
                 <StyledTableCell>Date :</StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
+                <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell colSpan={3}></StyledTableCell>
                 <StyledTableCell colSpan={3}></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
               </StyledTableRow>
             </TableBody>
           </Table>

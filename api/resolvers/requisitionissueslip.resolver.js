@@ -1,8 +1,8 @@
 import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize models
 import requisitionIssueSlip from "../models/inspectionacceptancereport.js";
-import { customAlphabet } from 'nanoid'
 import { Op } from 'sequelize'
-const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
+import { generateNewRisId } from "../utils/risIdGenerator.js";
+
 const requisitionIssueSlipResolver = {
   Query: {
     requisitionIssueSlip: async (_, __, context) => {
@@ -58,10 +58,10 @@ const requisitionIssueSlipResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        // Generate a single batch ICS ID for all items
-        const batchRisId = nanoid();
+        // Generate a single batch RIS ID for all items
+        const batchRisId = await generateNewRisId();
         console.log("Updating items with IDs:", input.ids);
-        console.log("Generated batch ICS ID:", batchRisId);
+        console.log("Generated batch RIS ID:", batchRisId);
         
         // Find all items by their IDs and update them with the same ICS ID
         const updatedItems = await requisitionIssueSlip.update(
@@ -73,7 +73,7 @@ const requisitionIssueSlipResolver = {
             returning: true
           }
         );
-        console.log({updatedItems});
+        // console.log({updatedItems});
         
         // Fetch the updated items to return them
         const items = await requisitionIssueSlip.findAll({
@@ -83,12 +83,12 @@ const requisitionIssueSlipResolver = {
           include: [PurchaseOrder]
         });
 
-        console.log("Updated items:", items);
+        // console.log("Updated items:", items);
         
         return items;
       } catch (error) {
-        console.error("Error updating ICS IDs:", error);
-        throw new Error(error.message || "Failed to update ICS IDs");
+        console.error("Error updating RIS IDs:", error);
+        throw new Error(error.message || "Failed to update RIS IDs");
       }
     },
    
