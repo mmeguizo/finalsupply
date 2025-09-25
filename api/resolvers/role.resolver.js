@@ -13,9 +13,12 @@ const roleResolver = {
 
         const roles = await Role.findAll({
           where: {
-            [Op.and]: [{ is_active: 1 }, { is_deleted: 0 }]
+            [Op.and]: [
+              { is_active: true }, // boolean column we just added via migration/model
+              { isDeleted: 0 } // model field name (maps to is_deleted due to underscored: true)
+            ]
           },
-          order: [['name', 'ASC']]
+          order: [["name", "ASC"]]
         });
 
         console.log('[role.resolver] roles fetched:', Array.isArray(roles) ? roles.length : 'no-array');
@@ -41,7 +44,10 @@ const roleResolver = {
       try {
         return await Role.count({
           where: {
-            [Op.or]: [{ is_active: true }, { isDeleted: 0 }]
+            [Op.and]: [
+              { is_active: true },
+              { isDeleted: 0 }
+            ]
           }
         });
       } catch (err) {
@@ -55,9 +61,8 @@ const roleResolver = {
     addRole: async (_, { input }) => {
       try {
         const payload = { ...input };
-        if (payload.is_active === undefined && payload.isDeleted === undefined) {
-          payload.is_active = true;
-        }
+        if (payload.is_active === undefined) payload.is_active = true;
+        if (payload.isDeleted === undefined) payload.isDeleted = 0;
         const role = await Role.create(payload);
         return role;
       } catch (err) {
