@@ -90,7 +90,9 @@ await server.start();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://192.168.156.105:3000",
-  'http://localhost:4173'
+  'http://localhost:4173',
+  'https://unduly-enjoyed-parrot.ngrok-free.app',
+  'http://10.100.168.99:3000'
 ];
 
 app.use(

@@ -343,7 +343,7 @@ export const getInspectionReportTemplateForIAR = (
                     </div>
                   </div>
                   <div>
-                  ${signatories?.inspectionOfficer || "Inspection Officer"}
+                  ${signatories?.inspectionOfficer || ""}
                     <hr />
                     Inspection Officer
                   </div>
@@ -368,7 +368,7 @@ export const getInspectionReportTemplateForIAR = (
                       </div>
                   </div>
                   <div>
-                  ${signatories?.supplyOfficer || "Property and Supply Management Officer"}
+                  ${signatories?.supplyOfficer || ""}
                     <hr />
                      Property and Supply Management Officer
                   </div>

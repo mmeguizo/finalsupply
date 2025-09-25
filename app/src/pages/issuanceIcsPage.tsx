@@ -17,7 +17,7 @@
   } from "@mui/material";
   import { PageContainer } from "@toolpad/core/PageContainer";
   import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from "../graphql/queries/inspectionacceptancereport.query";
-  import useSignatoryStore from "../stores/signatoryStore";
+  // Note: signatories are supplied explicitly via the SignatorySelectionContainer
   import { Row } from "./issuanceIcsFunctions/tableRow";
   import EnhancedTableToolbar from "./issuanceIcsFunctions/enhancedToolbar";
   import SignatoriesComponent from "./issuanceIcsFunctions/SignatorySelectionContainer";
@@ -54,18 +54,7 @@
     const [reportType, setReportType] = React.useState("");
     const [title, setTitle] = React.useState("");
 
-    // Signatory store access - derive stable primitives to avoid creating new object refs each render
-    const inspectorSig = useSignatoryStore((s) =>
-      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "inspector officer") || null
-    );
-    const supplySig = useSignatoryStore((s) =>
-      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "property and supply officer") || null
-    );
-    const recievedFromSig = useSignatoryStore((s) =>
-      s.signatories.find((sig: any) => sig.role?.toLowerCase() === "recieved from") || null
-    );
-
-    // Initialize signatories state (kept local and only updated when underlying signatory records change)
+    // Initialize signatories state. Keep blank until user selects via SignatorySelectionContainer.
     const [signatories, setSignatories] = React.useState<icsIssuanceSignatories>({
       recieved_from: "",
       recieved_by: "",
@@ -74,26 +63,6 @@
         recieved_by: { position: "", role: "" }
       }
     });
-
-    // Only update local signatories when the underlying signatory primitives change
-    const signatoriesSnapshotRef = React.useRef<string>("");
-    React.useEffect(() => {
-      const next = {
-        recieved_from: recievedFromSig?.name || "",
-        recieved_by: inspectorSig?.name || "",
-        metadata: {
-          recieved_from: { position: "", role: recievedFromSig?.role || "" },
-          recieved_by: { position: "", role: inspectorSig?.role || "" },
-        },
-      } as icsIssuanceSignatories;
-
-      const serialized = JSON.stringify(next);
-      if (signatoriesSnapshotRef.current !== serialized) {
-        signatoriesSnapshotRef.current = serialized;
-        setSignatories(next);
-      }
-      // depend on stable primitive properties only
-  }, [inspectorSig?.id, inspectorSig?.name, inspectorSig?.role, supplySig?.id, supplySig?.name, recievedFromSig?.id, recievedFromSig?.name, recievedFromSig?.role]);
 
     // Safer derived list
     const icsList = data?.inspectionAcceptanceReportForICS ?? [];

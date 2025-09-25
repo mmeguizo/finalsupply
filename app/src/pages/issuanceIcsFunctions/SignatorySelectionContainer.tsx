@@ -152,20 +152,11 @@ const SignatoriesComponent = ({
   // Find the selected option object using id first, fallback to name when id is missing
   const findSelectedOption = (roleKey: string, options: UserOption[]) => {
     const meta = selectedSignatories?.metadata?.[roleKey];
+    // Only select if metadata contains an explicit id
     if (meta?.id) {
-      return options.find(o => o.id === meta.id) || null;
+      return options.find((o) => o.id === meta.id) || null;
     }
-    // Do not auto-select "Received From" based on name; require explicit choice (id)
-    if (roleKey === "recieved_from") {
-      return null;
-    }
-    const value = (selectedSignatories?.[roleKey] || "").trim().toLowerCase();
-    return (
-      options.find(option => {
-        const optionFullName = [option.name, option.last_name].filter(Boolean).join(" ").trim().toLowerCase();
-        return optionFullName === value || option.name.toLowerCase() === value;
-      }) || null
-    );
+    return null;
   };
 
   const signatoryRoles = [

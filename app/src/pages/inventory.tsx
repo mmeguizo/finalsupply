@@ -31,6 +31,7 @@ import ConfirmDialog from "../components/confirmationdialog";
 //@ts-ignore
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
 import PrintReportDialogForIAR from "../components/printReportModalForIAR";
+import SignatoriesComponent from "./inventoryFunctions/SignatorySelectionContainer";
 import {
   formatTimestampToDateTime,
   currencyFormat,
@@ -224,6 +225,15 @@ export default function InventoryPage() {
   const [reportType, setReportType] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
+  // Local signatories state for Inventory printing
+  const [selectedSignatories, setSelectedSignatories] = React.useState<any>({
+    recieved_from: "",
+    recieved_by: "",
+    metadata: {
+      recieved_from: { id: "", position: "", role: "" },
+      recieved_by: { id: "", position: "", role: "" },
+    },
+  });
   const [updateIARStatus] = useMutation(UPDATE_IAR_STATUS, {
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
   });
@@ -431,6 +441,7 @@ export default function InventoryPage() {
           maxHeight: "calc(100vh - 100px)",
         }}
       >
+      
         <Paper sx={{ width: "100%" }}>
           <EnhancedTableToolbar
             searchQuery={searchQuery}
@@ -472,6 +483,13 @@ export default function InventoryPage() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
+          {/* Signatory selection for IAR printing */}
+        <Paper sx={{ width: "100%", p: 2 }}>
+          <SignatoriesComponent
+            signatories={selectedSignatories}
+            onSignatoriesChange={setSelectedSignatories}
+          />
+        </Paper>
       </Stack>
       <ConfirmDialog
         open={confirmOpen}
@@ -483,6 +501,11 @@ export default function InventoryPage() {
         handleClose={handleClosePrintModal}
         reportData={printPOI}
         reportType={reportType}
+        signatories={{
+          inspectionOfficer: selectedSignatories?.recieved_by || "",
+          supplyOfficer:
+            selectedSignatories?.recieved_from || "",
+        }}
       />
     </PageContainer>
   );

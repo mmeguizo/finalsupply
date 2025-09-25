@@ -279,6 +279,8 @@ const purchaseorderResolver = {
 
         // If items exist, create purchase order items
         if (items && Array.isArray(items) && items.length > 0) {
+          // Use a single ICS ID for the entire batch, regardless of tag (high/low)
+          let batchIcsId = "";
           // Validate that if items are provided, at least one item has meaningful data
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -319,7 +321,10 @@ const purchaseorderResolver = {
               let parId = "";
               let risId = "";
               if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                icsId = await generateNewIcsId(cleanedItems.tag);
+                if (!batchIcsId) {
+                  batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                }
+                icsId = batchIcsId;
               }
               if (
                 cleanedItems.category === "property acknowledgement reciept"
@@ -457,6 +462,8 @@ const purchaseorderResolver = {
 
         // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
+          // Use a single ICS ID for the entire update batch, regardless of tag
+          let batchIcsId = "";
           // Generate a single IAR ID for all items in this batch
 
           const hasAtLeastOneValidItem = items.some((item) => {
@@ -580,7 +587,10 @@ const purchaseorderResolver = {
                     risIdGen = await generateNewRisId();
                   }
                   if (effectiveTag === "high" || effectiveTag === "low") {
-                    icsIdGen = await generateNewIcsId(effectiveTag);
+                    if (!batchIcsId) {
+                      batchIcsId = await generateNewIcsId(effectiveTag);
+                    }
+                    icsIdGen = batchIcsId;
                   }
 
                   const iarRow = await inspectionAcceptanceReport.create({
@@ -652,8 +662,11 @@ const purchaseorderResolver = {
                 let risId = "";
                 // Use currentItem or itemUpdates to get the tag and category values
 
-                if (item.tag) {
-                  icsId = await generateNewIcsId(cleanedItems.tag);
+                if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
+                  if (!batchIcsId) {
+                    batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                  }
+                  icsId = batchIcsId;
                 }
                 if (item.category === "property acknowledgement reciept") {
                   parId = await generateNewParId();
@@ -661,11 +674,7 @@ const purchaseorderResolver = {
                 if (item.category === "requisition issue slip") {
                   risId = await generateNewRisId();
                 }
-                console.log({item})
-                console.log('=====================')
-                console.log({cleanedItems})
-                console.log('=====================')
-                console.log({ icsId, parId, risId });
+                
 
                 const iarRow = await inspectionAcceptanceReport.create({
                   ...cleanedItems,
@@ -791,7 +800,9 @@ const purchaseorderResolver = {
 
           const beforeAqr = Number(poi.actualQuantityReceived || 0);
           const delta = Math.min(beforeAqr, Number(info.total || 0));
-          const afterAqr = Math.max(0, beforeAqr - delta);
+          // If the item is an ICS category, fully zero out AQR on revert of this batch
+          const isIcsCategory = (poi.category || '').toLowerCase() === 'inventory custodian slip';
+          const afterAqr = isIcsCategory ? 0 : Math.max(0, beforeAqr - delta);
 
           // Capture latest doc IDs before we null them out on IAR table
           const latestIar = await inspectionAcceptanceReport.findOne({

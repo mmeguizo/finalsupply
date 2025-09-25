@@ -13,7 +13,6 @@ import {
   Button,
 } from "@mui/material";
 import { InspectionAcceptanceReportPropsForIAR } from "../../types/previewPrintDocument/types";
-import useSignatoryStore from "../../stores/signatoryStore";
 import { Divider } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
 
@@ -72,17 +71,7 @@ export default function InspectionAcceptanceReportForIAR({
 }: InspectionAcceptanceReportPropsForIAR) {
 
   const componentRef = useRef(null);
-  // const { signatories, loading, error } = useSignatoryStore();
-  // Get specific signatories by role
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
-  );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  // const receivedFrom = useSignatoryStore((state) =>
-  //   state.getSignatoryByRole("Recieved From")
-  // );
+  // Use signatories provided by parent (Inventory page)
   // --- ADDED: normalize reportData to an array and compute totals ---
 
   console.log({reportData});
@@ -458,7 +447,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(InspectorOffice?.name)}
+                      {capitalizeFirstLetter(signatories?.inspectionOfficer || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Inspection Officer
                     </Box>
@@ -548,7 +537,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(supplyOffice?.name)}
+                      {capitalizeFirstLetter(signatories?.supplyOfficer || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Property and Supply Management Officer
                     </Box>

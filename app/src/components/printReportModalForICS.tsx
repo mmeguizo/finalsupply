@@ -15,9 +15,7 @@ import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/property
 import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
 import { getInventoryTemplateForICS } from "./printDocumentFiles/inventoryCustodianslipPrinting";
 import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { UPDATE_ICSID } from "../graphql/mutations/inventoryIAR.mutation";
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from "../graphql/queries/inspectionacceptancereport.query";
 export default function PrintReportDialogForICS({
@@ -32,8 +30,6 @@ export default function PrintReportDialogForICS({
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS }],
    
   });
-
-  // Avoid noisy logs on each render
 
   const getReportTemplate = (data: any) => {
     return getInventoryTemplateForICS(signatories, data);

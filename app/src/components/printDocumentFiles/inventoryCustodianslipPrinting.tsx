@@ -2,7 +2,6 @@ import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
 export const getInventoryTemplateForICS = (signatories : any,reportData: any) => {
 
-  console.log({signatories})
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   // Calculate total amount from all items
