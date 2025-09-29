@@ -15,6 +15,13 @@ export const handleSavePurchaseOrder = async (
       //remove id , typname and iarId
 
      // Validate that if items are provided, at least one item has meaningful data
+    // Require campus when creating a new purchase order
+    if (!editingPO) {
+      if (!formData.campus || String(formData.campus).trim() === "") {
+        return { success: false, message: "Please select a campus for this Purchase Order." };
+      }
+    }
+    
     if (formData.items && Array.isArray(formData.items) && formData.items.length > 0) {
       // const hasAtLeastOneValidItem = formData.items.some((item: any) => {
       //   const itemNameIsValid = item.itemName && item.itemName.trim() !== '';

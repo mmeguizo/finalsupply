@@ -58,6 +58,7 @@ export default function PurchaseOrderModal({
     poNumber: purchaseOrder?.poNumber || "",
     supplier: purchaseOrder?.supplier || "",
     address: purchaseOrder?.address || "",
+    campus: purchaseOrder?.campus || "",
     placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
     deliveryTerms: purchaseOrder?.deliveryTerms || "",
     paymentTerms: purchaseOrder?.paymentTerms || "",
@@ -127,6 +128,7 @@ export default function PurchaseOrderModal({
         poNumber: purchaseOrder.poNumber || "",
         supplier: purchaseOrder.supplier || "",
         address: purchaseOrder.address || "",
+        campus: purchaseOrder.campus || "",
         placeOfDelivery: purchaseOrder.placeOfDelivery || "",
         dateOfConformity: dayjs(purchaseOrder?.dateOfConformity) || dayjs(),
         dateOfPayment: dayjs(purchaseOrder?.dateOfPayment) || dayjs(),
@@ -146,6 +148,7 @@ export default function PurchaseOrderModal({
         poNumber: "",
         supplier: "",
         address: "",
+        campus: "",
         placeOfDelivery: "",
         modeOfProcurement: "",
         deliveryTerms: "",
@@ -316,6 +319,24 @@ export default function PurchaseOrderModal({
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic PO Info */}
+          {purchaseOrder ? null : (
+            <Grid item xs={12} md={6}>
+              <Select
+                fullWidth
+                value={formData.campus}
+                onChange={(e) =>
+                  setFormData((prev: any) => ({ ...prev, campus: e.target.value }))
+                }
+                displayEmpty
+              >
+                <MenuItem value=""><em>Select Campus</em></MenuItem>
+                <MenuItem value="Talisay">Talisay</MenuItem>
+                <MenuItem value="Alijis">Alijis</MenuItem>
+                <MenuItem value="Binalbagan">Binalbagan</MenuItem>
+                <MenuItem value="Fortune Town">Fortune Town</MenuItem>
+              </Select>
+            </Grid>
+          )}
 
           <Grid item xs={12} md={6}>
             <TextField
