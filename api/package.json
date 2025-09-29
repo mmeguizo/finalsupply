@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "migrate:add-campus": "node ./scripts/run_add_campus_migration.js"
   },
   "keywords": [],
   "author": "",

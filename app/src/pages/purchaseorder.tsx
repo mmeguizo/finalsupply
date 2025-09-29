@@ -129,6 +129,7 @@ export default function PurchaseOrder() {
         // Use the GraphQL id for consistency with cache normalization
         id: po.id,
         ...po,
+        campus: po.campus,
         // formattedDeliveryDate,
         // formattedPaymentDate,
         formatAmount: currencyFormat(po.amount),

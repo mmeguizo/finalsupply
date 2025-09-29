@@ -242,7 +242,7 @@ const purchaseorderResolver = {
 
       try {
         const user = context.req.user;
-        const { items, ...poRestData } = input;
+  const { items, campus, ...poRestData } = input;
 
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
@@ -273,6 +273,7 @@ const purchaseorderResolver = {
         const newPurchaseorder = await PurchaseOrder.create(
           {
             ...poRestData,
+            campus: campus || null,
           },
           { transaction: t }
         ); // Use transaction
@@ -320,19 +321,29 @@ const purchaseorderResolver = {
               let icsId = "";
               let parId = "";
               let risId = "";
+              // derive campus suffix
+              const campusSuffixMap = {
+                Talisay: 'T',
+                Alijis: 'A',
+                Binalbagan: 'B',
+                'Fortune Town': 'F',
+              };
+              const campusSuffix = campusSuffixMap[campus] || '';
               if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
                 if (!batchIcsId) {
                   batchIcsId = await generateNewIcsId(cleanedItems.tag);
                 }
-                icsId = batchIcsId;
+                icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
               }
               if (
                 cleanedItems.category === "property acknowledgement reciept"
               ) {
-                parId = await generateNewParId();
+                const gen = await generateNewParId();
+                parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
               }
               if (cleanedItems.category === "requisition issue slip") {
-                risId = await generateNewRisId();
+                const gen = await generateNewRisId();
+                risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
               }
 
               const iarRow = await inspectionAcceptanceReport.create(
@@ -408,7 +419,7 @@ const purchaseorderResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        const { id: poId, items, markingComplete, ...poUpdates } = input; // Use poId for clarity
+  const { id: poId, items, markingComplete, campus, ...poUpdates } = input; // Use poId for clarity
 
         const findIfExists = await PurchaseOrder.findOne({
           where: { id: poId },
@@ -418,7 +429,7 @@ const purchaseorderResolver = {
         }
         // Update the purchase order details
         // Update the purchase order
-        const [_, affectedRows] = await PurchaseOrder.update(poUpdates, {
+        const [_, affectedRows] = await PurchaseOrder.update({ ...poUpdates, campus: campus ?? poUpdates.campus }, {
           where: { id: poId },
         });
 
@@ -579,18 +590,30 @@ const purchaseorderResolver = {
                   let parIdGen = "";
                   let risIdGen = "";
                   let icsIdGen = "";
+                  const campusSuffixMap = {
+                    Talisay: 'T',
+                    Alijis: 'A',
+                    Binalbagan: 'B',
+                    'Fortune Town': 'F',
+                  };
+                  // prefer input.campus, fallback to purchase order's campus in DB
+                  const poRecord = findIfExists;
+                  const campusValue = campus ?? poRecord?.campus ?? '';
+                  const campusSuffix = campusSuffixMap[campusValue] || '';
 
                   if (effectiveCategory === "property acknowledgement reciept") {
-                    parIdGen = await generateNewParId();
+                    const gen = await generateNewParId();
+                    parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
                   }
                   if (effectiveCategory === "requisition issue slip") {
-                    risIdGen = await generateNewRisId();
+                    const gen = await generateNewRisId();
+                    risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
                   }
                   if (effectiveTag === "high" || effectiveTag === "low") {
                     if (!batchIcsId) {
                       batchIcsId = await generateNewIcsId(effectiveTag);
                     }
-                    icsIdGen = batchIcsId;
+                    icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
                   }
 
                   const iarRow = await inspectionAcceptanceReport.create({
@@ -660,19 +683,30 @@ const purchaseorderResolver = {
                 let icsId = "";
                 let parId = "";
                 let risId = "";
+                const campusSuffixMap = {
+                  Talisay: 'T',
+                  Alijis: 'A',
+                  Binalbagan: 'B',
+                  'Fortune Town': 'F',
+                };
+                const poRecord = await PurchaseOrder.findByPk(poId);
+                const campusValue = campus ?? poRecord?.campus ?? '';
+                const campusSuffix = campusSuffixMap[campusValue] || '';
                 // Use currentItem or itemUpdates to get the tag and category values
 
                 if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
                   if (!batchIcsId) {
                     batchIcsId = await generateNewIcsId(cleanedItems.tag);
                   }
-                  icsId = batchIcsId;
+                  icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
                 }
                 if (item.category === "property acknowledgement reciept") {
-                  parId = await generateNewParId();
+                  const gen = await generateNewParId();
+                  parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 }
                 if (item.category === "requisition issue slip") {
-                  risId = await generateNewRisId();
+                  const gen = await generateNewRisId();
+                  risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 }
                 
 

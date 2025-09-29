@@ -18,6 +18,12 @@ const Role = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    // Align with other models (users, department) which use is_active for soft enabling/disabling
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     isDeleted: {
       type: DataTypes.TINYINT(1),
       allowNull: true,

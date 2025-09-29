@@ -30,6 +30,11 @@ export const createPoColumns = (
     flex: 1,
   },
   {
+    field: "campus",
+    headerName: "Campus",
+    width: 120,
+  },
+  {
     field: "placeOfDelivery", // Use the pre-formatted field
     headerName: "Place of Delivery",
     width: 150,

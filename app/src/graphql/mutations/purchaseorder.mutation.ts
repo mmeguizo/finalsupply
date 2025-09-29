@@ -7,6 +7,7 @@ export const ADD_PURCHASEORDER = gql`
       poNumber
       supplier
       address
+      campus
       dateOfDelivery
       dateOfPayment
       category
@@ -40,6 +41,7 @@ export const UPDATE_PURCHASEORDER = gql`
       address
       poNumber
       telephone
+      campus
       placeOfDelivery
       dateOfDelivery
       dateOfPayment

@@ -8,6 +8,7 @@ const GET_PURCHASEORDERS = gql`
       address
       poNumber
       telephone
+      campus
       placeOfDelivery
       dateOfDelivery
       dateOfPayment
@@ -49,6 +50,7 @@ const GET_PURCHASEORDER = gql`
       address
       poNumber
       telephone
+      campus
       placeOfDelivery
       dateOfDelivery
       dateOfPayment
@@ -118,6 +120,7 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
         address
         poNumber
         telephone
+        campus
         placeOfDelivery
         dateOfDelivery
         dateOfPayment
@@ -153,6 +156,7 @@ const GET_ALL_ICS_PURCHASEORDER_ITEMS = gql`
         address
         poNumber
         telephone
+        campus
         placeOfDelivery
         dateOfDelivery
         dateOfPayment
@@ -180,6 +184,7 @@ const GET_ALL_DASHBOARD_DATA = gql`
       address
       poNumber
       telephone
+      campus
       placeOfDelivery
       dateOfDelivery
       dateOfPayment
