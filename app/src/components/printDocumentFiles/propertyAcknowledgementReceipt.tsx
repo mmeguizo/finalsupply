@@ -3,7 +3,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   console.log("getPropertyAcknowledgementReciept", signatories, reportData);
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
 
-  const  { recieved_from, recieved_by, metadata } = signatories;
+  const { recieved_from, recieved_by, metadata } = signatories;
   const { position: recievedFromPosition, role: recievedFromRole } = metadata?.recieved_from || {};
   const { position: recievedByPosition, role: recievedByRole } = metadata?.recieved_by || {};
 
@@ -14,41 +14,35 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
-  
+
   const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, "<br/>");
 
   // Currency formatter for PHP with thousand separators
   const formatCurrency = (value: any) => {
     const num = Number(value) || 0;
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num);
   };
 
   // Collect all unique PAR IDs from the items
-  const parIds = Array.from(
-    new Set(
-      itemsArray
-        .map((item: any) => item?.parId)
-        .filter((id: any) => !!id)
-    )
-  );
-  const parIdsDisplay = parIds.length ? parIds.join(', ') : '';
-  
+  const parIds = Array.from(new Set(itemsArray.map((item: any) => item?.parId).filter((id: any) => !!id)));
+  const parIdsDisplay = parIds.length ? parIds.join(", ") : "";
+
   // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
   const itemRows = itemsArray
-    .map((item) => {
+    .map((item, index) => {
       const desc = escapeHtml(item.description || item.PurchaseOrderItem?.description || "");
       const spec = item.PurchaseOrderItem?.specification || item.specification || "";
       const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || "";
-  
-      const specHtml = spec ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
-      const genHtml = gen ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
-  
-      return `
+
+      const specHtml = spec ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
+      const genHtml = gen ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
+
+      let row = `
         <tr>
           <td>${escapeHtml(item.inventoryNumber || "")}</td>
           <td>${escapeHtml(item.quantity || "")}</td>
@@ -62,25 +56,51 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
           <td>${escapeHtml(formatCurrency(item.amount))}</td>
         </tr>
       `;
+
+      if (index === itemsArray.length - 1) {
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td style="text-align: center;">*****Nothing Follows*****</td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+        row += `
+          <tr>
+            <td style="height: 100%"></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          `;
+      }
+
+      return row;
     })
     .join("");
-  
+
   // Get the first item for header information
   const firstItem = itemsArray[0] || {};
   // Note: We display all PAR IDs instead of the PO number in the header
-  const poNumber = firstItem.PurchaseOrder?.poNumber || '';
-  const supplier = firstItem.PurchaseOrder?.supplier || '';
-  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || '';
-  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || '';
-  
+  const poNumber = firstItem.PurchaseOrder?.poNumber || "";
+  const supplier = firstItem.PurchaseOrder?.supplier || "";
+  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || "";
+  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || "";
+
   // Calculate totals
   const totalUnitCost = itemsArray.reduce((sum, item) => sum + (parseFloat(item.unitCost) || 0), 0);
   const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-  
+
   // Format totals
-  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : formatCurrency(totalUnitCost);
-  const formatTotalAmount = isNaN(totalAmount) ? '' : formatCurrency(totalAmount);
-  
+  const formatTotalUnitCost = isNaN(totalUnitCost) ? "" : formatCurrency(totalUnitCost);
+  const formatTotalAmount = isNaN(totalAmount) ? "" : formatCurrency(totalAmount);
+
   return `
 <html lang="en">
 
@@ -106,7 +126,15 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   margin: 0 auto;
   border: 1px solid #000;
   padding: 0.25in;
+  overflow: hidden;
+  page-break-after: always;
 } */
+
+/* A4 size dimensions in millimeters */
+.page {
+  overflow: hidden;
+  page-break-after: always;
+}
 
 table {
   width: 100%;
@@ -136,12 +164,12 @@ table {
       }
     }
   }
-  & th,
-  & td {
+  & :not(tbody) td {
     border: 1px solid #000;
     padding: 0px;
   }
   & th {
+    border: 1px solid #000;
     white-space: normal; /* Change from nowrap to normal */
     word-wrap: break-word; /* Add this to ensure long words break */
   }
@@ -164,7 +192,7 @@ table {
       & > div:nth-child(1) {
         flex-grow: 1;
         display: grid;
-        grid-template-columns: 2fr 4fr 2fr;
+        grid-template-columns: 2fr 5fr 2fr;
         grid-template-rows: 90px;
         align-items: center;
         text-align: center;
@@ -236,7 +264,10 @@ table {
 
   & tbody {
     & td {
-      padding: 1px;
+      padding: 4px 2px;
+      align-content: start;
+      border-top: none;
+      border-bottom: none;
     }
   }
 
@@ -310,8 +341,6 @@ table {
     }
   }
 }
-
-
 </style>
 <body>
   <div class="page">
@@ -365,6 +394,7 @@ table {
       </tbody>
       <tfoot>
         <tr class="total-row">
+          <td></td>
           <td></td>
           <td></td>
           <td colspan="2">Total</td>
