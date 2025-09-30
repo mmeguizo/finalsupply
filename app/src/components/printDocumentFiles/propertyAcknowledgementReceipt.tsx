@@ -3,7 +3,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   console.log("getPropertyAcknowledgementReciept", signatories, reportData);
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
 
-  const  { recieved_from, recieved_by, metadata } = signatories;
+  const { recieved_from, recieved_by, metadata } = signatories;
   const { position: recievedFromPosition, role: recievedFromRole } = metadata?.recieved_from || {};
   const { position: recievedByPosition, role: recievedByRole } = metadata?.recieved_by || {};
 
@@ -14,20 +14,20 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
-  
+
   const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, "<br/>");
-  
+
   // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
   const itemRows = itemsArray
-    .map((item) => {
+    .map((item, index) => {
       const desc = escapeHtml(item.description || item.PurchaseOrderItem?.description || "");
       const spec = item.PurchaseOrderItem?.specification || item.specification || "";
       const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || "";
-  
+
       const specHtml = spec ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
       const genHtml = gen ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
-  
-      return `
+
+      let row = `
         <tr>
           <td>${escapeHtml(item.inventoryNumber || "")}</td>
           <td>${escapeHtml(item.quantity || "")}</td>
@@ -41,24 +41,54 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
           <td>${escapeHtml(item.amount || "")}</td>
         </tr>
       `;
+
+      // If this is the LAST item, append "Nothing Follows"
+      if (index === itemsArray.length - 1) {
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td style="text-align: center;">*****Nothing Follows*****</td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+        for (let i = 0; i < 1; i++) {
+          // <-- you can make this 200 if needed
+          row += `
+          <tr>
+            <td style="height: 100%"></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          `;
+        }
+      }
+
+      return row;
     })
     .join("");
-  
+
   // Get the first item for header information
   const firstItem = itemsArray[0] || {};
-  const poNumber = firstItem.PurchaseOrder?.poNumber || '';
-  const supplier = firstItem.PurchaseOrder?.supplier || '';
-  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || '';
-  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || '';
-  
+  const poNumber = firstItem.PurchaseOrder?.poNumber || "";
+  const supplier = firstItem.PurchaseOrder?.supplier || "";
+  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || "";
+  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || "";
+
   // Calculate totals
   const totalUnitCost = itemsArray.reduce((sum, item) => sum + (parseFloat(item.unitCost) || 0), 0);
   const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-  
+
   // Format totals
-  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : totalUnitCost.toFixed(2);
-  const formatTotalAmount = isNaN(totalAmount) ? '' : totalAmount.toFixed(2);
-  
+  const formatTotalUnitCost = isNaN(totalUnitCost) ? "" : totalUnitCost.toFixed(2);
+  const formatTotalAmount = isNaN(totalAmount) ? "" : totalAmount.toFixed(2);
+
   return `
 <html lang="en">
 
@@ -84,6 +114,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   margin: 0 auto;
   border: 1px solid #000;
   padding: 0.25in;
+  overflow: hidden;page-break-after: always;
 } */
 
 table {
@@ -114,12 +145,12 @@ table {
       }
     }
   }
-  & th,
-  & td {
+  & :not(tbody) td {
     border: 1px solid #000;
     padding: 0px;
   }
   & th {
+    border: 1px solid #000;
     white-space: normal; /* Change from nowrap to normal */
     word-wrap: break-word; /* Add this to ensure long words break */
   }
@@ -215,6 +246,11 @@ table {
   & tbody {
     & td {
       padding: 1px;
+      align-content: start;
+      border: 1px red #000 !important
+      & p {
+        line-height: 1 !important;
+      }
     }
   }
 
@@ -343,6 +379,7 @@ table {
       </tbody>
       <tfoot>
         <tr class="total-row">
+          <td></td>
           <td></td>
           <td></td>
           <td colspan="2">Total</td>
