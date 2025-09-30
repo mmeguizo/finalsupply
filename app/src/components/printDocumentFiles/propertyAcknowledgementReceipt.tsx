@@ -39,8 +39,8 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
       const spec = item.PurchaseOrderItem?.specification || item.specification || "";
       const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || "";
 
-      const specHtml = spec ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
-      const genHtml = gen ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
+      const specHtml = spec ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
+      const genHtml = gen ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
 
       let row = `
         <tr>
@@ -57,7 +57,6 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
         </tr>
       `;
 
-      // If this is the LAST item, append "Nothing Follows"
       if (index === itemsArray.length - 1) {
         row += `
         <tr>
@@ -70,9 +69,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
         </tr>
         `;
 
-        for (let i = 0; i < 1; i++) {
-          // <-- you can make this 200 if needed
-          row += `
+        row += `
           <tr>
             <td style="height: 100%"></td>
             <td>&nbsp;</td>
@@ -82,7 +79,6 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
             <td>&nbsp;</td>
           </tr>
           `;
-        }
       }
 
       return row;
@@ -130,8 +126,15 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   margin: 0 auto;
   border: 1px solid #000;
   padding: 0.25in;
-  overflow: hidden;page-break-after: always;
+  overflow: hidden;
+  page-break-after: always;
 } */
+
+/* A4 size dimensions in millimeters */
+.page {
+  overflow: hidden;
+  page-break-after: always;
+}
 
 table {
   width: 100%;
@@ -189,7 +192,7 @@ table {
       & > div:nth-child(1) {
         flex-grow: 1;
         display: grid;
-        grid-template-columns: 2fr 4fr 2fr;
+        grid-template-columns: 2fr 5fr 2fr;
         grid-template-rows: 90px;
         align-items: center;
         text-align: center;
@@ -261,12 +264,10 @@ table {
 
   & tbody {
     & td {
-      padding: 1px;
+      padding: 4px 2px;
       align-content: start;
-      border: 1px red #000 !important
-      & p {
-        line-height: 1 !important;
-      }
+      border-top: none;
+      border-bottom: none;
     }
   }
 
@@ -340,8 +341,6 @@ table {
     }
   }
 }
-
-
 </style>
 <body>
   <div class="page">

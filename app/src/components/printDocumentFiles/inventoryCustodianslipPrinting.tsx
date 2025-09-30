@@ -1,42 +1,33 @@
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
-export const getInventoryTemplateForICS = (signatories : any,reportData: any) => {
-
+export const getInventoryTemplateForICS = (signatories: any, reportData: any) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
     return sum + (item?.amount || 0);
   }, 0);
-  
+
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
   const icsIds = Array.from(new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)));
-  const icsIdsDisplay = icsIds.join(', ');
-  
+  const icsIdsDisplay = icsIds.join(", ");
+
   // Generate rows for each item
   const itemRows = itemsArray
     .map((item, index) => {
       const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || "");
       const spec = item?.PurchaseOrderItem?.specification || item?.specification || "";
       const gen = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "";
-      
-      const specHtml = spec
-        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(
-            escapeHtml(spec)
-          )}</div>`
-        : "";
-      
-      const genHtml = gen
-        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(
-            escapeHtml(gen)
-          )}</div>`
-        : "";
-      
+
+      const specHtml = spec ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(spec))}</div>` : "";
+
+      const genHtml = gen ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(gen))}</div>` : "";
+
       const unitCostDisplay = item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : "");
       const amountDisplay = item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : "");
-      
-      return `
+
+      let row = `
                 <tr>
                     <td>${escapeHtml(item?.quantity || "")}</td>
                     <td>${escapeHtml(item?.unit || "")}</td>
@@ -47,24 +38,36 @@ export const getInventoryTemplateForICS = (signatories : any,reportData: any) =>
                     <td>5 years</td>
                 </tr>
       `;
+
+      if (index === itemsArray.length - 1) {
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: center;">********Nothing Follows********</td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+        row += `
+          <tr>
+            <td style="height: 100%"></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        `;
+      }
+      return row;
     })
     .join("");
-  
-  // Fill remaining rows with empty rows to maintain layout
-  const emptyRows = Array(Math.max(0, 5 - itemsArray.length))
-    .fill('')
-    .map(() => `
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-    `).join('');
-  
+
   return `
 <html lang="en">
 <head>
@@ -85,6 +88,7 @@ export const getInventoryTemplateForICS = (signatories : any,reportData: any) =>
 
 table {
   width: 100%;
+  height: 100%;
   table-layout: fixed;
   border-collapse: collapse;
 
@@ -247,10 +251,13 @@ thead {
 tbody {
   & > tr {
     & > td {
-      padding: 2px 0px;
+      padding: 4px 2px;
       font-size: 12px;
       height: 14px;
       line-height: 1;
+      align-content: start;
+      border-top: none;
+      border-bottom: none;
     }
   }
 }
@@ -345,7 +352,7 @@ tfoot {
                             <div></div>
                             <div>
                                 <span>ICS No. ${escapeHtml(icsIdsDisplay)}</span>
-                                <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
+                                <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</span>
                             </div>
                         </div>
                     </th>
@@ -367,7 +374,6 @@ tfoot {
             </thead>
             <tbody>
                 ${itemRows}
-                ${emptyRows}
             </tbody>
             <tfoot>
                <tr>
@@ -393,7 +399,7 @@ tfoot {
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
                                 <span> ${signatories?.recieved_from} </span>
                                 <hr style="width: 100%; margin: 5px 0;" />
-                                <span style="font-weight: 600;">${itemsArray[0]?.PurchaseOrder?.supplier || ''}</span>
+                                <span style="font-weight: 600;">${itemsArray[0]?.PurchaseOrder?.supplier || ""}</span>
                                 <hr style="width: 100%; margin: 5px 0;" />
                             </div>
                             <div style="text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">

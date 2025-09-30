@@ -1,6 +1,6 @@
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
-export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) => {
+export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -8,12 +8,12 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
   }, 0);
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
-  
+
   const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
   // Collect unique RIS IDs
   const risIds = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
-  const risIdsDisplay = risIds.join(', ');
-  
+  const risIdsDisplay = risIds.join(", ");
+
   // Generate rows for each item (supports array input). description, specification and generalDescription are escaped;
   // specification and generalDescription preserve newlines via nl2br.
   const itemRows = itemsArray
@@ -22,14 +22,10 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
       const specRaw = item?.PurchaseOrderItem?.specification || item?.specification || "";
       const genRaw = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "";
 
-      const specHtml = specRaw
-        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>`
-        : "";
-      const genHtml = genRaw
-        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>`
-        : "";
+      const specHtml = specRaw ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>` : "";
+      const genHtml = genRaw ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>` : "";
 
-      return `
+      let row = `
                 <tr>
                     <td>${escapeHtml(item?.id ?? "")}</td>
                     <td>${index + 1}</td>
@@ -46,26 +42,40 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
                     <td></td>
                 </tr>
       `;
+      if (index === itemsArray.length - 1) {
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: center;">********Nothing Follows********</td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+        row += `
+          <tr>
+            <td style="height: 100%"></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        `;
+      }
+
+      return row;
     })
     .join("");
-  
-  // Fill remaining rows with empty rows to maintain layout
-  const emptyRows = Array(Math.max(0,2 - itemsArray.length))
-    .fill('')
-    .map(() => `
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-    `).join('');
-  
+
   return `
 <html lang="en">
 <head>
@@ -86,6 +96,7 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
 
 table {
   width: 100%;
+  height: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   border: 1px solid #000;
@@ -141,6 +152,19 @@ thead {
       & > div {
         display: grid;
         grid-template-columns: 1fr 1.75fr 1fr;
+        position: relative;
+        &::after {
+          content: "Non Stock Item";
+          position: absolute;
+          right: 20px;
+          top: 45px;
+          color: yellow;
+          font-size: 1.55rem;
+          -webkit-text-stroke: 1px #000;
+          text-stroke: 1px #000;
+          z-index: 1;
+          font-weight: 700;
+        }
         & > div {
           &:nth-child(1) {
             display: grid;
@@ -255,10 +279,13 @@ thead {
 tbody {
   & > tr {
     & > td {
-      padding: 2px 0px;
+      padding: 4px 2px;
       font-size: 12px;
       height: 14px;
       line-height: 1;
+      align-content: start;
+      border-top: none;
+      border-bottom: none;
     }
   }
 }
@@ -393,7 +420,6 @@ tfoot {
             </thead>
             <tbody>
                 ${itemRows}
-                ${emptyRows}
             </tbody>
             <tfoot>
             <tr>
@@ -440,14 +466,13 @@ tfoot {
                 <tr class="footer-last-rows">
                     <td colspan="2">Printed Name :</td>
                     <td></td>
-                    <td> ${signatories?.requested_by || ''}</td>
-                    <td colspan="3"> ${signatories?.approved_by || ''} </td>
-                    <td colspan="3">${signatories?.issued_by || ''}</td>
-                    <td>${signatories?.recieved_by || ''}</td>
+                    <td> ${signatories?.requested_by || ""}</td>
+                    <td colspan="3"> ${signatories?.approved_by || ""} </td>
+                    <td colspan="3">${signatories?.issued_by || ""}</td>
+                    <td>${signatories?.recieved_by || ""}</td>
                 </tr>
                 <tr class="footer-last-rows">
-                    <td>Designation :</td>
-                    <td></td>
+                    <td colspan="2">Designation :</td>
                     <td></td>
                     <td></td>
                     <td colspan="3"></td>
