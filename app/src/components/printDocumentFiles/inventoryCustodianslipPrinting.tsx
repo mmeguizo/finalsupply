@@ -11,6 +11,8 @@ export const getInventoryTemplateForICS = (signatories : any,reportData: any) =>
   
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
+  const icsIds = Array.from(new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)));
+  const icsIdsDisplay = icsIds.join(', ');
   
   // Generate rows for each item
   const itemRows = itemsArray
@@ -342,7 +344,7 @@ tfoot {
                             </div>
                             <div></div>
                             <div>
-                                <span>ICS No. ${itemsArray[0]?.icsId || ''}</span>
+                                <span>ICS No. ${escapeHtml(icsIdsDisplay)}</span>
                                 <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
                             </div>
                         </div>

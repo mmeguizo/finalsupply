@@ -10,6 +10,9 @@ export const getRequisitionAndIssueSlip = (signatories : any, reportData: any) =
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
   
   const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
+  // Collect unique RIS IDs
+  const risIds = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
+  const risIdsDisplay = risIds.join(', ');
   
   // Generate rows for each item (supports array input). description, specification and generalDescription are escaped;
   // specification and generalDescription preserve newlines via nl2br.
@@ -367,7 +370,7 @@ tfoot {
                     <th colspan="3">
                         <div>
                             <span>Responsibility Center Code : <span></span></span>
-                            <span>RIS No. : ${itemsArray[0]?.risId || ''}</span>
+                            <span>RIS No. : ${escapeHtml(risIdsDisplay)}</span>
                         </div>
                     </th>
                 </tr>

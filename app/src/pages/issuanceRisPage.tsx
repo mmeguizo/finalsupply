@@ -25,6 +25,8 @@ import { PageContainer } from "@toolpad/core/PageContainer";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PreviewIcon from "@mui/icons-material/Preview";
+import PrintIcon from "@mui/icons-material/Print";
+import Checkbox from "@mui/material/Checkbox";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintReportDialogForRIS from "../components/printReportModalForRIS";
 import {
@@ -41,6 +43,56 @@ import { risIssuanceSignatories } from "../types/user/userType";
 function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
   const { row, handleOpenPrintModal } = props;
   const [open, setOpen] = React.useState(false);
+  const [idSearch, setIdSearch] = React.useState("");
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+
+  const filteredItems = React.useMemo(() => {
+    const term = idSearch.trim().toLowerCase();
+    if (!term) return row.items;
+    return row.items.filter((item: any) =>
+      (item.risId || "").toLowerCase().includes(term)
+    );
+  }, [row.items, idSearch]);
+
+  const isItemSelected = (id: string) => selectedIds.has(id);
+  const toggleItem = (item: any) => {
+    if (!item?.risId) return; // only allow selecting items with a RIS ID
+    const id = String(item.id);
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const allFilteredSelected = React.useMemo(() => {
+    if (!filteredItems.length) return false;
+    const selectable = filteredItems.filter((it: any) => !!it.risId);
+    if (!selectable.length) return false;
+    return selectable.every((it: any) => selectedIds.has(String(it.id)));
+  }, [filteredItems, selectedIds]);
+
+  const someFilteredSelected = React.useMemo(() => {
+    return filteredItems.some((it: any) => selectedIds.has(String(it.id)));
+  }, [filteredItems, selectedIds]);
+
+  const toggleSelectAllFiltered = (checked: boolean) => {
+    const next = new Set(selectedIds);
+    if (checked) {
+      filteredItems.forEach((it: any) => {
+        if (it.risId) next.add(String(it.id));
+      });
+    } else {
+      filteredItems.forEach((it: any) => next.delete(String(it.id)));
+    }
+    setSelectedIds(next);
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const printSelected = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const items = row.items.filter((it: any) => selectedIds.has(String(it.id)));
+    if (items.length) handleOpenPrintModal(items);
+  };
 
   return (
     <React.Fragment>
@@ -80,9 +132,36 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
               <Typography variant="h6" gutterBottom component="div">
                 RIS Items Details
               </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
+                <TextField
+                  size="small"
+                  label="Search RIS ID"
+                  value={idSearch}
+                  onChange={(e) => setIdSearch(e.target.value)}
+                />
+                <Button size="small" onClick={clearSelection}>Clear</Button>
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<PrintIcon fontSize="small" />}
+                  onClick={printSelected}
+                  disabled={selectedIds.size === 0}
+                >
+                  Print Selected
+                </Button>
+              </Box>
               <Table size="small" aria-label="ris-details">
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={allFilteredSelected}
+                        indeterminate={!allFilteredSelected && someFilteredSelected}
+                        onChange={(e) => toggleSelectAllFiltered(e.target.checked)}
+                        inputProps={{ 'aria-label': 'select all filtered' }}
+                      />
+                    </TableCell>
                     <TableCell>RIS ID</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Unit</TableCell>
@@ -92,11 +171,19 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
                     <TableCell align="right">Amount</TableCell>
                     <TableCell>Category</TableCell>
                     <TableCell>Tag</TableCell>
+                    <TableCell>Print</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.items.map((item: any) => (
+                  {filteredItems.map((item: any) => (
                     <TableRow key={item.id}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isItemSelected(String(item.id))}
+                          onChange={() => toggleItem(item)}
+                          disabled={!item.risId}
+                        />
+                      </TableCell>
                       <TableCell component="th" scope="row">
                         {item.risId || "Not Generated"}
                       </TableCell>
@@ -129,6 +216,19 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
                               word.charAt(0).toUpperCase() + word.slice(1)
                           )
                           .join(" ") || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="small"
+                          startIcon={<PrintIcon fontSize="small" />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenPrintModal([item]);
+                          }}
+                          disabled={!item.risId}
+                        >
+                          Print
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -184,7 +284,6 @@ export default function IssuanceRisPage() {
     {
       fetchPolicy: "cache-and-network",
       nextFetchPolicy: "cache-first",
-      pollInterval: 4000,
       notifyOnNetworkStatusChange: true,
     }
   );
@@ -238,12 +337,23 @@ export default function IssuanceRisPage() {
     setPage(0); // Reset to first page when searching
   };
 
-  // Refetch on window focus/online/visibility change
+  // Refetch on window focus/online/visibility (guarded to avoid overlaps)
   React.useEffect(() => {
-    const onFocus = () => refetch();
-    const onOnline = () => refetch();
+    const inFlight = { current: false } as { current: boolean };
+    const safeRefetch = async () => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      try {
+        await refetch();
+      } finally {
+        inFlight.current = false;
+      }
+    };
+
+    const onFocus = () => void safeRefetch();
+    const onOnline = () => void safeRefetch();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refetch();
+      if (document.visibilityState === "visible") void safeRefetch();
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);

@@ -16,6 +16,27 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
       .replace(/'/g, "&#039;");
   
   const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, "<br/>");
+
+  // Currency formatter for PHP with thousand separators
+  const formatCurrency = (value: any) => {
+    const num = Number(value) || 0;
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  // Collect all unique PAR IDs from the items
+  const parIds = Array.from(
+    new Set(
+      itemsArray
+        .map((item: any) => item?.parId)
+        .filter((id: any) => !!id)
+    )
+  );
+  const parIdsDisplay = parIds.length ? parIds.join(', ') : '';
   
   // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
   const itemRows = itemsArray
@@ -37,8 +58,8 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
             ${specHtml}
             ${genHtml}
           </td>
-          <td>${escapeHtml(item.unitCost || "")}</td>
-          <td>${escapeHtml(item.amount || "")}</td>
+          <td>${escapeHtml(formatCurrency(item.unitCost))}</td>
+          <td>${escapeHtml(formatCurrency(item.amount))}</td>
         </tr>
       `;
     })
@@ -46,6 +67,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   
   // Get the first item for header information
   const firstItem = itemsArray[0] || {};
+  // Note: We display all PAR IDs instead of the PO number in the header
   const poNumber = firstItem.PurchaseOrder?.poNumber || '';
   const supplier = firstItem.PurchaseOrder?.supplier || '';
   const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || '';
@@ -56,8 +78,8 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   
   // Format totals
-  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : totalUnitCost.toFixed(2);
-  const formatTotalAmount = isNaN(totalAmount) ? '' : totalAmount.toFixed(2);
+  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : formatCurrency(totalUnitCost);
+  const formatTotalAmount = isNaN(totalAmount) ? '' : formatCurrency(totalAmount);
   
   return `
 <html lang="en">
@@ -320,7 +342,7 @@ table {
               <div>
                 <div></div>
                 <div></div>
-                <div>PAR#: ${poNumber}</div>
+                <div>PAR#: ${escapeHtml(parIdsDisplay)}</div>
               </div>
               <div>
                 <p>Appendix 71</p>

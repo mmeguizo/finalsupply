@@ -127,6 +127,12 @@ export default function InventoryCustodianSlip({
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
 
+  // Build a display string of unique ICS IDs
+  const icsIdsDisplay = React.useMemo(() => {
+    const ids = Array.from(new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)));
+    return ids.join(', ');
+  }, [itemsArray]);
+
   return (
     <>
       <PrintControls sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
@@ -237,12 +243,8 @@ export default function InventoryCustodianSlip({
                             marginLeft: "calc(3rem * -1)"
                           }}
                         >
-                          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                            ICS No: 
-                          </Typography>
-                          <Box sx={{ borderBottom: "1px solid #000" }}>
-                            {itemsArray[0]?.icsId || ""}
-                          </Box>
+                          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>ICS No: </Typography>
+                          <Box sx={{ borderBottom: "1px solid #000" }}>{icsIdsDisplay}</Box>
                         </Box>
                       </Box>
                     </Box>
@@ -260,9 +262,7 @@ export default function InventoryCustodianSlip({
                       <Typography sx={{ fontSize: "14px" }}>
                         Entity Name: Carlos Hilado Memorial State University
                       </Typography>
-                      <Typography sx={{ fontSize: "14px" }}>
-                        Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
-                      </Typography>
+                      <Typography sx={{ fontSize: "14px" }}>Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
                     </Box>
                   </Box>
                 </HeaderTableCell>
