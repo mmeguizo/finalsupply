@@ -135,6 +135,14 @@ export default function RequisitionReport({
   // Format the total amount
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
 
+  // Build a display string of unique RIS IDs from the report data
+  const risIdsDisplay = React.useMemo(() => {
+    const ids = Array.from(
+      new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean))
+    );
+    return ids.join(', ');
+  }, [itemsArray]);
+
   return (
     <>
       <PrintControls
@@ -243,7 +251,7 @@ export default function RequisitionReport({
                           alignItems: "end",
                         }}
                       >
-                        No. {itemsArray[0]?.risId || ""}
+                        No. {risIdsDisplay}
                       </Box>
                       <Box
                         sx={{
@@ -333,9 +341,7 @@ export default function RequisitionReport({
                       <Box
                         sx={{ borderBottom: "1px solid #000", width: "100%" }}
                       >
-                        {" "}
-                        &nbsp; &nbsp;
-                        {itemsArray[0]?.PurchaseOrder?.poNumber || ""}
+                        {" "}&nbsp; &nbsp;{risIdsDisplay}
                       </Box>
                     </Box>
                   </Box>

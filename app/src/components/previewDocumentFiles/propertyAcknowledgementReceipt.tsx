@@ -138,9 +138,17 @@ export default function PropertyAcknowledgementReceipt({
   }, 0);
   
   // Format the total amount
-  // Format the total amount
-  const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
-  const formatTotalUnitCost = `₱${totalUnitCost.toFixed(2)}`;
+  const formatCurrency = (value: any) =>
+    new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2 }).format(Number(value) || 0);
+  const formatTotalAmount = formatCurrency(totalAmount);
+  const formatTotalUnitCost = formatCurrency(totalUnitCost);
+
+  // Build a display string of unique PAR IDs from the report data
+  const parIdsDisplay = React.useMemo(() => {
+    const items = Array.isArray(reportData) ? reportData : (reportData ? [reportData] : []);
+    const ids = Array.from(new Set(items.map((it: any) => it?.parId).filter(Boolean)));
+    return ids.join(', ');
+  }, [reportData]);
 
 
   return (
@@ -241,7 +249,7 @@ export default function PropertyAcknowledgementReceipt({
                           fontWeight: 600
                         }}
                       >
-                        PAR#: {reportData && reportData[0]?.parId || ""}
+                        PAR#: {parIdsDisplay}
                       </Box>
                     </Box>
 
@@ -331,8 +339,8 @@ export default function PropertyAcknowledgementReceipt({
                         )}
                       </Box>
                     </StyledTableCell>
-                    <StyledTableCell align="right">{reportData.unitCost}</StyledTableCell>
-                    <StyledTableCell align="right">{reportData.amount}</StyledTableCell>
+                    <StyledTableCell align="right">{formatCurrency(reportData.unitCost)}</StyledTableCell>
+                    <StyledTableCell align="right">{formatCurrency(reportData.amount)}</StyledTableCell>
                   </StyledTableRow>
                 ))
               : (
@@ -400,7 +408,7 @@ export default function PropertyAcknowledgementReceipt({
                         gap: "3px"
                       }}
                     >
-                      Date: {reportData?.PurchaseOrder?.dateOfDelivery || ""}
+                      Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -443,7 +451,7 @@ export default function PropertyAcknowledgementReceipt({
                         gap: "2px"
                       }}
                     >
-                      Date: {reportData?.PurchaseOrder?.dateOfPayment || ""}
+                      Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}
                     </Box>
                   </Box>
                 </StyledTableCell>
