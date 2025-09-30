@@ -1,16 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  styled
-} from "@mui/material";
+import React, { useRef, useEffect } from "react";
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled } from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
 import useSignatoryStore from "../../stores/signatoryStore";
@@ -20,13 +9,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
   padding: "4px",
   fontSize: "12px",
-  fontWeight: "normal"
+  fontWeight: "normal",
 }));
 
 const StyledTableCellHeader = styled(StyledTableCell)(({ theme }) => ({
   whiteSpace: "nowrap",
   textAlign: "left",
-  padding: "0px 6px"
+  padding: "0px 6px",
 }));
 
 const StyledTableRow = styled(TableRow)({
@@ -36,55 +25,43 @@ const StyledTableRow = styled(TableRow)({
 });
 
 const HeaderTableCell = styled(StyledTableCell)({
-  padding: 0
+  padding: 0,
 });
 
 // Improved PrintContainer with better print isolation
 const PrintContainer = styled(Box)({
-  '@media print': {
-    position: 'fixed',
+  "@media print": {
+    position: "fixed",
     left: 0,
     top: 0,
-    width: '210mm',
-    height: '297mm',
+    width: "210mm",
+    height: "297mm",
     margin: 0,
     padding: 0,
-    pageBreakAfter: 'always',
-    backgroundColor: 'white',
+    pageBreakAfter: "always",
+    backgroundColor: "white",
     zIndex: 9999,
-    visibility: 'visible'
-  }
+    visibility: "visible",
+  },
 });
 
 // Controls for buttons that shouldn't print
 const PrintControls = styled(Box)({
-  '@media print': {
-    display: 'none !important'
-  }
+  "@media print": {
+    display: "none !important",
+  },
 });
 
-
-export default function PropertyAcknowledgementReceipt({
-  signatories,
-  reportData,
-  onPrint,
-  onClose,
-}: genericPreviewProps) {
+export default function PropertyAcknowledgementReceipt({ signatories, reportData, onPrint, onClose }: genericPreviewProps) {
   const componentRef = useRef(null);
-  console.log({PropertyAcknowledgementReceipt :reportData})
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
-  );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  console.log({ PropertyAcknowledgementReceipt: reportData });
+  const InspectorOffice = useSignatoryStore((state) => state.getSignatoryByRole("Inspector Officer"));
+  const supplyOffice = useSignatoryStore((state) => state.getSignatoryByRole("Property And Supply Officer"));
+  const receivedFrom = useSignatoryStore((state) => state.getSignatoryByRole("Recieved From"));
   // Create and inject print styles dynamically
   useEffect(() => {
     // Create a style element
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.innerHTML = `
       @media print {
         @page {
@@ -114,21 +91,19 @@ export default function PropertyAcknowledgementReceipt({
         }
       }
     `;
-    
+
     // Append the style to the document head
     document.head.appendChild(style);
-    
+
     // Clean up on component unmount
     return () => {
       document.head.removeChild(style);
     };
   }, []);
 
-    // Check if reportData is an array, if not, convert it to an array for consistent handling
-    const itemsArray = Array.isArray(reportData) 
-    ? reportData.filter(item => item !== null && item !== undefined) 
-    : (reportData ? [reportData] : []);
-  
+  // Check if reportData is an array, if not, convert it to an array for consistent handling
+  const itemsArray = Array.isArray(reportData) ? reportData.filter((item) => item !== null && item !== undefined) : reportData ? [reportData] : [];
+
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
     return sum + (item?.amount || 0);
@@ -136,31 +111,28 @@ export default function PropertyAcknowledgementReceipt({
   const totalUnitCost = itemsArray.reduce((sum, item) => {
     return sum + (item?.unitCost || 0);
   }, 0);
-  
+
   // Format the total amount
-  const formatCurrency = (value: any) =>
-    new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2 }).format(Number(value) || 0);
+  const formatCurrency = (value: any) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", minimumFractionDigits: 2 }).format(Number(value) || 0);
   const formatTotalAmount = formatCurrency(totalAmount);
   const formatTotalUnitCost = formatCurrency(totalUnitCost);
 
   // Build a display string of unique PAR IDs from the report data
   const parIdsDisplay = React.useMemo(() => {
-    const items = Array.isArray(reportData) ? reportData : (reportData ? [reportData] : []);
+    const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
     const ids = Array.from(new Set(items.map((it: any) => it?.parId).filter(Boolean)));
-    return ids.join(', ');
+    return ids.join(", ");
   }, [reportData]);
 
-
   return (
-    
     <>
-      <PrintControls sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+      <PrintControls sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
         {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
         {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
       </PrintControls>
-      
+
       <Box id="printable-report" ref={componentRef}>
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid black' }}>
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid black" }}>
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
@@ -179,7 +151,7 @@ export default function PropertyAcknowledgementReceipt({
                       flexDirection: "column",
                       padding: "4px 0px",
                       position: "relative",
-                      gap: "0.5em"
+                      gap: "0.5em",
                     }}
                   >
                     <Box
@@ -189,7 +161,7 @@ export default function PropertyAcknowledgementReceipt({
                         gridTemplateColumns: "2fr 4fr 2fr",
                         gridTemplateRows: "90px",
                         alignItems: "center",
-                        textAlign: "center"
+                        textAlign: "center",
                       }}
                     >
                       <Box>
@@ -201,14 +173,14 @@ export default function PropertyAcknowledgementReceipt({
                             width: "30%",
                             height: "30%",
                             marginTop: "10%",
-                            objectFit: "contain"
+                            objectFit: "contain",
                           }}
                         />
                       </Box>
                       <Box
                         sx={{
                           display: "grid",
-                          placeItems: "center"
+                          placeItems: "center",
                         }}
                       >
                         <Typography variant="h6" sx={{ fontSize: "14px", fontWeight: "normal" }}>
@@ -229,7 +201,7 @@ export default function PropertyAcknowledgementReceipt({
                         flexGrow: 1,
                         display: "grid",
                         gridTemplateColumns: "repeat(3, 1fr)",
-                        gridTemplateRows: "3em"
+                        gridTemplateRows: "3em",
                       }}
                     >
                       <Box></Box>
@@ -237,16 +209,15 @@ export default function PropertyAcknowledgementReceipt({
                         sx={{
                           display: "grid",
                           justifyContent: "center",
-                          alignItems: "end"
+                          alignItems: "end",
                         }}
-                      >
-                      </Box>
+                      ></Box>
                       <Box
                         sx={{
                           display: "grid",
                           justifyContent: "start",
                           alignItems: "center",
-                          fontWeight: 600
+                          fontWeight: 600,
                         }}
                       >
                         PAR#: {parIdsDisplay}
@@ -258,23 +229,23 @@ export default function PropertyAcknowledgementReceipt({
                         position: "absolute",
                         top: "3px",
                         right: "3px",
-                        textAlign: "right"
+                        textAlign: "right",
                       }}
                     >
-                      <Typography 
-                        sx={{ 
+                      <Typography
+                        sx={{
                           fontFamily: "serif",
                           fontStyle: "italic",
                           fontWeight: "bold",
-                          fontSize: "16px"
+                          fontSize: "16px",
                         }}
                       >
                         Appendix 71
                       </Typography>
-                      <Typography 
-                        sx={{ 
+                      <Typography
+                        sx={{
                           fontFamily: "system-ui",
-                          fontSize: "12px"
+                          fontSize: "12px",
                         }}
                       >
                         page 1/1
@@ -295,18 +266,15 @@ export default function PropertyAcknowledgementReceipt({
             </TableHead>
 
             <TableBody>
-            
-            {reportData ? 
-                reportData.map((reportData : any, index : any) => (
+              {reportData ? (
+                reportData.map((reportData: any, index: any) => (
                   <StyledTableRow key={reportData?.id}>
                     <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
                     <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
                     <StyledTableCell align="left">
                       <Box>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {reportData.description || reportData.PurchaseOrderItem?.description || ""}
-                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{reportData.description || reportData.PurchaseOrderItem?.description || ""}</Typography>
 
                         {/* specification: preserve newlines */}
                         {(reportData.PurchaseOrderItem?.specification || reportData.specification) && (
@@ -343,21 +311,23 @@ export default function PropertyAcknowledgementReceipt({
                     <StyledTableCell align="right">{formatCurrency(reportData.amount)}</StyledTableCell>
                   </StyledTableRow>
                 ))
-              : (
+              ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
-                  <StyledTableCell ></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
-              )  }
+              )}
 
               <StyledTableRow>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell align="right" colSpan={2} sx={{ paddingLeft: "14%", fontWeight: 600 }}>Total</StyledTableCell>
-                <StyledTableCell  align="right">{formatTotalUnitCost}</StyledTableCell>
+                <StyledTableCell align="right" colSpan={2} sx={{ paddingLeft: "14%", fontWeight: 600 }}>
+                  Total
+                </StyledTableCell>
+                <StyledTableCell align="right">{formatTotalUnitCost}</StyledTableCell>
                 <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell>
               </StyledTableRow>
 
@@ -375,7 +345,7 @@ export default function PropertyAcknowledgementReceipt({
                     sx={{
                       display: "flex",
                       flexDirection: "column",
-                      padding: "2px"
+                      padding: "2px",
                     }}
                   >
                     <Box sx={{ fontWeight: 600 }}>Received from:</Box>
@@ -390,13 +360,13 @@ export default function PropertyAcknowledgementReceipt({
                         alignContent: "stretch",
                         alignItems: "stretch",
                         justifyContent: "flex-end",
-                        textAlign: "center"
+                        textAlign: "center",
                       }}
                     >
-                    <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
+                      <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
+                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>{signatories?.metadata?.recieved_from?.role || ""}</Typography>
-                     <Divider sx={{ width: "100%", margin: "5px 0" }} />
+                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Position</Typography>
                     </Box>
                     <Box
@@ -405,7 +375,7 @@ export default function PropertyAcknowledgementReceipt({
                         margin: "0 auto",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "3px"
+                        gap: "3px",
                       }}
                     >
                       Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
@@ -417,7 +387,7 @@ export default function PropertyAcknowledgementReceipt({
                     sx={{
                       display: "flex",
                       flexDirection: "column",
-                      padding: "2px"
+                      padding: "2px",
                     }}
                   >
                     <Box sx={{ fontWeight: 600 }}>Received by:</Box>
@@ -432,10 +402,10 @@ export default function PropertyAcknowledgementReceipt({
                         alignContent: "stretch",
                         alignItems: "stretch",
                         justifyContent: "flex-end",
-                        textAlign: "center"
+                        textAlign: "center",
                       }}
                     >
-                        {capitalizeFirstLetter(signatories?.recieved_by)}
+                      {capitalizeFirstLetter(signatories?.recieved_by)}
                       <Divider sx={{ width: "100%", margin: "0px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}>Signature over Printed Name</Typography>
                       {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.position)}
@@ -448,7 +418,7 @@ export default function PropertyAcknowledgementReceipt({
                         margin: "0 0",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "2px"
+                        gap: "2px",
                       }}
                     >
                       Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}
