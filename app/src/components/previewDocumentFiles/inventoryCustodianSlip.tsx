@@ -271,16 +271,16 @@ export default function InventoryCustodianSlip({
               <TableRow>
                 <StyledTableCell rowSpan={2}>Quantity</StyledTableCell>
                 <StyledTableCell rowSpan={2}>Unit</StyledTableCell>
-                <StyledTableCell colSpan={2}>Amount</StyledTableCell>
+                <StyledTableCell colSpan={2} align="center">Amount</StyledTableCell>
                 <StyledTableCell rowSpan={2} colSpan={2}>Description</StyledTableCell>
-                <StyledTableCell>Inventory</StyledTableCell>
-                <StyledTableCell>Estimated</StyledTableCell>
+                {/* <StyledTableCell>Inventory</StyledTableCell> */}
+                <StyledTableCell colSpan={2}>Estimated</StyledTableCell>
               </TableRow>
               <TableRow>
-                <StyledTableCell>Unit Cost</StyledTableCell>
-                <StyledTableCell>Total Cost</StyledTableCell>
-                <StyledTableCell>Item No.</StyledTableCell>
-                <StyledTableCell>Useful Life</StyledTableCell>
+                <StyledTableCell colSpan={2}>Unit Cost</StyledTableCell>
+                {/* <StyledTableCell>Total Cost</StyledTableCell> */}
+                {/* <StyledTableCell>Item No.</StyledTableCell> */}
+                <StyledTableCell colSpan={2}>Useful Life</StyledTableCell>
               </TableRow>
             </TableHead>
 
@@ -288,11 +288,11 @@ export default function InventoryCustodianSlip({
               {itemsArray && itemsArray.length > 0 ? (
                 itemsArray.map((item, index) => (
                   <StyledTableRow key={item?.id || index}>
-                    <StyledTableCell align="center">{item?.quantity || ''}</StyledTableCell>
-                    <StyledTableCell align="center">{item?.unit || ''}</StyledTableCell>
-                    <StyledTableCell align="right">
+                    <StyledTableCell align="center">{item?.actualQuantityReceived || ''}</StyledTableCell>
+                    <StyledTableCell colSpan={2} align="center">{item?.unit || ''}</StyledTableCell>
+                    {/* <StyledTableCell align="right">
                       {item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : '')}
-                    </StyledTableCell>
+                    </StyledTableCell> */}
                     <StyledTableCell align="right">
                       {item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : '')}
                     </StyledTableCell>
@@ -329,8 +329,8 @@ export default function InventoryCustodianSlip({
                         )}
                       </Box>
                     </StyledTableCell>
-                    <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell>
-                    <StyledTableCell align="center">5 years</StyledTableCell>
+                    {/* <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell> */}
+                    <StyledTableCell colSpan={2} align="center">5 years</StyledTableCell>
                   </StyledTableRow>
                 ))
               ) : (
@@ -346,9 +346,9 @@ export default function InventoryCustodianSlip({
               )}
               
               <StyledTableRow>
-                <StyledTableCell colSpan={3} align="right" sx={{ fontWeight: 600 }}>Total</StyledTableCell>
-                <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell>
-                <StyledTableCell colSpan={4}></StyledTableCell>
+                {/* <StyledTableCell colSpan={3} align="right" sx={{ fontWeight: 600 }}>Total</StyledTableCell> */}
+                {/* <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell> */}
+                <StyledTableCell colSpan={7}></StyledTableCell>
               </StyledTableRow>
             
               {/* Move this TableRow inside TableBody */}
@@ -387,7 +387,8 @@ export default function InventoryCustodianSlip({
                     >
                         <span>{signatories?.recieved_from}</span> 
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}></Typography>
+                      {/* <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography> */}
                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box

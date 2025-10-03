@@ -16,6 +16,12 @@ import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndI
 import { getInventoryTemplate } from "./printDocumentFiles/inventoryCustodianslip";
 import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
 
+type Props = InspectionReportDialogPropsForIAR & {
+  poOverrides?: { invoice?: string; dateOfPayment?: string };
+};
+
+
+
 export default function PrintReportDialogForIAR({
   open,
   handleClose,
@@ -23,12 +29,13 @@ export default function PrintReportDialogForIAR({
   reportType = "inspection",
   title,
   signatories = {},
-}: InspectionReportDialogPropsForIAR) {
+  poOverrides
+}: Props) {
 
   const [showPrintView, setShowPrintView] = useState(false);
 
   const getReportTemplate = (data: any) => {
-    return getInspectionReportTemplateForIAR(signatories, data);
+    return getInspectionReportTemplateForIAR(signatories, data, poOverrides);
   };
 
   const handleClosePrintView = () => {
@@ -49,38 +56,47 @@ export default function PrintReportDialogForIAR({
 
   // If print view is active, render the print-friendly report
   if (showPrintView) {
-    switch (reportType) {
-      case "property":
-        return (
-          <PropertyAcknowledgementReceipt
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
-        );
-      case "requisition":
-        return (
-          <RequisitionAndIssueSlip
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
-        );
-      case "inventory":
-        return (
-          <InventoryCustodianSlip
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
-        );
-      case "inspection":
-      default:
-        return (
+
+    return (
           <InspectionAcceptanceReportForIAR
             signatories={signatories}
             reportData={reportData}
             onClose={handleClosePrintView}
+            poOverrides={poOverrides}
           />
         );
-    }
+    // switch (reportType) {
+    //   case "property":
+    //     return (
+    //       <PropertyAcknowledgementReceipt
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "requisition":
+    //     return (
+    //       <RequisitionAndIssueSlip
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "inventory":
+    //     return (
+    //       <InventoryCustodianSlip
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "inspection":
+    //   default:
+    //     return (
+    //       <InspectionAcceptanceReportForIAR
+    //         signatories={signatories}
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    // }
   }
 
   // Otherwise, show the dialog with preview
@@ -88,7 +104,11 @@ export default function PrintReportDialogForIAR({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-  <InspectionAcceptanceReportForIAR signatories={signatories} reportData={reportData} />
+        <InspectionAcceptanceReportForIAR
+          signatories={signatories}
+          reportData={reportData}
+          poOverrides={poOverrides}
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>

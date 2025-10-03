@@ -45,16 +45,27 @@ import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from "../graphql/queries/p
 // Row component for collapsible table
 function Row(props: {
   row: any;
-  handleOpenPrintModal: (item: any) => void;
+  handleOpenPrintModal: (item: any, iarId: string) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
-  onRevert: (iarId: string) => void; // add
+  onRevert: (iarId: string) => void;
+  // added
+  invoiceOverride?: string;
+  dateOfPaymentOverride?: string;
+  onOverrideChange: (iarId: string, patch: { invoice?: string; dateOfPayment?: string }) => void;
 }) {
-  const { row, handleOpenPrintModal, onStatusUpdate, onRevert } = props;
+  const { row, handleOpenPrintModal, onStatusUpdate, onRevert, invoiceOverride, dateOfPaymentOverride, onOverrideChange } = props;
   const [open, setOpen] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
     return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
   }, [row]);
+
+  const poDefaults = {
+    invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
+    dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
+  };
+  const invoiceValue = invoiceOverride ?? poDefaults.invoice;
+  const dateValue = dateOfPaymentOverride ?? poDefaults.dateOfPayment;
 
   return (
     <React.Fragment>
@@ -88,29 +99,52 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
+        {/* NEW: Invoice input */}
+        <TableCell>
+          <TextField
+            size="small"
+            placeholder={poDefaults.invoice || "Invoice #"}
+            value={invoiceOverride ?? ""}
+            onChange={(e) => onOverrideChange(row.iarId, { invoice: e.target.value })}
+            onClick={(e) => e.stopPropagation()}
+            sx={{ minWidth: 160 }}
+          />
+        </TableCell>
+        {/* NEW: Invoice Date input */}
+        <TableCell>
+          <TextField
+            type="date"
+            size="small"
+            placeholder={poDefaults.dateOfPayment || "YYYY-MM-DD"}
+            value={dateOfPaymentOverride ?? ""}
+            onChange={(e) => onOverrideChange(row.iarId, { dateOfPayment: e.target.value })}
+            onClick={(e) => e.stopPropagation()}
+            sx={{ minWidth: 160 }}
+            InputLabelProps={{ shrink: true }}
+          />
+        </TableCell>
         <TableCell>
           <Button
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items);
+              handleOpenPrintModal(row.items, row.iarId);
             }}
             sx={{ mr: 1 }}
           >
             <PreviewIcon fontSize="medium" />
           </Button>
-         
         </TableCell>
         <TableCell>
-             {canRevert && (
+          {canRevert && (
             <Button
-            size="small"
-            color="error"
-            variant="outlined"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRevert(row.iarId);
-            }}
+              size="small"
+              color="error"
+              variant="outlined"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRevert(row.iarId);
+              }}
             >
               Revert
             </Button>
@@ -220,6 +254,14 @@ export default function InventoryPage() {
       notifyOnNetworkStatusChange: true,
     }
   );
+
+ const [iarOverrides, setIarOverrides] = React.useState<
+    Record<string, { invoice?: string; dateOfPayment?: string }>
+  >({});
+  const [poOverrides, setPoOverrides] = React.useState<
+    { invoice?: string; dateOfPayment?: string } | null
+  >(null);
+
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
   const [reportType, setReportType] = React.useState("");
@@ -262,15 +304,17 @@ export default function InventoryPage() {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingIarToRevert, setPendingIarToRevert] = React.useState<string | null>(null);
 
-  const handleOpenPrintModal = (po: any) => {
+  const handleOpenPrintModal = (poItems: any, iarId: string) => {
     setReportType("inspection");
-    setPrintPOI(po);
+    setPrintPOI(poItems);
+    setPoOverrides(iarOverrides[iarId] ?? null);
     setOpenPrintModal(true);
   };
 
   const handleClosePrintModal = () => {
     setOpenPrintModal(false);
     setPrintPOI(null);
+    setPoOverrides(null);
   };
 
   // Add this function after handleClosePrintModal (around line 177)
@@ -456,6 +500,9 @@ export default function InventoryPage() {
                   <TableCell>IAR#</TableCell>
                   <TableCell>Delivery Date</TableCell>
                   <TableCell>IAR</TableCell>
+                  {/* NEW headers */}
+                  <TableCell>Invoice#</TableCell>
+                  <TableCell>Invoice Date</TableCell>
                   <TableCell>Print</TableCell>
                   <TableCell>Revert</TableCell>
                 </TableRow>
@@ -467,7 +514,16 @@ export default function InventoryPage() {
                     row={row}
                     handleOpenPrintModal={handleOpenPrintModal}
                     onStatusUpdate={handleStatusUpdate}
-                    onRevert={handleRevertIAR} // pass handler
+                    onRevert={handleRevertIAR}
+                    // pass overrides
+                    invoiceOverride={iarOverrides[row.iarId]?.invoice}
+                    dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
+                    onOverrideChange={(iarId, patch) =>
+                      setIarOverrides((prev) => ({
+                        ...prev,
+                        [iarId]: { ...(prev[iarId] || {}), ...patch },
+                      }))
+                    }
                   />
                 ))}
               </TableBody>
@@ -503,9 +559,10 @@ export default function InventoryPage() {
         reportType={reportType}
         signatories={{
           inspectionOfficer: selectedSignatories?.recieved_by || "",
-          supplyOfficer:
-            selectedSignatories?.recieved_from || "",
+          supplyOfficer: selectedSignatories?.recieved_from || "",
         }}
+        // NEW: pass overrides
+        poOverrides={poOverrides || undefined}
       />
     </PageContainer>
   );
