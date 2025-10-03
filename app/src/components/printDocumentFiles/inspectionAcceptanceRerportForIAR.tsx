@@ -2,7 +2,8 @@ import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
-  reportData: any
+  reportData: any,
+  poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
 ) => {
   // normalize input to array
   const items: any[] = Array.isArray(reportData)
@@ -12,6 +13,8 @@ export const getInspectionReportTemplateForIAR = (
     : [];
 
   const purchaseOrder = items[0]?.PurchaseOrder || {};
+  const invoiceText = escapeHtml(String(poOverrides?.invoice ?? purchaseOrder?.invoice ?? ""));
+  const dateOfPaymentText = escapeHtml(String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? ""));
 
   // helpers already imported: escapeHtml, nl2br
   const rowsHtml = items
@@ -305,8 +308,8 @@ export const getInspectionReportTemplateForIAR = (
                <th>${reportData[0]?.PurchaseOrder?.poNumber || ""}</th>
               <th>${reportData[0]?.PurchaseOrder?.dateOfDelivery || ""}</th>
               <th>Invoice# & Date:</th>
-              <th colspan="2">${reportData[0]?.PurchaseOrder?.invoice || ""} </th>
-               <th> ${reportData[0]?.PurchaseOrder?.dateOfPayment || ""}</th>
+              <th colspan="2">${invoiceText} </th>
+               <th>${dateOfPaymentText}</th>
             </tr>
             <tr>
               <th colspan="3">Requisitioning Office/Department:</th>

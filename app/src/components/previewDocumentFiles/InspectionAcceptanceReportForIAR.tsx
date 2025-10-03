@@ -68,7 +68,8 @@ export default function InspectionAcceptanceReportForIAR({
   reportData,
   onPrint,
   onClose,
-}: InspectionAcceptanceReportPropsForIAR) {
+  poOverrides, // NEW: optional overrides { invoice, dateOfPayment }
+}: any) {
 
   const componentRef = useRef(null);
   // Use signatories provided by parent (Inventory page)
@@ -84,6 +85,8 @@ export default function InspectionAcceptanceReportForIAR({
 
   // purchase order info (use first item if array)
   const purchaseOrder = items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
+  const invoiceText = (poOverrides?.invoice ?? purchaseOrder?.invoice ?? "") as string;
+  const dateOfPaymentText = (poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "") as string;
 
   const totalAmount = items.reduce(
     (sum, it) => sum + Number(it?.amount ?? 0),
@@ -298,10 +301,10 @@ export default function InspectionAcceptanceReportForIAR({
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>Invoice# & Date:</StyledTableCellHeader>
                 <StyledTableCellHeader colSpan={2}>
-                  {purchaseOrder?.invoice || ""}
+                  {invoiceText}
                 </StyledTableCellHeader>
                 <StyledTableCellHeader>
-                  {purchaseOrder?.dateOfPayment || ""}
+                  {dateOfPaymentText}
                 </StyledTableCellHeader>
               </TableRow>
 

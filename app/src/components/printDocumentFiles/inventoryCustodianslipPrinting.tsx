@@ -27,42 +27,37 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any) =>
       const unitCostDisplay = item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : "");
       const amountDisplay = item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : "");
 
-      let row = `
-                <tr>
-                    <td>${escapeHtml(item?.quantity || "")}</td>
-                    <td>${escapeHtml(item?.unit || "")}</td>
-                    <td>${unitCostDisplay}</td>
-                    <td>${amountDisplay}</td>
-                    <td colspan="2">${desc}${specHtml}${genHtml}</td>
-                    <td style="text-align: center">${escapeHtml(item?.inventoryNumber || "")}</td>
-                    <td>5 years</td>
-                </tr>
-      `;
+    let row = `
+        <tr>
+          <td>${escapeHtml(item?.actualQuantityReceived || "")}</td>
+          <td colspan="2">${escapeHtml(item?.unit || "")}</td>
+          <td>${amountDisplay}</td>
+          <td colspan="2">${desc}${specHtml}${genHtml}</td>
+          <td colspan="2" style="text-align: center">5 years</td>
+        </tr>
+    `;
 
       if (index === itemsArray.length - 1) {
         row += `
         <tr>
           <td></td>
-          <td></td>
-          <td></td>
+          <td colspan="2"></td>
           <td></td>
           <td colspan="2" style="text-align: center;">********Nothing Follows********</td>
-          <td></td>
-          <td></td>
+          <td  colspan="2"></td>
         </tr>
         `;
-
-        row += `
-          <tr>
-            <td style="height: 100%"></td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td colspan="2">&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-          </tr>
-        `;
+        // row += `
+        //   <tr>
+        //     <td style="height: 100%"></td>
+        //     <td>&nbsp;</td>
+        //     <td>&nbsp;</td>
+        //     <td>&nbsp;</td>
+        //     <td colspan="2">&nbsp;</td>
+        //     <td>&nbsp;</td>
+        //     <td>&nbsp;</td>
+        //   </tr>
+        // `;
       }
       return row;
     })
@@ -73,7 +68,7 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any) =>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Requisition and Issue Slip</title>
+  <title>Inventory Custodian Slip</title>
     <link rel="stylesheet" href="./assets/styles/style.css">
 </head>
 <style>
@@ -359,32 +354,29 @@ tfoot {
                 </tr>
                 <tr class="header-2nd-row">
                     <th rowspan="2">Quantity</th>
-                    <th rowspan="2">Unit</th>
-                    <th colspan="2">Amount</th>
+                    <th  colspan="2" rowspan="2">Unit</th>
+                    <th >Amount</th>
                     <th rowspan="2" colspan="2">Description</th>
-                    <th>Inventory</th>
-                    <th>Estimated</th>
+                    <th  colspan="2">Estimated</th>
                 </tr>
                 <tr class="header-3rd-row">
-                    <th>Unit Cost</th>
-                    <th>Total Cost</th>
-                    <th>Item No.</th>
-                    <th>Useful Life</th>
+                  <th  >Unit Cost</th>
+                  <th colspan="2">Useful Life</th>
                 </tr>
             </thead>
             <tbody>
                 ${itemRows}
             </tbody>
             <tfoot>
-               <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Total</td>
-                    <td>${formatTotalAmount}</td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+         <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+        </tr>
                 <tr>
                     <td colspan="8">
                         <span style="font-weight: lighter; font-size: 12px;">
@@ -399,7 +391,7 @@ tfoot {
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
                                 <span> ${signatories?.recieved_from} </span>
                                 <hr style="width: 100%; margin: 5px 0;" />
-                                <span style="font-weight: 600;">${itemsArray[0]?.PurchaseOrder?.supplier || ""}</span>
+                                <span style="font-weight: 600;"></span>
                                 <hr style="width: 100%; margin: 5px 0;" />
                             </div>
                             <div style="text-align: center; margin: 0 auto; display: flex; flex-direction: column; gap: 3px;">
@@ -442,5 +434,18 @@ tfoot {
 /*
 <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ''}</span>
 <span>Date: ${itemsArray[0]?.PurchaseOrder?.dateOfPayment || ''}</span>
+// line 402
+     <span style="font-weight: 600;">${itemsArray[0]?.PurchaseOrder?.supplier || ""}</span>
+//line 382
+      <td>Total</td>
+                    <td>${formatTotalAmount}</td>
+                    //line 365
+                     <th>Inventory</th>
+
+                     //line 370
+                       <th>Total Cost</th>
+                    <th>Item No.</th>
+                    //line 34
+                      <td>${unitCostDisplay}</td>
 
 */
