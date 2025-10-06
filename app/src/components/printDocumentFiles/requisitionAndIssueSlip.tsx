@@ -27,7 +27,7 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
 
       let row = `
                 <tr>
-                    <td>${escapeHtml(item?.id ?? "")}</td>
+                    <td>${escapeHtml(" ")}</td>
                     <td>${index + 1}</td>
                     <td>${escapeHtml(item?.unit ?? "")}</td>
                     <td colspan="2">
@@ -35,10 +35,10 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
                       ${specHtml}
                       ${genHtml}
                     </td>
-                    <td>${escapeHtml(String(item?.quantity ?? ""))}</td>
+                    <td>${escapeHtml(String(item?.actualQuantityReceived ?? ""))}</td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td>${escapeHtml(String(item?.actualQuantityReceived ?? ""))}</td>
+                    <td>${escapeHtml(String( " "))}</td>
                     <td></td>
                 </tr>
       `;
@@ -430,8 +430,8 @@ tfoot {
                     <td></td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td>Total</td>
-                    <td>${formatTotalAmount}</td>
+                    <td> </td>
+                    <td> </td>
                 </tr>
                 <tr class="footer-1st-row">
                     <td colspan="2">

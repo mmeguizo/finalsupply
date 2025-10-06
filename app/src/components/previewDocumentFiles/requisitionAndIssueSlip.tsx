@@ -402,7 +402,7 @@ export default function RequisitionReport({
               {itemsArray?.length > 0 ? (
                 itemsArray.map((item: any, index: any) => (
                   <StyledTableRow key={index}>
-                    <StyledTableCell>{item.id || ""}</StyledTableCell>
+                    <StyledTableCell>{" "}</StyledTableCell>
                     <StyledTableCell>{index + 1 || ""}</StyledTableCell>
                     <StyledTableCell>{item.unit || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}>
@@ -436,10 +436,10 @@ export default function RequisitionReport({
                         )}
                       </Box>
                     </StyledTableCell>
-                    <StyledTableCell>{item.quantity || ""}</StyledTableCell>
+                    <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
+                    <StyledTableCell>{" "}</StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
                 ))
@@ -465,9 +465,9 @@ export default function RequisitionReport({
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell align="right">Total</StyledTableCell>
+                <StyledTableCell align="right"> {" "} </StyledTableCell>
                 <StyledTableCell align="right">
-                  {formatTotalAmount}
+                  {/* {formatTotalAmount} */ " "}
                 </StyledTableCell>
               </StyledTableRow>
             </TableBody>
