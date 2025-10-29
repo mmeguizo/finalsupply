@@ -23,6 +23,7 @@
   import SignatoriesComponent from "./issuanceIcsFunctions/SignatorySelectionContainer";
   import { formatDateString } from "../utils/generalUtils";
   import PrintReportDialogForICS from "../components/printReportModalForICS";
+  import useSignatoryStore from "../stores/signatoryStore";
 
   // Type definition for the signatory data
   interface icsIssuanceSignatories {
@@ -54,15 +55,18 @@
     const [reportType, setReportType] = React.useState("");
     const [title, setTitle] = React.useState("");
 
-    // Initialize signatories state. Keep blank until user selects via SignatorySelectionContainer.
-    const [signatories, setSignatories] = React.useState<icsIssuanceSignatories>({
+    // Persist selections across navigation using store
+    const getSelections = useSignatoryStore((s) => s.getSelections);
+    const setSelections = useSignatoryStore((s) => s.setSelections);
+    const icsDefault: icsIssuanceSignatories = React.useMemo(() => ({
       recieved_from: "",
       recieved_by: "",
       metadata: {
         recieved_from: { position: "", role: "" },
         recieved_by: { position: "", role: "" }
       }
-    });
+    }), []);
+    const signatories: icsIssuanceSignatories = getSelections("ics") || icsDefault;
 
     // Safer derived list
     const icsList = data?.inspectionAcceptanceReportForICS ?? [];
@@ -160,7 +164,7 @@
 
     // Handle signatory changes
     const onSignatoriesChange = (selectedSignatories: icsIssuanceSignatories) => {
-      setSignatories(selectedSignatories);
+      setSelections("ics", selectedSignatories);
     };
 
     if (loading) return <CircularProgress />;

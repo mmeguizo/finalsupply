@@ -650,6 +650,8 @@ export default function PurchaseOrderModal({
                           type="number"
                           value={item.quantity ?? 0}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
+                          // Disable editing quantity when the purchase order is completed
+                          disabled={purchaseOrder?.status === "completed"}
                           inputProps={{ style: { textAlign: "right" } }}
                         />
                       </Grid>
@@ -669,8 +671,30 @@ export default function PurchaseOrderModal({
                           fullWidth
                           size="small"
                           value={item.currentInput || ""}
-                          onChange={(e) => updateItem(index, "currentInput", Number(e.target.value))}
-                          inputProps={{ style: { textAlign: "right" } }}
+                          type="number"
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const remaining = Math.max(0, Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0));
+                            // Allow clearing the input box
+                            if (raw === "") {
+                              updateItem(index, "currentInput", "");
+                              return;
+                            }
+                            const numeric = Number(raw);
+                            if (Number.isNaN(numeric)) {
+                              // ignore non-numeric
+                              return;
+                            }
+                            const clamped = Math.min(Math.max(0, numeric), remaining);
+                            updateItem(index, "currentInput", clamped);
+                          }}
+                          disabled={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0}
+                          placeholder={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0 ? "Fully received" : undefined}
+                          inputProps={{
+                            style: { textAlign: "right" },
+                            min: 0,
+                            max: Math.max(0, Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)),
+                          }}
                         />
                       </Grid>
 
