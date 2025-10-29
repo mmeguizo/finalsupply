@@ -142,9 +142,6 @@ export default function PurchaseOrder() {
     if (!selectedPO?.items) return [];
 
     return selectedPO.items.map((item: any) => ({
-      // formatUnitCost: item.unitCost ? `₱${item.unitCost.toFixed(2)}` : "0.00",
-      // formatAmount: item.amount ? `₱${item.amount.toFixed(2)}` : "0.00",
-      // Use the GraphQL id; fall back to a stable synthetic id only if necessary
       id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
       formatUnitCost: currencyFormat(item.unitCost),
