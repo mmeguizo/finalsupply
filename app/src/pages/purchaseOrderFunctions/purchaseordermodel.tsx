@@ -12,6 +12,7 @@ import {
   IconButton,
   Box,
 } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 // @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -51,6 +52,7 @@ export default function PurchaseOrderModal({
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [recievedLimit, setrecievedLimit] = React.useState(0);
   const [addItemButton, setAddItemButtonDisable] = React.useState(false);
+  const isEditing = !!purchaseOrder;
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState<any>({
@@ -146,6 +148,8 @@ export default function PurchaseOrderModal({
       setAddingItem(false);
       setHasSubmitted(false);
     } else {
+      // Reset when adding new PO to avoid stale state from previous edit session
+      setAddItemButtonDisable(false);
       setFormData({
         poNumber: "",
         supplier: "",
@@ -314,13 +318,37 @@ export default function PurchaseOrderModal({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {purchaseOrder
-          ? "Update Recieved Item or Invoice"
-          : "Add Purchase Order"}
+    <Dialog
+      key={isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add'}
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {purchaseOrder ? "Update Recieved Item or Invoice" : "Add Purchase Order"}
+        <Chip
+          label={isEditing ? `Edit • ${String(formData.status || purchaseOrder?.status || '').toUpperCase() || 'PENDING'}` : 'Add'}
+          size="small"
+          color={isEditing && String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed' ? 'default' : 'primary'}
+        />
       </DialogTitle>
       <DialogContent>
+        {(() => {
+          const addItemDisabled = !isEditing
+            ? false
+            : String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed";
+          console.log("[PO Model] render", {
+            dialogKey: isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add',
+            open,
+            isEditing,
+            formStatus: formData.status,
+            poStatus: purchaseOrder?.status,
+            addItemDisabled,
+            items: formData.items?.length || 0,
+          });
+          return null;
+        })()}
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic PO Info */}
           {purchaseOrder ? null : (
@@ -494,7 +522,13 @@ export default function PurchaseOrderModal({
                 variant="contained"
                 size="small"
                 sx={{ ml: 2 }}
-                disabled={addItemButton}
+                disabled={
+                  // In Add mode, always allow adding items
+                  !isEditing
+                    ? false
+                    : // In Edit mode, disable if current status is completed (prefer formData.status if present)
+                      String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed"
+                }
               >
                 Add Item
               </Button>

@@ -38,9 +38,11 @@ import {
 } from "../utils/generalUtils";
 import { Select, MenuItem, Chip } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { UPDATE_IAR_STATUS, REVERT_IAR_BATCH } from "../graphql/mutations/inventoryIAR.mutation";
+import { UPDATE_IAR_STATUS, REVERT_IAR_BATCH, APPEND_TO_EXISTING_IAR } from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
 import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query";
+// @ts-ignore
+import { UPDATE_PURCHASEORDER } from "../graphql/mutations/purchaseorder.mutation";
 
 // Row component for collapsible table
 function Row(props: {
@@ -59,6 +61,87 @@ function Row(props: {
     if (!row?.items?.length) return false;
     return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
   }, [row]);
+
+  // Local state to add a NEW item into the same Purchase Order directly from Inventory
+  const [newItemDraft, setNewItemDraft] = React.useState<any>({
+    description: "",
+    unit: "",
+    quantity: 0,
+    unitCost: 0,
+    received: 0,
+    category: "requisition issue slip",
+  });
+
+  // Mutation to update item details (description/unit) via Purchase Order
+  const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Mutation to append a new IAR line under the same IAR ID
+  const [appendToExistingIAR] = useMutation(APPEND_TO_EXISTING_IAR, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Per-item add-line drafts keyed by purchaseOrderItemId
+  const [iarLineDrafts, setIarLineDrafts] = React.useState<Record<string, { description?: string; generalDescription?: string; specification?: string; received?: number }>>({});
+
+  const handleAddNewItem = async () => {
+    try {
+      const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+      if (!poId) return;
+
+      const q = Number(newItemDraft.quantity || 0);
+      const uc = Number(newItemDraft.unitCost || 0);
+      const recv = Number(newItemDraft.received || 0);
+      const amt = q * uc;
+
+      // Basic validation: must have description and non-negative numbers; received cannot exceed quantity
+      if (!newItemDraft.description?.trim()) return;
+      if (q <= 0 || uc < 0 || recv < 0 || recv > q) return;
+
+      const payloadItem = {
+        id: "temp", // signals backend to create a new PO item
+        description: newItemDraft.description,
+        unit: newItemDraft.unit,
+        quantity: q,
+        unitCost: uc,
+        amount: amt,
+        category: newItemDraft.category,
+        currentInput: recv, // immediately receive this amount and create IAR/history
+      };
+
+      await updatePurchaseOrder({
+        variables: {
+          input: {
+            id: Number(poId),
+            items: [payloadItem],
+          },
+        },
+      });
+
+      // Reset draft row
+      setNewItemDraft({
+        description: "",
+        unit: "",
+        quantity: 0,
+        unitCost: 0,
+        received: 0,
+        category: "requisition issue slip",
+      });
+    } catch (e) {
+      console.error("Failed to add new PO item from Inventory:", e);
+    }
+  };
 
   const poDefaults = {
     invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
@@ -162,6 +245,8 @@ function Row(props: {
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
+                    <TableCell>General Desc.</TableCell>
+                    <TableCell>Specification</TableCell>
                     <TableCell>Unit</TableCell>
                     <TableCell align="right">Actual Received</TableCell>
                     <TableCell align="right">Quantity</TableCell>
@@ -169,17 +254,164 @@ function Row(props: {
                     <TableCell align="right">Amount</TableCell>
                     {/* <TableCell>P.O. #</TableCell> */}
                     <TableCell>Category</TableCell>
+                    <TableCell align="center">Add Line</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.items.map((item: any) => (
-                    <TableRow key={item.id}>
-                      <TableCell component="th" scope="row">
-                        {item.description}
-                      </TableCell>
-                      <TableCell>{item.unit}</TableCell>
+                  {row.items.map((item: any) => {
+                    const poi = item.PurchaseOrderItem;
+                    const isCompleted = item.PurchaseOrder?.status === "completed";
+
+                    const currentDescription = poi?.description ?? item.description ?? "";
+                    const currentGenDesc = poi?.generalDescription ?? item.generalDescription ?? "";
+                    const currentSpec = poi?.specification ?? item.specification ?? "";
+                    const currentUnit = poi?.unit ?? item.unit ?? "";
+                    const remaining = Math.max(0, Number(poi?.quantity || item.quantity || 0) - Number(poi?.actualQuantityReceived || 0));
+
+                    const handleBlur = async (
+                      field: "description" | "unit" | "generalDescription" | "specification",
+                      value: string
+                    ) => {
+                      const targetPoiId = poi?.id ?? item.purchaseOrderItemId;
+                      const poId = item.purchaseOrderId;
+                      if (!targetPoiId || !poId) return;
+
+                      // Skip if no actual change
+                      const prevVal =
+                        field === "description"
+                          ? currentDescription
+                          : field === "unit"
+                          ? currentUnit
+                          : field === "generalDescription"
+                          ? currentGenDesc
+                          : currentSpec;
+                      if ((prevVal || "") === (value || "")) return;
+
+                      try {
+                        await updatePurchaseOrder({
+                          variables: {
+                            input: {
+                              id: parseInt(String(poId), 10),
+                              items: [
+                                {
+                                  id: targetPoiId,
+                                  [field]: value,
+                                  changeReason: "Edited in Inventory details",
+                                },
+                              ],
+                            },
+                          },
+                        });
+                      } catch (e) {
+                        console.error("Failed to update item details from Inventory view", e);
+                      }
+                    };
+
+                    const draftKey = String(poi?.id ?? item.purchaseOrderItemId);
+                    const draft = iarLineDrafts[draftKey] || null;
+
+                    const updateDraft = (patch: Partial<{ description?: string; generalDescription?: string; specification?: string; received?: number }>) => {
+                      setIarLineDrafts((prev) => ({
+                        ...prev,
+                        [draftKey]: { ...(prev[draftKey] || {}), ...patch },
+                      }));
+                    };
+
+                    const clearDraft = () => {
+                      setIarLineDrafts((prev) => {
+                        const next = { ...prev } as any;
+                        delete next[draftKey];
+                        return next;
+                      });
+                    };
+
+                    const handleAddLine = async () => {
+                      if (!draft) return;
+                      const recv = Number(draft.received || 0);
+                      if (recv <= 0) return;
+                      const clamped = Math.min(recv, remaining);
+                      if (clamped <= 0) return;
+                      try {
+                        const poiIdNum = parseInt(String(poi?.id ?? item.purchaseOrderItemId), 10);
+                        if (!Number.isFinite(poiIdNum)) {
+                          console.error("Invalid purchaseOrderItemId", poi?.id, item.purchaseOrderItemId);
+                          return;
+                        }
+                        await appendToExistingIAR({
+                          variables: {
+                            iarId: row.iarId,
+                            items: [
+                              {
+                                purchaseOrderItemId: poiIdNum,
+                                received: clamped,
+                                description: draft.description || undefined,
+                                generalDescription: draft.generalDescription || undefined,
+                                specification: draft.specification || undefined,
+                              },
+                            ],
+                          },
+                        });
+                        clearDraft();
+                      } catch (e) {
+                        console.error("Failed to append IAR line", e);
+                      }
+                    };
+
+                    return (
+                      <React.Fragment key={item.id}>
+                      <TableRow>
+                        <TableCell component="th" scope="row">
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            fullWidth
+                            defaultValue={currentDescription}
+                            placeholder="Description"
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => handleBlur("description", e.target.value)}
+                            disabled={remaining === 0}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            fullWidth
+                            defaultValue={currentGenDesc}
+                            placeholder="General Description"
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => handleBlur("generalDescription", e.target.value)}
+                            disabled={remaining === 0}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            fullWidth
+                            defaultValue={currentSpec}
+                            placeholder="Specification"
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => handleBlur("specification", e.target.value)}
+                            disabled={remaining === 0}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            fullWidth
+                            value={currentUnit || "-"}
+                            placeholder="Unit"
+                            InputProps={{ readOnly: true }}
+                            sx={{ maxWidth: 160 }}
+                          />
+                        </TableCell>
                       <TableCell align="right">
-                        {item.actualQuantityReceived}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                          <Typography>{item.actualQuantityReceived}</Typography>
+                          <Typography variant="caption" color="text.secondary">Remaining: {remaining}</Typography>
+                        </Box>
                       </TableCell>
                       <TableCell align="right">{item.quantity}</TableCell>
                       <TableCell align="right">
@@ -198,8 +430,63 @@ function Row(props: {
                           )
                           .join(" ")}
                       </TableCell>
-                    </TableRow>
-                  ))}
+                      <TableCell align="center">
+                        {!draft && (
+                          <Button size="small" variant="outlined" disabled={remaining <= 0 || isCompleted} onClick={(e) => { e.stopPropagation(); updateDraft({ description: "", generalDescription: "", specification: "", received: 0 }); }}>+ Add</Button>
+                        )}
+                      </TableCell>
+                      </TableRow>
+                      {draft && (
+                        <TableRow>
+                          {/* Description */}
+                          <TableCell>
+                            <TextField size="small" fullWidth placeholder="New Description" value={draft.description ?? ""} onChange={(e) => updateDraft({ description: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                          </TableCell>
+                          {/* General Desc. */}
+                          <TableCell>
+                            <TextField size="small" fullWidth placeholder="New General Desc." value={draft.generalDescription ?? ""} onChange={(e) => updateDraft({ generalDescription: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                          </TableCell>
+                          {/* Specification */}
+                          <TableCell>
+                            <TextField size="small" fullWidth placeholder="New Specification" value={draft.specification ?? ""} onChange={(e) => updateDraft({ specification: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                          </TableCell>
+                          {/* Unit (read-only to align) */}
+                          <TableCell>
+                            <TextField size="small" fullWidth value={currentUnit || "-"} InputProps={{ readOnly: true }} onClick={(e)=>e.stopPropagation()} />
+                          </TableCell>
+                          {/* Actual Received input aligned in its column */}
+                          <TableCell align="right">
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} onClick={(e)=>e.stopPropagation()}>
+                              <TextField type="number" size="small" sx={{ width: 120 }} placeholder="Received" value={draft.received ?? ''} onChange={(e) => updateDraft({ received: Number(e.target.value) })} inputProps={{ min: 0, max: remaining }} />
+                              <Typography variant="caption" color="text.secondary">Remaining: {remaining}</Typography>
+                            </Box>
+                          </TableCell>
+                          {/* Quantity */}
+                          <TableCell align="right">{item.quantity}</TableCell>
+                          {/* Unit Cost */}
+                          <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
+                          {/* Amount */}
+                          <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
+                          {/* Category */}
+                          <TableCell>
+                            {item.category
+                              ?.split(" ")
+                              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(" ")}
+                          </TableCell>
+                          {/* Add/Cancel buttons in Add Line column */}
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                              <Button size="small" variant="contained" onClick={handleAddLine} disabled={remaining <= 0}>Add</Button>
+                              <Button size="small" onClick={clearDraft}>Cancel</Button>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      </React.Fragment>
+                    );
+                  })}
+                  {/* Add-new-item row removed per requirement to avoid adding new line items from Inventory for now */}
                 </TableBody>
               </Table>
             </Box>

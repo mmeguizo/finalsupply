@@ -342,6 +342,120 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to update IAR status");
       }
     },
+    appendToExistingIAR: async (_, { iarId, items }, context) => {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const user = context.req.user;
+
+        if (!iarId) {
+          throw new Error("IAR ID is required");
+        }
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error("No items provided");
+        }
+
+        // Load an existing IAR row to inherit document IDs (par/ics/ris)
+        const existingIar = await inspectionAcceptanceReport.findOne({
+          where: { iarId, isDeleted: false },
+          order: [["createdAt", "DESC"]],
+          transaction: t,
+        });
+
+        let appended = 0;
+        for (const line of items) {
+          const { purchaseOrderItemId, received, description, generalDescription, specification } = line;
+          if (!purchaseOrderItemId || !received || Number(received) <= 0) continue;
+
+          // Lock the POI and validate remaining
+          const poi = await PurchaseOrderItems.findByPk(purchaseOrderItemId, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+          });
+          if (!poi || poi.isDeleted) continue;
+
+          const remaining = Math.max(0, Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0));
+          const delta = Math.min(remaining, Number(received));
+          if (delta <= 0) continue;
+
+          // Update POI actual received
+          const beforeAqr = Number(poi.actualQuantityReceived || 0);
+          const afterAqr = beforeAqr + delta;
+          await PurchaseOrderItems.update(
+            { actualQuantityReceived: afterAqr },
+            { where: { id: poi.id }, transaction: t }
+          );
+
+          // Create IAR row reusing iarId and inheriting doc IDs if any
+          const iarRow = await inspectionAcceptanceReport.create(
+            {
+              itemName: poi.itemName,
+              description: description ?? poi.description,
+              generalDescription: generalDescription ?? poi.generalDescription,
+              specification: specification ?? poi.specification,
+              unit: poi.unit || existingIar?.unit || null,
+              quantity: poi.quantity,
+              unitCost: poi.unitCost,
+              amount: poi.amount,
+              category: poi.category,
+              tag: poi.tag,
+              inventoryNumber: poi.inventoryNumber,
+              iarId,
+              purchaseOrderId: poi.purchaseOrderId,
+              purchaseOrderItemId: poi.id,
+              actualQuantityReceived: delta,
+              createdBy: user.name || user.id,
+              updatedBy: user.name || user.id,
+              // inherit document IDs if present on existing IAR rows
+              parId: existingIar?.parId || null,
+              icsId: existingIar?.icsId || null,
+              risId: existingIar?.risId || null,
+            },
+            { transaction: t }
+          );
+
+          // History entry
+          await PurchaseOrderItemsHistory.create(
+            {
+              purchaseOrderItemId: poi.id,
+              purchaseOrderId: poi.purchaseOrderId,
+              itemName: poi.itemName || "",
+              description: description ?? poi.description ?? null,
+              previousQuantity: poi.quantity,
+              newQuantity: poi.quantity,
+              previousActualQuantityReceived: beforeAqr,
+              newActualQuantityReceived: afterAqr,
+              previousAmount: poi.amount,
+              newAmount: poi.amount,
+              iarId: iarRow.iarId || iarId,
+              parId: iarRow.parId || null,
+              risId: iarRow.risId || null,
+              icsId: iarRow.icsId || null,
+              changeType: "received_update",
+              changedBy: user.name || user.id,
+              changeReason: "Appended to existing IAR",
+            },
+            { transaction: t }
+          );
+
+          appended += 1;
+        }
+
+        await t.commit();
+        return {
+          success: true,
+          iarId,
+          updatedCount: appended,
+          message: appended > 0 ? `Appended ${appended} line(s) to IAR ${iarId}` : "No lines appended (nothing to receive or invalid input)",
+        };
+      } catch (error) {
+        await t.rollback();
+        console.error("appendToExistingIAR error:", error);
+        throw new Error(error.message || "Failed to append to IAR");
+      }
+    },
   },
 };
 

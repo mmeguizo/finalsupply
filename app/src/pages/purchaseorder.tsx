@@ -149,6 +149,55 @@ export default function PurchaseOrder() {
     }));
   }, [selectedPO]);
 
+  // Inline edit handler for item details (description, unit)
+  const processItemRowUpdate = React.useCallback(
+    async (newRow: any, oldRow: any) => {
+      // If nothing relevant changed, return early
+      const changedDescription = newRow.description !== oldRow.description;
+      const changedUnit = newRow.unit !== oldRow.unit;
+      if (!changedDescription && !changedUnit) return newRow;
+
+      try {
+        const resp = await updatePurchaseOrder({
+          variables: {
+            input: {
+              id: parseInt(selectedPO.id),
+              items: [
+                {
+                  id: newRow.id,
+                  description: newRow.description,
+                  unit: newRow.unit,
+                  changeReason: "Edited item details",
+                },
+              ],
+            },
+          },
+        });
+
+        // Update local selectedPO with server response to keep items in sync
+        const updated = resp?.data?.updatePurchaseOrder;
+        if (updated) {
+          setSelectedPO(updated);
+        }
+
+        setNotificationMessage("Item details updated");
+        setNotificationSeverity("success");
+        setShowNotification(true);
+        return newRow;
+      } catch (err: any) {
+        console.error("Failed to update item details", err);
+        setNotificationMessage(
+          err?.message || "Failed to update item details"
+        );
+        setNotificationSeverity("error");
+        setShowNotification(true);
+        // Revert to old row
+        return oldRow;
+      }
+    },
+    [selectedPO, updatePurchaseOrder]
+  );
+
   // Handle row click to show items
   const handleRowClick = (params: GridRowParams) => {
     const clickedPO = data?.purchaseOrders.find(
@@ -340,6 +389,11 @@ export default function PurchaseOrder() {
                   columns={itemColumns}
                   hideFooter={itemRows.length <= 10}
                   disableRowSelectionOnClick
+                  isCellEditable={() => selectedPO?.status !== "completed"}
+                  processRowUpdate={processItemRowUpdate}
+                  onProcessRowUpdateError={(error) => {
+                    console.error(error);
+                  }}
                   density="compact"
                   initialState={{
                     pagination: {
