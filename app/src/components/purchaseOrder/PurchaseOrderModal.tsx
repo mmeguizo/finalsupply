@@ -9,13 +9,14 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 // @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
 // @ts-ignore
 import AddIcon from "@mui/icons-material/Add";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -37,7 +38,12 @@ export default function PurchaseOrderModal({
 }: PurchaseOrderModalProps) {
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
-  const [actualQuantityfromDb, setActualQuantityfromDb] = React.useState(0);
+  // Track original actualQuantityReceived per item inside items state instead of a component-level value
+  // Determine if we are editing an existing PO vs creating a new one
+  const isEditing = React.useMemo(
+    () => Boolean(purchaseOrder && (purchaseOrder.id || purchaseOrder.poNumber)),
+    [purchaseOrder]
+  );
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
@@ -63,11 +69,9 @@ export default function PurchaseOrderModal({
   // Modify the disabled logic in your TextField components
   // For example:
   const isFieldDisabled = (existingValue: any) => {
-    // If editing (purchaseOrder exists) and value exists and not adding new item
-    if (purchaseOrder && existingValue && !addingItem) {
-      return true;
-    }
-    // If not editing (new PO) or adding new item
+    // Disable only when editing an existing PO and the field already has a value,
+    // unless the user has just added a new item row.
+    if (isEditing && existingValue && !addingItem) return true;
     return false;
   };
 
@@ -75,7 +79,7 @@ export default function PurchaseOrderModal({
   React.useEffect(() => {
     // Reset addingItem when modal opens/closes
     setAddingItem(false);
-    setHasSubmitted(false); // Add this line
+    setHasSubmitted(false);
     if (purchaseOrder) {
       setFormData({
         poNumber: purchaseOrder.poNumber || "",
@@ -91,17 +95,16 @@ export default function PurchaseOrderModal({
           : null,
         // items: purchaseOrder.items || [],
         items:
-          purchaseOrder.items.map((item: any) => {
-            setActualQuantityfromDb(item.actualQuantityReceived);
-            return {
-              ...item,
-              // Use the existing value instead of resetting to 0
-              actualQuantityReceived:
-                purchaseOrder.status === "completed"
-                  ? item.actualQuantityReceived
-                  : 0,
-            };
-          }) || [],
+          purchaseOrder.items.map((item: any) => ({
+            ...item,
+            // Preserve original received to compute remaining balance accurately
+            originalActualQuantityReceived: Number(item.actualQuantityReceived || 0),
+            // For non-completed POs, the input field represents this-session received amount
+            actualQuantityReceived:
+              purchaseOrder.status === "completed"
+                ? Number(item.actualQuantityReceived || 0)
+                : 0,
+          })) || [],
         amount: purchaseOrder.amount || 0,
         status: purchaseOrder.status || "",
         invoice: purchaseOrder.invoice || "",
@@ -117,11 +120,25 @@ export default function PurchaseOrderModal({
         dateOfPayment: null,
         amount: 0,
         items: [],
-        status: "",
+        status: "", // ensure status resets so no stale 'completed' can influence UI
         invoice: "",
       });
     }
   }, [purchaseOrder, open]);
+
+  // Defensive: when opening in Add mode, enforce a clean state immediately
+  React.useEffect(() => {
+    if (open && !purchaseOrder) {
+      setAddingItem(false);
+      setHasSubmitted(false);
+      setFormData((prev) => ({
+        ...prev,
+        status: "",
+      }));
+    }
+  }, [open, purchaseOrder]);
+
+  // keep status in state but avoid noisy logs in production
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,13 +195,12 @@ export default function PurchaseOrderModal({
     }
 
     // Check if quantities match to update status
-    const allItemsComplete = updatedItems.every((item) => {
-      return (
-        Number(item.quantity) ===
-          Number(item.actualQuantityReceived + actualQuantityfromDb) &&
-        item.quantity > 0
-      );
+    const allItemsComplete = updatedItems.every((itm: any) => {
+      const original = Number(itm.originalActualQuantityReceived || 0);
+      const sessionRecv = Number(itm.actualQuantityReceived || 0);
+      return Number(itm.quantity) === original + sessionRecv && Number(itm.quantity) > 0;
     });
+    // updateItem - keep logic but avoid logging
     setFormData({
       ...formData,
       items: updatedItems,
@@ -195,7 +211,7 @@ export default function PurchaseOrderModal({
   // Handle form submission
   const onSubmit = () => {
     // Clean items - remove __typename and handle _id appropriately
-    const cleanedItems = formData.items.map((item) => {
+  const cleanedItems = formData.items.map((item: any) => {
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
@@ -214,20 +230,29 @@ export default function PurchaseOrderModal({
     };
 
     // Remove __typename from the main object if it exists
-    const { __typename, ...cleanData } = formattedData;
+  const cleanData = formattedData;
     setAddingItem(false);
     handleSave(cleanData);
   };
 
+  // Compute Add Item disabled state
+  const dialogKey = isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add';
+  const addItemDisabled = !isEditing
+    ? false
+    : String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed";
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {purchaseOrder
-          ? "Update Recieved Item or Invoice"
-          : "Add Purchase Order"}
+    <Dialog key={dialogKey} open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {purchaseOrder ? "Update Recieved Item or Invoice" : "Add Purchase Order"}
+        <Chip
+          label={isEditing ? `Edit • ${String(formData.status || purchaseOrder?.status || '').toUpperCase() || 'PENDING'}` : 'Add'}
+          size="small"
+          color={isEditing && String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed' ? 'default' : 'primary'}
+        />
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
+    <DialogContent>
+  <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic PO Info */}
 
           <Grid item xs={12} md={6}>
@@ -305,8 +330,9 @@ export default function PurchaseOrderModal({
                 variant="contained"
                 size="small"
                 sx={{ ml: 2 }}
+                disabled={addItemDisabled}
               >
-                Add Item
+                Add Items {addItemDisabled}
               </Button>
             </Typography>
 
@@ -341,10 +367,10 @@ export default function PurchaseOrderModal({
                 <Grid item xs={1}>
                   <Typography variant="subtitle2">Received</Typography>
                 </Grid>
-                <Grid item xs={1.5}>
+                <Grid item xs={1}>
                   <Typography variant="subtitle2">Unit Cost</Typography>
                 </Grid>
-                <Grid item xs={1.5}>
+                <Grid item xs={2}>
                   <Typography variant="subtitle2">Amount</Typography>
                 </Grid>
               </Grid>
@@ -454,21 +480,18 @@ export default function PurchaseOrderModal({
                     value={item.actualQuantityReceived}
                     inputProps={{
                       min: 0,
-                      max: item.quantity - actualQuantityfromDb,
+                      max: Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)),
                     }}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-                      if (
-                        value >= 0 &&
-                        value <= item.quantity - item.actualQuantityReceived
-                      ) {
-                        updateItem(index, "actualQuantityReceived", value);
-                      }
+                      const remaining = Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0));
+                      const clamped = Math.min(Math.max(0, value), remaining);
+                      updateItem(index, "actualQuantityReceived", clamped);
                     }}
                     disabled={
-                      (hasSubmitted || purchaseOrder?.status === "completed") &&
-                      Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
+                      Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)) === 0 ||
+                      ((hasSubmitted || purchaseOrder?.status === "completed") &&
+                        Number(item.originalActualQuantityReceived || 0) + Number(item.actualQuantityReceived || 0) >= Number(item.quantity))
                     }
                     onFocus={() => {
                     }}
@@ -483,15 +506,14 @@ export default function PurchaseOrderModal({
                       },
                       // Optional: Add visual feedback
                       backgroundColor:
-                        Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
+                        (Number(item.originalActualQuantityReceived || 0) + Number(item.actualQuantityReceived || 0)) >= Number(item.quantity)
                           ? "action.disabledBackground"
                           : "transparent",
                     }}
                   />
                 </Grid>
 
-                <Grid item xs={1.5}>
+                <Grid item xs={1}>
                   <TextField
                     fullWidth
                     size="small"
@@ -514,7 +536,7 @@ export default function PurchaseOrderModal({
                   />
                 </Grid>
 
-                <Grid item xs={1.5}>
+                <Grid item xs={2}>
                   <TextField
                     fullWidth
                     size="small"

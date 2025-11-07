@@ -191,8 +191,14 @@ export const itemColumns: GridColDef[] = [
     valueFormatter: (params) => formatCategory(params),
   },
   { field: "itemName", headerName: "Item", width: 150 },
-  { field: "description", headerName: "Description", width: 300, flex: 1 },
-  { field: "unit", headerName: "Unit", width: 100 },
+  {
+    field: "description",
+    headerName: "Description",
+    width: 300,
+    flex: 1,
+    editable: true,
+  },
+  { field: "unit", headerName: "Unit", width: 100, editable: true },
   {
     field: "actualQuantityReceived",
     headerName: "Actual Recieved",

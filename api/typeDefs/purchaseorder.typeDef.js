@@ -24,6 +24,7 @@ type PurchaseOrder {
     isDeleted: Boolean
     createdAt: String
     completed_status_date : String
+    fundsource : String
 }
 type InspectionAcceptanceReport {
     id: ID!
@@ -110,6 +111,7 @@ type PurchaseOrderType {
     category: String
     status: String
     invoice: String
+    fundsource : String
 }
 
 type InspectionAcceptanceReportType {
@@ -200,6 +202,7 @@ input UpdatePurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    fundsource: String
     completed_status_date : String
     markingComplete : Boolean
 }
@@ -221,6 +224,7 @@ input PurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    fundsource: String
     dateOfConformity : String
     completed_status_date : String
 }

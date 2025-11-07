@@ -82,3 +82,14 @@ export const REVERT_IAR_BATCH = gql`
   }
 `;
 
+export const APPEND_TO_EXISTING_IAR = gql`
+  mutation AppendToExistingIAR($iarId: String!, $items: [AppendIARItemInput!]!) {
+    appendToExistingIAR(iarId: $iarId, items: $items) {
+      success
+      iarId
+      updatedCount
+      message
+    }
+  }
+`;
+

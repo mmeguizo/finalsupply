@@ -12,6 +12,7 @@ import {
   IconButton,
   Box,
 } from "@mui/material";
+import Chip from "@mui/material/Chip";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 // @ts-ignore
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -51,6 +52,7 @@ export default function PurchaseOrderModal({
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [recievedLimit, setrecievedLimit] = React.useState(0);
   const [addItemButton, setAddItemButtonDisable] = React.useState(false);
+  const isEditing = !!purchaseOrder;
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState<any>({
@@ -76,6 +78,7 @@ export default function PurchaseOrderModal({
     amount: purchaseOrder?.amount || 0,
     status: purchaseOrder?.status || "",
     invoice: purchaseOrder?.invoice || "",
+    fundsource: purchaseOrder?.fundsource || "",
   });
 
   // if adding item remove disabled in input
@@ -140,10 +143,13 @@ export default function PurchaseOrderModal({
         amount: purchaseOrder.amount || 0,
         status: purchaseOrder.status || "",
         invoice: purchaseOrder.invoice || "",
+        fundsource: purchaseOrder?.fundsource || "",
       });
       setAddingItem(false);
       setHasSubmitted(false);
     } else {
+      // Reset when adding new PO to avoid stale state from previous edit session
+      setAddItemButtonDisable(false);
       setFormData({
         poNumber: "",
         supplier: "",
@@ -160,6 +166,7 @@ export default function PurchaseOrderModal({
         amount: 0,
         status: "",
         invoice: "",
+        fundsource:  "",
       });
     }
   }, [purchaseOrder, open]);
@@ -306,17 +313,42 @@ export default function PurchaseOrderModal({
     };
 
     const { status, ...cleanData } = formattedData;
+    console.log("Submitting Purchase Order:", cleanData);
     handleSave(cleanData);
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {purchaseOrder
-          ? "Update Recieved Item or Invoice"
-          : "Add Purchase Order"}
+    <Dialog
+      key={isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add'}
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {purchaseOrder ? "Update Recieved Item or Invoice" : "Add Purchase Order"}
+        <Chip
+          label={isEditing ? `Edit • ${String(formData.status || purchaseOrder?.status || '').toUpperCase() || 'PENDING'}` : 'Add'}
+          size="small"
+          color={isEditing && String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed' ? 'default' : 'primary'}
+        />
       </DialogTitle>
       <DialogContent>
+        {(() => {
+          const addItemDisabled = !isEditing
+            ? false
+            : String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed";
+          console.log("[PO Model] render", {
+            dialogKey: isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add',
+            open,
+            isEditing,
+            formStatus: formData.status,
+            poStatus: purchaseOrder?.status,
+            addItemDisabled,
+            items: formData.items?.length || 0,
+          });
+          return null;
+        })()}
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic PO Info */}
           {purchaseOrder ? null : (
@@ -412,6 +444,19 @@ export default function PurchaseOrderModal({
               />
             </Grid>
           )}
+          {purchaseOrder ? null : (
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Fund Source"
+                name="fundsource"
+                value={formData.fundsource}
+                placeholder="Source of Funds"
+                onChange={handleChange}
+                // disabled={purchaseOrder ? true : false}
+              />
+            </Grid>
+          )}
 
           {purchaseOrder ? null : (
             <Grid item xs={12} md={12}>
@@ -477,7 +522,13 @@ export default function PurchaseOrderModal({
                 variant="contained"
                 size="small"
                 sx={{ ml: 2 }}
-                disabled={addItemButton}
+                disabled={
+                  // In Add mode, always allow adding items
+                  !isEditing
+                    ? false
+                    : // In Edit mode, disable if current status is completed (prefer formData.status if present)
+                      String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed"
+                }
               >
                 Add Item
               </Button>
@@ -633,6 +684,8 @@ export default function PurchaseOrderModal({
                           type="number"
                           value={item.quantity ?? 0}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
+                          // Disable editing quantity when the purchase order is completed
+                          disabled={purchaseOrder?.status === "completed"}
                           inputProps={{ style: { textAlign: "right" } }}
                         />
                       </Grid>
@@ -652,8 +705,30 @@ export default function PurchaseOrderModal({
                           fullWidth
                           size="small"
                           value={item.currentInput || ""}
-                          onChange={(e) => updateItem(index, "currentInput", Number(e.target.value))}
-                          inputProps={{ style: { textAlign: "right" } }}
+                          type="number"
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const remaining = Math.max(0, Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0));
+                            // Allow clearing the input box
+                            if (raw === "") {
+                              updateItem(index, "currentInput", "");
+                              return;
+                            }
+                            const numeric = Number(raw);
+                            if (Number.isNaN(numeric)) {
+                              // ignore non-numeric
+                              return;
+                            }
+                            const clamped = Math.min(Math.max(0, numeric), remaining);
+                            updateItem(index, "currentInput", clamped);
+                          }}
+                          disabled={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0}
+                          placeholder={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0 ? "Fully received" : undefined}
+                          inputProps={{
+                            style: { textAlign: "right" },
+                            min: 0,
+                            max: Math.max(0, Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)),
+                          }}
                         />
                       </Grid>
 
@@ -736,308 +811,3 @@ export default function PurchaseOrderModal({
     </Dialog>
   );
 }
-/*
- {formData.items.map((item: any, index: any) => (
-              <Grid
-                container
-                spacing={1}
-                key={index}
-                sx={{
-                  mb: 1,
-                  p: 0.5,
-                  alignItems: "center",
-                  "&:hover": { backgroundColor: "action.hover" },
-                  borderBottom: 1,
-                  borderColor: "divider",
-                }}
-              >
-                <Grid item xs={0.60}>
-                  <Select
-                    fullWidth
-                    size="small"
-                    value={item.category}
-                    onChange={(e) =>
-                      updateItem(index, "category", e.target.value)
-                    }
-                    label="Category"
-                    // disabled={isIndexFieldDisabled(item.category, 'category', index)}
-                  >
-                    <MenuItem value={"property acknowledgement reciept"}>
-                      PAR
-                    </MenuItem>
-                    <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
-                    <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
-                  </Select>
-                </Grid>
-
-                {item.category === "inventory custodian slip" ? (
-                  <Grid item xs={0.60}>
-                    <Select
-                      fullWidth
-                      size="small"
-                      value={item.tag ?? ""}
-                      onChange={(e) => updateItem(index, "tag", e.target.value)}
-                      label="Tag"
-                      // disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
-                    >
-                      <MenuItem value={"low"}>Low Value</MenuItem>
-                      <MenuItem value={"high"}>High Value</MenuItem>
-                    </Select>
-                  </Grid>
-                ) : (
-                  <Grid item xs={0.5}>
-                    <Select
-                      fullWidth
-                      size="small"
-                      value={item.tag ?? ""}
-                      label="Tag"
-                      disabled={true}
-                    >
-                      <MenuItem value={"low"}>Low Value</MenuItem>
-                      <MenuItem value={"high"}>High Value</MenuItem>
-                    </Select>
-                  </Grid>
-                )}
-                {item.category === "inventory custodian slip" ||
-                item.category === "property acknowledgement reciept" ? (
-                  <Grid item xs={0.5}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Inventory #"
-                      label="Inventory #"
-                      value={item.inventoryNumber ?? ""}
-                      onChange={(e) =>
-                        updateItem(index, "inventoryNumber", e.target.value)
-                      }
-                      // disabled={isIndexFieldDisabled(item.inventoryNumber, 'inventoryNumber', index)}
-                    />
-                  </Grid>
-                ) : (
-                  <Grid item xs={0.5}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Inventory #"
-                      label="Inventory #"
-                      disabled={true}
-                    />
-                  </Grid>
-                )}
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Description"
-                    label="Description"
-                    value={item.description}
-                    onChange={(e) =>
-                      updateItem(index, "description", e.target.value)
-                    }
-                    // disabled={isIndexFieldDisabled(item.description, 'description', index)}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Specification"
-                    label="Specification"
-                    value={item.specification ?? ""}       // fallback
-                    multiline
-                    maxRows={2}
-                    onChange={(e) =>
-                      updateItem(index, "specification", e.target.value)
-                    }
-                    // disabled={isIndexFieldDisabled(item.description, 'description', index)}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="general description"
-                    label="General Description"
-                    value={item.generalDescription ?? ""}  // fallback
-                    multiline
-                    maxRows={2}
-                    onChange={(e) =>
-                      updateItem(index, "generalDescription", e.target.value)
-                    }
-                    // disabled={isIndexFieldDisabled(item.description, 'description', index)}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Total"
-                    label="Total"
-                    inputProps={{ min: 0, style: { textAlign: "right" } }}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, "quantity", Number(e.target.value))
-                    }
-                    // disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
-                  />
-                </Grid>
-           
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={`Delivered: ${item.id && item.id !== "temp" ? Math.max(0, Number(item.actualQuantityReceived)) : ""}`}
-                    type="number"
-                    placeholder={`${item.id && item.id !== "temp" ? Math.max(0, Number(item.actualQuantityReceived)) : ""}`}
-                    disabled={true}
-                    sx={{
-                      "& input": { textAlign: "right" },
-                      backgroundColor:
-                        Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
-                          ? "action.disabledBackground"
-                          : "transparent",
-                    }}
-                  />
-                </Grid>
-               
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={`0`}
-                    type="number"
-                    placeholder={``}
-                    inputProps={{
-                      min: 0,
-                      max: Math.max(
-                        0,
-                        Number(item.quantity) -
-                          Number(item.actualQuantityReceived)
-                      ),
-                      style: { textAlign: "right" },
-                    }}
-                    value={item.currentInput || ""}
-                    error={
-                      Number(item.currentInput) >
-                      Number(item.quantity) -
-                        Number(item.actualQuantityReceived)
-                    }
-                    helperText={
-                      Number(item.currentInput) >
-                      Number(item.quantity) -
-                        Number(item.actualQuantityReceived)
-                        ? `exceeded (${Number(item.quantity) - Number(item.actualQuantityReceived)})`
-                        : ""
-                    }
-                    onChange={(e) => {
-                      let itemQty = Number(item.quantity);
-                      let itemQtyRcvd = Number(item.actualQuantityReceived);
-                      let numValue = Number(e.target.value);
-                      updateItem(index, "currentInput", numValue);
-                    }}
-                    sx={{
-                      "& input": { textAlign: "right" },
-                      backgroundColor:
-                        Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
-                          ? "action.disabledBackground"
-                          : "transparent",
-                    }}
-                  />
-                </Grid>
-              
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder={`${item.id && item.id !== "temp" ? Math.max(0, Number(item.quantity)) - Number(item.actualQuantityReceived) : Number(item.quantity)} ${item.unit}`}
-                    onClick={(e) => {
-                      console.log(
-                        Number(item.quantity) -
-                          Number(item.actualQuantityReceived)
-                      );
-                      console.log(Number(item.quantity));
-                      console.log(Number(item.actualQuantityReceived));
-                    }}
-                    sx={{
-                      "& input": { textAlign: "left" },
-                      backgroundColor:
-                        Number(item.actualQuantityReceived) ===
-                        Number(item.quantity)
-                          ? "action.disabledBackground"
-                          : "transparent",
-                    }}
-                    disabled={true}
-                  />
-                </Grid>
-
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Unit"
-                    label="Unit"
-                    value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Unit Cost"
-                    label="Unit Cost"
-                    value={item.unitCost ?? 0}
-                    onChange={(e) =>
-                      updateItem(index, "unitCost", Number(e.target.value))
-                    }
-                    // disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
-                    InputProps={{
-                      startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
-                      ),
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-
-                <Grid item xs={1}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    placeholder="Total Cost"
-                    label="Total Cost"
-                    value={item.amount ?? 0}
-                    disabled={true}
-                    InputProps={{
-                      readOnly: true,
-                      startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
-                      ),
-                    }}
-                    sx={{ "& input": { textAlign: "right" } }}
-                  />
-                </Grid>
-                <Grid item xs={0.25} sx={{ textAlign: "center" }}>
-                  <IconButton
-                    onClick={() => removeItem(index)}
-                    color="error"
-                    size="small"
-                    disabled={purchaseOrder && item.id && item.id !== "temp"} // Optional: Disable for persisted items
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Grid>
-              </Grid>
-            ))}
-*/

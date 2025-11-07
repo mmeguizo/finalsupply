@@ -7,7 +7,10 @@ const User = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      // NOTE: removed `unique: true` to avoid Sequelize `ALTER TABLE` trying to
+      // add a UNIQUE key repeatedly which can hit MySQL's max index limit.
+      // Create a single UNIQUE index manually in the database (or via a
+      // dedicated migration) instead of relying on `sync({ alter: true })`.
     },
     name: {
       type: DataTypes.STRING,
