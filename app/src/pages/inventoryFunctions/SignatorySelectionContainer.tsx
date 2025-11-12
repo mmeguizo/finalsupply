@@ -123,6 +123,9 @@ const SignatoriesComponent = ({
 
   // Get dropdown options based on role and format them for Autocomplete
   const getDropdownOptions = (roleKey: string): UserOption[] => {
+
+    // console.log("Getting dropdown options for role:", roleKey);
+
     if (roleKey === "recieved_by") {
       // Use users for end users (recieved_by)
       const users = usersData?.users?.filter((user: any) => user.is_active) || [];
@@ -166,7 +169,7 @@ const SignatoriesComponent = ({
 
   const signatoryRoles = [
     { key: "recieved_from", label: "Received From", designation: "Supply Officer" },
-    { key: "recieved_by", label: "Received By", designation: "End User" },
+    { key: "recieved_by", label: "Received By", designation: "Inspector" },
   ];
 
   if (usersLoading) {
@@ -212,6 +215,11 @@ const SignatoriesComponent = ({
                 const options = getDropdownOptions(role.key);
                 const isUserRole = role.key === "recieved_by";
                 const selectedOption = findSelectedOption(role.key, options);
+
+                // console.log("Rendering role:", role.key, "Selected option:", selectedOption);
+                console.log("Options for role:", role.key, options);
+                console.log("getDropdownOptions",  options);
+
 
                 return (
                   <TableRow key={role.key}>

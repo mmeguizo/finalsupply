@@ -611,12 +611,24 @@ export default function PurchaseOrderModal({
                         flexWrap: "nowrap",
                       }}
                     >
+                      {(() => {
+                        // Lock most fields once any units have been received
+                        const hasReceived = Number(item.actualQuantityReceived ?? 0) > 0;
+                        const isCompleted = String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed";
+                        const lockFields = hasReceived || isCompleted;
+                        return null;
+                      })()}
+                      {/** Helper booleans for clarity inside JSX below */}
+                      {(() => {
+                        return null;
+                      })()}
                       <Grid item sx={{ flex: "0 0 6%", maxWidth: 90 }}>
                         <Select
                           fullWidth
                           size="small"
                           value={item.category}
                           onChange={(e) => updateItem(index, "category", e.target.value)}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         >
                           <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
                           <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
@@ -630,7 +642,7 @@ export default function PurchaseOrderModal({
                           size="small"
                           value={item.tag ?? ""}
                           onChange={(e) => updateItem(index, "tag", e.target.value)}
-                          disabled={item.category !== "inventory custodian slip"}
+                          disabled={(item.category !== "inventory custodian slip") || (Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         >
                           <MenuItem value={"low"}>Low</MenuItem>
                           <MenuItem value={"high"}>High</MenuItem>
@@ -643,6 +655,7 @@ export default function PurchaseOrderModal({
                           size="small"
                           value={item.inventoryNumber ?? ""}
                           onChange={(e) => updateItem(index, "inventoryNumber", e.target.value)}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 
@@ -652,6 +665,7 @@ export default function PurchaseOrderModal({
                           size="small"
                           value={item.description ?? ""}
                           onChange={(e) => updateItem(index, "description", e.target.value)}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 
@@ -663,6 +677,7 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "specification", e.target.value)}
                           multiline
                           maxRows={2}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 
@@ -674,6 +689,7 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "generalDescription", e.target.value)}
                           multiline
                           maxRows={2}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 
@@ -684,8 +700,11 @@ export default function PurchaseOrderModal({
                           type="number"
                           value={item.quantity ?? 0}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                          // Disable editing quantity when the purchase order is completed
-                          disabled={purchaseOrder?.status === "completed"}
+                          // Disable editing quantity when the purchase order is completed or fully received
+                          disabled={
+                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
+                            (Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0
+                          }
                           inputProps={{ style: { textAlign: "right" } }}
                         />
                       </Grid>
@@ -747,6 +766,7 @@ export default function PurchaseOrderModal({
                           size="small"
                           value={item.unit ?? ""}
                           onChange={(e) => updateItem(index, "unit", e.target.value)}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 
@@ -759,6 +779,7 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
                           InputProps={{ startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography> }}
                           sx={{ "& input": { textAlign: "right" } }}
+                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         />
                       </Grid>
 

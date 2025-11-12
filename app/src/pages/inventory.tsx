@@ -61,6 +61,8 @@ function Row(props: {
     if (!row?.items?.length) return false;
     return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
   }, [row]);
+  // Parent Purchase Order completed state (same PO across grouped items)
+  const poCompleted = row?.items?.[0]?.PurchaseOrder?.status === "completed";
 
   // Local state to add a NEW item into the same Purchase Order directly from Inventory
   const [newItemDraft, setNewItemDraft] = React.useState<any>({
@@ -224,6 +226,7 @@ function Row(props: {
               size="small"
               color="error"
               variant="outlined"
+              disabled={poCompleted}
               onClick={(e) => {
                 e.stopPropagation();
                 onRevert(row.iarId);
@@ -235,13 +238,13 @@ function Row(props: {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+        <TableCell sx={{ p: 0 }} colSpan={9}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
+            <Box sx={{ m: 0 }}>
               <Typography variant="h6" gutterBottom component="div">
                 Details
               </Typography>
-              <Table size="small" aria-label="details">
+              <Table size="small" aria-label="details" sx={{ width: '100%' }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
@@ -268,44 +271,7 @@ function Row(props: {
                     const currentUnit = poi?.unit ?? item.unit ?? "";
                     const remaining = Math.max(0, Number(poi?.quantity || item.quantity || 0) - Number(poi?.actualQuantityReceived || 0));
 
-                    const handleBlur = async (
-                      field: "description" | "unit" | "generalDescription" | "specification",
-                      value: string
-                    ) => {
-                      const targetPoiId = poi?.id ?? item.purchaseOrderItemId;
-                      const poId = item.purchaseOrderId;
-                      if (!targetPoiId || !poId) return;
-
-                      // Skip if no actual change
-                      const prevVal =
-                        field === "description"
-                          ? currentDescription
-                          : field === "unit"
-                          ? currentUnit
-                          : field === "generalDescription"
-                          ? currentGenDesc
-                          : currentSpec;
-                      if ((prevVal || "") === (value || "")) return;
-
-                      try {
-                        await updatePurchaseOrder({
-                          variables: {
-                            input: {
-                              id: parseInt(String(poId), 10),
-                              items: [
-                                {
-                                  id: targetPoiId,
-                                  [field]: value,
-                                  changeReason: "Edited in Inventory details",
-                                },
-                              ],
-                            },
-                          },
-                        });
-                      } catch (e) {
-                        console.error("Failed to update item details from Inventory view", e);
-                      }
-                    };
+                    // Original PO fields are view-only in this table.
 
                     const draftKey = String(poi?.id ?? item.purchaseOrderItemId);
                     const draft = iarLineDrafts[draftKey] || null;
@@ -361,51 +327,24 @@ function Row(props: {
                       <React.Fragment key={item.id}>
                       <TableRow>
                         <TableCell component="th" scope="row">
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentDescription}
-                            placeholder="Description"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("description", e.target.value)}
-                            disabled={remaining === 0}
-                          />
+                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                            {currentDescription || '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentGenDesc}
-                            placeholder="General Description"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("generalDescription", e.target.value)}
-                            disabled={remaining === 0}
-                          />
+                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                            {currentGenDesc || '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentSpec}
-                            placeholder="Specification"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("specification", e.target.value)}
-                            disabled={remaining === 0}
-                          />
+                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                            {currentSpec || '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            value={currentUnit || "-"}
-                            placeholder="Unit"
-                            InputProps={{ readOnly: true }}
-                            sx={{ maxWidth: 160 }}
-                          />
+                          <Typography variant="body2">
+                            {currentUnit || '-'}
+                          </Typography>
                         </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -440,15 +379,18 @@ function Row(props: {
                         <TableRow>
                           {/* Description */}
                           <TableCell>
-                            <TextField size="small" fullWidth placeholder="New Description" value={draft.description ?? ""} onChange={(e) => updateDraft({ description: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                            <TextField size="small" fullWidth placeholder="New Description"  multiline
+                            maxRows={3} value={draft.description ?? ""} onChange={(e) => updateDraft({ description: e.target.value })} onClick={(e)=>e.stopPropagation()} />
                           </TableCell>
                           {/* General Desc. */}
                           <TableCell>
-                            <TextField size="small" fullWidth placeholder="New General Desc." value={draft.generalDescription ?? ""} onChange={(e) => updateDraft({ generalDescription: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                            <TextField size="small"  multiline
+                            maxRows={3} fullWidth placeholder="New General Desc." value={draft.generalDescription ?? ""} onChange={(e) => updateDraft({ generalDescription: e.target.value })} onClick={(e)=>e.stopPropagation()} />
                           </TableCell>
                           {/* Specification */}
                           <TableCell>
-                            <TextField size="small" fullWidth placeholder="New Specification" value={draft.specification ?? ""} onChange={(e) => updateDraft({ specification: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                            <TextField size="small"   multiline
+                            maxRows={3} fullWidth placeholder="New Specification" value={draft.specification ?? ""} onChange={(e) => updateDraft({ specification: e.target.value })} onClick={(e)=>e.stopPropagation()} />
                           </TableCell>
                           {/* Unit (read-only to align) */}
                           <TableCell>
@@ -778,7 +720,7 @@ export default function InventoryPage() {
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
           />
-          <TableContainer>
+          <TableContainer sx={{ px: 0 }}>
             <Table aria-label="collapsible table">
               <TableHead>
                 <TableRow>
