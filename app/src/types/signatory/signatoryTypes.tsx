@@ -36,11 +36,14 @@ interface SignatoryStore {
       recieved_by: { position: string; role: string };
     };
   };
+
+  IARSelections : any;
+
   // Generic persisted selections by context (e.g., 'ris', 'ics', 'par', ...)
   selectionsByContext: Record<string, any>;
   // Actions
   fetchSignatories: () => Promise<void>;
-  getSignatoryByRole: (role: string) => SignatoryTypes | undefined;
+  getSignatoryByRole: (role: string) => Signatory | undefined;
   selectSignatory: (id: string) => void;
   clearSelectedSignatory: () => void;
   setIssuanceParSelections: (selections: {
@@ -51,6 +54,8 @@ interface SignatoryStore {
       recieved_by: { position: string; role: string };
     };
   }) => void;
+  setIARSelections: (selections: any) => void;
+  clearIARSelections: () => void;
   clearIssuanceParSelections: () => void;
   // Generic getters/setters for selections persistence
   getSelections: (key: string) => any;

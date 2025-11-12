@@ -34,6 +34,11 @@ export default function PrintReportDialogForIAR({
 
   const [showPrintView, setShowPrintView] = useState(false);
 
+
+  React.useEffect(() => {
+    console.log("Signatories changed in PrintReportDialogForIAR:", signatories);
+  }, [signatories]);
+
   const getReportTemplate = (data: any) => {
     return getInspectionReportTemplateForIAR(signatories, data, poOverrides);
   };

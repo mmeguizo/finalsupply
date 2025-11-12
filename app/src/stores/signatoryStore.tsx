@@ -10,8 +10,9 @@ const useSignatoryStore = create<SignatoryStore>()(
       signatories: [],
       selectedSignatory: null,
       loading: false,
-      error: null,
-  selectionsByContext: {},
+    error: null,
+    selectionsByContext: {},
+    IARSelections: {},
       issuanceParSelections: {
         recieved_from: "",
         recieved_by: "",
@@ -38,12 +39,19 @@ const useSignatoryStore = create<SignatoryStore>()(
         return get().signatories.find(sig => sig.role.toLowerCase() === role.toLowerCase());
       },
       
-      selectSignatory: (id) => {
+      selectSignatory: (id: string) => {
         const signatory = get().signatories.find(s => s.id === id) || null;
         set({ selectedSignatory: signatory });
       },
       setIssuanceParSelections: (selections) => {
         set({ issuanceParSelections: selections });
+      },
+
+      setIARSelections: (selections) => {
+
+        console.log("Setting IARSelections in store:", selections);
+
+        set({ IARSelections: selections });
       },
       getSelections: (key: string) => {
         return get().selectionsByContext[key];
@@ -74,6 +82,7 @@ const useSignatoryStore = create<SignatoryStore>()(
       },
       
       clearSelectedSignatory: () => set({ selectedSignatory: null }),
+      clearIARSelections: () => set({ IARSelections: {} }),
       clearIssuanceParSelections: () => set({
         issuanceParSelections: {
           recieved_from: "",

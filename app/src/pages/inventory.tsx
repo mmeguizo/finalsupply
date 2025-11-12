@@ -38,11 +38,19 @@ import {
 } from "../utils/generalUtils";
 import { Select, MenuItem, Chip } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { UPDATE_IAR_STATUS, REVERT_IAR_BATCH, APPEND_TO_EXISTING_IAR } from "../graphql/mutations/inventoryIAR.mutation";
+import {
+  UPDATE_IAR_STATUS,
+  REVERT_IAR_BATCH,
+  APPEND_TO_EXISTING_IAR,
+} from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
-import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query";
+import {
+  GET_PURCHASEORDERS,
+  GET_ALL_DASHBOARD_DATA,
+} from "../graphql/queries/purchaseorder.query";
 // @ts-ignore
 import { UPDATE_PURCHASEORDER } from "../graphql/mutations/purchaseorder.mutation";
+import useSignatoryStore from "../stores/signatoryStore";
 
 // Row component for collapsible table
 function Row(props: {
@@ -53,14 +61,29 @@ function Row(props: {
   // added
   invoiceOverride?: string;
   dateOfPaymentOverride?: string;
-  onOverrideChange: (iarId: string, patch: { invoice?: string; dateOfPayment?: string }) => void;
+  onOverrideChange: (
+    iarId: string,
+    patch: { invoice?: string; dateOfPayment?: string }
+  ) => void;
 }) {
-  const { row, handleOpenPrintModal, onStatusUpdate, onRevert, invoiceOverride, dateOfPaymentOverride, onOverrideChange } = props;
+  const {
+    row,
+    handleOpenPrintModal,
+    onStatusUpdate,
+    onRevert,
+    invoiceOverride,
+    dateOfPaymentOverride,
+    onOverrideChange,
+  } = props;
   const [open, setOpen] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
-    return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
+    return row.items.some(
+      (it: any) => Number(it.actualQuantityReceived || 0) > 0
+    );
   }, [row]);
+  // Parent Purchase Order completed state (same PO across grouped items)
+  const poCompleted = row?.items?.[0]?.PurchaseOrder?.status === "completed";
 
   // Local state to add a NEW item into the same Purchase Order directly from Inventory
   const [newItemDraft, setNewItemDraft] = React.useState<any>({
@@ -93,11 +116,22 @@ function Row(props: {
   });
 
   // Per-item add-line drafts keyed by purchaseOrderItemId
-  const [iarLineDrafts, setIarLineDrafts] = React.useState<Record<string, { description?: string; generalDescription?: string; specification?: string; received?: number }>>({});
+  const [iarLineDrafts, setIarLineDrafts] = React.useState<
+    Record<
+      string,
+      {
+        description?: string;
+        generalDescription?: string;
+        specification?: string;
+        received?: number;
+      }
+    >
+  >({});
 
   const handleAddNewItem = async () => {
     try {
-      const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+      const poId =
+        row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
       if (!poId) return;
 
       const q = Number(newItemDraft.quantity || 0);
@@ -188,7 +222,9 @@ function Row(props: {
             size="small"
             placeholder={poDefaults.invoice || "Invoice #"}
             value={invoiceOverride ?? ""}
-            onChange={(e) => onOverrideChange(row.iarId, { invoice: e.target.value })}
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { invoice: e.target.value })
+            }
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
           />
@@ -200,7 +236,9 @@ function Row(props: {
             size="small"
             placeholder={poDefaults.dateOfPayment || "YYYY-MM-DD"}
             value={dateOfPaymentOverride ?? ""}
-            onChange={(e) => onOverrideChange(row.iarId, { dateOfPayment: e.target.value })}
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { dateOfPayment: e.target.value })
+            }
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
             InputLabelProps={{ shrink: true }}
@@ -224,6 +262,7 @@ function Row(props: {
               size="small"
               color="error"
               variant="outlined"
+              disabled={poCompleted}
               onClick={(e) => {
                 e.stopPropagation();
                 onRevert(row.iarId);
@@ -235,13 +274,13 @@ function Row(props: {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+        <TableCell sx={{ p: 0 }} colSpan={9}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
+            <Box sx={{ m: 0 }}>
               <Typography variant="h6" gutterBottom component="div">
                 Details
               </Typography>
-              <Table size="small" aria-label="details">
+              <Table size="small" aria-label="details" sx={{ width: "100%" }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
@@ -260,57 +299,37 @@ function Row(props: {
                 <TableBody>
                   {row.items.map((item: any) => {
                     const poi = item.PurchaseOrderItem;
-                    const isCompleted = item.PurchaseOrder?.status === "completed";
+                    const isCompleted =
+                      item.PurchaseOrder?.status === "completed";
 
-                    const currentDescription = poi?.description ?? item.description ?? "";
-                    const currentGenDesc = poi?.generalDescription ?? item.generalDescription ?? "";
-                    const currentSpec = poi?.specification ?? item.specification ?? "";
+                    const currentDescription =
+                      poi?.description ?? item.description ?? "";
+                    const currentGenDesc =
+                      poi?.generalDescription ?? item.generalDescription ?? "";
+                    const currentSpec =
+                      poi?.specification ?? item.specification ?? "";
                     const currentUnit = poi?.unit ?? item.unit ?? "";
-                    const remaining = Math.max(0, Number(poi?.quantity || item.quantity || 0) - Number(poi?.actualQuantityReceived || 0));
+                    const remaining = Math.max(
+                      0,
+                      Number(poi?.quantity || item.quantity || 0) -
+                        Number(poi?.actualQuantityReceived || 0)
+                    );
 
-                    const handleBlur = async (
-                      field: "description" | "unit" | "generalDescription" | "specification",
-                      value: string
-                    ) => {
-                      const targetPoiId = poi?.id ?? item.purchaseOrderItemId;
-                      const poId = item.purchaseOrderId;
-                      if (!targetPoiId || !poId) return;
+                    // Original PO fields are view-only in this table.
 
-                      // Skip if no actual change
-                      const prevVal =
-                        field === "description"
-                          ? currentDescription
-                          : field === "unit"
-                          ? currentUnit
-                          : field === "generalDescription"
-                          ? currentGenDesc
-                          : currentSpec;
-                      if ((prevVal || "") === (value || "")) return;
-
-                      try {
-                        await updatePurchaseOrder({
-                          variables: {
-                            input: {
-                              id: parseInt(String(poId), 10),
-                              items: [
-                                {
-                                  id: targetPoiId,
-                                  [field]: value,
-                                  changeReason: "Edited in Inventory details",
-                                },
-                              ],
-                            },
-                          },
-                        });
-                      } catch (e) {
-                        console.error("Failed to update item details from Inventory view", e);
-                      }
-                    };
-
-                    const draftKey = String(poi?.id ?? item.purchaseOrderItemId);
+                    const draftKey = String(
+                      poi?.id ?? item.purchaseOrderItemId
+                    );
                     const draft = iarLineDrafts[draftKey] || null;
 
-                    const updateDraft = (patch: Partial<{ description?: string; generalDescription?: string; specification?: string; received?: number }>) => {
+                    const updateDraft = (
+                      patch: Partial<{
+                        description?: string;
+                        generalDescription?: string;
+                        specification?: string;
+                        received?: number;
+                      }>
+                    ) => {
                       setIarLineDrafts((prev) => ({
                         ...prev,
                         [draftKey]: { ...(prev[draftKey] || {}), ...patch },
@@ -332,9 +351,16 @@ function Row(props: {
                       const clamped = Math.min(recv, remaining);
                       if (clamped <= 0) return;
                       try {
-                        const poiIdNum = parseInt(String(poi?.id ?? item.purchaseOrderItemId), 10);
+                        const poiIdNum = parseInt(
+                          String(poi?.id ?? item.purchaseOrderItemId),
+                          10
+                        );
                         if (!Number.isFinite(poiIdNum)) {
-                          console.error("Invalid purchaseOrderItemId", poi?.id, item.purchaseOrderItemId);
+                          console.error(
+                            "Invalid purchaseOrderItemId",
+                            poi?.id,
+                            item.purchaseOrderItemId
+                          );
                           return;
                         }
                         await appendToExistingIAR({
@@ -345,7 +371,8 @@ function Row(props: {
                                 purchaseOrderItemId: poiIdNum,
                                 received: clamped,
                                 description: draft.description || undefined,
-                                generalDescription: draft.generalDescription || undefined,
+                                generalDescription:
+                                  draft.generalDescription || undefined,
                                 specification: draft.specification || undefined,
                               },
                             ],
@@ -359,130 +386,227 @@ function Row(props: {
 
                     return (
                       <React.Fragment key={item.id}>
-                      <TableRow>
-                        <TableCell component="th" scope="row">
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentDescription}
-                            placeholder="Description"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("description", e.target.value)}
-                            disabled={remaining === 0}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentGenDesc}
-                            placeholder="General Description"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("generalDescription", e.target.value)}
-                            disabled={remaining === 0}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            defaultValue={currentSpec}
-                            placeholder="Specification"
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={(e) => handleBlur("specification", e.target.value)}
-                            disabled={remaining === 0}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            variant="outlined"
-                            fullWidth
-                            value={currentUnit || "-"}
-                            placeholder="Unit"
-                            InputProps={{ readOnly: true }}
-                            sx={{ maxWidth: 160 }}
-                          />
-                        </TableCell>
-                      <TableCell align="right">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                          <Typography>{item.actualQuantityReceived}</Typography>
-                          <Typography variant="caption" color="text.secondary">Remaining: {remaining}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.unitCost)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.amount)}
-                      </TableCell>
-                      {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
-                      <TableCell>
-                        {item.category
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                          )
-                          .join(" ")}
-                      </TableCell>
-                      <TableCell align="center">
-                        {!draft && (
-                          <Button size="small" variant="outlined" disabled={remaining <= 0 || isCompleted} onClick={(e) => { e.stopPropagation(); updateDraft({ description: "", generalDescription: "", specification: "", received: 0 }); }}>+ Add</Button>
-                        )}
-                      </TableCell>
-                      </TableRow>
-                      {draft && (
                         <TableRow>
-                          {/* Description */}
-                          <TableCell>
-                            <TextField size="small" fullWidth placeholder="New Description" value={draft.description ?? ""} onChange={(e) => updateDraft({ description: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                          <TableCell component="th" scope="row">
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentDescription || "-"}
+                            </Typography>
                           </TableCell>
-                          {/* General Desc. */}
                           <TableCell>
-                            <TextField size="small" fullWidth placeholder="New General Desc." value={draft.generalDescription ?? ""} onChange={(e) => updateDraft({ generalDescription: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentGenDesc || "-"}
+                            </Typography>
                           </TableCell>
-                          {/* Specification */}
                           <TableCell>
-                            <TextField size="small" fullWidth placeholder="New Specification" value={draft.specification ?? ""} onChange={(e) => updateDraft({ specification: e.target.value })} onClick={(e)=>e.stopPropagation()} />
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentSpec || "-"}
+                            </Typography>
                           </TableCell>
-                          {/* Unit (read-only to align) */}
                           <TableCell>
-                            <TextField size="small" fullWidth value={currentUnit || "-"} InputProps={{ readOnly: true }} onClick={(e)=>e.stopPropagation()} />
+                            <Typography variant="body2">
+                              {currentUnit || "-"}
+                            </Typography>
                           </TableCell>
-                          {/* Actual Received input aligned in its column */}
                           <TableCell align="right">
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} onClick={(e)=>e.stopPropagation()}>
-                              <TextField type="number" size="small" sx={{ width: 120 }} placeholder="Received" value={draft.received ?? ''} onChange={(e) => updateDraft({ received: Number(e.target.value) })} inputProps={{ min: 0, max: remaining }} />
-                              <Typography variant="caption" color="text.secondary">Remaining: {remaining}</Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-end",
+                              }}
+                            >
+                              <Typography>
+                                {item.actualQuantityReceived}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Remaining: {remaining}
+                              </Typography>
                             </Box>
                           </TableCell>
-                          {/* Quantity */}
                           <TableCell align="right">{item.quantity}</TableCell>
-                          {/* Unit Cost */}
-                          <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
-                          {/* Amount */}
-                          <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
-                          {/* Category */}
+                          <TableCell align="right">
+                            {currencyFormat(item.unitCost)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {currencyFormat(item.amount)}
+                          </TableCell>
+                          {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
                           <TableCell>
                             {item.category
                               ?.split(" ")
-                              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .map(
+                                (word: string) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
                               .join(" ")}
                           </TableCell>
-                          {/* Add/Cancel buttons in Add Line column */}
                           <TableCell align="center">
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                              <Button size="small" variant="contained" onClick={handleAddLine} disabled={remaining <= 0}>Add</Button>
-                              <Button size="small" onClick={clearDraft}>Cancel</Button>
-                            </Box>
+                            {!draft && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={remaining <= 0 || isCompleted}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateDraft({
+                                    description: "",
+                                    generalDescription: "",
+                                    specification: "",
+                                    received: 0,
+                                  });
+                                }}
+                              >
+                                + Add
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
-                      )}
+                        {draft && (
+                          <TableRow>
+                            {/* Description */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                placeholder="New Description"
+                                multiline
+                                maxRows={3}
+                                value={draft.description ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({ description: e.target.value })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* General Desc. */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                multiline
+                                maxRows={3}
+                                fullWidth
+                                placeholder="New General Desc."
+                                value={draft.generalDescription ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({
+                                    generalDescription: e.target.value,
+                                  })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Specification */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                multiline
+                                maxRows={3}
+                                fullWidth
+                                placeholder="New Specification"
+                                value={draft.specification ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({ specification: e.target.value })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Unit (read-only to align) */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                value={currentUnit || "-"}
+                                InputProps={{ readOnly: true }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Actual Received input aligned in its column */}
+                            <TableCell align="right">
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-end",
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  sx={{ width: 120 }}
+                                  placeholder="Received"
+                                  value={draft.received ?? ""}
+                                  onChange={(e) =>
+                                    updateDraft({
+                                      received: Number(e.target.value),
+                                    })
+                                  }
+                                  inputProps={{ min: 0, max: remaining }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Remaining: {remaining}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            {/* Quantity */}
+                            <TableCell align="right">{item.quantity}</TableCell>
+                            {/* Unit Cost */}
+                            <TableCell align="right">
+                              {currencyFormat(item.unitCost)}
+                            </TableCell>
+                            {/* Amount */}
+                            <TableCell align="right">
+                              {currencyFormat(item.amount)}
+                            </TableCell>
+                            {/* Category */}
+                            <TableCell>
+                              {item.category
+                                ?.split(" ")
+                                .map(
+                                  (word: string) =>
+                                    word.charAt(0).toUpperCase() + word.slice(1)
+                                )
+                                .join(" ")}
+                            </TableCell>
+                            {/* Add/Cancel buttons in Add Line column */}
+                            <TableCell align="center">
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={handleAddLine}
+                                  disabled={remaining <= 0}
+                                >
+                                  Add
+                                </Button>
+                                <Button size="small" onClick={clearDraft}>
+                                  Cancel
+                                </Button>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </React.Fragment>
                     );
                   })}
@@ -542,12 +666,13 @@ export default function InventoryPage() {
     }
   );
 
- const [iarOverrides, setIarOverrides] = React.useState<
+  const [iarOverrides, setIarOverrides] = React.useState<
     Record<string, { invoice?: string; dateOfPayment?: string }>
   >({});
-  const [poOverrides, setPoOverrides] = React.useState<
-    { invoice?: string; dateOfPayment?: string } | null
-  >(null);
+  const [poOverrides, setPoOverrides] = React.useState<{
+    invoice?: string;
+    dateOfPayment?: string;
+  } | null>(null);
 
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -555,14 +680,23 @@ export default function InventoryPage() {
   const [title, setTitle] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   // Local signatories state for Inventory printing
-  const [selectedSignatories, setSelectedSignatories] = React.useState<any>({
-    recieved_from: "",
-    recieved_by: "",
-    metadata: {
-      recieved_from: { id: "", position: "", role: "" },
-      recieved_by: { id: "", position: "", role: "" },
-    },
-  });
+  // const [selectedSignatories, setSelectedSignatories] = React.useState<any>({});
+
+  const IARSelections = useSignatoryStore((s) => s.IARSelections);
+  
+
+  React.useEffect(() => {
+  console.log("IARSelections changed in InventoryPage:", IARSelections);
+}, [IARSelections]);
+
+
+console.log("IARSelections in InventoryPag1e:", IARSelections);
+
+  const  setSelectedIAR = useSignatoryStore((s) => s.setIARSelections);
+  const defaultSelections = React.useMemo(() => ({}), []);
+
+  const currentSelections = IARSelections || defaultSelections;
+
   const [updateIARStatus] = useMutation(UPDATE_IAR_STATUS, {
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
   });
@@ -589,7 +723,9 @@ export default function InventoryPage() {
 
   // Confirm dialog state for revert
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<string | null>(null);
+  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<
+    string | null
+  >(null);
 
   const handleOpenPrintModal = (poItems: any, iarId: string) => {
     setReportType("inspection");
@@ -604,6 +740,11 @@ export default function InventoryPage() {
     setPoOverrides(null);
   };
 
+  const onSignatoriesChange = (signatories: any) => {
+    console.log("onSignatoriesChange signatories for IAR:", signatories);
+    setSelectedIAR(signatories);
+  };
+  
   // Add this function after handleClosePrintModal (around line 177)
   const handleStatusUpdate = async (iarId: string, newStatus: string) => {
     try {
@@ -617,7 +758,7 @@ export default function InventoryPage() {
         },
       });
       if (results.data?.updateIARStatus) {
-        console.log({updateIARStatus :results.data.updateIARStatus});
+        console.log({ updateIARStatus: results.data.updateIARStatus });
         setNotificationMessage(results.data.updateIARStatus.message);
         setNotificationSeverity("success"); // Always success if we get here
         setShowNotification(true);
@@ -648,7 +789,9 @@ export default function InventoryPage() {
       return;
     }
     try {
-      const res = await revertIARBatch({ variables: { iarId, reason: "User requested revert" } });
+      const res = await revertIARBatch({
+        variables: { iarId, reason: "User requested revert" },
+      });
       if (res.data?.revertIARBatch?.success) {
         setNotificationMessage(res.data.revertIARBatch.message);
         setNotificationSeverity("success");
@@ -772,13 +915,12 @@ export default function InventoryPage() {
           maxHeight: "calc(100vh - 100px)",
         }}
       >
-      
         <Paper sx={{ width: "100%" }}>
           <EnhancedTableToolbar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
           />
-          <TableContainer>
+          <TableContainer sx={{ px: 0 }}>
             <Table aria-label="collapsible table">
               <TableHead>
                 <TableRow>
@@ -804,7 +946,9 @@ export default function InventoryPage() {
                     onRevert={handleRevertIAR}
                     // pass overrides
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
-                    dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
+                    dateOfPaymentOverride={
+                      iarOverrides[row.iarId]?.dateOfPayment
+                    }
                     onOverrideChange={(iarId, patch) =>
                       setIarOverrides((prev) => ({
                         ...prev,
@@ -826,11 +970,11 @@ export default function InventoryPage() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-          {/* Signatory selection for IAR printing */}
+        {/* Signatory selection for IAR printing */}
         <Paper sx={{ width: "100%", p: 2 }}>
           <SignatoriesComponent
-            signatories={selectedSignatories}
-            onSignatoriesChange={setSelectedSignatories}
+            signatories={currentSelections}
+            onSignatoriesChange={onSignatoriesChange}
           />
         </Paper>
       </Stack>
@@ -844,10 +988,7 @@ export default function InventoryPage() {
         handleClose={handleClosePrintModal}
         reportData={printPOI}
         reportType={reportType}
-        signatories={{
-          inspectionOfficer: selectedSignatories?.recieved_by || "",
-          supplyOfficer: selectedSignatories?.recieved_from || "",
-        }}
+        signatories={currentSelections}
         // NEW: pass overrides
         poOverrides={poOverrides || undefined}
       />

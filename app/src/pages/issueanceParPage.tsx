@@ -57,6 +57,7 @@ export default function IssuanceParPage() {
       recieved_by: { position: "", role: "" }
     }
   }), []);
+  
   const currentSelections = issuanceParSelections || defaultSelections;
 
   const groupedRows = React.useMemo(() => {
