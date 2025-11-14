@@ -117,7 +117,6 @@ const SignatoriesComponent = ({
       metadata: updatedMetadata
     };
 
-    console.log("Updated Signatories:", updatedSignatories);
 
     setSelectedSignatories(updatedSignatories);
     onSignatoriesChange(updatedSignatories);
@@ -163,7 +162,6 @@ const SignatoriesComponent = ({
   const findSelectedOption = (roleKey: string, options: UserOption[]) => {
     const meta = selectedSignatories?.metadata?.[roleKey];
 
-    console.log("SelectedSignatories", selectedSignatories)
 
     if (meta?.id) {
       return options.find(o => o.id === meta.id) || null;

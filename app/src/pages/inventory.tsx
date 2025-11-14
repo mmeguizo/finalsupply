@@ -58,12 +58,16 @@ function Row(props: {
   handleOpenPrintModal: (item: any, iarId: string) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
-  // added
+  onNotify: (message: string, severity?: "success" | "error" | "info" | "warning") => void;
+  // overrides
   invoiceOverride?: string;
   dateOfPaymentOverride?: string;
+  incomeOverride?: string;
+  mdsOverride?: string;
+  detailsOverride?: string;
   onOverrideChange: (
     iarId: string,
-    patch: { invoice?: string; dateOfPayment?: string }
+    patch: { invoice?: string; dateOfPayment?: string; income?: string; mds?: string; details?: string }
   ) => void;
 }) {
   const {
@@ -71,11 +75,18 @@ function Row(props: {
     handleOpenPrintModal,
     onStatusUpdate,
     onRevert,
+    onNotify,
     invoiceOverride,
     dateOfPaymentOverride,
+    incomeOverride,
+    mdsOverride,
+    detailsOverride,
     onOverrideChange,
   } = props;
   const [open, setOpen] = React.useState(false);
+  const [savingIncome, setSavingIncome] = React.useState(false);
+  const [savingMds, setSavingMds] = React.useState(false);
+  const [savingDetails, setSavingDetails] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
     return row.items.some(
@@ -180,9 +191,15 @@ function Row(props: {
   const poDefaults = {
     invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
     dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
+    income: row.items?.[0]?.PurchaseOrder?.income || "",
+    mds: row.items?.[0]?.PurchaseOrder?.mds || "",
+    details: row.items?.[0]?.PurchaseOrder?.details || "",
   };
   const invoiceValue = invoiceOverride ?? poDefaults.invoice;
   const dateValue = dateOfPaymentOverride ?? poDefaults.dateOfPayment;
+  const incomeValue = incomeOverride ?? poDefaults.income;
+  const mdsValue = mdsOverride ?? poDefaults.mds;
+  const detailsValue = detailsOverride ?? poDefaults.details;
 
   return (
     <React.Fragment>
@@ -216,7 +233,7 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
-        {/* NEW: Invoice input */}
+        {/* Invoice input */}
         <TableCell>
           <TextField
             size="small"
@@ -229,7 +246,7 @@ function Row(props: {
             sx={{ minWidth: 160 }}
           />
         </TableCell>
-        {/* NEW: Invoice Date input */}
+        {/* Invoice Date input */}
         <TableCell>
           <TextField
             type="date"
@@ -242,6 +259,117 @@ function Row(props: {
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
             InputLabelProps={{ shrink: true }}
+          />
+        </TableCell>
+        {/* Income multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.income || "Income..."}
+            value={incomeOverride !== undefined ? incomeOverride : poDefaults.income}
+            onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingIncome(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), income: valueToSave } } });
+                    onNotify('Income saved');
+                  }
+                } catch (err) { console.error('Failed to save income', err); onNotify('Failed to save income','error'); }
+                finally { setSavingIncome(false); }
+              }
+            }}
+            sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingIncome ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingIncome}
+          />
+        </TableCell>
+        {/* MDS multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.mds || "MDS..."}
+            value={mdsOverride !== undefined ? mdsOverride : poDefaults.mds}
+            onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingMds(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), mds: valueToSave } } });
+                    onNotify('MDS saved');
+                  }
+                } catch (err) { console.error('Failed to save mds', err); onNotify('Failed to save MDS','error'); }
+                finally { setSavingMds(false); }
+              }
+            }}
+            sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingMds ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingMds}
+          />
+        </TableCell>
+        {/* Details multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.details || "Details..."}
+            value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
+            onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingDetails(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), details: valueToSave } } });
+                    onNotify('Details saved');
+                  }
+                } catch (err) { console.error('Failed to save details', err); onNotify('Failed to save details','error'); }
+                finally { setSavingDetails(false); }
+              }
+            }}
+            sx={{ minWidth: 200 }}
+            InputProps={{
+              endAdornment: savingDetails ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingDetails}
           />
         </TableCell>
         <TableCell>
@@ -274,12 +402,10 @@ function Row(props: {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell sx={{ p: 0 }} colSpan={9}>
+        <TableCell sx={{ p: 0 }} colSpan={12}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ m: 0 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Details
-              </Typography>
+          
               <Table size="small" aria-label="details" sx={{ width: "100%" }}>
                 <TableHead>
                   <TableRow>
@@ -667,7 +793,16 @@ export default function InventoryPage() {
   );
 
   const [iarOverrides, setIarOverrides] = React.useState<
-    Record<string, { invoice?: string; dateOfPayment?: string }>
+    Record<
+      string,
+      {
+        invoice?: string;
+        dateOfPayment?: string;
+        income?: string;
+        mds?: string;
+        details?: string;
+      }
+    >
   >({});
   const [poOverrides, setPoOverrides] = React.useState<{
     invoice?: string;
@@ -683,14 +818,6 @@ export default function InventoryPage() {
   // const [selectedSignatories, setSelectedSignatories] = React.useState<any>({});
 
   const IARSelections = useSignatoryStore((s) => s.IARSelections);
-  
-
-  React.useEffect(() => {
-  console.log("IARSelections changed in InventoryPage:", IARSelections);
-}, [IARSelections]);
-
-
-console.log("IARSelections in InventoryPag1e:", IARSelections);
 
   const  setSelectedIAR = useSignatoryStore((s) => s.setIARSelections);
   const defaultSelections = React.useMemo(() => ({}), []);
@@ -929,9 +1056,12 @@ console.log("IARSelections in InventoryPag1e:", IARSelections);
                   <TableCell>IAR#</TableCell>
                   <TableCell>Delivery Date</TableCell>
                   <TableCell>IAR</TableCell>
-                  {/* NEW headers */}
+                  {/* Expanded headers including financial/meta fields */}
                   <TableCell>Invoice#</TableCell>
                   <TableCell>Invoice Date</TableCell>
+                  <TableCell>Income</TableCell>
+                  <TableCell>MDS</TableCell>
+                  <TableCell>Details</TableCell>
                   <TableCell>Print</TableCell>
                   <TableCell>Revert</TableCell>
                 </TableRow>
@@ -944,11 +1074,17 @@ console.log("IARSelections in InventoryPag1e:", IARSelections);
                     handleOpenPrintModal={handleOpenPrintModal}
                     onStatusUpdate={handleStatusUpdate}
                     onRevert={handleRevertIAR}
-                    // pass overrides
+                    onNotify={(message, severity = 'success') => {
+                      setNotificationMessage(message);
+                      setNotificationSeverity(severity);
+                      setShowNotification(true);
+                    }}
+                    // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
-                    dateOfPaymentOverride={
-                      iarOverrides[row.iarId]?.dateOfPayment
-                    }
+                    dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
+                    incomeOverride={iarOverrides[row.iarId]?.income}
+                    mdsOverride={iarOverrides[row.iarId]?.mds}
+                    detailsOverride={iarOverrides[row.iarId]?.details}
                     onOverrideChange={(iarId, patch) =>
                       setIarOverrides((prev) => ({
                         ...prev,

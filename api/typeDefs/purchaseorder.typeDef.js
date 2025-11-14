@@ -21,6 +21,9 @@ type PurchaseOrder {
     category: String
     status: String
     invoice: String
+    income: String
+    mds: String
+    details: String
     isDeleted: Boolean
     createdAt: String
     completed_status_date : String
@@ -111,6 +114,9 @@ type PurchaseOrderType {
     category: String
     status: String
     invoice: String
+    income: String
+    mds: String
+    details: String
     fundsource : String
 }
 
@@ -202,6 +208,9 @@ input UpdatePurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    income: String
+    mds: String
+    details: String
     fundsource: String
     completed_status_date : String
     markingComplete : Boolean
@@ -224,6 +233,9 @@ input PurchaseOrderInput {
     amount: Float
     status: String
     invoice: String
+    income: String
+    mds: String
+    details: String
     fundsource: String
     dateOfConformity : String
     completed_status_date : String

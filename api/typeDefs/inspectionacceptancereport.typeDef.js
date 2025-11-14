@@ -84,6 +84,9 @@ type ItemWithPurchaseOrder {
     parId : String
     createdAt : String
     iarStatus : String
+    income: String
+    mds: String
+    details: String
 }
 type IARonly{
     id: ID

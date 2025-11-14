@@ -176,7 +176,7 @@ export default function IssuanceParPage() {
               reportData={printItem}
               reportType={reportType}
               title={title}
-    signatories={currentSelections}
+              signatories={currentSelections}
             />
     </PageContainer>
   );

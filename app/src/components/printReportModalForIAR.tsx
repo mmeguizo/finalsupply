@@ -17,7 +17,7 @@ import { getInventoryTemplate } from "./printDocumentFiles/inventoryCustodiansli
 import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
 
 type Props = InspectionReportDialogPropsForIAR & {
-  poOverrides?: { invoice?: string; dateOfPayment?: string };
+  poOverrides?: { invoice?: string; dateOfPayment?: string; income?: string; mds?: string; details?: string };
 };
 
 
@@ -33,10 +33,10 @@ export default function PrintReportDialogForIAR({
 }: Props) {
 
   const [showPrintView, setShowPrintView] = useState(false);
-
+  console.log("reportData:", reportData);
 
   React.useEffect(() => {
-    console.log("Signatories changed in PrintReportDialogForIAR:", signatories);
+    console.log("reportData:", reportData);
   }, [signatories]);
 
   const getReportTemplate = (data: any) => {

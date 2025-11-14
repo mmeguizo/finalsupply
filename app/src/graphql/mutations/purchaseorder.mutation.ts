@@ -15,6 +15,9 @@ export const ADD_PURCHASEORDER = gql`
       dateOfConformity
       completed_status_date
       fundsource
+  income
+  mds
+  details
       items {
         id
         description
@@ -53,6 +56,9 @@ export const UPDATE_PURCHASEORDER = gql`
       status
       completed_status_date
       fundsource
+  income
+  mds
+  details
       items {
         id
         description
