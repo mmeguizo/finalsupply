@@ -35,6 +35,9 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT = gql`
         status
         amount
         invoice
+        income
+        mds
+        details
       }
     }
   }
@@ -76,6 +79,9 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
         status
         amount
         invoice
+        income
+        mds
+        details
       },
         PurchaseOrderItem {
         id

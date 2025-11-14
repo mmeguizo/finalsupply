@@ -94,6 +94,21 @@ const PurchaseOrder = sequelize.define(
     fundsource : {
       type: DataTypes.STRING(100),
       allowNull: true,
+    },
+    income: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: "Income source or code",
+    },
+    mds: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: "MDS reference",
+    },
+    details: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Additional PO details",
     }
   },
   {

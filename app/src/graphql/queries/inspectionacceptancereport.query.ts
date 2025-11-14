@@ -40,6 +40,9 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         status
         amount
         invoice
+        income
+        mds
+        details
       },
       PurchaseOrderItem {
         id
@@ -97,6 +100,9 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
         status
         amount
         invoice
+        income
+        mds
+        details
       }
     }
   }
@@ -140,6 +146,9 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
         status
         amount
         invoice
+        income
+        mds
+        details
       },
        PurchaseOrderItem {
         id

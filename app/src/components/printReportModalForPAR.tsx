@@ -26,7 +26,7 @@ export default function PrintReportDialogForPAR({
   const getReportTemplate = (data: any) => {
     return getPropertyAcknowledgementReciept(signatories, data);
   };
-  console.log("PrintReportDialogForPAR", signatories);
+  console.log("reportData", reportData);
   const handlePrintReport = async () => {
     try {
       // Extract just the IDs from the reportData

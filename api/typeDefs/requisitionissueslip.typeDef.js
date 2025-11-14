@@ -76,6 +76,9 @@ type ItemWithPurchaseOrder {
     icsId : String
     risId : String
     parId : String
+    income: String
+    mds: String
+    details: String
 }
 
 

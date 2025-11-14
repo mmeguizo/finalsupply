@@ -18,6 +18,9 @@ const GET_PURCHASEORDERS = gql`
       category
       status
       modeOfProcurement
+  income
+  mds
+  details
       items {
         id
         itemName
@@ -38,6 +41,7 @@ const GET_PURCHASEORDERS = gql`
       }
       amount
       invoice
+      fundsource
     }
   }
 `;
@@ -58,6 +62,9 @@ const GET_PURCHASEORDER = gql`
       paymentTerms
       category
       status
+  income
+  mds
+  details
       items {
         id
         itemName
@@ -75,6 +82,7 @@ const GET_PURCHASEORDER = gql`
       }
       amount
       invoice
+      fundsource
     }
   }
 `;
@@ -128,8 +136,12 @@ const GET_ALL_PURCHASEORDER_ITEMS = gql`
         paymentTerms
         category
         status
+        income
+        mds
+        details
         amount
         invoice
+        fundsource
       }
     }
   }
@@ -164,8 +176,12 @@ const GET_ALL_ICS_PURCHASEORDER_ITEMS = gql`
         paymentTerms
         category
         status
+        income
+        mds
+        details
         amount
         invoice
+        fundsource
       }
     }
   }
@@ -193,6 +209,9 @@ const GET_ALL_DASHBOARD_DATA = gql`
       category
       status
       completed_status_date
+  income
+  mds
+  details
       items {
         id
         itemName
@@ -210,6 +229,7 @@ const GET_ALL_DASHBOARD_DATA = gql`
       amount
       invoice
       createdAt
+      fundsource
     }
     getAllCategory {
       category
