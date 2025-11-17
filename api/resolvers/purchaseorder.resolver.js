@@ -229,8 +229,11 @@ const purchaseorderResolver = {
 
   Mutation: {
     addPurchaseOrder: async (_, { input }, context) => {
+
+      console.log("addPurchaseOrder", input, context.req.user);
+
       const batchIarId = nanoid();
-      const autoIiarIds = await generateNewIarId(context.req.user.location);
+      const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories at a higher scope if used for both PO and POItems
       const validCategories = [
         "property acknowledgement reciept",
@@ -407,7 +410,7 @@ const purchaseorderResolver = {
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
       const batchIarId = nanoid();
-      const autoIiarIds = await generateNewIarId(context.req.user.location);
+      const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
         "property acknowledgement reciept",
@@ -649,6 +652,42 @@ const purchaseorderResolver = {
                     changeReason: item.changeReason || "Received quantity update",
                   });
                 } // End of hasChanges check
+                else {
+                  // Details update only (e.g., description/unit/category/etc.)
+                  try {
+                    await PurchaseOrderItemsHistory.create({
+                      purchaseOrderItemId: currentItem.id,
+                      purchaseOrderId: poId,
+                      itemName:
+                        (itemUpdates.itemName !== undefined
+                          ? itemUpdates.itemName
+                          : currentItem.itemName) || "",
+                      description:
+                        (itemUpdates.description !== undefined
+                          ? itemUpdates.description
+                          : currentItem.description) || null,
+                      previousQuantity: currentItem.quantity,
+                      newQuantity: newQuantity,
+                      previousActualQuantityReceived:
+                        currentItem.actualQuantityReceived,
+                      newActualQuantityReceived:
+                        currentItem.actualQuantityReceived,
+                      previousAmount: currentItem.amount,
+                      newAmount: newAmount,
+                      iarId: null,
+                      parId: null,
+                      risId: null,
+                      icsId: null,
+                      changeType: "item_details_update",
+                      changedBy: user.name || user.id,
+                      changeReason:
+                        item.changeReason ||
+                        "Updated item details (no quantity received)",
+                    });
+                  } catch (e) {
+                    console.error("Failed to record item details update history", e);
+                  }
+                }
               }
             } else {
               // Create new item if the item does not have an id

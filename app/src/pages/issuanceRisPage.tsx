@@ -308,13 +308,16 @@ export default function IssuanceRisPage() {
     state.getSignatoryByRole("Recieved From")
   );
   
-  // Updated signatory state to use proper type
-  const [signatories, setSignatories] = React.useState<risIssuanceSignatories>({
+  // Persist selections across navigation using store
+  const getSelections = useSignatoryStore((s) => s.getSelections);
+  const setSelections = useSignatoryStore((s) => s.setSelections);
+  const risDefault: risIssuanceSignatories = React.useMemo(() => ({
     requested_by: "",
     approved_by: "",
     issued_by: "",
     recieved_by: ""
-  });
+  }), []);
+  const signatories: risIssuanceSignatories = getSelections("ris") || risDefault;
  
   const handleOpenPrintModal = (items: any) => {
     const reportTitle = items[0]?.category?.split(" ") || [];
@@ -437,7 +440,7 @@ export default function IssuanceRisPage() {
 
 
   const onSignatoriesChange = (selectedSignatories: risIssuanceSignatories) => {
-    setSignatories(selectedSignatories);
+    setSelections("ris", selectedSignatories);
   }
 
   // Apply pagination to the filtered rows

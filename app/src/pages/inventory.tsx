@@ -38,9 +38,19 @@ import {
 } from "../utils/generalUtils";
 import { Select, MenuItem, Chip } from "@mui/material";
 import { useMutation } from "@apollo/client";
-import { UPDATE_IAR_STATUS, REVERT_IAR_BATCH } from "../graphql/mutations/inventoryIAR.mutation";
+import {
+  UPDATE_IAR_STATUS,
+  REVERT_IAR_BATCH,
+  APPEND_TO_EXISTING_IAR,
+} from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
-import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query";
+import {
+  GET_PURCHASEORDERS,
+  GET_ALL_DASHBOARD_DATA,
+} from "../graphql/queries/purchaseorder.query";
+// @ts-ignore
+import { UPDATE_PURCHASEORDER } from "../graphql/mutations/purchaseorder.mutation";
+import useSignatoryStore from "../stores/signatoryStore";
 
 // Row component for collapsible table
 function Row(props: {
@@ -48,24 +58,148 @@ function Row(props: {
   handleOpenPrintModal: (item: any, iarId: string) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
-  // added
+  onNotify: (message: string, severity?: "success" | "error" | "info" | "warning") => void;
+  // overrides
   invoiceOverride?: string;
   dateOfPaymentOverride?: string;
-  onOverrideChange: (iarId: string, patch: { invoice?: string; dateOfPayment?: string }) => void;
+  incomeOverride?: string;
+  mdsOverride?: string;
+  detailsOverride?: string;
+  onOverrideChange: (
+    iarId: string,
+    patch: { invoice?: string; dateOfPayment?: string; income?: string; mds?: string; details?: string }
+  ) => void;
 }) {
-  const { row, handleOpenPrintModal, onStatusUpdate, onRevert, invoiceOverride, dateOfPaymentOverride, onOverrideChange } = props;
+  const {
+    row,
+    handleOpenPrintModal,
+    onStatusUpdate,
+    onRevert,
+    onNotify,
+    invoiceOverride,
+    dateOfPaymentOverride,
+    incomeOverride,
+    mdsOverride,
+    detailsOverride,
+    onOverrideChange,
+  } = props;
   const [open, setOpen] = React.useState(false);
+  const [savingIncome, setSavingIncome] = React.useState(false);
+  const [savingMds, setSavingMds] = React.useState(false);
+  const [savingDetails, setSavingDetails] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
-    return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
+    return row.items.some(
+      (it: any) => Number(it.actualQuantityReceived || 0) > 0
+    );
   }, [row]);
+  // Parent Purchase Order completed state (same PO across grouped items)
+  const poCompleted = row?.items?.[0]?.PurchaseOrder?.status === "completed";
+
+  // Local state to add a NEW item into the same Purchase Order directly from Inventory
+  const [newItemDraft, setNewItemDraft] = React.useState<any>({
+    description: "",
+    unit: "",
+    quantity: 0,
+    unitCost: 0,
+    received: 0,
+    category: "requisition issue slip",
+  });
+
+  // Mutation to update item details (description/unit) via Purchase Order
+  const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Mutation to append a new IAR line under the same IAR ID
+  const [appendToExistingIAR] = useMutation(APPEND_TO_EXISTING_IAR, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Per-item add-line drafts keyed by purchaseOrderItemId
+  const [iarLineDrafts, setIarLineDrafts] = React.useState<
+    Record<
+      string,
+      {
+        description?: string;
+        generalDescription?: string;
+        specification?: string;
+        received?: number;
+      }
+    >
+  >({});
+
+  const handleAddNewItem = async () => {
+    try {
+      const poId =
+        row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+      if (!poId) return;
+
+      const q = Number(newItemDraft.quantity || 0);
+      const uc = Number(newItemDraft.unitCost || 0);
+      const recv = Number(newItemDraft.received || 0);
+      const amt = q * uc;
+
+      // Basic validation: must have description and non-negative numbers; received cannot exceed quantity
+      if (!newItemDraft.description?.trim()) return;
+      if (q <= 0 || uc < 0 || recv < 0 || recv > q) return;
+
+      const payloadItem = {
+        id: "temp", // signals backend to create a new PO item
+        description: newItemDraft.description,
+        unit: newItemDraft.unit,
+        quantity: q,
+        unitCost: uc,
+        amount: amt,
+        category: newItemDraft.category,
+        currentInput: recv, // immediately receive this amount and create IAR/history
+      };
+
+      await updatePurchaseOrder({
+        variables: {
+          input: {
+            id: Number(poId),
+            items: [payloadItem],
+          },
+        },
+      });
+
+      // Reset draft row
+      setNewItemDraft({
+        description: "",
+        unit: "",
+        quantity: 0,
+        unitCost: 0,
+        received: 0,
+        category: "requisition issue slip",
+      });
+    } catch (e) {
+      console.error("Failed to add new PO item from Inventory:", e);
+    }
+  };
 
   const poDefaults = {
     invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
     dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
+    income: row.items?.[0]?.PurchaseOrder?.income || "",
+    mds: row.items?.[0]?.PurchaseOrder?.mds || "",
+    details: row.items?.[0]?.PurchaseOrder?.details || "",
   };
   const invoiceValue = invoiceOverride ?? poDefaults.invoice;
   const dateValue = dateOfPaymentOverride ?? poDefaults.dateOfPayment;
+  const incomeValue = incomeOverride ?? poDefaults.income;
+  const mdsValue = mdsOverride ?? poDefaults.mds;
+  const detailsValue = detailsOverride ?? poDefaults.details;
 
   return (
     <React.Fragment>
@@ -99,28 +233,143 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
-        {/* NEW: Invoice input */}
+        {/* Invoice input */}
         <TableCell>
           <TextField
             size="small"
             placeholder={poDefaults.invoice || "Invoice #"}
             value={invoiceOverride ?? ""}
-            onChange={(e) => onOverrideChange(row.iarId, { invoice: e.target.value })}
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { invoice: e.target.value })
+            }
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
           />
         </TableCell>
-        {/* NEW: Invoice Date input */}
+        {/* Invoice Date input */}
         <TableCell>
           <TextField
             type="date"
             size="small"
             placeholder={poDefaults.dateOfPayment || "YYYY-MM-DD"}
             value={dateOfPaymentOverride ?? ""}
-            onChange={(e) => onOverrideChange(row.iarId, { dateOfPayment: e.target.value })}
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { dateOfPayment: e.target.value })
+            }
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
             InputLabelProps={{ shrink: true }}
+          />
+        </TableCell>
+        {/* Income multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.income || "Income..."}
+            value={incomeOverride !== undefined ? incomeOverride : poDefaults.income}
+            onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingIncome(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), income: valueToSave } } });
+                    onNotify('Income saved');
+                  }
+                } catch (err) { console.error('Failed to save income', err); onNotify('Failed to save income','error'); }
+                finally { setSavingIncome(false); }
+              }
+            }}
+            sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingIncome ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingIncome}
+          />
+        </TableCell>
+        {/* MDS multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.mds || "MDS..."}
+            value={mdsOverride !== undefined ? mdsOverride : poDefaults.mds}
+            onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingMds(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), mds: valueToSave } } });
+                    onNotify('MDS saved');
+                  }
+                } catch (err) { console.error('Failed to save mds', err); onNotify('Failed to save MDS','error'); }
+                finally { setSavingMds(false); }
+              }
+            }}
+            sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingMds ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingMds}
+          />
+        </TableCell>
+        {/* Details multiline enter-to-save */}
+        <TableCell>
+          <TextField
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={poDefaults.details || "Details..."}
+            value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
+            onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingDetails(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), details: valueToSave } } });
+                    onNotify('Details saved');
+                  }
+                } catch (err) { console.error('Failed to save details', err); onNotify('Failed to save details','error'); }
+                finally { setSavingDetails(false); }
+              }
+            }}
+            sx={{ minWidth: 200 }}
+            InputProps={{
+              endAdornment: savingDetails ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingDetails}
           />
         </TableCell>
         <TableCell>
@@ -141,6 +390,7 @@ function Row(props: {
               size="small"
               color="error"
               variant="outlined"
+              disabled={poCompleted}
               onClick={(e) => {
                 e.stopPropagation();
                 onRevert(row.iarId);
@@ -152,16 +402,16 @@ function Row(props: {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+        <TableCell sx={{ p: 0 }} colSpan={12}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Details
-              </Typography>
-              <Table size="small" aria-label="details">
+            <Box sx={{ m: 0 }}>
+          
+              <Table size="small" aria-label="details" sx={{ width: "100%" }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
+                    <TableCell>General Desc.</TableCell>
+                    <TableCell>Specification</TableCell>
                     <TableCell>Unit</TableCell>
                     <TableCell align="right">Actual Received</TableCell>
                     <TableCell align="right">Quantity</TableCell>
@@ -169,37 +419,324 @@ function Row(props: {
                     <TableCell align="right">Amount</TableCell>
                     {/* <TableCell>P.O. #</TableCell> */}
                     <TableCell>Category</TableCell>
+                    <TableCell align="center">Add Line</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.items.map((item: any) => (
-                    <TableRow key={item.id}>
-                      <TableCell component="th" scope="row">
-                        {item.description}
-                      </TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell align="right">
-                        {item.actualQuantityReceived}
-                      </TableCell>
-                      <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.unitCost)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.amount)}
-                      </TableCell>
-                      {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
-                      <TableCell>
-                        {item.category
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                          )
-                          .join(" ")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {row.items.map((item: any) => {
+                    const poi = item.PurchaseOrderItem;
+                    const isCompleted =
+                      item.PurchaseOrder?.status === "completed";
+
+                    const currentDescription =
+                      poi?.description ?? item.description ?? "";
+                    const currentGenDesc =
+                      poi?.generalDescription ?? item.generalDescription ?? "";
+                    const currentSpec =
+                      poi?.specification ?? item.specification ?? "";
+                    const currentUnit = poi?.unit ?? item.unit ?? "";
+                    const remaining = Math.max(
+                      0,
+                      Number(poi?.quantity || item.quantity || 0) -
+                        Number(poi?.actualQuantityReceived || 0)
+                    );
+
+                    // Original PO fields are view-only in this table.
+
+                    const draftKey = String(
+                      poi?.id ?? item.purchaseOrderItemId
+                    );
+                    const draft = iarLineDrafts[draftKey] || null;
+
+                    const updateDraft = (
+                      patch: Partial<{
+                        description?: string;
+                        generalDescription?: string;
+                        specification?: string;
+                        received?: number;
+                      }>
+                    ) => {
+                      setIarLineDrafts((prev) => ({
+                        ...prev,
+                        [draftKey]: { ...(prev[draftKey] || {}), ...patch },
+                      }));
+                    };
+
+                    const clearDraft = () => {
+                      setIarLineDrafts((prev) => {
+                        const next = { ...prev } as any;
+                        delete next[draftKey];
+                        return next;
+                      });
+                    };
+
+                    const handleAddLine = async () => {
+                      if (!draft) return;
+                      const recv = Number(draft.received || 0);
+                      if (recv <= 0) return;
+                      const clamped = Math.min(recv, remaining);
+                      if (clamped <= 0) return;
+                      try {
+                        const poiIdNum = parseInt(
+                          String(poi?.id ?? item.purchaseOrderItemId),
+                          10
+                        );
+                        if (!Number.isFinite(poiIdNum)) {
+                          console.error(
+                            "Invalid purchaseOrderItemId",
+                            poi?.id,
+                            item.purchaseOrderItemId
+                          );
+                          return;
+                        }
+                        await appendToExistingIAR({
+                          variables: {
+                            iarId: row.iarId,
+                            items: [
+                              {
+                                purchaseOrderItemId: poiIdNum,
+                                received: clamped,
+                                description: draft.description || undefined,
+                                generalDescription:
+                                  draft.generalDescription || undefined,
+                                specification: draft.specification || undefined,
+                              },
+                            ],
+                          },
+                        });
+                        clearDraft();
+                      } catch (e) {
+                        console.error("Failed to append IAR line", e);
+                      }
+                    };
+
+                    return (
+                      <React.Fragment key={item.id}>
+                        <TableRow>
+                          <TableCell component="th" scope="row">
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentDescription || "-"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentGenDesc || "-"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {currentSpec || "-"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {currentUnit || "-"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-end",
+                              }}
+                            >
+                              <Typography>
+                                {item.actualQuantityReceived}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Remaining: {remaining}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">{item.quantity}</TableCell>
+                          <TableCell align="right">
+                            {currencyFormat(item.unitCost)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {currencyFormat(item.amount)}
+                          </TableCell>
+                          {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
+                          <TableCell>
+                            {item.category
+                              ?.split(" ")
+                              .map(
+                                (word: string) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
+                              .join(" ")}
+                          </TableCell>
+                          <TableCell align="center">
+                            {!draft && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={remaining <= 0 || isCompleted}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateDraft({
+                                    description: "",
+                                    generalDescription: "",
+                                    specification: "",
+                                    received: 0,
+                                  });
+                                }}
+                              >
+                                + Add
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        {draft && (
+                          <TableRow>
+                            {/* Description */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                placeholder="New Description"
+                                multiline
+                                maxRows={3}
+                                value={draft.description ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({ description: e.target.value })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* General Desc. */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                multiline
+                                maxRows={3}
+                                fullWidth
+                                placeholder="New General Desc."
+                                value={draft.generalDescription ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({
+                                    generalDescription: e.target.value,
+                                  })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Specification */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                multiline
+                                maxRows={3}
+                                fullWidth
+                                placeholder="New Specification"
+                                value={draft.specification ?? ""}
+                                onChange={(e) =>
+                                  updateDraft({ specification: e.target.value })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Unit (read-only to align) */}
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                value={currentUnit || "-"}
+                                InputProps={{ readOnly: true }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                            {/* Actual Received input aligned in its column */}
+                            <TableCell align="right">
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-end",
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  sx={{ width: 120 }}
+                                  placeholder="Received"
+                                  value={draft.received ?? ""}
+                                  onChange={(e) =>
+                                    updateDraft({
+                                      received: Number(e.target.value),
+                                    })
+                                  }
+                                  inputProps={{ min: 0, max: remaining }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Remaining: {remaining}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            {/* Quantity */}
+                            <TableCell align="right">{item.quantity}</TableCell>
+                            {/* Unit Cost */}
+                            <TableCell align="right">
+                              {currencyFormat(item.unitCost)}
+                            </TableCell>
+                            {/* Amount */}
+                            <TableCell align="right">
+                              {currencyFormat(item.amount)}
+                            </TableCell>
+                            {/* Category */}
+                            <TableCell>
+                              {item.category
+                                ?.split(" ")
+                                .map(
+                                  (word: string) =>
+                                    word.charAt(0).toUpperCase() + word.slice(1)
+                                )
+                                .join(" ")}
+                            </TableCell>
+                            {/* Add/Cancel buttons in Add Line column */}
+                            <TableCell align="center">
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={handleAddLine}
+                                  disabled={remaining <= 0}
+                                >
+                                  Add
+                                </Button>
+                                <Button size="small" onClick={clearDraft}>
+                                  Cancel
+                                </Button>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                  {/* Add-new-item row removed per requirement to avoid adding new line items from Inventory for now */}
                 </TableBody>
               </Table>
             </Box>
@@ -255,12 +792,22 @@ export default function InventoryPage() {
     }
   );
 
- const [iarOverrides, setIarOverrides] = React.useState<
-    Record<string, { invoice?: string; dateOfPayment?: string }>
+  const [iarOverrides, setIarOverrides] = React.useState<
+    Record<
+      string,
+      {
+        invoice?: string;
+        dateOfPayment?: string;
+        income?: string;
+        mds?: string;
+        details?: string;
+      }
+    >
   >({});
-  const [poOverrides, setPoOverrides] = React.useState<
-    { invoice?: string; dateOfPayment?: string } | null
-  >(null);
+  const [poOverrides, setPoOverrides] = React.useState<{
+    invoice?: string;
+    dateOfPayment?: string;
+  } | null>(null);
 
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
@@ -268,14 +815,15 @@ export default function InventoryPage() {
   const [title, setTitle] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   // Local signatories state for Inventory printing
-  const [selectedSignatories, setSelectedSignatories] = React.useState<any>({
-    recieved_from: "",
-    recieved_by: "",
-    metadata: {
-      recieved_from: { id: "", position: "", role: "" },
-      recieved_by: { id: "", position: "", role: "" },
-    },
-  });
+  // const [selectedSignatories, setSelectedSignatories] = React.useState<any>({});
+
+  const IARSelections = useSignatoryStore((s) => s.IARSelections);
+
+  const  setSelectedIAR = useSignatoryStore((s) => s.setIARSelections);
+  const defaultSelections = React.useMemo(() => ({}), []);
+
+  const currentSelections = IARSelections || defaultSelections;
+
   const [updateIARStatus] = useMutation(UPDATE_IAR_STATUS, {
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
   });
@@ -302,7 +850,9 @@ export default function InventoryPage() {
 
   // Confirm dialog state for revert
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<string | null>(null);
+  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<
+    string | null
+  >(null);
 
   const handleOpenPrintModal = (poItems: any, iarId: string) => {
     setReportType("inspection");
@@ -317,6 +867,11 @@ export default function InventoryPage() {
     setPoOverrides(null);
   };
 
+  const onSignatoriesChange = (signatories: any) => {
+    console.log("onSignatoriesChange signatories for IAR:", signatories);
+    setSelectedIAR(signatories);
+  };
+  
   // Add this function after handleClosePrintModal (around line 177)
   const handleStatusUpdate = async (iarId: string, newStatus: string) => {
     try {
@@ -330,7 +885,7 @@ export default function InventoryPage() {
         },
       });
       if (results.data?.updateIARStatus) {
-        console.log({updateIARStatus :results.data.updateIARStatus});
+        console.log({ updateIARStatus: results.data.updateIARStatus });
         setNotificationMessage(results.data.updateIARStatus.message);
         setNotificationSeverity("success"); // Always success if we get here
         setShowNotification(true);
@@ -361,7 +916,9 @@ export default function InventoryPage() {
       return;
     }
     try {
-      const res = await revertIARBatch({ variables: { iarId, reason: "User requested revert" } });
+      const res = await revertIARBatch({
+        variables: { iarId, reason: "User requested revert" },
+      });
       if (res.data?.revertIARBatch?.success) {
         setNotificationMessage(res.data.revertIARBatch.message);
         setNotificationSeverity("success");
@@ -485,13 +1042,12 @@ export default function InventoryPage() {
           maxHeight: "calc(100vh - 100px)",
         }}
       >
-      
         <Paper sx={{ width: "100%" }}>
           <EnhancedTableToolbar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
           />
-          <TableContainer>
+          <TableContainer sx={{ px: 0 }}>
             <Table aria-label="collapsible table">
               <TableHead>
                 <TableRow>
@@ -500,9 +1056,12 @@ export default function InventoryPage() {
                   <TableCell>IAR#</TableCell>
                   <TableCell>Delivery Date</TableCell>
                   <TableCell>IAR</TableCell>
-                  {/* NEW headers */}
+                  {/* Expanded headers including financial/meta fields */}
                   <TableCell>Invoice#</TableCell>
                   <TableCell>Invoice Date</TableCell>
+                  <TableCell>Income</TableCell>
+                  <TableCell>MDS</TableCell>
+                  <TableCell>Details</TableCell>
                   <TableCell>Print</TableCell>
                   <TableCell>Revert</TableCell>
                 </TableRow>
@@ -515,9 +1074,17 @@ export default function InventoryPage() {
                     handleOpenPrintModal={handleOpenPrintModal}
                     onStatusUpdate={handleStatusUpdate}
                     onRevert={handleRevertIAR}
-                    // pass overrides
+                    onNotify={(message, severity = 'success') => {
+                      setNotificationMessage(message);
+                      setNotificationSeverity(severity);
+                      setShowNotification(true);
+                    }}
+                    // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
                     dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
+                    incomeOverride={iarOverrides[row.iarId]?.income}
+                    mdsOverride={iarOverrides[row.iarId]?.mds}
+                    detailsOverride={iarOverrides[row.iarId]?.details}
                     onOverrideChange={(iarId, patch) =>
                       setIarOverrides((prev) => ({
                         ...prev,
@@ -539,11 +1106,11 @@ export default function InventoryPage() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-          {/* Signatory selection for IAR printing */}
+        {/* Signatory selection for IAR printing */}
         <Paper sx={{ width: "100%", p: 2 }}>
           <SignatoriesComponent
-            signatories={selectedSignatories}
-            onSignatoriesChange={setSelectedSignatories}
+            signatories={currentSelections}
+            onSignatoriesChange={onSignatoriesChange}
           />
         </Paper>
       </Stack>
@@ -557,10 +1124,7 @@ export default function InventoryPage() {
         handleClose={handleClosePrintModal}
         reportData={printPOI}
         reportType={reportType}
-        signatories={{
-          inspectionOfficer: selectedSignatories?.recieved_by || "",
-          supplyOfficer: selectedSignatories?.recieved_from || "",
-        }}
+        signatories={currentSelections}
         // NEW: pass overrides
         poOverrides={poOverrides || undefined}
       />

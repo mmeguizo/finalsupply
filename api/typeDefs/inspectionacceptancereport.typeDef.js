@@ -84,6 +84,9 @@ type ItemWithPurchaseOrder {
     parId : String
     createdAt : String
     iarStatus : String
+    income: String
+    mds: String
+    details: String
 }
 type IARonly{
     id: ID
@@ -141,6 +144,7 @@ type Mutation {
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
     revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
+        appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
 }
 
 type RevertIARBatchPayload {
@@ -148,6 +152,22 @@ type RevertIARBatchPayload {
     message: String!
     iarId: String!
     affectedCount: Int!
+}
+
+# New inputs and payloads for appending lines to an existing IAR
+input AppendIARItemInput {
+    purchaseOrderItemId: Int!
+    received: Int!
+    description: String
+    generalDescription: String
+    specification: String
+}
+
+type AppendIARResult {
+    success: Boolean!
+    iarId: String!
+    updatedCount: Int!
+    message: String!
 }
 
 

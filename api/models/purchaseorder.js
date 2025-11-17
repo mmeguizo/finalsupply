@@ -91,6 +91,25 @@ const PurchaseOrder = sequelize.define(
       allowNull: true,
       comment: "Campus name: Talisay | Alijis | Binalbagan | Fortune Town",
     },
+    fundsource : {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    income: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: "Income source or code",
+    },
+    mds: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: "MDS reference",
+    },
+    details: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Additional PO details",
+    }
   },
   {
     tableName: "purchase_orders", // Specify the table name

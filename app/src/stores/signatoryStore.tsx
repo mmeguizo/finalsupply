@@ -10,7 +10,17 @@ const useSignatoryStore = create<SignatoryStore>()(
       signatories: [],
       selectedSignatory: null,
       loading: false,
-      error: null,
+    error: null,
+    selectionsByContext: {},
+    IARSelections: {},
+      issuanceParSelections: {
+        recieved_from: "",
+        recieved_by: "",
+        metadata: {
+          recieved_from: { position: "", role: "" },
+          recieved_by: { position: "", role: "" }
+        }
+      },
       
       fetchSignatories: async () => {
         set({ loading: true });
@@ -29,9 +39,26 @@ const useSignatoryStore = create<SignatoryStore>()(
         return get().signatories.find(sig => sig.role.toLowerCase() === role.toLowerCase());
       },
       
-      selectSignatory: (id) => {
+      selectSignatory: (id: string) => {
         const signatory = get().signatories.find(s => s.id === id) || null;
         set({ selectedSignatory: signatory });
+      },
+      setIssuanceParSelections: (selections) => {
+        set({ issuanceParSelections: selections });
+      },
+
+      setIARSelections: (selections) => {
+
+        console.log("Setting IARSelections in store:", selections);
+
+        set({ IARSelections: selections });
+      },
+      getSelections: (key: string) => {
+        return get().selectionsByContext[key];
+      },
+      setSelections: (key: string, selections: any) => {
+        const current = get().selectionsByContext || {};
+        set({ selectionsByContext: { ...current, [key]: selections } });
       },
       // Add or update a signatory in the persisted signatory list
       addOrUpdateSignatory: (signatory: Signatory) => {
@@ -54,7 +81,23 @@ const useSignatoryStore = create<SignatoryStore>()(
         }
       },
       
-      clearSelectedSignatory: () => set({ selectedSignatory: null })
+      clearSelectedSignatory: () => set({ selectedSignatory: null }),
+      clearIARSelections: () => set({ IARSelections: {} }),
+      clearIssuanceParSelections: () => set({
+        issuanceParSelections: {
+          recieved_from: "",
+          recieved_by: "",
+          metadata: {
+            recieved_from: { position: "", role: "" },
+            recieved_by: { position: "", role: "" }
+          }
+        }
+      }),
+      clearSelections: (key: string) => {
+        const next = { ...(get().selectionsByContext || {}) };
+        delete next[key];
+        set({ selectionsByContext: next });
+      }
     }),
     {
       name: 'signatory-storage', // unique name for localStorage key

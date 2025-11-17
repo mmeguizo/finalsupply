@@ -75,7 +75,7 @@ export default function InspectionAcceptanceReportForIAR({
   // Use signatories provided by parent (Inventory page)
   // --- ADDED: normalize reportData to an array and compute totals ---
 
-  console.log({reportData});
+  console.log({signatories});
 
   const items: any[] = Array.isArray(reportData)
     ? reportData
@@ -450,7 +450,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.inspectionOfficer || "")}
+                      {capitalizeFirstLetter(signatories?.recieved_from || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Inspection Officer
                     </Box>
@@ -540,7 +540,7 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.supplyOfficer || "")}
+                      {capitalizeFirstLetter(signatories?.recieved_by || "")}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Property and Supply Management Officer
                     </Box>

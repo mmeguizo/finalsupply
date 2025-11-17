@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "migrate:add-campus": "node ./scripts/run_add_campus_migration.js"
+    "migrate:add-income-mds-details": "node ./scripts/run_add_income_mds_details_migration.js",
+    "cleanup-indexes": "node ./scripts/cleanup-indexes.js"
   },
   "keywords": [],
   "author": "",

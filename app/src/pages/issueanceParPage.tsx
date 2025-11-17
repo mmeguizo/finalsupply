@@ -46,23 +46,19 @@ export default function IssuanceParPage() {
   const [title, setTitle] = React.useState("");
 
   // Signatory store access
-  const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
-  );
-  const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
-  );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  // Persist selections across navigation using Zustand store
+  const issuanceParSelections = useSignatoryStore((s) => s.issuanceParSelections);
+  const setIssuanceParSelections = useSignatoryStore((s) => s.setIssuanceParSelections);
+  const defaultSelections = React.useMemo(() => ({
+    recieved_from: "",
+    recieved_by: "",
+    metadata: {
+      recieved_from: { position: "", role: "" },
+      recieved_by: { position: "", role: "" }
+    }
+  }), []);
   
-  // Initialize signatories state
-  const [signatories, setSignatories] = React.useState<any>({
-    requested_by: "",
-    approved_by: "",
-    issued_by: "",
-    recieved_by: ""
-  });
+  const currentSelections = issuanceParSelections || defaultSelections;
 
   const groupedRows = React.useMemo(() => {
     if (!data?.propertyAcknowledgmentReportForView?.length) return [];
@@ -104,7 +100,8 @@ export default function IssuanceParPage() {
   };
 
   const onSignatoriesChange = (selectedSignatories: any) => {
-    setSignatories(selectedSignatories);
+    // Persist to store so it survives route changes and reloads
+    setIssuanceParSelections(selectedSignatories);
   };
 
     const handleClosePrintModal = () => {
@@ -167,19 +164,19 @@ export default function IssuanceParPage() {
         
         {/* Signatory Selection Component */}
         <SignatoriesComponent
-          signatories={signatories}
+          signatories={currentSelections}
           onSignatoriesChange={onSignatoriesChange}
         />
       </Stack>
 
       {/* You can add your PrintReportDialogForPAR component here when ready */}
-       <PrintReportDialogForPAR
+  <PrintReportDialogForPAR
               open={openPrintModal}
               handleClose={handleClosePrintModal}
               reportData={printItem}
               reportType={reportType}
               title={title}
-              signatories={signatories}
+              signatories={currentSelections}
             />
     </PageContainer>
   );
