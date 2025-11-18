@@ -331,6 +331,24 @@ export default function InspectionAcceptanceReportForIAR({
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={3} sx={{ textAlign: "left", padding: 0.5 }}>
+                      <Typography fontSize={12}>
+                        Income: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        MDS: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        Details: <span>(Value)</span>
+                      </Typography>
+                    </StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                  </StyledTableRow>
                 </>
               ) : (
                 <StyledTableRow>
@@ -346,17 +364,7 @@ export default function InspectionAcceptanceReportForIAR({
               <StyledTableRow>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell colSpan={4}>
-                  <Typography fontSize={12}>
-                    Income: <span>(Value)</span>
-                  </Typography>
-                  <Typography fontSize={12}>
-                    MDS: <span>(Value)</span>
-                  </Typography>
-                  <Typography fontSize={12}>
-                    Details: <span>(Value)</span>
-                  </Typography>
-                </StyledTableCell>
+                <StyledTableCell colSpan={4}></StyledTableCell>
                 <StyledTableCell>Total</StyledTableCell>
                 <StyledTableCell>{totalAmount || ""}</StyledTableCell>
               </StyledTableRow>

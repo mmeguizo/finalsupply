@@ -136,11 +136,12 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
-                <TableCell sx={{ width: "11%" }}></TableCell>
-                <TableCell sx={{ width: "11%" }}></TableCell>
-                <TableCell sx={{ width: "28%" }}></TableCell>
-                <TableCell sx={{ width: "25%" }}></TableCell>
-                <TableCell sx={{ width: "11%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "20%" }}></TableCell>
+                <TableCell sx={{ width: "22%" }}></TableCell>
+                <TableCell sx={{ width: "14%" }}></TableCell>
                 <TableCell sx={{ width: "14%" }}></TableCell>
               </TableRow>
               <TableRow>
@@ -259,58 +260,90 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                 <StyledTableCell align="left">Inventory Number</StyledTableCell>
                 <StyledTableCell align="left">Quantity</StyledTableCell>
                 <StyledTableCell align="left">Unit</StyledTableCell>
-                <StyledTableCell align="center">Description and Property Number</StyledTableCell>
+                <StyledTableCell colSpan={2} align="center">
+                  Description and Property Number
+                </StyledTableCell>
                 <StyledTableCell align="right">Unit Price</StyledTableCell>
                 <StyledTableCell align="right">Total Price</StyledTableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {reportData ? (
-                reportData.map((reportData: any, index: any) => (
-                  <StyledTableRow key={reportData?.id}>
-                    <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
-                    <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
-                    <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
-                    <StyledTableCell align="left">
-                      <Box>
-                        <Typography sx={{ fontWeight: 500 }}>{reportData.description || reportData.PurchaseOrderItem?.description || ""}</Typography>
+              {reportData.length ? (
+                <>
+                  {reportData.map((reportData: any, index: any) => (
+                    <StyledTableRow key={reportData?.id}>
+                      <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
+                      <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
+                      <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
+                      <StyledTableCell align="left" colSpan={2}>
+                        <Box>
+                          <Typography sx={{ fontWeight: 500 }}>{reportData.description || reportData.PurchaseOrderItem?.description || ""}</Typography>
 
-                        {/* specification: preserve newlines */}
-                        {(reportData.PurchaseOrderItem?.specification || reportData.specification) && (
-                          <Typography
-                            sx={{
-                              whiteSpace: "pre-line",
-                              fontSize: "12px",
-                              color: "text.secondary",
-                              mt: 0.5,
-                              textAlign: "left",
-                            }}
-                          >
-                            {reportData.PurchaseOrderItem?.specification || reportData.specification}
-                          </Typography>
-                        )}
+                          {/* specification: preserve newlines */}
+                          {(reportData.PurchaseOrderItem?.specification || reportData.specification) && (
+                            <Typography
+                              sx={{
+                                whiteSpace: "pre-line",
+                                fontSize: "12px",
+                                color: "text.secondary",
+                                mt: 0.5,
+                                textAlign: "left",
+                              }}
+                            >
+                              {reportData.PurchaseOrderItem?.specification || reportData.specification}
+                            </Typography>
+                          )}
 
-                        {/* general description: preserve newlines and add small gap */}
-                        {(reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription) && (
-                          <Typography
-                            sx={{
-                              whiteSpace: "pre-line",
-                              fontSize: "12px",
-                              color: "text.secondary",
-                              mt: 0.75,
-                              textAlign: "left",
-                            }}
-                          >
-                            {reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription}
-                          </Typography>
-                        )}
-                      </Box>
+                          {/* general description: preserve newlines and add small gap */}
+                          {(reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription) && (
+                            <Typography
+                              sx={{
+                                whiteSpace: "pre-line",
+                                fontSize: "12px",
+                                color: "text.secondary",
+                                mt: 0.75,
+                                textAlign: "left",
+                              }}
+                            >
+                              {reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription}
+                            </Typography>
+                          )}
+                        </Box>
+                      </StyledTableCell>
+                      <StyledTableCell align="right">{formatCurrency(reportData.unitCost)}</StyledTableCell>
+                      <StyledTableCell align="right">{formatCurrency(reportData.amount)}</StyledTableCell>
+                    </StyledTableRow>
+                  ))}
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={2} sx={{ textAlign: "center", padding: 0.5 }}>
+                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
                     </StyledTableCell>
-                    <StyledTableCell align="right">{formatCurrency(reportData.unitCost)}</StyledTableCell>
-                    <StyledTableCell align="right">{formatCurrency(reportData.amount)}</StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
-                ))
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
+                      <Typography fontSize={12}>
+                        Income: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        MDS: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        Details: <span>(Value)</span>
+                      </Typography>
+                    </StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                  </StyledTableRow>
+                </>
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
@@ -322,6 +355,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               )}
 
               <StyledTableRow>
+                <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell align="right" colSpan={2} sx={{ paddingLeft: "14%", fontWeight: 600 }}>
@@ -340,7 +374,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 1px 1px" }}>
+                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 1px 1px" }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -382,7 +416,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                     </Box>
                   </Box>
                 </StyledTableCell>
-                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 16px 1px" }}>
+                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 16px 1px" }}>
                   <Box
                     sx={{
                       display: "flex",

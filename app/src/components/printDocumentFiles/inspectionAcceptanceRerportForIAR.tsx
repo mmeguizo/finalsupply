@@ -53,6 +53,20 @@ export const getInspectionReportTemplateForIAR = (
         <td style="padding:4px"></td>
         <td style="padding:4px"></td>
       </tr>
+      <tr>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td colspan="3" style="padding:4px; text-align:left;">
+          <span style="font-size:12px; color:#333;">
+            <p style="font-size:12px;">Income: <span>(Value)</span></p>
+            <p style="font-size:12px;">MDS: <span>(Value)</span></p>
+            <p style="font-size:12px;">Details: <span>(Value)</span></p>
+          </span>
+        </td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+      </tr>
     `
       : "");
 
@@ -334,11 +348,7 @@ export const getInspectionReportTemplateForIAR = (
             <tr class="total-row">
               <td></td>
               <td></td>
-              <td colspan="4" style="padding-left:6px;">
-                  <p style="font-size:12px;">Income: <span>(Value)</span></p>
-                  <p style="font-size:12px;">MDS: <span>(Value)</span></p>
-                  <p style="font-size:12px;">Details: <span>(Value)</span></p>
-              </td>
+              <td colspan="4"></td>
               <td>Total</td>
              <td>${escapeHtml(String(formattedTotal))}</td>
             </tr>
@@ -364,14 +374,14 @@ export const getInspectionReportTemplateForIAR = (
                   <div>Date Received: _____</div>
                   <div style="display:flex; flex-direction:column; gap:6px;">
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:40px; aspect-ratio:3/2; border:1px dotted black; background:${overallComplete ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallComplete ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
                           ${overallComplete ? "✓" : ""}
                         </div>
                         <p style="margin:0; width:65px;">Complete</p>
                       </div>
 
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:40px; aspect-ratio:3/2; border:1px dotted black; background:${overallPartial ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallPartial ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
                           ${overallPartial ? "✓" : ""}
                         </div>
                         <p style="margin:0; width:65px;">Partial</p>
