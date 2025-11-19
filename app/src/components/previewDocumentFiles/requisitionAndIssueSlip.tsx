@@ -1,18 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  styled,
-  Button,
-  Divider,
-} from "@mui/material";
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled, Button, Divider } from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import useSignatoryStore from "../../stores/signatoryStore";
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
@@ -65,17 +52,10 @@ const PrintControls = styled(Box)({
   },
 });
 
-export default function RequisitionReport({
-  signatories,
-  reportData,
-  onPrint,
-  onClose,
-}: genericPreviewProps) {
+export default function RequisitionReport({ signatories, reportData, onPrint, onClose }: genericPreviewProps) {
   const componentRef = useRef(null);
 
   console.log("signatories", signatories);
-
- 
 
   // Create and inject print styles dynamically
   useEffect(() => {
@@ -121,11 +101,7 @@ export default function RequisitionReport({
   }, []);
 
   // Check if reportData is an array, if not, convert it to an array for consistent handling
-  const itemsArray = Array.isArray(reportData)
-    ? reportData.filter((item) => item !== null && item !== undefined)
-    : reportData
-      ? [reportData]
-      : [];
+  const itemsArray = Array.isArray(reportData) ? reportData.filter((item) => item !== null && item !== undefined) : reportData ? [reportData] : [];
 
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -137,27 +113,19 @@ export default function RequisitionReport({
 
   // Build a display string of unique RIS IDs from the report data
   const risIdsDisplay = React.useMemo(() => {
-    const ids = Array.from(
-      new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean))
-    );
-    return ids.join(', ');
+    const ids = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
+    return ids.join(", ");
   }, [itemsArray]);
 
   return (
     <>
-      <PrintControls
-        sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}
-      >
+      <PrintControls sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
         {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
         {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
       </PrintControls>
 
       <Box id="printable-report" ref={componentRef}>
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: "1px solid black" }}
-        >
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid black" }}>
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
@@ -213,22 +181,13 @@ export default function RequisitionReport({
                           placeItems: "center",
                         }}
                       >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontSize: "14px", fontWeight: "normal" }}
-                        >
+                        <Typography variant="h6" sx={{ fontSize: "14px", fontWeight: "normal" }}>
                           REPUBLIC OF THE PHILIPPINES
                         </Typography>
-                        <Typography
-                          variant="h5"
-                          sx={{ fontSize: "16px", fontWeight: 600 }}
-                        >
+                        <Typography variant="h5" sx={{ fontSize: "16px", fontWeight: 600 }}>
                           CARLOS HILADO MEMORIAL STATE UNIVERSITY
                         </Typography>
-                        <Typography
-                          variant="h6"
-                          sx={{ fontSize: "14px", fontWeight: "normal" }}
-                        >
+                        <Typography variant="h6" sx={{ fontSize: "14px", fontWeight: "normal" }}>
                           REQUISITION AND ISSUE SLIP
                         </Typography>
                       </Box>
@@ -292,9 +251,7 @@ export default function RequisitionReport({
                       }}
                     >
                       <Typography>Division:</Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      ></Box>
+                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}></Box>
                     </Box>
                     <Box
                       sx={{
@@ -305,13 +262,7 @@ export default function RequisitionReport({
                     >
                       <Typography>Office: </Typography>
 
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      >
-                        {" "}
-                        &nbsp; &nbsp;{" "}
-                        {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}
-                      </Box>
+                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}> &nbsp; &nbsp; {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}</Box>
                     </Box>
                   </Box>
                 </StyledTableCellHeader>
@@ -326,9 +277,7 @@ export default function RequisitionReport({
                       }}
                     >
                       <Typography>Responsibility Center Code : </Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      ></Box>
+                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}></Box>
                     </Box>
                     <Box
                       sx={{
@@ -338,11 +287,7 @@ export default function RequisitionReport({
                       }}
                     >
                       <Typography>RIS No. :</Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      >
-                        {" "}&nbsp; &nbsp;{risIdsDisplay}
-                      </Box>
+                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}> &nbsp; &nbsp;{risIdsDisplay}</Box>
                     </Box>
                   </Box>
                 </HeaderTableCell>
@@ -400,49 +345,80 @@ export default function RequisitionReport({
 
             <TableBody>
               {itemsArray?.length > 0 ? (
-                itemsArray.map((item: any, index: any) => (
-                  <StyledTableRow key={index}>
-                    <StyledTableCell>{" "}</StyledTableCell>
-                    <StyledTableCell>{index + 1 || ""}</StyledTableCell>
-                    <StyledTableCell>{item.unit || ""}</StyledTableCell>
-                    <StyledTableCell colSpan={2}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {item.description || item.PurchaseOrderItem?.description || ""}
-                        </Typography>
+                <>
+                  {itemsArray.map((item: any, index: any) => (
+                    <StyledTableRow key={index}>
+                      <StyledTableCell> </StyledTableCell>
+                      <StyledTableCell>{index + 1 || ""}</StyledTableCell>
+                      <StyledTableCell>{item.unit || ""}</StyledTableCell>
+                      <StyledTableCell colSpan={2}>
+                        <Box>
+                          <Typography sx={{ fontWeight: 500 }}>{item.description || item.PurchaseOrderItem?.description || ""}</Typography>
 
-                        {(item.PurchaseOrderItem?.specification || item.specification) && (
-                          <Typography
-                            component="div"
-                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
-                            dangerouslySetInnerHTML={{
-                              __html: nl2br(
-                                escapeHtml(item.PurchaseOrderItem?.specification || item.specification || "")
-                              ),
-                            }}
-                          />
-                        )}
+                          {(item.PurchaseOrderItem?.specification || item.specification) && (
+                            <Typography
+                              component="div"
+                              sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                              dangerouslySetInnerHTML={{
+                                __html: nl2br(escapeHtml(item.PurchaseOrderItem?.specification || item.specification || "")),
+                              }}
+                            />
+                          )}
 
-                        {(item.PurchaseOrderItem?.generalDescription || item.generalDescription) && (
-                          <Typography
-                            component="div"
-                            sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
-                            dangerouslySetInnerHTML={{
-                              __html: nl2br(
-                                escapeHtml(item.PurchaseOrderItem?.generalDescription || item.generalDescription || "")
-                              ),
-                            }}
-                          />
-                        )}
-                      </Box>
+                          {(item.PurchaseOrderItem?.generalDescription || item.generalDescription) && (
+                            <Typography
+                              component="div"
+                              sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                              dangerouslySetInnerHTML={{
+                                __html: nl2br(escapeHtml(item.PurchaseOrderItem?.generalDescription || item.generalDescription || "")),
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </StyledTableCell>
+                      <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
+                      <StyledTableCell colSpan={2}></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell> </StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                    </StyledTableRow>
+                  ))}
+
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={2} sx={{ textAlign: "center", padding: 0.5 }}>
+                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
                     </StyledTableCell>
-                    <StyledTableCell>{item.actualQuantityReceived || ""}</StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell>{" "}</StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
-                ))
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
+                      <Typography fontSize={12}>
+                        Income: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        MDS: <span>(Value)</span>
+                      </Typography>
+                      <Typography fontSize={12}>
+                        Details: <span>(Value)</span>
+                      </Typography>
+                    </StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell colSpan={2}></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                  </StyledTableRow>
+                </>
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
@@ -465,10 +441,8 @@ export default function RequisitionReport({
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell align="right"> {" "} </StyledTableCell>
-                <StyledTableCell align="right">
-                  {/* {formatTotalAmount} */ " "}
-                </StyledTableCell>
+                <StyledTableCell align="right"> </StyledTableCell>
+                <StyledTableCell align="right">{/* {formatTotalAmount} */ " "}</StyledTableCell>
               </StyledTableRow>
             </TableBody>
 
@@ -502,24 +476,16 @@ export default function RequisitionReport({
               <StyledTableRow>
                 <StyledTableCell colSpan={2}>Printed Name :</StyledTableCell>
                 <StyledTableCell>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.requested_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.requested_by || "")}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={2}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.approved_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.approved_by || "")}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.issued_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.issued_by || "")}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.recieved_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.recieved_by || "")}</Typography>
                 </StyledTableCell>
               </StyledTableRow>
 
