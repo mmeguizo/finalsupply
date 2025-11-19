@@ -703,7 +703,7 @@ export default function PurchaseOrderModal({
                           // Disable editing quantity when the purchase order is completed or fully received
                           disabled={
                             String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
-                            (Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0
+                            ((Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0 && item.id !== "temp")
                           }
                           inputProps={{ style: { textAlign: "right" } }}
                         />
@@ -741,8 +741,8 @@ export default function PurchaseOrderModal({
                             const clamped = Math.min(Math.max(0, numeric), remaining);
                             updateItem(index, "currentInput", clamped);
                           }}
-                          disabled={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0}
-                          placeholder={(Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0 ? "Fully received" : undefined}
+                          disabled={((Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0) && item.id !== "temp"}
+                          placeholder={((Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0) && item.id !== "temp" ? "Fully received" : undefined}
                           inputProps={{
                             style: { textAlign: "right" },
                             min: 0,

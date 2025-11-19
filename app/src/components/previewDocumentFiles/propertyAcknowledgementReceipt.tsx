@@ -102,7 +102,11 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
   }, []);
 
   // Check if reportData is an array, if not, convert it to an array for consistent handling
-  const itemsArray = Array.isArray(reportData) ? reportData.filter((item) => item !== null && item !== undefined) : reportData ? [reportData] : [];
+  const itemsArray = Array.isArray(reportData)
+    ? reportData.filter((item) => item !== null && item !== undefined)
+    : reportData
+    ? [reportData]
+    : [];
 
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -123,6 +127,12 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
     const ids = Array.from(new Set(items.map((it: any) => it?.parId).filter(Boolean)));
     return ids.join(", ");
   }, [reportData]);
+
+  // Pull PO-level meta for Income/MDS/Details from first item
+  const firstPO = itemsArray[0]?.PurchaseOrder || {} as any;
+  const poIncome = firstPO?.income || "";
+  const poMds = firstPO?.mds || "";
+  const poDetails = firstPO?.details || "";
 
   return (
     <>
@@ -269,19 +279,21 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
             </TableHead>
 
             <TableBody>
-              {reportData.length ? (
+              {itemsArray.length ? (
                 <>
-                  {reportData.map((reportData: any, index: any) => (
-                    <StyledTableRow key={reportData?.id}>
-                      <StyledTableCell align="left">{reportData.inventoryNumber}</StyledTableCell>
-                      <StyledTableCell align="left">{reportData.quantity}</StyledTableCell>
-                      <StyledTableCell align="left">{reportData.unit}</StyledTableCell>
+                  {itemsArray.map((row: any, index: any) => (
+                    <StyledTableRow key={row?.id ?? index}>
+                      <StyledTableCell align="left">{row?.inventoryNumber || ""}</StyledTableCell>
+                      <StyledTableCell align="left">{row?.quantity ?? ""}</StyledTableCell>
+                      <StyledTableCell align="left">{row?.unit || ""}</StyledTableCell>
                       <StyledTableCell align="left" colSpan={2}>
                         <Box>
-                          <Typography sx={{ fontWeight: 500 }}>{reportData.description || reportData.PurchaseOrderItem?.description || ""}</Typography>
+                          <Typography sx={{ fontWeight: 500 }}>
+                            {row?.description || row?.PurchaseOrderItem?.description || ""}
+                          </Typography>
 
                           {/* specification: preserve newlines */}
-                          {(reportData.PurchaseOrderItem?.specification || reportData.specification) && (
+                          {(row?.PurchaseOrderItem?.specification || row?.specification) && (
                             <Typography
                               sx={{
                                 whiteSpace: "pre-line",
@@ -291,12 +303,12 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                                 textAlign: "left",
                               }}
                             >
-                              {reportData.PurchaseOrderItem?.specification || reportData.specification}
+                              {row?.PurchaseOrderItem?.specification || row?.specification}
                             </Typography>
                           )}
 
                           {/* general description: preserve newlines and add small gap */}
-                          {(reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription) && (
+                          {(row?.PurchaseOrderItem?.generalDescription || row?.generalDescription) && (
                             <Typography
                               sx={{
                                 whiteSpace: "pre-line",
@@ -306,13 +318,13 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                                 textAlign: "left",
                               }}
                             >
-                              {reportData.PurchaseOrderItem?.generalDescription || reportData.generalDescription}
+                              {row?.PurchaseOrderItem?.generalDescription || row?.generalDescription}
                             </Typography>
                           )}
                         </Box>
                       </StyledTableCell>
-                      <StyledTableCell align="right">{formatCurrency(reportData.unitCost)}</StyledTableCell>
-                      <StyledTableCell align="right">{formatCurrency(reportData.amount)}</StyledTableCell>
+                      <StyledTableCell align="right">{formatCurrency(row?.unitCost)}</StyledTableCell>
+                      <StyledTableCell align="right">{formatCurrency(row?.amount)}</StyledTableCell>
                     </StyledTableRow>
                   ))}
                   <StyledTableRow>
@@ -330,15 +342,9 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Typography fontSize={12}>
-                        Income: <span>(Value)</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        MDS: <span>(Value)</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        Details: <span>(Value)</span>
-                      </Typography>
+                      <Typography fontSize={12}>Income: <span>{poIncome}</span></Typography>
+                      <Typography fontSize={12}>MDS: <span>{poMds}</span></Typography>
+                      <Typography fontSize={12}>Details: <span>{poDetails}</span></Typography>
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
@@ -349,6 +355,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
+                  <StyledTableCell colSpan={2}></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
