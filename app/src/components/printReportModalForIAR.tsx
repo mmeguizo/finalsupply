@@ -61,7 +61,6 @@ export default function PrintReportDialogForIAR({
 
   // If print view is active, render the print-friendly report
   if (showPrintView) {
-
     return (
           <InspectionAcceptanceReportForIAR
             signatories={signatories}
@@ -70,38 +69,7 @@ export default function PrintReportDialogForIAR({
             poOverrides={poOverrides}
           />
         );
-    // switch (reportType) {
-    //   case "property":
-    //     return (
-    //       <PropertyAcknowledgementReceipt
-    //         reportData={reportData}
-    //         onClose={handleClosePrintView}
-    //       />
-    //     );
-    //   case "requisition":
-    //     return (
-    //       <RequisitionAndIssueSlip
-    //         reportData={reportData}
-    //         onClose={handleClosePrintView}
-    //       />
-    //     );
-    //   case "inventory":
-    //     return (
-    //       <InventoryCustodianSlip
-    //         reportData={reportData}
-    //         onClose={handleClosePrintView}
-    //       />
-    //     );
-    //   case "inspection":
-    //   default:
-    //     return (
-    //       <InspectionAcceptanceReportForIAR
-    //         signatories={signatories}
-    //         reportData={reportData}
-    //         onClose={handleClosePrintView}
-    //       />
-    //     );
-    // }
+   
   }
 
   // Otherwise, show the dialog with preview
@@ -136,5 +104,39 @@ export default function PrintReportDialogForIAR({
         ) : (
           <PropertyAcknowledgementReceipt reportData={reportData} />
         )}
+
+
+         // switch (reportType) {
+    //   case "property":
+    //     return (
+    //       <PropertyAcknowledgementReceipt
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "requisition":
+    //     return (
+    //       <RequisitionAndIssueSlip
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "inventory":
+    //     return (
+    //       <InventoryCustodianSlip
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    //   case "inspection":
+    //   default:
+    //     return (
+    //       <InspectionAcceptanceReportForIAR
+    //         signatories={signatories}
+    //         reportData={reportData}
+    //         onClose={handleClosePrintView}
+    //       />
+    //     );
+    // }
 
 */

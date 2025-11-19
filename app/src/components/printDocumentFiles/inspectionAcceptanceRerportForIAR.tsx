@@ -1,4 +1,6 @@
+import { capitalizeFirstLetter,formatCurrencyPHP } from "../../utils/generalUtils";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
+
 
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
@@ -6,33 +8,26 @@ export const getInspectionReportTemplateForIAR = (
   poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
 ) => {
   // normalize input to array
-  const items: any[] = Array.isArray(reportData)
-    ? reportData
-    : reportData
-    ? [reportData]
-    : [];
+  const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
 
   const purchaseOrder = items[0]?.PurchaseOrder || {};
   const invoiceText = escapeHtml(String(poOverrides?.invoice ?? purchaseOrder?.invoice ?? ""));
   const dateOfPaymentText = escapeHtml(String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? ""));
 
   // helpers already imported: escapeHtml, nl2br
-  const rowsHtml = items
-    .map((it: any, idx: number) => {
-      const desc = escapeHtml(it.description || it.PurchaseOrderItem?.description || "");
-      const specHtml = it.PurchaseOrderItem?.specification
-        ? nl2br(it.PurchaseOrderItem.specification)
-        : "";
-      const genDescHtml = it.PurchaseOrderItem?.generalDescription
-        ? nl2br(it.PurchaseOrderItem.generalDescription)
-        : "";
+  const rowsHtml =
+    items
+      .map((it: any, idx: number) => {
+        const desc = escapeHtml(it.description || it.PurchaseOrderItem?.description || "");
+        const specHtml = it.PurchaseOrderItem?.specification ? nl2br(it.PurchaseOrderItem.specification) : "";
+        const genDescHtml = it.PurchaseOrderItem?.generalDescription ? nl2br(it.PurchaseOrderItem.generalDescription) : "";
 
-      const qty = escapeHtml(String(it.actualQuantityReceived ?? it.quantity ?? ""));
-      const unit = escapeHtml(it.unit ?? "");
-      const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""));
-      const amount = escapeHtml(String(it.amount ?? it.PurchaseOrderItem?.amount ?? ""));
+        const qty = escapeHtml(String(it.actualQuantityReceived ?? it.quantity ?? ""));
+        const unit = escapeHtml(it.unit ?? "");
+        const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""));
+        const amount = escapeHtml(String(it.amount ?? it.PurchaseOrderItem?.amount ?? ""));
 
-      return `
+        return `
         <tr>
           <td style="padding:4px">${idx + 1}</td>
           <td style="padding:4px">${unit}</td>
@@ -42,24 +37,48 @@ export const getInspectionReportTemplateForIAR = (
             ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ""}
           </td>
           <td style="padding:4px; text-align:right;">${qty}</td>
-          <td style="padding:4px; text-align:right;">${unitCost}</td>
-          <td style="padding:4px; text-align:right;">${amount}</td>
+          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
-    })
-    .join("\n");
+      })
+      .join("\n") +
+    (items.length
+      ? `
+      <tr>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td colspan="3" style="padding:4px; text-align:center;">
+          <span style="font-size:12px; color:#333;">*****Nothing Follows*****</span>
+        </td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+      </tr>
+      <tr>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td colspan="3" style="padding:4px; text-align:left;">
+          <span style="font-size:12px; color:#333;">
+            <p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.income)}</span></p>
+            <p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.mds)}</span></p>
+            <p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.details)}</span></p>
+          </span>
+        </td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+        <td style="padding:4px"></td>
+      </tr>
+    `
+      : "");
 
-  const totalAmount = items.reduce(
-    (sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0),
-    0
-  );
-  const formattedTotal = items[0]?.formatAmount ?? totalAmount ?? "";
+  const totalAmount = items.reduce((sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0), 0);
+  const formattedTotal = items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
 
   const overallComplete = items.length && items.every((i) => i.iarStatus === "complete");
   const overallPartial = items.some((i) => i.iarStatus === "partial");
 
-
-  console.log("Overall Complete:", reportData,overallComplete);
+  console.log("Overall Complete:", reportData, overallComplete);
 
   return `
     <html lang="en">
@@ -346,7 +365,7 @@ export const getInspectionReportTemplateForIAR = (
                     </div>
                   </div>
                   <div>
-                  ${signatories?.inspectionOfficer || ""}
+                  ${capitalizeFirstLetter(signatories?.recieved_from) || ""}
                     <hr />
                     Inspection Officer
                   </div>
@@ -357,21 +376,21 @@ export const getInspectionReportTemplateForIAR = (
                   <div>Date Received: _____</div>
                   <div style="display:flex; flex-direction:column; gap:6px;">
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:40px; aspect-ratio:3/2; border:1px dotted black; background:${overallComplete ? '#ccc' : 'transparent'}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
-                          ${overallComplete ? '✓' : ''}
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallComplete ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                          ${overallComplete ? "✓" : ""}
                         </div>
                         <p style="margin:0; width:65px;">Complete</p>
                       </div>
 
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:40px; aspect-ratio:3/2; border:1px dotted black; background:${overallPartial ? '#ccc' : 'transparent'}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
-                          ${overallPartial ? '✓' : ''}
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallPartial ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                          ${overallPartial ? "✓" : ""}
                         </div>
                         <p style="margin:0; width:65px;">Partial</p>
                       </div>
                   </div>
                   <div>
-                  ${signatories?.supplyOfficer || ""}
+                  ${ capitalizeFirstLetter(signatories?.recieved_by) || ""}
                     <hr />
                      Property and Supply Management Officer
                   </div>

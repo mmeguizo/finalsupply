@@ -62,8 +62,21 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
         <tr>
           <td></td>
           <td></td>
-          <td style="text-align: center;">*****Nothing Follows*****</td>
-          <td colspan="2"></td>
+          <td></td>
+          <td colspan="2"">
+            <br />
+            <p style="text-align: center;">*****Nothing Follows*****</p>
+            <br />
+            <p style="text-align: left;">
+              Income: ${item.PurchaseOrder?.income ?? ""}
+            </p>
+            <p style="text-align: left;">
+              MDS: ${item.PurchaseOrder?.mds ?? ""}
+            </p>
+            <p style="text-align: left;">
+              Details: ${item.PurchaseOrder?.details ?? ""}
+            </p>
+          </td>
           <td></td>
           <td></td>
         </tr>
@@ -148,18 +161,21 @@ table {
     & > td {
       &:nth-child(1),
       &:nth-child(2) {
-        width: 11%;
+        width: 10%;
       }
       &:nth-child(3) {
-        width: 28%;
+        width: 10%;
+      }
+      &:nth-child(4) {
+        width: 20%;
       }
       &:nth-child(5) {
-        width: 25%;
-      }
-      &:nth-child(5) {
-        width: 11%;
+        width: 22%;
       }
       &:nth-child(6) {
+        width: 14%;
+      }
+      &:nth-child(7) {
         width: 14%;
       }
     }
@@ -353,6 +369,7 @@ table {
           <td></td>
           <td></td>
           <td></td>
+          <td></td>
         </tr>
         <tr>
           <th colspan="7">
@@ -408,7 +425,7 @@ table {
           <td colspan="7"></td>
         </tr>
         <tr>
-          <td colspan="3">
+          <td colspan="4">
             <div>
               <div>Received from:</div>
               <div>
@@ -428,7 +445,7 @@ table {
               </div>
             </div>
           </td>
-          <td colspan="4">
+          <td colspan="3">
             <div>
               <div>Received by:</div>
               <div>
