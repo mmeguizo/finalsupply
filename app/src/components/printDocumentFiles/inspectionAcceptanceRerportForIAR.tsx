@@ -1,4 +1,4 @@
-import { capitalizeFirstLetter } from "../../utils/generalUtils";
+import { capitalizeFirstLetter,formatCurrencyPHP } from "../../utils/generalUtils";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
 
@@ -37,8 +37,8 @@ export const getInspectionReportTemplateForIAR = (
             ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ""}
           </td>
           <td style="padding:4px; text-align:right;">${qty}</td>
-          <td style="padding:4px; text-align:right;">${unitCost}</td>
-          <td style="padding:4px; text-align:right;">${amount}</td>
+          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
       })
@@ -60,9 +60,9 @@ export const getInspectionReportTemplateForIAR = (
         <td style="padding:4px"></td>
         <td colspan="3" style="padding:4px; text-align:left;">
           <span style="font-size:12px; color:#333;">
-            <p style="font-size:12px;">Income: <span>(Value)</span></p>
-            <p style="font-size:12px;">MDS: <span>(Value)</span></p>
-            <p style="font-size:12px;">Details: <span>(Value)</span></p>
+            <p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.income)}</span></p>
+            <p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.mds)}</span></p>
+            <p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.details)}</span></p>
           </span>
         </td>
         <td style="padding:4px"></td>
@@ -73,7 +73,7 @@ export const getInspectionReportTemplateForIAR = (
       : "");
 
   const totalAmount = items.reduce((sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0), 0);
-  const formattedTotal = items[0]?.formatAmount ?? totalAmount ?? "";
+  const formattedTotal = items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
 
   const overallComplete = items.length && items.every((i) => i.iarStatus === "complete");
   const overallPartial = items.some((i) => i.iarStatus === "partial");

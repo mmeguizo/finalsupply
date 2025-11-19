@@ -53,9 +53,9 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any) =>
           <td colspan="2" style="text-align: left;">
             <br/>
             <span style="font-size:12px; color:#333;">
-              <p style="font-size:12px;">Income: <span>(Value)</span></p>
-              <p style="font-size:12px;">MDS: <span>(Value)</span></p>
-              <p style="font-size:12px;">Details: <span>(Value)</span></p>
+              <p style="font-size:12px;">Income: <span> ${ itemsArray[0]?.PurchaseOrder?.income }</span></p>
+              <p style="font-size:12px;">MDS: <span>${ itemsArray[0]?.PurchaseOrder?.mds }</span></p>
+              <p style="font-size:12px;">Details: <span>${ itemsArray[0]?.PurchaseOrder?.details }</span></p>
             </span>
           </td>
           <td  colspan="2"></td>

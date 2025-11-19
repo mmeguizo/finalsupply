@@ -323,13 +323,13 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
                       <Typography fontSize={12}>
-                        Income: <span>(Value)</span>
+                        Income: <span>{itemsArray[0]?.PurchaseOrder?.income }</span>
                       </Typography>
                       <Typography fontSize={12}>
-                        MDS: <span>(Value)</span>
+                        MDS: <span>{ itemsArray[0]?.PurchaseOrder?.mds  }</span>
                       </Typography>
                       <Typography fontSize={12}>
-                        Details: <span>(Value)</span>
+                        Details: <span>{ itemsArray[0]?.PurchaseOrder?.details }</span>
                       </Typography>
                     </StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
