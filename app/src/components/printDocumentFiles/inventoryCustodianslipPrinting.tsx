@@ -27,7 +27,7 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any) =>
       const unitCostDisplay = item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : "");
       const amountDisplay = item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : "");
 
-    let row = `
+      let row = `
         <tr>
           <td>${escapeHtml(item?.actualQuantityReceived || "")}</td>
           <td colspan="2">${escapeHtml(item?.unit || "")}</td>
@@ -43,21 +43,33 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any) =>
           <td></td>
           <td colspan="2"></td>
           <td></td>
-          <td colspan="2" style="text-align: center;">********Nothing Follows********</td>
+          <td colspan="2" style="text-align: center;"><br/>********Nothing Follows********</td>
+          <td  colspan="2"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td colspan="2" style="text-align: left;">
+            <br/>
+            <span style="font-size:12px; color:#333;">
+              <p style="font-size:12px;">Income: <span>(Value)</span></p>
+              <p style="font-size:12px;">MDS: <span>(Value)</span></p>
+              <p style="font-size:12px;">Details: <span>(Value)</span></p>
+            </span>
+          </td>
           <td  colspan="2"></td>
         </tr>
         `;
-        // row += `
-        //   <tr>
-        //     <td style="height: 100%"></td>
-        //     <td>&nbsp;</td>
-        //     <td>&nbsp;</td>
-        //     <td>&nbsp;</td>
-        //     <td colspan="2">&nbsp;</td>
-        //     <td>&nbsp;</td>
-        //     <td>&nbsp;</td>
-        //   </tr>
-        // `;
+        row += `
+          <tr>
+            <td style="height: 100%"></td>
+            <td colspan="2">&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+          </tr>
+        `;
       }
       return row;
     })
@@ -370,12 +382,10 @@ tfoot {
             <tfoot>
          <tr>
           <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
           <td colspan="2"></td>
           <td></td>
-          <td></td>
+          <td colspan="2"></td>
+          <td colspan="2"></td>
         </tr>
                 <tr>
                     <td colspan="8">
@@ -385,7 +395,7 @@ tfoot {
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="padding: 20px 0px;">
+                    <td colspan="5" style="padding: 20px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600;">Received from:</div>
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
@@ -401,7 +411,7 @@ tfoot {
                             </div>
                         </div>
                     </td>
-                    <td colspan="4" style="padding: 20px 0px;">
+                    <td colspan="3" style="padding: 20px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600;">Received by:</div>
                             <div style="display: flex; flex-direction: column; padding: 22px 75px; gap: 20px; height: 125px; margin-top: 5px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">

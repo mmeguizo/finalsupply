@@ -38,7 +38,7 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
                     <td>${escapeHtml(String(item?.actualQuantityReceived ?? ""))}</td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td>${escapeHtml(String( " "))}</td>
+                    <td>${escapeHtml(String(" "))}</td>
                     <td></td>
                 </tr>
       `;
@@ -48,7 +48,25 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
           <td></td>
           <td></td>
           <td></td>
-          <td colspan="2" style="text-align: center;">********Nothing Follows********</td>
+          <td colspan="2" style="text-align: center;"><br/>********Nothing Follows********</td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: left;">
+            <br/>
+            <span style="font-size:12px; color:#333;">
+              <p style="font-size:12px;">Income: <span>(Value)</span></p>
+              <p style="font-size:12px;">MDS: <span>(Value)</span></p>
+              <p style="font-size:12px;">Details: <span>(Value)</span></p>
+            </span>
+          </td>
           <td></td>
           <td colspan="2"></td>
           <td></td>
