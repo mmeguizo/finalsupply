@@ -1,4 +1,6 @@
+import { capitalizeFirstLetter } from "../../utils/generalUtils";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
+
 
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
@@ -363,7 +365,7 @@ export const getInspectionReportTemplateForIAR = (
                     </div>
                   </div>
                   <div>
-                  ${signatories?.inspectionOfficer || ""}
+                  ${capitalizeFirstLetter(signatories?.recieved_from) || ""}
                     <hr />
                     Inspection Officer
                   </div>
@@ -388,7 +390,7 @@ export const getInspectionReportTemplateForIAR = (
                       </div>
                   </div>
                   <div>
-                  ${signatories?.supplyOfficer || ""}
+                  ${ capitalizeFirstLetter(signatories?.recieved_by) || ""}
                     <hr />
                      Property and Supply Management Officer
                   </div>

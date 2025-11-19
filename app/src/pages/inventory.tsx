@@ -959,6 +959,7 @@ export default function InventoryPage() {
   // Group rows by iarId
   const groupedRows = React.useMemo(() => {
     if (!data?.inspectionAcceptanceReport?.length) return [];
+    console.log("Raw IAR data:", data.inspectionAcceptanceReport);
     // Group by iarId
     const groups = data.inspectionAcceptanceReport.reduce(
       (acc: any, item: any) => {

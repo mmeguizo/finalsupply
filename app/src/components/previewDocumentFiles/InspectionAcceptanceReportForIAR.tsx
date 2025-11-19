@@ -62,7 +62,7 @@ export default function InspectionAcceptanceReportForIAR({
   // Use signatories provided by parent (Inventory page)
   // --- ADDED: normalize reportData to an array and compute totals ---
 
-  console.log({ signatories });
+  console.log({ reportData });
 
   const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
 
