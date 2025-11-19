@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled, Button } from "@mui/material";
 import { InspectionAcceptanceReportPropsForIAR } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
-import { capitalizeFirstLetter } from "../../utils/generalUtils";
+import { capitalizeFirstLetter,formatCurrencyPHP } from "../../utils/generalUtils";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -71,7 +71,7 @@ export default function InspectionAcceptanceReportForIAR({
   const invoiceText = (poOverrides?.invoice ?? purchaseOrder?.invoice ?? "") as string;
   const dateOfPaymentText = (poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "") as string;
 
-  const totalAmount = items.reduce((sum, it) => sum + Number(it?.amount ?? 0), 0);
+  const totalAmount = formatCurrencyPHP(items.reduce((sum, it) => sum + Number(it?.amount ?? 0), 0));
   // --- end added ---
 
   // Create and inject print styles dynamically
@@ -316,8 +316,8 @@ export default function InspectionAcceptanceReportForIAR({
                         </Box>
                       </StyledTableCell>
                       <StyledTableCell>{rd.actualQuantityReceived ?? ""}</StyledTableCell>
-                      <StyledTableCell>{rd.unitCost ?? ""}</StyledTableCell>
-                      <StyledTableCell>{rd.amount ?? ""}</StyledTableCell>
+                      <StyledTableCell>{formatCurrencyPHP(rd.unitCost) ?? ""}</StyledTableCell>
+                      <StyledTableCell>{formatCurrencyPHP(rd.amount) ?? ""}</StyledTableCell>
                     </StyledTableRow>
                   ))}
 
@@ -336,13 +336,13 @@ export default function InspectionAcceptanceReportForIAR({
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={3} sx={{ textAlign: "left", padding: 0.5 }}>
                       <Typography fontSize={12}>
-                        Income: <span>(Value)</span>
+                        Income: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.income)}</span>
                       </Typography>
                       <Typography fontSize={12}>
-                        MDS: <span>(Value)</span>
+                        MDS: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.mds)}</span>
                       </Typography>
                       <Typography fontSize={12}>
-                        Details: <span>(Value)</span>
+                        Details: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.details)}</span>
                       </Typography>
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>

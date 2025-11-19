@@ -267,7 +267,7 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.income || "Income..."}
+            placeholder={poDefaults.income || "Hit Enter to save.."}
             value={incomeOverride !== undefined ? incomeOverride : poDefaults.income}
             onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
             onKeyDown={async (e) => {
@@ -304,7 +304,7 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.mds || "MDS..."}
+            placeholder={poDefaults.mds || "Hit Enter to save.."}
             value={mdsOverride !== undefined ? mdsOverride : poDefaults.mds}
             onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
             onKeyDown={async (e) => {
@@ -341,7 +341,7 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.details || "Details..."}
+            placeholder={poDefaults.details || "Hit Enter to save..."}
             value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
             onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
             onKeyDown={async (e) => {

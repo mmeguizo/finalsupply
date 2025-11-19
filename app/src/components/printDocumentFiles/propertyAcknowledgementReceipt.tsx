@@ -68,13 +68,13 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
             <p style="text-align: center;">*****Nothing Follows*****</p>
             <br />
             <p style="text-align: left;">
-              Income: (Value)
+              Income: ${item.PurchaseOrder?.income ?? ""}
             </p>
             <p style="text-align: left;">
-              MDS: (Value)
+              MDS: ${item.PurchaseOrder?.mds ?? ""}
             </p>
             <p style="text-align: left;">
-              Details: (Value)
+              Details: ${item.PurchaseOrder?.details ?? ""}
             </p>
           </td>
           <td></td>

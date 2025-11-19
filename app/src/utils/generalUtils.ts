@@ -157,3 +157,18 @@ export const formatDateString = (dateString: string): string => {
     day: 'numeric',
   });
 };
+
+
+/**
+ * Formats a numeric value as Philippine Peso currency with 2 decimal places.
+ *
+ * @param {any} value The numeric value to format (will be converted to number).
+ * @returns {string} The formatted currency string (e.g., "₱1,234.56") or "₱0.00" if invalid.
+ */
+export const formatCurrencyPHP = (value: any): string => {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2
+  }).format(Number(value) || 0);
+};
