@@ -20,16 +20,16 @@ export async function generateNewIarId(userLocation) {
   let campusCode = '';
   switch (userLocation) {
     case 'Talisay':
-      campusCode = 'TI';
+      campusCode = 'T';
       break;
     case 'Fortune Town':
-      campusCode = 'FT';
+      campusCode = 'F';
       break;
     case 'Binalbagan':
-      campusCode = 'BI';
+      campusCode = 'B';
       break;
     case 'Alijis':
-      campusCode = 'AI';
+      campusCode = 'A';
       break;
     default:
       // Fallback for unknown locations, or throw an error if strict

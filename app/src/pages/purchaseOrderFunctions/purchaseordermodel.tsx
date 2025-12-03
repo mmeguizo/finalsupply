@@ -665,7 +665,11 @@ export default function PurchaseOrderModal({
                           size="small"
                           value={item.description ?? ""}
                           onChange={(e) => updateItem(index, "description", e.target.value)}
-                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
+                          disabled={
+                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
+                            (Number(item.quantity ?? 0) > 0 &&
+                              Number(item.quantity ?? 0) === Number(item.actualQuantityReceived ?? 0))
+                          }
                         />
                       </Grid>
 
@@ -677,7 +681,11 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "specification", e.target.value)}
                           multiline
                           maxRows={2}
-                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
+                          disabled={
+                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
+                            (Number(item.quantity ?? 0) > 0 &&
+                              Number(item.quantity ?? 0) === Number(item.actualQuantityReceived ?? 0))
+                          }
                         />
                       </Grid>
 
@@ -689,7 +697,11 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "generalDescription", e.target.value)}
                           multiline
                           maxRows={2}
-                          disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
+                          disabled={
+                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
+                            (Number(item.quantity ?? 0) > 0 &&
+                              Number(item.quantity ?? 0) === Number(item.actualQuantityReceived ?? 0))
+                          }
                         />
                       </Grid>
 
@@ -700,10 +712,10 @@ export default function PurchaseOrderModal({
                           type="number"
                           value={item.quantity ?? 0}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                          // Disable editing quantity when the purchase order is completed or fully received
+                          // Disable if any quantity has already been received OR PO completed
                           disabled={
-                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed" ||
-                            ((Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0)) <= 0 && item.id !== "temp")
+                            Number(item.actualQuantityReceived ?? 0) > 0 ||
+                            String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"
                           }
                           inputProps={{ style: { textAlign: "right" } }}
                         />
