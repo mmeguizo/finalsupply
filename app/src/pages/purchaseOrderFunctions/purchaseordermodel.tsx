@@ -806,16 +806,17 @@ export default function PurchaseOrderModal({
                         />
                       </Grid>
 
-                      <Grid item sx={{ flex: "0 0 5%", maxWidth: 60, textAlign: "center" }}>
-                        <IconButton
-                          onClick={() => removeItem(index)}
-                          color="error"
-                          size="small"
-                          disabled={purchaseOrder && item.id && item.id !== "temp"}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
+                        <Grid item sx={{ flex: "0 0 5%", maxWidth: 60, textAlign: "center" }}>
+                          <IconButton
+                            onClick={() => removeItem(index)}
+                            color="error"
+                            size="small"
+                            disabled={purchaseOrder && item.id && item.id !== "temp"}
+                            title="Remove"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Grid>
                     </Grid>
                   ))}
                 </Box>

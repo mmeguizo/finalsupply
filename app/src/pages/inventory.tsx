@@ -42,6 +42,7 @@ import {
   UPDATE_IAR_STATUS,
   REVERT_IAR_BATCH,
   APPEND_TO_EXISTING_IAR,
+  CREATE_LINE_ITEM_FROM_EXISTING,
 } from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
 import {
@@ -126,6 +127,16 @@ function Row(props: {
     ],
   });
 
+  // Mutation to create a NEW PO item from an existing one (same itemGroupId)
+  const [createLineItemFromExisting] = useMutation(CREATE_LINE_ITEM_FROM_EXISTING, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
   // Per-item add-line drafts keyed by purchaseOrderItemId
   const [iarLineDrafts, setIarLineDrafts] = React.useState<
     Record<
@@ -157,6 +168,9 @@ function Row(props: {
       const payloadItem = {
         id: "temp", // signals backend to create a new PO item
         description: newItemDraft.description,
+        generalDescription: newItemDraft.generalDescription || "",
+        specification: newItemDraft.specification || "",
+        itemName: newItemDraft.itemName || "",
         unit: newItemDraft.unit,
         quantity: q,
         unitCost: uc,
@@ -165,7 +179,7 @@ function Row(props: {
         currentInput: recv, // immediately receive this amount and create IAR/history
       };
 
-      await updatePurchaseOrder({
+      const resp = await updatePurchaseOrder({
         variables: {
           input: {
             id: Number(poId),
@@ -174,9 +188,15 @@ function Row(props: {
         },
       });
 
+      // Ensure UI reflects the newly created PO item
+      await refetch();
+
       // Reset draft row
       setNewItemDraft({
         description: "",
+        generalDescription: "",
+        specification: "",
+        itemName: "",
         unit: "",
         quantity: 0,
         unitCost: 0,
@@ -424,6 +444,9 @@ function Row(props: {
                 </TableHead>
                 <TableBody>
                   {row.items.map((item: any) => {
+
+                    console.log('🔍 Processing item:', item);
+
                     const poi = item.PurchaseOrderItem;
                     const isCompleted =
                       item.PurchaseOrder?.status === "completed";
@@ -435,17 +458,78 @@ function Row(props: {
                     const currentSpec =
                       poi?.specification ?? item.specification ?? "";
                     const currentUnit = poi?.unit ?? item.unit ?? "";
-                    const remaining = Math.max(
-                      0,
-                      Number(poi?.quantity || item.quantity || 0) -
-                        Number(poi?.actualQuantityReceived || 0)
+
+                    // Get itemGroupId - this should exist if items were created via createLineItemFromExisting
+                    const currentItemGroupId = poi?.itemGroupId || item.itemGroupId;
+                    
+                    // console.log('🔍 Item Group Check:', {
+                    //   itemId: item.id,
+                    //   poiId: poi?.id,
+                    //   currentItemGroupId,
+                    //   description: currentDescription?.substring(0, 20),
+                    //   actualReceived: poi?.actualQuantityReceived || item.actualQuantityReceived
+                    // });
+
+                    // Determine the base ordered quantity for the group
+                    const baseQuantity = Number(poi?.quantity || item.quantity || 0);
+
+                    // If NO itemGroupId exists, we need to find items that should be grouped
+                    // by matching description, unit, unitCost, etc. (fallback heuristic)
+                    let groupedItems = [];
+                    if (currentItemGroupId) {
+                      // Use itemGroupId to find all items in this group
+                      groupedItems = row.items.filter((i: any) => {
+                        const iPoi = i.PurchaseOrderItem;
+                        const iGroupId = iPoi?.itemGroupId || i.itemGroupId;
+                        return iGroupId === currentItemGroupId;
+                      });
+                    } else {
+                      // Fallback: group by description + unit + unitCost
+                      const desc = currentDescription;
+                      const unit = currentUnit;
+                      const cost = Number(poi?.unitCost || item.unitCost || 0);
+                      
+                      groupedItems = row.items.filter((i: any) => {
+                        const iPoi = i.PurchaseOrderItem;
+                        const iDesc = iPoi?.description ?? i.description ?? "";
+                        const iUnit = iPoi?.unit ?? i.unit ?? "";
+                        const iCost = Number(iPoi?.unitCost || i.unitCost || 0);
+                        return iDesc === desc && iUnit === unit && iCost === cost;
+                      });
+                    }
+
+                    // Sum actualQuantityReceived across ALL items in this logical group
+                    const totalReceivedInGroup = groupedItems.reduce((sum: number, i: any) => {
+                      const iPoi = i.PurchaseOrderItem;
+                      const recv = Number(
+                        iPoi?.actualQuantityReceived || i.actualQuantityReceived || 0
+                      );
+                      return sum + recv;
+                    }, 0);
+
+                    // Remaining for the WHOLE group, not per row
+                    const remaining = Math.max(0, baseQuantity - totalReceivedInGroup);
+                    
+                    console.log('📊 Remaining Calc:', {
+                      baseQuantity,
+                      totalReceivedInGroup,
+                      remaining,
+                      groupedItemsCount: groupedItems.length
+                    });
+
+                    // Show this row's own received (for clarity)
+                    const totalReceived = Number(
+                      poi?.actualQuantityReceived || item.actualQuantityReceived || 0
                     );
 
                     // Original PO fields are view-only in this table.
 
-                    const draftKey = String(
-                      poi?.id ?? item.purchaseOrderItemId
-                    );
+                    // CRITICAL: Use itemGroupId as the ONLY draftKey so all items in a group share ONE form
+                    // If no itemGroupId (shouldn't happen now), fall back to a stable group key
+                    const draftKey = currentItemGroupId || 
+                      `fallback_${currentDescription}_${currentUnit}_${Number(poi?.unitCost || item.unitCost || 0)}`;
+                    
+                    // Check if ANY item in this group already has a draft open
                     const draft = iarLineDrafts[draftKey] || null;
 
                     const updateDraft = (
@@ -456,6 +540,11 @@ function Row(props: {
                         received?: number;
                       }>
                     ) => {
+                      // If updating received, clamp to [0, remaining]
+                      if (patch.received !== undefined) {
+                        const raw = Number(patch.received) || 0;
+                        patch.received = Math.min(Math.max(0, raw), remaining);
+                      }
                       setIarLineDrafts((prev) => ({
                         ...prev,
                         [draftKey]: { ...(prev[draftKey] || {}), ...patch },
@@ -489,24 +578,25 @@ function Row(props: {
                           );
                           return;
                         }
-                        await appendToExistingIAR({
+                        // Use the new mutation to create a distinct PO item with the same itemGroupId
+                        await createLineItemFromExisting({
                           variables: {
-                            iarId: row.iarId,
-                            items: [
-                              {
-                                purchaseOrderItemId: poiIdNum,
-                                received: clamped,
-                                description: draft.description || undefined,
-                                generalDescription:
-                                  draft.generalDescription || undefined,
-                                specification: draft.specification || undefined,
-                              },
-                            ],
+                            sourceItemId: poiIdNum,
+                            newItem: {
+                              iarId: row.iarId,
+                              quantity: clamped, // New item quantity = what we're receiving now
+                              received: clamped, // Immediately mark as received
+                              description: draft.description || undefined,
+                              generalDescription: draft.generalDescription || undefined,
+                              specification: draft.specification || undefined,
+                            },
                           },
                         });
+                        onNotify(`Created new line item (received ${clamped})`, 'success');
                         clearDraft();
                       } catch (e) {
-                        console.error("Failed to append IAR line", e);
+                        console.error("Failed to create line item", e);
+                        onNotify("Failed to create line item", 'error');
                       }
                     };
 
@@ -543,23 +633,9 @@ function Row(props: {
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "flex-end",
-                              }}
-                            >
-                              <Typography>
-                                {item.actualQuantityReceived}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                Remaining: {remaining}
-                              </Typography>
-                            </Box>
+                            <Typography>
+                              {totalReceived}
+                            </Typography>
                           </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">
@@ -599,7 +675,7 @@ function Row(props: {
                             )}
                           </TableCell>
                         </TableRow>
-                        {draft && (
+                        {draft && groupedItems[0]?.id === item.id && (
                           <TableRow>
                             {/* Description */}
                             <TableCell>
@@ -660,34 +736,28 @@ function Row(props: {
                             </TableCell>
                             {/* Actual Received input aligned in its column */}
                             <TableCell align="right">
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "flex-end",
+                              <TextField
+                                type="number"
+                                size="small"
+                                sx={{ width: 120 }}
+                                placeholder="Received"
+                                value={draft.received ?? ""}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  updateDraft({
+                                    received: val,
+                                  });
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  sx={{ width: 120 }}
-                                  placeholder="Received"
-                                  value={draft.received ?? ""}
-                                  onChange={(e) =>
-                                    updateDraft({
-                                      received: Number(e.target.value),
-                                    })
+                                onBlur={(e) => {
+                                  // Force clamp on blur to ensure value is within range
+                                  const val = Number(e.target.value);
+                                  if (val > remaining) {
+                                    updateDraft({ received: remaining });
                                   }
-                                  inputProps={{ min: 0, max: remaining }}
-                                />
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Remaining: {remaining}
-                                </Typography>
-                              </Box>
+                                }}
+                                inputProps={{ min: 0, max: remaining }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
                             </TableCell>
                             {/* Quantity */}
                             <TableCell align="right">{item.quantity}</TableCell>
