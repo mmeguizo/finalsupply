@@ -60,6 +60,8 @@ function Row(props: {
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
   onNotify: (message: string, severity?: "success" | "error" | "info" | "warning") => void;
+  // allow parent to pass refetch function for cache refresh
+  refetch?: () => Promise<any>;
   // overrides
   invoiceOverride?: string;
   dateOfPaymentOverride?: string;
@@ -189,7 +191,9 @@ function Row(props: {
       });
 
       // Ensure UI reflects the newly created PO item
-      await refetch();
+      if (typeof props.refetch === "function") {
+        await props.refetch();
+      }
 
       // Reset draft row
       setNewItemDraft({
@@ -221,6 +225,12 @@ function Row(props: {
   const mdsValue = mdsOverride ?? poDefaults.mds;
   const detailsValue = detailsOverride ?? poDefaults.details;
 
+  // Add local state to track status updates
+  const [localStatus, setLocalStatus] = React.useState<string | null>(null);
+  
+  // Use local status if set, otherwise use row status
+  const displayStatus = localStatus ?? row.iarStatus ?? "none";
+
   return (
     <React.Fragment>
       <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
@@ -242,8 +252,12 @@ function Row(props: {
         <TableCell>{formatTimestampToDateTime(row.createdAt)}</TableCell>
         <TableCell component="th" scope="row">
           <Select
-            value={row.iarStatus || "none"}
-            onChange={(e) => onStatusUpdate(row.iarId, e.target.value)}
+            value={displayStatus}
+            onChange={(e) => {
+              const newStatus = e.target.value;
+              setLocalStatus(newStatus); // Immediately update local state
+              onStatusUpdate(row.iarId, newStatus);
+            }}
             size="small"
             variant="outlined"
             sx={{ minWidth: 120 }}
@@ -528,7 +542,6 @@ function Row(props: {
                     // If no itemGroupId (shouldn't happen now), fall back to a stable group key
                     const draftKey = currentItemGroupId || 
                       `fallback_${currentDescription}_${currentUnit}_${Number(poi?.unitCost || item.unitCost || 0)}`;
-                    
                     // Check if ANY item in this group already has a draft open
                     const draft = iarLineDrafts[draftKey] || null;
 
@@ -945,31 +958,30 @@ export default function InventoryPage() {
   // Add this function after handleClosePrintModal (around line 177)
   const handleStatusUpdate = async (iarId: string, newStatus: string) => {
     try {
-      // TODO: Replace with your actual mutation
-      // await updateIARStatus({ variables: { iarId, status: newStatus } });
-      console.log(`Updating IAR ${iarId} to status: ${newStatus}`);
       const results = await updateIARStatus({
         variables: {
-          airId: iarId, // <-- send the variable name your mutation expects
+          airId: iarId,
           iarStatus: newStatus,
         },
       });
       if (results.data?.updateIARStatus) {
         console.log({ updateIARStatus: results.data.updateIARStatus });
         setNotificationMessage(results.data.updateIARStatus.message);
-        setNotificationSeverity("success"); // Always success if we get here
+        setNotificationSeverity("success");
         setShowNotification(true);
         console.log("Status updated successfully");
-        refetch(); // Don't forget to refetch to update the UI
+        await refetch(); // Ensure refetch completes before UI updates
       } else {
         console.error("Failed to update status");
+        setNotificationMessage("Failed to update status");
         setNotificationSeverity("error");
+        setShowNotification(true);
       }
-
-      // Refetch data to update UI
-      // refetch();
     } catch (error) {
       console.error("Error updating status:", error);
+      setNotificationMessage("Error updating status");
+      setNotificationSeverity("error");
+      setShowNotification(true);
     }
   };
 
@@ -1150,6 +1162,7 @@ export default function InventoryPage() {
                       setNotificationSeverity(severity);
                       setShowNotification(true);
                     }}
+                    refetch={refetch}
                     // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
                     dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
