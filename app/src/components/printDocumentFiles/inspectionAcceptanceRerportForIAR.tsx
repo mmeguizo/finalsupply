@@ -1,6 +1,8 @@
-import { capitalizeFirstLetter,formatCurrencyPHP } from "../../utils/generalUtils";
+import {
+  capitalizeFirstLetter,
+  formatCurrencyPHP,
+} from "../../utils/generalUtils";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
-
 
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
@@ -8,37 +10,57 @@ export const getInspectionReportTemplateForIAR = (
   poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
 ) => {
   // normalize input to array
-  const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const items: any[] = Array.isArray(reportData)
+    ? reportData
+    : reportData
+      ? [reportData]
+      : [];
 
   const purchaseOrder = items[0]?.PurchaseOrder || {};
-  const invoiceText = escapeHtml(String(poOverrides?.invoice ?? purchaseOrder?.invoice ?? ""));
-  const dateOfPaymentText = escapeHtml(String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? ""));
+  const invoiceText = escapeHtml(
+    String(poOverrides?.invoice ?? purchaseOrder?.invoice ?? "")
+  );
+  const dateOfPaymentText = escapeHtml(
+    String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "")
+  );
 
   // helpers already imported: escapeHtml, nl2br
   const rowsHtml =
     items
       .map((it: any, idx: number) => {
-        const desc = escapeHtml(it.description || it.PurchaseOrderItem?.description || "");
-        const specHtml = it.PurchaseOrderItem?.specification ? nl2br(it.PurchaseOrderItem.specification) : "";
-        const genDescHtml = it.PurchaseOrderItem?.generalDescription ? nl2br(it.PurchaseOrderItem.generalDescription) : "";
+        const desc = escapeHtml(
+          it.description || it.PurchaseOrderItem?.description || ""
+        );
+        const specHtml = it.PurchaseOrderItem?.specification
+          ? nl2br(it.PurchaseOrderItem.specification)
+          : "";
+        const genDescHtml = it.PurchaseOrderItem?.generalDescription
+          ? nl2br(it.PurchaseOrderItem.generalDescription)
+          : "";
 
-        const qty = escapeHtml(String(it.actualQuantityReceived ?? it.quantity ?? ""));
+        const qty = escapeHtml(
+          String(it.actualQuantityReceived ?? it.quantity ?? "")
+        );
         const unit = escapeHtml(it.unit ?? "");
-        const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""));
-        const amount = escapeHtml(String(it.amount ?? it.PurchaseOrderItem?.amount ?? ""));
+        const unitCost = escapeHtml(
+          String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? "")
+        );
+        const amount = escapeHtml(
+          String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
+        );
 
         return `
         <tr>
-          <td style="padding:4px">${idx + 1}</td>
-          <td style="padding:4px">${unit}</td>
-          <td colspan="3" style="padding:6px; text-align:left; vertical-align:top;">
+          <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${idx + 1}</td>
+          <td style="padding:4px ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${unit}</td>
+          <td colspan="3" style="padding:6px; text-align:left; vertical-align:top; ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
             ${desc}
             ${specHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${specHtml}</div>` : ""}
             ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ""}
           </td>
-          <td style="padding:4px; text-align:right;">${qty}</td>
-          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(unitCost)}</td>
-          <td style="padding:4px; text-align:right;">${formatCurrencyPHP(amount)}</td>
+          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${qty}</td>
+          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
       })
@@ -46,14 +68,14 @@ export const getInspectionReportTemplateForIAR = (
     (items.length
       ? `
       <tr>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
-        <td colspan="3" style="padding:4px; text-align:center;">
+        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td colspan="3" style="padding:4px; text-align:center; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
           <span style="font-size:12px; color:#333;">*****Nothing Follows*****</span>
         </td>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
+        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
       </tr>
       <tr>
         <td style="padding:4px"></td>
@@ -72,10 +94,15 @@ export const getInspectionReportTemplateForIAR = (
     `
       : "");
 
-  const totalAmount = items.reduce((sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0), 0);
-  const formattedTotal = items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
+  const totalAmount = items.reduce(
+    (sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0),
+    0
+  );
+  const formattedTotal =
+    items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
 
-  const overallComplete = items.length && items.every((i) => i.iarStatus === "complete");
+  const overallComplete =
+    items.length && items.every((i) => i.iarStatus === "complete");
   const overallPartial = items.some((i) => i.iarStatus === "partial");
 
   console.log("Overall Complete:", reportData, overallComplete);
@@ -365,7 +392,7 @@ export const getInspectionReportTemplateForIAR = (
                     </div>
                   </div>
                   <div>
-                  ${capitalizeFirstLetter(signatories?.recieved_from) || ""}
+                   ${capitalizeFirstLetter(signatories?.recieved_by) || ""}
                     <hr />
                     Inspection Officer
                   </div>
@@ -390,7 +417,7 @@ export const getInspectionReportTemplateForIAR = (
                       </div>
                   </div>
                   <div>
-                  ${ capitalizeFirstLetter(signatories?.recieved_by) || ""}
+                    ${capitalizeFirstLetter(signatories?.recieved_from) || ""}
                     <hr />
                      Property and Supply Management Officer
                   </div>
