@@ -8,7 +8,8 @@ export async function up(queryInterface) {
   const [incomeCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'income'"
   );
-  if (!incomeCol || incomeCol.Field !== 'income') {
+  const incomeExists = Array.isArray(incomeCol) ? incomeCol.length > 0 : !!incomeCol;
+  if (!incomeExists) {
     await queryInterface.addColumn('purchase_orders', 'income', {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -21,7 +22,8 @@ export async function up(queryInterface) {
   const [mdsCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'mds'"
   );
-  if (!mdsCol || mdsCol.Field !== 'mds') {
+  const mdsExists = Array.isArray(mdsCol) ? mdsCol.length > 0 : !!mdsCol;
+  if (!mdsExists) {
     await queryInterface.addColumn('purchase_orders', 'mds', {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -34,7 +36,8 @@ export async function up(queryInterface) {
   const [detailsCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'details'"
   );
-  if (!detailsCol || detailsCol.Field !== 'details') {
+  const detailsExists = Array.isArray(detailsCol) ? detailsCol.length > 0 : !!detailsCol;
+  if (!detailsExists) {
     await queryInterface.addColumn('purchase_orders', 'details', {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -49,7 +52,8 @@ export async function down(queryInterface) {
   const [detailsCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'details'"
   );
-  if (detailsCol && detailsCol.Field === 'details') {
+  const detailsExists = Array.isArray(detailsCol) ? detailsCol.length > 0 : !!detailsCol;
+  if (detailsExists) {
     await queryInterface.removeColumn('purchase_orders', 'details');
   }
 
@@ -57,7 +61,8 @@ export async function down(queryInterface) {
   const [mdsCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'mds'"
   );
-  if (mdsCol && mdsCol.Field === 'mds') {
+  const mdsExists = Array.isArray(mdsCol) ? mdsCol.length > 0 : !!mdsCol;
+  if (mdsExists) {
     await queryInterface.removeColumn('purchase_orders', 'mds');
   }
 
@@ -65,7 +70,8 @@ export async function down(queryInterface) {
   const [incomeCol] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'income'"
   );
-  if (incomeCol && incomeCol.Field === 'income') {
+  const incomeExists = Array.isArray(incomeCol) ? incomeCol.length > 0 : !!incomeCol;
+  if (incomeExists) {
     await queryInterface.removeColumn('purchase_orders', 'income');
   }
 }

@@ -8,7 +8,8 @@ export async function up(queryInterface) {
   const [rows] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'campus'"
   );
-  if (rows && rows.Field === 'campus') {
+  const exists = Array.isArray(rows) ? rows.length > 0 : !!rows;
+  if (exists) {
     return; // already exists
   }
   await queryInterface.addColumn('purchase_orders', 'campus', {
@@ -23,7 +24,8 @@ export async function down(queryInterface) {
   const [rows] = await queryInterface.sequelize.query(
     "SHOW COLUMNS FROM `purchase_orders` LIKE 'campus'"
   );
-  if (!rows || rows.Field !== 'campus') {
+  const exists = Array.isArray(rows) ? rows.length > 0 : !!rows;
+  if (!exists) {
     return; // nothing to drop
   }
   await queryInterface.removeColumn('purchase_orders', 'campus');

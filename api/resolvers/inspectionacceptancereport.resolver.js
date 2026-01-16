@@ -47,6 +47,8 @@ const inspectionAcceptanceReportResolver = {
                 "actualQuantityReceived",
                 "tag",
                 "inventoryNumber",
+                "itemGroupId",
+                "isReceiptLine",
               ],
               required: false, // LEFT JOIN
             },
@@ -454,6 +456,143 @@ const inspectionAcceptanceReportResolver = {
         await t.rollback();
         console.error("appendToExistingIAR error:", error);
         throw new Error(error.message || "Failed to append to IAR");
+      }
+    },
+    createLineItemFromExisting: async (_, { sourceItemId, newItem }, context) => {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const user = context.req.user;
+
+        const { iarId, quantity, received, description, generalDescription, specification } = newItem;
+
+        if (!iarId) {
+          throw new Error("IAR ID is required");
+        }
+        if (!quantity || quantity <= 0) {
+          throw new Error("Quantity must be greater than 0");
+        }
+        if (!received || received <= 0 || received > quantity) {
+          throw new Error("Received must be between 1 and quantity");
+        }
+
+        // Lock and load the source PO item
+        const sourcePoi = await PurchaseOrderItems.findByPk(sourceItemId, {
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+        if (!sourcePoi || sourcePoi.isDeleted) {
+          throw new Error("Source item not found");
+        }
+
+        // Ensure we have or generate an itemGroupId for linking
+        let groupId = sourcePoi.itemGroupId;
+        if (!groupId) {
+          // If source doesn't have one, assign a new one and update source
+          groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          await PurchaseOrderItems.update(
+            { itemGroupId: groupId },
+            { where: { id: sourcePoi.id }, transaction: t }
+          );
+        }
+
+        // Create a NEW PurchaseOrderItems row with the same groupId
+        // Use the source item's original quantity, not the received amount
+        const newPoi = await PurchaseOrderItems.create(
+          {
+            purchaseOrderId: sourcePoi.purchaseOrderId,
+            itemName: sourcePoi.itemName,
+            description: description || sourcePoi.description,
+            generalDescription: generalDescription || sourcePoi.generalDescription,
+            specification: specification || sourcePoi.specification,
+            unit: sourcePoi.unit,
+            quantity: sourcePoi.quantity, // Copy original quantity
+            unitCost: sourcePoi.unitCost,
+            amount: Number(sourcePoi.quantity || 0) * Number(sourcePoi.unitCost || 0),
+            category: sourcePoi.category,
+            tag: sourcePoi.tag,
+            inventoryNumber: sourcePoi.inventoryNumber,
+            actualQuantityReceived: received,
+            itemGroupId: groupId, // Link to the same group
+            isReceiptLine: true, // Mark as a receipt line
+            createdBy: user.name || user.id,
+            updatedBy: user.name || user.id,
+          },
+          { transaction: t }
+        );
+
+        // Load existing IAR to inherit doc IDs
+        const existingIar = await inspectionAcceptanceReport.findOne({
+          where: { iarId, isDeleted: false },
+          order: [["createdAt", "DESC"]],
+          transaction: t,
+        });
+
+        // Create IAR row for the new PO item
+        const iarRow = await inspectionAcceptanceReport.create(
+          {
+            itemName: newPoi.itemName,
+            description: newPoi.description,
+            generalDescription: newPoi.generalDescription,
+            specification: newPoi.specification,
+            unit: newPoi.unit,
+            quantity: newPoi.quantity,
+            unitCost: newPoi.unitCost,
+            amount: newPoi.amount,
+            category: newPoi.category,
+            tag: newPoi.tag,
+            inventoryNumber: newPoi.inventoryNumber,
+            iarId,
+            purchaseOrderId: newPoi.purchaseOrderId,
+            purchaseOrderItemId: newPoi.id,
+            actualQuantityReceived: received,
+            createdBy: user.name || user.id,
+            updatedBy: user.name || user.id,
+            // inherit document IDs if present
+            parId: existingIar?.parId || null,
+            icsId: existingIar?.icsId || null,
+            risId: existingIar?.risId || null,
+          },
+          { transaction: t }
+        );
+
+        // Create history entry
+        await PurchaseOrderItemsHistory.create(
+          {
+            purchaseOrderItemId: newPoi.id,
+            purchaseOrderId: newPoi.purchaseOrderId,
+            itemName: newPoi.itemName || "",
+            description: newPoi.description,
+            previousQuantity: 0,
+            newQuantity: newPoi.quantity,
+            previousActualQuantityReceived: 0,
+            newActualQuantityReceived: received,
+            previousAmount: 0,
+            newAmount: newPoi.amount,
+            iarId: iarRow.iarId || iarId,
+            parId: iarRow.parId || null,
+            risId: iarRow.risId || null,
+            icsId: iarRow.icsId || null,
+            changeType: "item_creation",
+            changedBy: user.name || user.id,
+            changeReason: `New line item created from source item ${sourceItemId} with itemGroupId ${groupId}`,
+          },
+          { transaction: t }
+        );
+
+        await t.commit();
+        return {
+          success: true,
+          newItemId: newPoi.id,
+          iarId,
+          message: `Created new line item (ID: ${newPoi.id}) linked by itemGroupId: ${groupId}`,
+        };
+      } catch (error) {
+        await t.rollback();
+        console.error("createLineItemFromExisting error:", error);
+        throw new Error(error.message || "Failed to create line item");
       }
     },
   },

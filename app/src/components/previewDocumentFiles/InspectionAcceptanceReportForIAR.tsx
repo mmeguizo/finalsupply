@@ -27,6 +27,14 @@ const HeaderTableCell = styled(StyledTableCell)({
   padding: 0,
 });
 
+const BodyTableCell = styled(TableCell)(({ theme }) => ({
+  borderLeft: "1px solid black",
+  borderRight: "1px solid black",
+  padding: "4px",
+  fontSize: "12px",
+  fontWeight: "normal",
+}));
+
 // Improved PrintContainer with better print isolation
 const PrintContainer = styled(Box)({
   "@media print": {
@@ -281,9 +289,9 @@ export default function InspectionAcceptanceReportForIAR({
                 <>
                   {items.map((rd, idx) => (
                     <StyledTableRow key={rd.id ?? idx}>
-                      <StyledTableCell>{idx + 1}</StyledTableCell>
-                      <StyledTableCell>{rd.unit || ""}</StyledTableCell>
-                      <StyledTableCell colSpan={3} sx={{ textAlign: "left", verticalAlign: "top", padding: "6px" }}>
+                      <BodyTableCell>{idx + 1}</BodyTableCell>
+                      <BodyTableCell>{rd.unit || ""}</BodyTableCell>
+                      <BodyTableCell colSpan={3} sx={{ textAlign: "left", verticalAlign: "top", padding: "6px" }}>
                         <Box>
                           <Typography sx={{ fontWeight: 500, mb: 0.5 }}>{rd.description || rd.PurchaseOrderItem?.description || ""}</Typography>
 
@@ -314,11 +322,50 @@ export default function InspectionAcceptanceReportForIAR({
                             </Typography>
                           ) : null}
                         </Box>
-                      </StyledTableCell>
-                      <StyledTableCell>{rd.actualQuantityReceived ?? ""}</StyledTableCell>
-                      <StyledTableCell>{formatCurrencyPHP(rd.unitCost) ?? ""}</StyledTableCell>
-                      <StyledTableCell>{formatCurrencyPHP(rd.amount) ?? ""}</StyledTableCell>
+                      </BodyTableCell>
+                      <BodyTableCell>{rd.actualQuantityReceived ?? ""}</BodyTableCell>
+                      <BodyTableCell>{formatCurrencyPHP(rd.unitCost) ?? ""}</BodyTableCell>
+                      <BodyTableCell>{formatCurrencyPHP(rd.amount) ?? ""}</BodyTableCell>
                     </StyledTableRow>
+                    // <StyledTableRow key={rd.id ?? idx}>
+                    //   <StyledTableCell>{idx + 1}</StyledTableCell>
+                    //   <StyledTableCell>{rd.unit || ""}</StyledTableCell>
+                    //   <StyledTableCell colSpan={3} sx={{ textAlign: "left", verticalAlign: "top", padding: "6px" }}>
+                    //     <Box>
+                    //       <Typography sx={{ fontWeight: 500, mb: 0.5 }}>{rd.description || rd.PurchaseOrderItem?.description || ""}</Typography>
+
+                    //       {rd.PurchaseOrderItem?.specification ? (
+                    //         <Typography
+                    //           sx={{
+                    //             whiteSpace: "pre-line",
+                    //             fontSize: "12px",
+                    //             color: "text.secondary",
+                    //             mb: 0.5,
+                    //             textAlign: "left",
+                    //           }}
+                    //         >
+                    //           {rd.PurchaseOrderItem.specification}
+                    //         </Typography>
+                    //       ) : null}
+
+                    //       {rd.PurchaseOrderItem?.generalDescription ? (
+                    //         <Typography
+                    //           sx={{
+                    //             whiteSpace: "pre-line",
+                    //             fontSize: "12px",
+                    //             color: "text.secondary",
+                    //             textAlign: "left",
+                    //           }}
+                    //         >
+                    //           {rd.PurchaseOrderItem.generalDescription}
+                    //         </Typography>
+                    //       ) : null}
+                    //     </Box>
+                    //   </StyledTableCell>
+                    //   <StyledTableCell>{rd.actualQuantityReceived ?? ""}</StyledTableCell>
+                    //   <StyledTableCell>{formatCurrencyPHP(rd.unitCost) ?? ""}</StyledTableCell>
+                    //   <StyledTableCell>{formatCurrencyPHP(rd.amount) ?? ""}</StyledTableCell>
+                    // </StyledTableRow>
                   ))}
 
                   <StyledTableRow>
@@ -421,7 +468,9 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.recieved_from || "")}
+                      {capitalizeFirstLetter(signatories?.recieved_by || "")}
+                      {/* {capitalizeFirstLetter(signatories?.recieved_from || "")} */}
+
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Inspection Officer
                     </Box>
@@ -507,7 +556,9 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.recieved_by || "")}
+                      
+                       {capitalizeFirstLetter(signatories?.recieved_from || "")}
+                      {/* {capitalizeFirstLetter(signatories?.recieved_by || "")} */}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Property and Supply Management Officer
                     </Box>

@@ -81,6 +81,17 @@ const PurchaseOrderItems = sequelize.define(
       allowNull: true,
       defaultValue: "none", // Default value
     },
+    itemGroupId: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: "Stable grouping key for logical item across updates/receipts",
+    },
+    isReceiptLine: {
+      type: DataTypes.TINYINT(1),
+      allowNull: true,
+      defaultValue: 0,
+      comment: "Optional marker for cloned receipt-only lines",
+    },
     isDeleted: {
       type: DataTypes.TINYINT(1),
       allowNull: true,

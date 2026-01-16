@@ -93,3 +93,14 @@ export const APPEND_TO_EXISTING_IAR = gql`
   }
 `;
 
+export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
+  mutation CreateLineItemFromExisting($sourceItemId: Int!, $newItem: CreateLineItemInput!) {
+    createLineItemFromExisting(sourceItemId: $sourceItemId, newItem: $newItem) {
+      success
+      newItemId
+      iarId
+      message
+    }
+  }
+`;
+

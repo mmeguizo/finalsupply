@@ -61,6 +61,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         currentInput
         generalDescription
         specification
+        itemGroupId
+        isReceiptLine
       }
     }
   }
