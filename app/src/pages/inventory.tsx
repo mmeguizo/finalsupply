@@ -87,6 +87,7 @@ function Row(props: {
     onOverrideChange,
   } = props;
   const [open, setOpen] = React.useState(false);
+  const [savingInvoice, setSavingInvoice] = React.useState(false);
   const [savingIncome, setSavingIncome] = React.useState(false);
   const [savingMds, setSavingMds] = React.useState(false);
   const [savingDetails, setSavingDetails] = React.useState(false);
@@ -267,17 +268,42 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
-        {/* Invoice input */}
+        {/* Invoice input - enter-to-save */}
         <TableCell>
           <TextField
             size="small"
-            placeholder={poDefaults.invoice || "Invoice #"}
-            value={invoiceOverride ?? ""}
+            placeholder={poDefaults.invoice || "Hit Enter to save.."}
+            value={invoiceOverride !== undefined ? invoiceOverride : poDefaults.invoice}
             onChange={(e) =>
               onOverrideChange(row.iarId, { invoice: e.target.value })
             }
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingInvoice(true);
+                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+                  if (poId) {
+                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), invoice: valueToSave } } });
+                    onNotify('Invoice saved');
+                  }
+                } catch (err) { console.error('Failed to save invoice', err); onNotify('Failed to save invoice','error'); }
+                finally { setSavingInvoice(false); }
+              }
+            }}
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingInvoice ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingInvoice}
           />
         </TableCell>
         {/* Invoice Date input */}
