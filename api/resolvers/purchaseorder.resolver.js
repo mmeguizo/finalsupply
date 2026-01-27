@@ -8,9 +8,9 @@ import { sequelize } from "../db/connectDB.js";
 import { Op } from "sequelize"; // add if not present
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 import { generateNewIarId } from "../utils/iarIdGenerator.js";
-import { generateNewRisId } from "../utils/risIdGenerator.js";
-import { generateNewParId } from "../utils/parIdGenerator.js";
-import { generateNewIcsId } from "../utils/icsIdGenerator.js";
+import { generateNewRisId, resetRisIdBatch } from "../utils/risIdGenerator.js";
+import { generateNewParId, resetParIdBatch } from "../utils/parIdGenerator.js";
+import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js";
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
@@ -283,8 +283,13 @@ const purchaseorderResolver = {
 
         // If items exist, create purchase order items
         if (items && Array.isArray(items) && items.length > 0) {
-          // Use a single ICS ID for the entire batch, regardless of tag (high/low)
-          let batchIcsId = "";
+          // COMMENTED OUT FOR DEMO: Use a single ICS ID for the entire batch, regardless of tag (high/low)
+          // let batchIcsId = "";
+          
+          // Reset batch tracking for individual ID generation
+          resetIcsIdBatch();
+          resetParIdBatch();
+          resetRisIdBatch();
           // Validate that if items are provided, at least one item has meaningful data
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -315,6 +320,7 @@ const purchaseorderResolver = {
                 ...cleanedItems,
                 actualQuantityReceived: item.currentInput,
                 purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
+                itemGroupId: nanoid(), // stable grouping key for UI aggregation
               },
               { transaction: t }
             ); // Use transaction
@@ -333,10 +339,15 @@ const purchaseorderResolver = {
               };
               const campusSuffix = campusSuffixMap[campus] || '';
               if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                if (!batchIcsId) {
-                  batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                }
-                icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                // COMMENTED OUT FOR DEMO: Batch ICS ID logic
+                // if (!batchIcsId) {
+                //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                // }
+                // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                
+                // Generate individual ICS ID for each item
+                const gen = await generateNewIcsId(cleanedItems.tag);
+                icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
               }
               if (
                 cleanedItems.category === "property acknowledgement reciept"
@@ -477,8 +488,13 @@ const purchaseorderResolver = {
         // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
           // Use a single ICS ID for the entire update batch, regardless of tag
-          let batchIcsId = "";
+          // let batchIcsId = "";
           // Generate a single IAR ID for all items in this batch
+          
+          // Reset ID batch tracking for this transaction
+          resetIcsIdBatch();
+          resetParIdBatch();
+          resetRisIdBatch();
 
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -496,22 +512,16 @@ const purchaseorderResolver = {
 
           for (const item of items) {
             if (item.id !== "temp") {
-              // Existing item
               const currentItem = await PurchaseOrderItems.findOne({
                 where: { id: item.id, purchaseOrderId: poId },
               });
-
               if (!currentItem) {
-                console.warn(
-                  `Item with id ${item.id} not found for PO ${poId}. Skipping.`
-                );
+                console.warn(`Item with id ${item.id} not found for PO ${poId}. Skipping.`);
                 continue;
               }
 
               const itemUpdates = {};
-              let hasChanges = false;
-
-              // Check for updates to standard fields
+              let detailsChanged = false;
               [
                 "itemName",
                 "description",
@@ -522,179 +532,160 @@ const purchaseorderResolver = {
                 "tag",
                 "inventoryNumber",
               ].forEach((field) => {
-                if (
-                  item[field] !== undefined &&
-                  item[field] !== currentItem[field]
-                ) {
+                if (item[field] !== undefined && item[field] !== currentItem[field]) {
                   itemUpdates[field] = item[field];
-                  hasChanges = true;
+                  detailsChanged = true;
                 }
               });
-              if (
-                item.quantity !== undefined &&
-                Number(item.quantity) !== currentItem.quantity
-              ) {
+
+              if (item.quantity !== undefined && Number(item.quantity) !== currentItem.quantity) {
                 itemUpdates.quantity = Number(item.quantity);
-                hasChanges = true;
+                detailsChanged = true;
               }
-              if (
-                item.unitCost !== undefined &&
-                Number(item.unitCost) !== currentItem.unitCost
-              ) {
+              if (item.unitCost !== undefined && Number(item.unitCost) !== currentItem.unitCost) {
                 itemUpdates.unitCost = Number(item.unitCost);
-                hasChanges = true;
+                detailsChanged = true;
               }
 
-              // Recalculate amount if quantity or unitCost changed
               const newQuantity =
-                itemUpdates.quantity !== undefined
-                  ? itemUpdates.quantity
-                  : currentItem.quantity;
+                itemUpdates.quantity !== undefined ? itemUpdates.quantity : currentItem.quantity;
               const newUnitCost =
-                itemUpdates.unitCost !== undefined
-                  ? itemUpdates.unitCost
-                  : currentItem.unitCost;
-              const newAmount = newQuantity * newUnitCost;
-              if (newAmount !== currentItem.amount) {
-                itemUpdates.amount = newAmount;
-                hasChanges = true;
+                itemUpdates.unitCost !== undefined ? itemUpdates.unitCost : currentItem.unitCost;
+              const recalculatedAmount = newQuantity * newUnitCost;
+              if (detailsChanged && recalculatedAmount !== currentItem.amount) {
+                itemUpdates.amount = recalculatedAmount;
               }
 
-              let actualQuantityReceivedIncrement = 0;
-              if (item.currentInput && Number(item.currentInput) > 0) {
-                actualQuantityReceivedIncrement = Number(item.currentInput);
-                itemUpdates.actualQuantityReceived =
-                  currentItem.actualQuantityReceived +
-                  actualQuantityReceivedIncrement;
-                hasChanges = true;
+              const receivedQty =
+                item.currentInput && Number(item.currentInput) > 0
+                  ? Number(item.currentInput)
+                  : 0;
+
+              if (receivedQty > 0) {
+                const prevAqr = Number(currentItem.actualQuantityReceived || 0);
+                const maxAllowable = Number(
+                  itemUpdates.quantity !== undefined ? itemUpdates.quantity : currentItem.quantity
+                );
+                const newAqr = Math.min(prevAqr + receivedQty, maxAllowable);
+
+                // Doc IDs generation
+                let parIdGen = "";
+                let risIdGen = "";
+                let icsIdGen = "";
+                const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
+                const poRecord = findIfExists;
+                const campusValue = campus ?? poRecord?.campus ?? "";
+                const campusSuffix = campusSuffixMap[campusValue] || "";
+
+                const effectiveCategory =
+                  itemUpdates.category !== undefined ? itemUpdates.category : currentItem.category;
+                const effectiveTag = itemUpdates.tag !== undefined ? itemUpdates.tag : currentItem.tag;
+
+                if (effectiveCategory === "property acknowledgement reciept") {
+                  const gen = await generateNewParId();
+                  parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                }
+                if (effectiveCategory === "requisition issue slip") {
+                  const gen = await generateNewRisId();
+                  risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                }
+                if (effectiveTag === "high" || effectiveTag === "low") {
+                  // if (!batchIcsId) {
+                  //   batchIcsId = await generateNewIcsId(effectiveTag);
+                  // }
+                  // icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // Generate individual ICS ID for each item
+                  const individualIcsId = await generateNewIcsId(effectiveTag);
+                  icsIdGen = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
+                }
+
+                // Apply updates + increment actualQuantityReceived
+                await PurchaseOrderItems.update(
+                  { ...itemUpdates, actualQuantityReceived: newAqr },
+                  { where: { id: currentItem.id, purchaseOrderId: poId } }
+                );
+
+                // IAR row (represents this receipt only)
+                const iarRow = await inspectionAcceptanceReport.create({
+                  itemName: itemUpdates.itemName ?? currentItem.itemName,
+                  description: itemUpdates.description ?? currentItem.description,
+                  generalDescription:
+                    itemUpdates.generalDescription ?? currentItem.generalDescription,
+                  specification: itemUpdates.specification ?? currentItem.specification,
+                  unit: itemUpdates.unit ?? currentItem.unit,
+                  category: effectiveCategory,
+                  tag: effectiveTag,
+                  inventoryNumber:
+                    itemUpdates.inventoryNumber ?? currentItem.inventoryNumber,
+                  quantity: receivedQty, // this receipt batch
+                  unitCost: itemUpdates.unitCost ?? currentItem.unitCost,
+                  amount: receivedQty * (itemUpdates.unitCost ?? currentItem.unitCost),
+                  actualQuantityReceived: receivedQty,
+                  iarId: autoIiarIds || batchIarId,
+                  purchaseOrderId: poId,
+                  purchaseOrderItemId: currentItem.id,
+                  createdBy: user.name || user.id,
+                  updatedBy: user.name || user.id,
+                  parId: parIdGen || null,
+                  icsId: icsIdGen || null,
+                  risId: risIdGen || null,
+                });
+
+                // History (received_update, aggregated line)
+                await PurchaseOrderItemsHistory.create({
+                  purchaseOrderItemId: currentItem.id,
+                  purchaseOrderId: poId,
+                  itemName: itemUpdates.itemName ?? currentItem.itemName ?? "",
+                  description: itemUpdates.description ?? currentItem.description ?? "",
+                  previousQuantity: currentItem.quantity,
+                  newQuantity: newQuantity,
+                  previousActualQuantityReceived: prevAqr,
+                  newActualQuantityReceived: newAqr,
+                  previousAmount: currentItem.amount,
+                  newAmount:
+                    itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
+                  iarId: iarRow.iarId || null,
+                  parId: parIdGen || null,
+                  risId: risIdGen || null,
+                  icsId: icsIdGen || null,
+                  changeType: "received_update",
+                  changedBy: user.name || user.id,
+                  changeReason:
+                    item.changeReason ||
+                    (detailsChanged
+                      ? "Received qty + details update"
+                      : "Received quantity"),
+                });
+
+                continue;
               }
 
-              if (hasChanges) {
+              if (detailsChanged) {
                 await PurchaseOrderItems.update(itemUpdates, {
                   where: { id: item.id, purchaseOrderId: poId },
                 });
-                //lets create and id if there is none if there is an id existing we skip it
-
-                // Create IAR entry only if new quantity was received
-                if (actualQuantityReceivedIncrement > 0) {
-                  const iarItemData = { ...currentItem.get(), ...itemUpdates }; // Use currentItem and apply updates for IAR
-                  console.log({ iarItemData });
-
-                  // Generate IDs only when receiving new quantity (existing item path)
-                  const effectiveCategory =
-                    itemUpdates.category !== undefined
-                      ? itemUpdates.category
-                      : currentItem.category;
-                  const effectiveTag =
-                    itemUpdates.tag !== undefined
-                      ? itemUpdates.tag
-                      : currentItem.tag;
-
-                  let parIdGen = "";
-                  let risIdGen = "";
-                  let icsIdGen = "";
-                  const campusSuffixMap = {
-                    Talisay: 'T',
-                    Alijis: 'A',
-                    Binalbagan: 'B',
-                    'Fortune Town': 'F',
-                  };
-                  // prefer input.campus, fallback to purchase order's campus in DB
-                  const poRecord = findIfExists;
-                  const campusValue = campus ?? poRecord?.campus ?? '';
-                  const campusSuffix = campusSuffixMap[campusValue] || '';
-
-                  if (effectiveCategory === "property acknowledgement reciept") {
-                    const gen = await generateNewParId();
-                    parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                  }
-                  if (effectiveCategory === "requisition issue slip") {
-                    const gen = await generateNewRisId();
-                    risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                  }
-                  if (effectiveTag === "high" || effectiveTag === "low") {
-                    if (!batchIcsId) {
-                      batchIcsId = await generateNewIcsId(effectiveTag);
-                    }
-                    icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-                  }
-
-                  const iarRow = await inspectionAcceptanceReport.create({
-                    ...omitId(iarItemData),
-                    iarId: autoIiarIds || batchIarId,
-                    actualQuantityReceived: actualQuantityReceivedIncrement,
-                    purchaseOrderId: poId,
-                    purchaseOrderItemId: currentItem.id,
-                    createdBy: user.name || user.id,
-                    updatedBy: user.name || user.id,
-                    parId: parIdGen,
-                    icsId: icsIdGen,
-                    risId: risIdGen,
-                  });
-
-                  await PurchaseOrderItemsHistory.create({
-                    purchaseOrderItemId: currentItem.id,
-                    purchaseOrderId: poId,
-                    itemName: (iarItemData.itemName || currentItem.itemName || ""),
-                    description: (iarItemData.description || currentItem.description || null),
-                    previousQuantity: currentItem.quantity,
-                    newQuantity: newQuantity,
-                    previousActualQuantityReceived: currentItem.actualQuantityReceived,
-                    newActualQuantityReceived: currentItem.actualQuantityReceived + actualQuantityReceivedIncrement,
-                    previousAmount: currentItem.amount,
-                    newAmount: newAmount,
-                    iarId: (autoIiarIds || batchIarId),
-                    parId: parIdGen || null,
-                    risId: risIdGen || null,
-                    icsId: icsIdGen || null,
-                    changeType: "received_update",
-                    changedBy: user.name || user.id,
-                    changeReason: item.changeReason || "Received quantity update",
-                  });
-                } // End of hasChanges check
-                else {
-                  // Details update only (e.g., description/unit/category/etc.)
-                  try {
-                    await PurchaseOrderItemsHistory.create({
-                      purchaseOrderItemId: currentItem.id,
-                      purchaseOrderId: poId,
-                      itemName:
-                        (itemUpdates.itemName !== undefined
-                          ? itemUpdates.itemName
-                          : currentItem.itemName) || "",
-                      description:
-                        (itemUpdates.description !== undefined
-                          ? itemUpdates.description
-                          : currentItem.description) || null,
-                      previousQuantity: currentItem.quantity,
-                      newQuantity: newQuantity,
-                      previousActualQuantityReceived:
-                        currentItem.actualQuantityReceived,
-                      newActualQuantityReceived:
-                        currentItem.actualQuantityReceived,
-                      previousAmount: currentItem.amount,
-                      newAmount: newAmount,
-                      iarId: null,
-                      parId: null,
-                      risId: null,
-                      icsId: null,
-                      changeType: "item_details_update",
-                      changedBy: user.name || user.id,
-                      changeReason:
-                        item.changeReason ||
-                        "Updated item details (no quantity received)",
-                    });
-                  } catch (e) {
-                    console.error("Failed to record item details update history", e);
-                  }
-                }
+                await PurchaseOrderItemsHistory.create({
+                  purchaseOrderItemId: currentItem.id,
+                  purchaseOrderId: poId,
+                  itemName: itemUpdates.itemName ?? currentItem.itemName ?? "",
+                  description: itemUpdates.description ?? currentItem.description ?? "",
+                  previousQuantity: currentItem.quantity,
+                  newQuantity: newQuantity,
+                  previousActualQuantityReceived: currentItem.actualQuantityReceived,
+                  newActualQuantityReceived: currentItem.actualQuantityReceived,
+                  previousAmount: currentItem.amount,
+                  newAmount:
+                    itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
+                  changeType: "item_details_update",
+                  changedBy: user.name || user.id,
+                  changeReason: item.changeReason || "Updated item details",
+                });
               }
             } else {
-              // Create new item if the item does not have an id
+              // New item path unchanged
               const { id, ...cleanedItems } = item;
-              // Validate and set default for new item category
               if (!validCategories.includes(cleanedItems.category)) {
-                cleanedItems.category = "requisition issue slip"; // Default category
+                cleanedItems.category = "requisition issue slip";
               }
               const newPOI = await PurchaseOrderItems.create({
                 itemName: item.itemName || "",
@@ -705,39 +696,31 @@ const purchaseorderResolver = {
                 quantity: item.quantity ? item.quantity : 0,
                 unitCost: item.unitCost ? item.unitCost : 0,
                 amount: item.amount ? item.amount : 0,
-                category: item.category || "requisition issue slip", // Default category
+                category: item.category || "requisition issue slip",
                 tag: item.tag || "none",
                 inventoryNumber: item.inventoryNumber || "none",
-                actualQuantityReceived: item?.currentInput
-                  ? item.currentInput
-                  : 0,
+                actualQuantityReceived: item?.currentInput ? item.currentInput : 0,
                 purchaseOrderId: poId || id,
+                itemGroupId: nanoid(),
               });
 
-              // If item.currentInput is not provided do not create a Iar entry and purchaseOrderItemsHistory entry
-              // Only create IAR and History if currentInput is provided and greater than 0
               if (item.currentInput && Number(item.currentInput) > 0) {
-                //add entry to inspection acceptance report
-
                 let icsId = "";
                 let parId = "";
                 let risId = "";
-                const campusSuffixMap = {
-                  Talisay: 'T',
-                  Alijis: 'A',
-                  Binalbagan: 'B',
-                  'Fortune Town': 'F',
-                };
+                const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
                 const poRecord = await PurchaseOrder.findByPk(poId);
-                const campusValue = campus ?? poRecord?.campus ?? '';
-                const campusSuffix = campusSuffixMap[campusValue] || '';
-                // Use currentItem or itemUpdates to get the tag and category values
+                const campusValue = campus ?? poRecord?.campus ?? "";
+                const campusSuffix = campusSuffixMap[campusValue] || "";
 
                 if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                  if (!batchIcsId) {
-                    batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                  }
-                  icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // if (!batchIcsId) {
+                  //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                  // }
+                  // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // Generate individual ICS ID for each item
+                  const individualIcsId = await generateNewIcsId(cleanedItems.tag);
+                  icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
                 }
                 if (item.category === "property acknowledgement reciept") {
                   const gen = await generateNewParId();
@@ -747,19 +730,16 @@ const purchaseorderResolver = {
                   const gen = await generateNewRisId();
                   risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 }
-                
 
                 const iarRow = await inspectionAcceptanceReport.create({
                   ...cleanedItems,
-                  iarId: autoIiarIds || batchIarId, //=> "4f90d13a42"
-                  actualQuantityReceived: item?.currentInput
-                    ? item.currentInput
-                    : 0,
-                  purchaseOrderId: poId, // Link items to the new purchase order
+                  iarId: autoIiarIds || batchIarId,
+                  actualQuantityReceived: item?.currentInput ? item.currentInput : 0,
+                  purchaseOrderId: poId,
                   purchaseOrderItemId: newPOI.id,
-                  createdBy: user.name || user.id, // Track who created the IAR
-                  updatedBy: user.name || user.id, // Track who updated the IAR
-                  parId: parId || "", // Use the same PAR ID for all items in this batch
+                  createdBy: user.name || user.id,
+                  updatedBy: user.name || user.id,
+                  parId: parId || "",
                   icsId: icsId || "",
                   risId: risId || "",
                 });
@@ -772,16 +752,14 @@ const purchaseorderResolver = {
                   previousQuantity: 0,
                   newQuantity: item.quantity ? item.quantity : 0,
                   previousActualQuantityReceived: 0,
-                  newActualQuantityReceived: item?.currentInput
-                    ? item.currentInput
-                    : 0,
+                  newActualQuantityReceived: item?.currentInput ? item.currentInput : 0,
                   previousAmount: 0,
                   newAmount: item.amount ? item.amount : 0,
                   iarId: iarRow.iarId || null,
                   parId: iarRow.parId || null,
                   risId: iarRow.risId || null,
                   icsId: iarRow.icsId || null,
-                  changeType: "item_creation", // More specific
+                  changeType: "item_creation",
                   changedBy: user.name || user.id,
                   changeReason: "Initial item creation",
                 });
@@ -951,9 +929,75 @@ const purchaseorderResolver = {
   PurchaseOrder: {
     items: async (parent) => {
       try {
-        return await PurchaseOrderItems.findAll({
+        // Fetch all rows for this PO
+        const rows = await PurchaseOrderItems.findAll({
           where: { purchaseOrderId: parent.id, isDeleted: false },
+          order: [["createdAt", "ASC"]],
         });
+
+        // If there are no rows or only one, return as-is
+        if (!rows || rows.length <= 1) return rows;
+
+        // Group logically-same items: prefer stable itemGroupId when present,
+        // otherwise fall back to a heuristic signature.
+        const groups = new Map();
+        for (const r of rows) {
+          const key = r.itemGroupId && String(r.itemGroupId).trim() !== ""
+            ? `group:${r.itemGroupId}`
+            : [
+                r.itemName || "",
+                r.unit || "",
+                Number(r.unitCost || 0).toString(),
+                r.category || "",
+                r.tag || "",
+                r.inventoryNumber || "",
+              ].join("|");
+
+          if (!groups.has(key)) {
+            groups.set(key, {
+              base: r, // earliest row (ordered ASC)
+              totalReceived: Number(r.actualQuantityReceived || 0),
+              latestSpecs: {
+                description: r.description,
+                specification: r.specification,
+                generalDescription: r.generalDescription,
+              },
+              latestCreatedAt: new Date(r.createdAt || 0).getTime(),
+            });
+          } else {
+            const g = groups.get(key);
+            g.totalReceived += Number(r.actualQuantityReceived || 0);
+            const t = new Date(r.createdAt || 0).getTime();
+            if (t > g.latestCreatedAt) {
+              g.latestSpecs = {
+                description: r.description,
+                specification: r.specification,
+                generalDescription: r.generalDescription,
+              };
+              g.latestCreatedAt = t;
+            }
+
+            // Choose base as the one with non-zero amount when available
+            if (Number(g.base.amount || 0) === 0 && Number(r.amount || 0) > 0) {
+              g.base = r;
+            }
+          }
+        }
+
+        // Build a normalized array: one row per logical item
+        const merged = Array.from(groups.values()).map((g) => {
+          // Clone the base data without mutating Sequelize instances
+          const base = g.base.get ? g.base.get({ plain: true }) : { ...g.base };
+          return {
+            ...base,
+            description: g.latestSpecs.description,
+            specification: g.latestSpecs.specification,
+            generalDescription: g.latestSpecs.generalDescription,
+            actualQuantityReceived: g.totalReceived,
+          };
+        });
+
+        return merged;
       } catch (error) {
         console.error("Error fetching purchase order items:", error);
         throw new Error("Failed to load purchase order items");

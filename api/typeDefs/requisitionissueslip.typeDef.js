@@ -36,6 +36,7 @@ type PurchaseOrderType {
     category: String
     status: String
     invoice: String
+    campus: String
 }
 
 type PurchaseOrderItemType {

@@ -18,7 +18,7 @@ type Item {
     actualQuantityReceived: Int
     tag : String
     iarId : String
-     iarStatus : String
+    iarStatus : String
 }
 
 type PurchaseOrderType {
@@ -39,6 +39,7 @@ type PurchaseOrderType {
     category: String
     status: String
     invoice: String
+    campus: String
 }
 
 
@@ -57,6 +58,8 @@ type PurchaseOrderItemType {
     isDeleted: Boolean
     actualQuantityReceived: Int
     currentInput: Int
+    itemGroupId: String
+    isReceiptLine: Int
 }
 
 type ItemWithPurchaseOrder {
@@ -87,6 +90,8 @@ type ItemWithPurchaseOrder {
     income: String
     mds: String
     details: String
+    invoice: String
+    invoiceDate: String
 }
 type IARonly{
     id: ID
@@ -143,8 +148,19 @@ type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
-    revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
-        appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
+  revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
+  appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
+  createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
+  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String): UpdateIARInvoicePayload!
+}
+
+type UpdateIARInvoicePayload {
+    success: Boolean!
+    message: String!
+    iarId: String!
+    invoice: String
+    invoiceDate: String
+    updatedCount: Int!
 }
 
 type RevertIARBatchPayload {
@@ -167,6 +183,23 @@ type AppendIARResult {
     success: Boolean!
     iarId: String!
     updatedCount: Int!
+    message: String!
+}
+
+# New inputs and payloads for creating a new line item from an existing one
+input CreateLineItemInput {
+    iarId: String!
+    quantity: Int!
+    received: Int!
+    description: String
+    generalDescription: String
+    specification: String
+}
+
+type CreateLineItemResult {
+    success: Boolean!
+    newItemId: Int!
+    iarId: String!
     message: String!
 }
 

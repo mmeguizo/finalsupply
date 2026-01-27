@@ -62,32 +62,39 @@ export const createPoColumns = (
     align: "right",
     headerAlign: "right",
     renderCell: (params) => {
+      // Move hook outside StatusButton to prevent recreation
+      const [updatePurchaseOrder, { loading }] = useMutation(UPDATE_PURCHASEORDER, {
+        awaitRefetchQueries: true,
+        refetchQueries: ["GET_PURCHASEORDERS", "GET_ALL_PURCHASEORDER_ITEMS"],
+      });
+
       const StatusButton = () => {
-        const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
-          refetchQueries: ["GET_PURCHASEORDERS", "GET_ALL_PURCHASEORDER_ITEMS"],
-        });
-        // Check if all items have received quantities equal to their total quantities
         const allItemsComplete = params.row.items.length ? params.row.items.every(
           (item: any) => item.quantity === item.actualQuantityReceived && item.quantity > 0
         ) : false;
 
         const handleMarkComplete = async (e: React.MouseEvent) => {
-          e.stopPropagation(); // Prevent row selection
+          console.log("🎯 Handler called!");
+          e.stopPropagation();
+          e.preventDefault();
           
           try {
+            console.log("🟡 Sending mutation for PO:", params.row.id);
+            
             await updatePurchaseOrder({
               variables: {
                 input: {
-                  // id: params.row.id,
                   id: parseInt(params.row.id),
                   status: "completed",
                   completed_status_date: new Date().toISOString(),
-                  markingComplete : true,
+                  markingComplete: true,
                 },
               },
             });
+            
+            console.log("✅ Status updated successfully");
           } catch (error) {
-            console.error("Error updating status:", error);
+            console.error("❌ Error:", error);
           }
         };
 
@@ -106,10 +113,21 @@ export const createPoColumns = (
               variant="contained"
               color="warning"
               size="small"
-              onClick={handleMarkComplete}
-              sx={{ fontSize: "0.5rem", whiteSpace: "nowrap" }}
+              onMouseDown={(e) => {
+                // Use onMouseDown instead of onClick to capture event before re-render
+                console.log("🎯 Mouse down - calling handler");
+                e.stopPropagation();
+                e.preventDefault();
+                handleMarkComplete(e);
+              }}
+              disabled={loading}
+              sx={{ 
+                fontSize: "0.5rem", 
+                whiteSpace: "nowrap",
+                cursor: loading ? "wait" : "pointer"
+              }}
             >
-              Mark Complete
+              {loading ? "Updating..." : "Mark Complete"}
             </Button>
           );
         }

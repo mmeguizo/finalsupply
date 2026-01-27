@@ -44,8 +44,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
 
       let row = `
         <tr>
-          <td>${escapeHtml(item.inventoryNumber || "")}</td>
-          <td>${escapeHtml(item.quantity || "")}</td>
+          <td>${escapeHtml(item.quantity || item.actualQuantityReceived || "")}</td>
           <td>${escapeHtml(item.unit || "")}</td>
           <td colspan="2">
             ${desc}
@@ -62,20 +61,9 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
         <tr>
           <td></td>
           <td></td>
-          <td></td>
-          <td colspan="2"">
+          <td colspan="2">
             <br />
             <p style="text-align: center;">*****Nothing Follows*****</p>
-            <br />
-            <p style="text-align: left;">
-              Income: ${item.PurchaseOrder?.income ?? ""}
-            </p>
-            <p style="text-align: left;">
-              MDS: ${item.PurchaseOrder?.mds ?? ""}
-            </p>
-            <p style="text-align: left;">
-              Details: ${item.PurchaseOrder?.details ?? ""}
-            </p>
           </td>
           <td></td>
           <td></td>
@@ -85,7 +73,6 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
         row += `
           <tr>
             <td style="height: 100%"></td>
-            <td>&nbsp;</td>
             <td>&nbsp;</td>
             <td colspan="2">&nbsp;</td>
             <td>&nbsp;</td>
@@ -159,24 +146,23 @@ table {
     visibility: collapse;
     height: 0;
     & > td {
-      &:nth-child(1),
+      &:nth-child(1) {
+        width: 10%;
+      }
       &:nth-child(2) {
         width: 10%;
       }
       &:nth-child(3) {
-        width: 10%;
-      }
-      &:nth-child(4) {
-        width: 20%;
-      }
-      &:nth-child(5) {
         width: 22%;
       }
-      &:nth-child(6) {
-        width: 14%;
+      &:nth-child(4) {
+        width: 22%;
       }
-      &:nth-child(7) {
-        width: 14%;
+      &:nth-child(5) {
+        width: 18%;
+      }
+      &:nth-child(6) {
+        width: 18%;
       }
     }
   }
@@ -199,7 +185,7 @@ table {
       vertical-align: middle; /* Vertically center the text */
       height: auto; /* Allow height to adjust to content */
     }
-    & tr > th[colspan="7"] > div {
+    & tr > th[colspan="6"] > div {
       display: flex;
       flex-direction: column;
       padding: 4px 0px;
@@ -369,10 +355,9 @@ table {
           <td></td>
           <td></td>
           <td></td>
-          <td></td>
         </tr>
         <tr>
-          <th colspan="7">
+          <th colspan="6">
             <div>
               <div>
                 <div>
@@ -398,7 +383,6 @@ table {
           </th>
         </tr>
         <tr class="tbl-headings">
-          <th>Inventory Number</th>
           <th>Quantity</th>
           <th>Unit</th>
           <th colspan="2">Description and Property Number</th>
@@ -413,56 +397,40 @@ table {
         <tr class="total-row">
           <td></td>
           <td></td>
-          <td></td>
-          <td colspan="2">Total</td>
+          <td colspan="2" style="text-align: right; font-weight: 600;">Total</td>
           <td>${formatTotalUnitCost}</td>
           <td>${formatTotalAmount}</td>
         </tr>
         <tr>
-          <td colspan="7">Remarks:</td>
+          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${firstItem.PurchaseOrder?.details ? `<span style="font-style: italic;">${escapeHtml(firstItem.PurchaseOrder.details)}</span>` : ""}</td>
+          <td colspan="2" style="padding: 4px; vertical-align: top;">
+            <span style="display: inline-flex; align-items: center; margin-right: 15px;">
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem.PurchaseOrder?.income ? "✓" : ""}</span> INCOME
+            </span>
+            <span style="display: inline-flex; align-items: center;">
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem.PurchaseOrder?.mds ? "✓" : ""}</span> MDS
+            </span>
+          </td>
         </tr>
         <tr>
-          <td colspan="7"></td>
-        </tr>
-        <tr>
-          <td colspan="4">
-            <div>
-              <div>Received from:</div>
-              <div>
-                <div>
-                  <p>${recieved_from}</p>
-                   <hr>
-                  <p>Signature over Printed Name</p>
-                </div>
-                <div>
-               ${recievedFromRole}
-                   <hr>
-                  <p>Position / Office</p>
-                </div>
-              </div>
-              <div>
-                Date:___________
-              </div>
+          <td colspan="3" style="padding: 8px 4px; vertical-align: top;">
+            <div style="font-weight: 600; margin-bottom: 4px;">Received from:</div>
+            <div style="text-align: center; padding: 0 20px;">
+              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_from || ""}</p>
+              <p style="font-size: 11px; margin: 0;">Signature over Printed Name</p>
+              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedFromRole || ""}</p>
+              <p style="font-size: 11px; margin: 0;">Position / Office</p>
+              <p style="margin: 12px 0 0 0; font-size: 12px;">Date</p>
             </div>
           </td>
-          <td colspan="3">
-            <div>
-              <div>Received by:</div>
-              <div>
-                <div>
-                  <p>${recieved_by}</p>
-                   <hr>
-                  <p>Signature over Printed Name</p>
-                </div>
-                <div>
-                  ${recievedByPosition}
-                   <hr>
-                  <p>Position / Office</p>
-                </div>
-              </div>
-              <div>
-                Date: ____________
-              </div>
+          <td colspan="3" style="padding: 8px 4px; vertical-align: top;">
+            <div style="font-weight: 600; margin-bottom: 4px;">Received by:</div>
+            <div style="text-align: center; padding: 0 20px;">
+              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_by || ""}</p>
+              <p style="font-size: 11px; margin: 0;">Signature over Printed Name</p>
+              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedByPosition || ""}</p>
+              <p style="font-size: 11px; margin: 0;">Position / Office</p>
+              <p style="margin: 12px 0 0 0; font-size: 12px;">Date</p>
             </div>
           </td>
         </tr>

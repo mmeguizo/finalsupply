@@ -78,6 +78,7 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
         income
         mds
         details
+        campus
       },
        PurchaseOrderItem {
         id

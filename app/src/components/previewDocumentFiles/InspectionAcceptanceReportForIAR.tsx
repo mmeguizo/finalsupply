@@ -1,8 +1,23 @@
 import React, { useRef, useEffect } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  styled,
+  Button,
+} from "@mui/material";
 import { InspectionAcceptanceReportPropsForIAR } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
-import { capitalizeFirstLetter,formatCurrencyPHP } from "../../utils/generalUtils";
+import {
+  capitalizeFirstLetter,
+  formatCurrencyPHP,
+} from "../../utils/generalUtils";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -26,6 +41,14 @@ const StyledTableRow = styled(TableRow)({
 const HeaderTableCell = styled(StyledTableCell)({
   padding: 0,
 });
+
+const BodyTableCell = styled(TableCell)(({ theme }) => ({
+  borderLeft: "1px solid black",
+  borderRight: "1px solid black",
+  padding: "4px",
+  fontSize: "12px",
+  fontWeight: "normal",
+}));
 
 // Improved PrintContainer with better print isolation
 const PrintContainer = styled(Box)({
@@ -64,14 +87,30 @@ export default function InspectionAcceptanceReportForIAR({
 
   console.log({ reportData });
 
-  const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const items: any[] = Array.isArray(reportData)
+    ? reportData
+    : reportData
+      ? [reportData]
+      : [];
 
   // purchase order info (use first item if array)
-  const purchaseOrder = items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
-  const invoiceText = (poOverrides?.invoice ?? purchaseOrder?.invoice ?? "") as string;
-  const dateOfPaymentText = (poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "") as string;
+  const purchaseOrder =
+    items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
+  // Use IAR-specific invoice fields (from the IAR record itself, not from PO)
+  const invoiceText = (items[0]?.invoice ?? "") as string;
+  const invoiceDateText = (items[0]?.invoiceDate ?? "") as string;
+  const dateOfPaymentText = (poOverrides?.dateOfPayment ??
+    invoiceDateText ??
+    purchaseOrder?.dateOfPayment ??
+    "") as string;
 
-  const totalAmount = formatCurrencyPHP(items.reduce((sum, it) => sum + Number(it?.amount ?? 0), 0));
+ const totalAmount = formatCurrencyPHP(
+  items.reduce((sum, it) => sum + (Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0)), 0)
+);
+
+  // const totalAmount = formatCurrencyPHP(
+  //   items.reduce((sum, it) => sum + Number(it?.amount ?? 0), 0)
+  // );
   // --- end added ---
 
   // Create and inject print styles dynamically
@@ -127,13 +166,19 @@ export default function InspectionAcceptanceReportForIAR({
 
   return (
     <>
-      <PrintControls sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
+      <PrintControls
+        sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}
+      >
         {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
         {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
       </PrintControls>
 
       <Box id="printable-report" ref={componentRef}>
-        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid black" }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: "1px solid black" }}
+        >
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
@@ -186,13 +231,22 @@ export default function InspectionAcceptanceReportForIAR({
                           placeItems: "center",
                         }}
                       >
-                        <Typography variant="h6" sx={{ fontSize: "14px", fontWeight: "normal" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontSize: "14px", fontWeight: "normal" }}
+                        >
                           REPUBLIC OF THE PHILIPPINES
                         </Typography>
-                        <Typography variant="h5" sx={{ fontSize: "16px", fontWeight: 600 }}>
+                        <Typography
+                          variant="h5"
+                          sx={{ fontSize: "16px", fontWeight: 600 }}
+                        >
                           CARLOS HILADO MEMORIAL STATE UNIVERSITY
                         </Typography>
-                        <Typography variant="h6" sx={{ fontSize: "14px", fontWeight: "normal" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontSize: "14px", fontWeight: "normal" }}
+                        >
                           INSPECTION & ACCEPTANCE REPORT
                         </Typography>
                       </Box>
@@ -246,22 +300,40 @@ export default function InspectionAcceptanceReportForIAR({
               </TableRow>
 
               <TableRow>
-                <StyledTableCellHeader colSpan={2}>Supplier:</StyledTableCellHeader>
-                <StyledTableCellHeader colSpan={6}>{purchaseOrder?.supplier || ""}</StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={2}>
+                  Supplier:
+                </StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={6}>
+                  {purchaseOrder?.supplier || ""}
+                </StyledTableCellHeader>
               </TableRow>
 
               <TableRow>
-                <StyledTableCellHeader colSpan={2}>PO # & Date:</StyledTableCellHeader>
-                <StyledTableCellHeader>{purchaseOrder?.poNumber || ""}</StyledTableCellHeader>
-                <StyledTableCellHeader>{purchaseOrder?.dateOfDelivery || ""}</StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={2}>
+                  PO # & Date:
+                </StyledTableCellHeader>
+                <StyledTableCellHeader>
+                  {purchaseOrder?.poNumber || ""}
+                </StyledTableCellHeader>
+                <StyledTableCellHeader>
+                  {purchaseOrder?.dateOfDelivery || ""}
+                </StyledTableCellHeader>
                 <StyledTableCellHeader>Invoice# & Date:</StyledTableCellHeader>
-                <StyledTableCellHeader colSpan={2}>{invoiceText}</StyledTableCellHeader>
-                <StyledTableCellHeader>{dateOfPaymentText}</StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={2}>
+                  {invoiceText}
+                </StyledTableCellHeader>
+                <StyledTableCellHeader>
+                  {dateOfPaymentText}
+                </StyledTableCellHeader>
               </TableRow>
 
               <TableRow>
-                <StyledTableCellHeader colSpan={3}>Requisitioning Office/Department:</StyledTableCellHeader>
-                <StyledTableCellHeader colSpan={5}>{purchaseOrder?.placeOfDelivery || ""}</StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={3}>
+                  Requisitioning Office/Department:
+                </StyledTableCellHeader>
+                <StyledTableCellHeader colSpan={5}>
+                  {purchaseOrder?.placeOfDelivery || ""}
+                </StyledTableCellHeader>
               </TableRow>
 
               <TableRow sx={{ "& th": { padding: "1px 0px" } }}>
@@ -281,12 +353,22 @@ export default function InspectionAcceptanceReportForIAR({
                 <>
                   {items.map((rd, idx) => (
                     <StyledTableRow key={rd.id ?? idx}>
-                      <StyledTableCell>{idx + 1}</StyledTableCell>
-                      <StyledTableCell>{rd.unit || ""}</StyledTableCell>
-                      <StyledTableCell colSpan={3} sx={{ textAlign: "left", verticalAlign: "top", padding: "6px" }}>
+                      <BodyTableCell>{idx + 1}</BodyTableCell>
+                      <BodyTableCell>{rd.unit || ""}</BodyTableCell>
+                      <BodyTableCell
+                        colSpan={3}
+                        sx={{
+                          textAlign: "left",
+                          verticalAlign: "top",
+                          padding: "6px",
+                        }}
+                      >
                         <Box>
-                          <Typography sx={{ fontWeight: 500, mb: 0.5 }}>{rd.description || rd.PurchaseOrderItem?.description || ""}</Typography>
-
+                          <Typography sx={{ fontWeight: 500, mb: 0.5 }}>
+                            {rd.description ||
+                              rd.PurchaseOrderItem?.description ||
+                              ""}
+                          </Typography>
                           {rd.PurchaseOrderItem?.specification ? (
                             <Typography
                               sx={{
@@ -314,18 +396,33 @@ export default function InspectionAcceptanceReportForIAR({
                             </Typography>
                           ) : null}
                         </Box>
-                      </StyledTableCell>
-                      <StyledTableCell>{rd.actualQuantityReceived ?? ""}</StyledTableCell>
-                      <StyledTableCell>{formatCurrencyPHP(rd.unitCost) ?? ""}</StyledTableCell>
-                      <StyledTableCell>{formatCurrencyPHP(rd.amount) ?? ""}</StyledTableCell>
+                      </BodyTableCell>
+                      <BodyTableCell>
+                        {rd.actualQuantityReceived ?? ""}
+                      </BodyTableCell>
+                      <BodyTableCell>
+                        {formatCurrencyPHP(rd.unitCost) ?? ""}
+                      </BodyTableCell>
+                      <BodyTableCell>
+                        {formatCurrencyPHP(
+                          (rd.actualQuantityReceived ?? 0) * (rd.unitCost ?? 0)
+                        ) ?? 0}
+                      </BodyTableCell>
                     </StyledTableRow>
                   ))}
 
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell colSpan={3} sx={{ textAlign: "center", padding: 0.5 }}>
-                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
+                    <StyledTableCell
+                      colSpan={3}
+                      sx={{ textAlign: "center", padding: 0.5 }}
+                    >
+                      <Typography
+                        sx={{ fontSize: "12px", color: "text.secondary" }}
+                      >
+                        *****Nothing Follows*****
+                      </Typography>
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
@@ -334,16 +431,38 @@ export default function InspectionAcceptanceReportForIAR({
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell colSpan={3} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Typography fontSize={12}>
-                        Income: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.income)}</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        MDS: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.mds)}</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        Details: <span>{capitalizeFirstLetter(items[0]?.PurchaseOrder?.details)}</span>
-                      </Typography>
+                    <StyledTableCell
+                      colSpan={3}
+                      sx={{ textAlign: "left", padding: 0.5 }}
+                    >
+                      {items[0]?.PurchaseOrder?.income && (
+                        <Typography fontSize={12}>
+                          Income:{" "}
+                          <span>
+                            {capitalizeFirstLetter(
+                              items[0].PurchaseOrder.income
+                            )}
+                          </span>
+                        </Typography>
+                      )}
+                      {items[0]?.PurchaseOrder?.mds && (
+                        <Typography fontSize={12}>
+                          MDS:{" "}
+                          <span>
+                            {capitalizeFirstLetter(items[0].PurchaseOrder.mds)}
+                          </span>
+                        </Typography>
+                      )}
+                      {items[0]?.PurchaseOrder?.details && (
+                        <Typography fontSize={12}>
+                          Details:{" "}
+                          <span>
+                            {capitalizeFirstLetter(
+                              items[0].PurchaseOrder.details
+                            )}
+                          </span>
+                        </Typography>
+                      )}
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
@@ -407,7 +526,10 @@ export default function InspectionAcceptanceReportForIAR({
                             border: "1px dotted black",
                           }}
                         ></Box>
-                        <Typography>Inspected, verified and found in order as to quantity and specification</Typography>
+                        <Typography>
+                          Inspected, verified and found in order as to quantity
+                          and specification
+                        </Typography>
                       </Box>
                     </Box>
                     <Box
@@ -421,7 +543,8 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.recieved_from || "")}
+                      {capitalizeFirstLetter(signatories?.recieved_by || "")}
+                      {/* {capitalizeFirstLetter(signatories?.recieved_from || "")} */}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Inspection Officer
                     </Box>
@@ -459,7 +582,11 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: items.every((i) => i.iarStatus === "complete") ? "#ccc" : "transparent",
+                            backgroundColor: items.every(
+                              (i) => i.iarStatus === "complete"
+                            )
+                              ? "#ccc"
+                              : "transparent",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -467,7 +594,9 @@ export default function InspectionAcceptanceReportForIAR({
                             fontWeight: "bold",
                           }}
                         >
-                          {items.every((i) => i.iarStatus === "complete") ? "✓" : ""}
+                          {items.every((i) => i.iarStatus === "complete")
+                            ? "✓"
+                            : ""}
                         </Box>
                         <Typography sx={{ width: "65px" }}>Complete</Typography>
                       </Box>
@@ -483,7 +612,11 @@ export default function InspectionAcceptanceReportForIAR({
                             width: "40px",
                             aspectRatio: "3/2",
                             border: "1px dotted black",
-                            backgroundColor: items.some((i) => i.iarStatus === "partial") ? "#ccc" : "transparent",
+                            backgroundColor: items.some(
+                              (i) => i.iarStatus === "partial"
+                            )
+                              ? "#ccc"
+                              : "transparent",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -491,7 +624,9 @@ export default function InspectionAcceptanceReportForIAR({
                             fontWeight: "bold",
                           }}
                         >
-                          {items.some((i) => i.iarStatus === "partial") ? "✓" : ""}
+                          {items.some((i) => i.iarStatus === "partial")
+                            ? "✓"
+                            : ""}
                         </Box>
                         <Typography sx={{ width: "65px" }}>Partial</Typography>
                       </Box>
@@ -507,7 +642,8 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: "3px",
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.recieved_by || "")}
+                      {capitalizeFirstLetter(signatories?.recieved_from || "")}
+                      {/* {capitalizeFirstLetter(signatories?.recieved_by || "")} */}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       Property and Supply Management Officer
                     </Box>

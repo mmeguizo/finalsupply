@@ -42,6 +42,8 @@ import {
   UPDATE_IAR_STATUS,
   REVERT_IAR_BATCH,
   APPEND_TO_EXISTING_IAR,
+  CREATE_LINE_ITEM_FROM_EXISTING,
+  UPDATE_IAR_INVOICE,
 } from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
 import {
@@ -59,6 +61,8 @@ function Row(props: {
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
   onNotify: (message: string, severity?: "success" | "error" | "info" | "warning") => void;
+  // allow parent to pass refetch function for cache refresh
+  refetch?: () => Promise<any>;
   // overrides
   invoiceOverride?: string;
   dateOfPaymentOverride?: string;
@@ -84,6 +88,8 @@ function Row(props: {
     onOverrideChange,
   } = props;
   const [open, setOpen] = React.useState(false);
+  const [savingInvoice, setSavingInvoice] = React.useState(false);
+  const [savingInvoiceDate, setSavingInvoiceDate] = React.useState(false);
   const [savingIncome, setSavingIncome] = React.useState(false);
   const [savingMds, setSavingMds] = React.useState(false);
   const [savingDetails, setSavingDetails] = React.useState(false);
@@ -126,6 +132,26 @@ function Row(props: {
     ],
   });
 
+  // Mutation to create a NEW PO item from an existing one (same itemGroupId)
+  const [createLineItemFromExisting] = useMutation(CREATE_LINE_ITEM_FROM_EXISTING, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Mutation to update IAR-specific invoice
+  const [updateIARInvoice] = useMutation(UPDATE_IAR_INVOICE, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
   // Per-item add-line drafts keyed by purchaseOrderItemId
   const [iarLineDrafts, setIarLineDrafts] = React.useState<
     Record<
@@ -157,6 +183,9 @@ function Row(props: {
       const payloadItem = {
         id: "temp", // signals backend to create a new PO item
         description: newItemDraft.description,
+        generalDescription: newItemDraft.generalDescription || "",
+        specification: newItemDraft.specification || "",
+        itemName: newItemDraft.itemName || "",
         unit: newItemDraft.unit,
         quantity: q,
         unitCost: uc,
@@ -165,7 +194,7 @@ function Row(props: {
         currentInput: recv, // immediately receive this amount and create IAR/history
       };
 
-      await updatePurchaseOrder({
+      const resp = await updatePurchaseOrder({
         variables: {
           input: {
             id: Number(poId),
@@ -174,9 +203,17 @@ function Row(props: {
         },
       });
 
+      // Ensure UI reflects the newly created PO item
+      if (typeof props.refetch === "function") {
+        await props.refetch();
+      }
+
       // Reset draft row
       setNewItemDraft({
         description: "",
+        generalDescription: "",
+        specification: "",
+        itemName: "",
         unit: "",
         quantity: 0,
         unitCost: 0,
@@ -188,6 +225,12 @@ function Row(props: {
     }
   };
 
+  // IAR-specific invoice (separate from PO main invoice)
+  const iarDefaults = {
+    invoice: row.items?.[0]?.invoice || "",
+    invoiceDate: row.items?.[0]?.invoiceDate || "",
+  };
+
   const poDefaults = {
     invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
     dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
@@ -195,11 +238,17 @@ function Row(props: {
     mds: row.items?.[0]?.PurchaseOrder?.mds || "",
     details: row.items?.[0]?.PurchaseOrder?.details || "",
   };
-  const invoiceValue = invoiceOverride ?? poDefaults.invoice;
-  const dateValue = dateOfPaymentOverride ?? poDefaults.dateOfPayment;
+  const invoiceValue = invoiceOverride ?? iarDefaults.invoice;
+  const dateValue = dateOfPaymentOverride ?? iarDefaults.invoiceDate;
   const incomeValue = incomeOverride ?? poDefaults.income;
   const mdsValue = mdsOverride ?? poDefaults.mds;
   const detailsValue = detailsOverride ?? poDefaults.details;
+
+  // Add local state to track status updates
+  const [localStatus, setLocalStatus] = React.useState<string | null>(null);
+  
+  // Use local status if set, otherwise use row status
+  const displayStatus = localStatus ?? row.iarStatus ?? "none";
 
   return (
     <React.Fragment>
@@ -222,8 +271,12 @@ function Row(props: {
         <TableCell>{formatTimestampToDateTime(row.createdAt)}</TableCell>
         <TableCell component="th" scope="row">
           <Select
-            value={row.iarStatus || "none"}
-            onChange={(e) => onStatusUpdate(row.iarId, e.target.value)}
+            value={displayStatus}
+            onChange={(e) => {
+              const newStatus = e.target.value;
+              setLocalStatus(newStatus); // Immediately update local state
+              onStatusUpdate(row.iarId, newStatus);
+            }}
             size="small"
             variant="outlined"
             sx={{ minWidth: 120 }}
@@ -233,32 +286,69 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
-        {/* Invoice input */}
+        {/* Invoice input - enter-to-save (IAR-specific) */}
         <TableCell>
           <TextField
             size="small"
-            placeholder={poDefaults.invoice || "Invoice #"}
-            value={invoiceOverride ?? ""}
+            placeholder={iarDefaults.invoice || "Hit Enter to save.."}
+            value={invoiceOverride !== undefined ? invoiceOverride : iarDefaults.invoice}
             onChange={(e) =>
               onOverrideChange(row.iarId, { invoice: e.target.value })
             }
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = e.target as HTMLInputElement;
+                const valueToSave = (target.value || '').trim();
+                try {
+                  setSavingInvoice(true);
+                  await updateIARInvoice({ variables: { iarId: row.iarId, invoice: valueToSave } });
+                  onNotify('Invoice saved');
+                } catch (err) { console.error('Failed to save invoice', err); onNotify('Failed to save invoice','error'); }
+                finally { setSavingInvoice(false); }
+              }
+            }}
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
+            InputProps={{
+              endAdornment: savingInvoice ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+              readOnly: false,
+            }}
+            disabled={savingInvoice}
           />
         </TableCell>
-        {/* Invoice Date input */}
+        {/* Invoice Date input - saves on change (IAR-specific) */}
         <TableCell>
           <TextField
             type="date"
             size="small"
-            placeholder={poDefaults.dateOfPayment || "YYYY-MM-DD"}
-            value={dateOfPaymentOverride ?? ""}
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { dateOfPayment: e.target.value })
-            }
+            placeholder={iarDefaults.invoiceDate || "YYYY-MM-DD"}
+            value={dateOfPaymentOverride !== undefined ? dateOfPaymentOverride : iarDefaults.invoiceDate}
+            onChange={async (e) => {
+              const valueToSave = e.target.value;
+              onOverrideChange(row.iarId, { dateOfPayment: valueToSave });
+              try {
+                setSavingInvoiceDate(true);
+                await updateIARInvoice({ variables: { iarId: row.iarId, invoiceDate: valueToSave || null } });
+                onNotify('Invoice date saved');
+              } catch (err) { console.error('Failed to save invoice date', err); onNotify('Failed to save invoice date','error'); }
+              finally { setSavingInvoiceDate(false); }
+            }}
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
             InputLabelProps={{ shrink: true }}
+            InputProps={{
+              endAdornment: savingInvoiceDate ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+            }}
+            disabled={savingInvoiceDate}
           />
         </TableCell>
         {/* Income multiline enter-to-save */}
@@ -341,11 +431,11 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.details || "Hit Enter to save..."}
+            placeholder={poDefaults.details || "Hit Shift+Enter to save..."}
             value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
             onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && e.shiftKey) {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
                 const valueToSave = (target.value || '').trim();
@@ -424,6 +514,9 @@ function Row(props: {
                 </TableHead>
                 <TableBody>
                   {row.items.map((item: any) => {
+
+                    console.log('🔍 Processing item:', item);
+
                     const poi = item.PurchaseOrderItem;
                     const isCompleted =
                       item.PurchaseOrder?.status === "completed";
@@ -435,17 +528,77 @@ function Row(props: {
                     const currentSpec =
                       poi?.specification ?? item.specification ?? "";
                     const currentUnit = poi?.unit ?? item.unit ?? "";
-                    const remaining = Math.max(
-                      0,
-                      Number(poi?.quantity || item.quantity || 0) -
-                        Number(poi?.actualQuantityReceived || 0)
+
+                    // Get itemGroupId - this should exist if items were created via createLineItemFromExisting
+                    const currentItemGroupId = poi?.itemGroupId || item.itemGroupId;
+                    
+                    // console.log('🔍 Item Group Check:', {
+                    //   itemId: item.id,
+                    //   poiId: poi?.id,
+                    //   currentItemGroupId,
+                    //   description: currentDescription?.substring(0, 20),
+                    //   actualReceived: poi?.actualQuantityReceived || item.actualQuantityReceived
+                    // });
+
+                    // Determine the base ordered quantity for the group
+                    const baseQuantity = Number(poi?.quantity || item.quantity || 0);
+
+                    // If NO itemGroupId exists, we need to find items that should be grouped
+                    // by matching description, unit, unitCost, etc. (fallback heuristic)
+                    let groupedItems = [];
+                    if (currentItemGroupId) {
+                      // Use itemGroupId to find all items in this group
+                      groupedItems = row.items.filter((i: any) => {
+                        const iPoi = i.PurchaseOrderItem;
+                        const iGroupId = iPoi?.itemGroupId || i.itemGroupId;
+                        return iGroupId === currentItemGroupId;
+                      });
+                    } else {
+                      // Fallback: group by description + unit + unitCost
+                      const desc = currentDescription;
+                      const unit = currentUnit;
+                      const cost = Number(poi?.unitCost || item.unitCost || 0);
+                      
+                      groupedItems = row.items.filter((i: any) => {
+                        const iPoi = i.PurchaseOrderItem;
+                        const iDesc = iPoi?.description ?? i.description ?? "";
+                        const iUnit = iPoi?.unit ?? i.unit ?? "";
+                        const iCost = Number(iPoi?.unitCost || i.unitCost || 0);
+                        return iDesc === desc && iUnit === unit && iCost === cost;
+                      });
+                    }
+
+                    // Sum actualQuantityReceived across ALL items in this logical group
+                    const totalReceivedInGroup = groupedItems.reduce((sum: number, i: any) => {
+                      const iPoi = i.PurchaseOrderItem;
+                      const recv = Number(
+                        iPoi?.actualQuantityReceived || i.actualQuantityReceived || 0
+                      );
+                      return sum + recv;
+                    }, 0);
+
+                    // Remaining for the WHOLE group, not per row
+                    const remaining = Math.max(0, baseQuantity - totalReceivedInGroup);
+                    
+                    console.log('📊 Remaining Calc:', {
+                      baseQuantity,
+                      totalReceivedInGroup,
+                      remaining,
+                      groupedItemsCount: groupedItems.length
+                    });
+
+                    // Show this row's own received (for clarity)
+                    const totalReceived = Number(
+                      poi?.actualQuantityReceived || item.actualQuantityReceived || 0
                     );
 
                     // Original PO fields are view-only in this table.
 
-                    const draftKey = String(
-                      poi?.id ?? item.purchaseOrderItemId
-                    );
+                    // CRITICAL: Use itemGroupId as the ONLY draftKey so all items in a group share ONE form
+                    // If no itemGroupId (shouldn't happen now), fall back to a stable group key
+                    const draftKey = currentItemGroupId || 
+                      `fallback_${currentDescription}_${currentUnit}_${Number(poi?.unitCost || item.unitCost || 0)}`;
+                    // Check if ANY item in this group already has a draft open
                     const draft = iarLineDrafts[draftKey] || null;
 
                     const updateDraft = (
@@ -456,6 +609,11 @@ function Row(props: {
                         received?: number;
                       }>
                     ) => {
+                      // If updating received, clamp to [0, remaining]
+                      if (patch.received !== undefined) {
+                        const raw = Number(patch.received) || 0;
+                        patch.received = Math.min(Math.max(0, raw), remaining);
+                      }
                       setIarLineDrafts((prev) => ({
                         ...prev,
                         [draftKey]: { ...(prev[draftKey] || {}), ...patch },
@@ -489,24 +647,25 @@ function Row(props: {
                           );
                           return;
                         }
-                        await appendToExistingIAR({
+                        // Use the new mutation to create a distinct PO item with the same itemGroupId
+                        await createLineItemFromExisting({
                           variables: {
-                            iarId: row.iarId,
-                            items: [
-                              {
-                                purchaseOrderItemId: poiIdNum,
-                                received: clamped,
-                                description: draft.description || undefined,
-                                generalDescription:
-                                  draft.generalDescription || undefined,
-                                specification: draft.specification || undefined,
-                              },
-                            ],
+                            sourceItemId: poiIdNum,
+                            newItem: {
+                              iarId: row.iarId,
+                              quantity: clamped, // New item quantity = what we're receiving now
+                              received: clamped, // Immediately mark as received
+                              description: draft.description || undefined,
+                              generalDescription: draft.generalDescription || undefined,
+                              specification: draft.specification || undefined,
+                            },
                           },
                         });
+                        onNotify(`Created new line item (received ${clamped})`, 'success');
                         clearDraft();
                       } catch (e) {
-                        console.error("Failed to append IAR line", e);
+                        console.error("Failed to create line item", e);
+                        onNotify("Failed to create line item", 'error');
                       }
                     };
 
@@ -543,23 +702,9 @@ function Row(props: {
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "flex-end",
-                              }}
-                            >
-                              <Typography>
-                                {item.actualQuantityReceived}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                Remaining: {remaining}
-                              </Typography>
-                            </Box>
+                            <Typography>
+                              {totalReceived}
+                            </Typography>
                           </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">
@@ -599,7 +744,7 @@ function Row(props: {
                             )}
                           </TableCell>
                         </TableRow>
-                        {draft && (
+                        {draft && groupedItems[0]?.id === item.id && (
                           <TableRow>
                             {/* Description */}
                             <TableCell>
@@ -660,34 +805,28 @@ function Row(props: {
                             </TableCell>
                             {/* Actual Received input aligned in its column */}
                             <TableCell align="right">
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "flex-end",
+                              <TextField
+                                type="number"
+                                size="small"
+                                sx={{ width: 120 }}
+                                placeholder="Received"
+                                value={draft.received ?? ""}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  updateDraft({
+                                    received: val,
+                                  });
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  sx={{ width: 120 }}
-                                  placeholder="Received"
-                                  value={draft.received ?? ""}
-                                  onChange={(e) =>
-                                    updateDraft({
-                                      received: Number(e.target.value),
-                                    })
+                                onBlur={(e) => {
+                                  // Force clamp on blur to ensure value is within range
+                                  const val = Number(e.target.value);
+                                  if (val > remaining) {
+                                    updateDraft({ received: remaining });
                                   }
-                                  inputProps={{ min: 0, max: remaining }}
-                                />
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Remaining: {remaining}
-                                </Typography>
-                              </Box>
+                                }}
+                                inputProps={{ min: 0, max: remaining }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
                             </TableCell>
                             {/* Quantity */}
                             <TableCell align="right">{item.quantity}</TableCell>
@@ -875,31 +1014,30 @@ export default function InventoryPage() {
   // Add this function after handleClosePrintModal (around line 177)
   const handleStatusUpdate = async (iarId: string, newStatus: string) => {
     try {
-      // TODO: Replace with your actual mutation
-      // await updateIARStatus({ variables: { iarId, status: newStatus } });
-      console.log(`Updating IAR ${iarId} to status: ${newStatus}`);
       const results = await updateIARStatus({
         variables: {
-          airId: iarId, // <-- send the variable name your mutation expects
+          airId: iarId,
           iarStatus: newStatus,
         },
       });
       if (results.data?.updateIARStatus) {
         console.log({ updateIARStatus: results.data.updateIARStatus });
         setNotificationMessage(results.data.updateIARStatus.message);
-        setNotificationSeverity("success"); // Always success if we get here
+        setNotificationSeverity("success");
         setShowNotification(true);
         console.log("Status updated successfully");
-        refetch(); // Don't forget to refetch to update the UI
+        await refetch(); // Ensure refetch completes before UI updates
       } else {
         console.error("Failed to update status");
+        setNotificationMessage("Failed to update status");
         setNotificationSeverity("error");
+        setShowNotification(true);
       }
-
-      // Refetch data to update UI
-      // refetch();
     } catch (error) {
       console.error("Error updating status:", error);
+      setNotificationMessage("Error updating status");
+      setNotificationSeverity("error");
+      setShowNotification(true);
     }
   };
 
@@ -1080,6 +1218,7 @@ export default function InventoryPage() {
                       setNotificationSeverity(severity);
                       setShowNotification(true);
                     }}
+                    refetch={refetch}
                     // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
                     dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
