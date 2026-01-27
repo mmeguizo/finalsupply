@@ -18,7 +18,7 @@ export const getInspectionReportTemplateForIAR = (
 
   const purchaseOrder = items[0]?.PurchaseOrder || {};
   const invoiceText = escapeHtml(
-    String(poOverrides?.invoice ?? purchaseOrder?.invoice ?? "")
+    String(items[0]?.invoice ?? "")
   );
   const dateOfPaymentText = escapeHtml(
     String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "")
@@ -46,8 +46,11 @@ export const getInspectionReportTemplateForIAR = (
           String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? "")
         );
         const amount = escapeHtml(
-          String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
+          String((it.actualQuantityReceived ?? it.quantity ?? "") * (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? "") )
         );
+        // const amount = escapeHtml(
+        //   String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
+        // );
 
         return `
         <tr>
@@ -77,20 +80,22 @@ export const getInspectionReportTemplateForIAR = (
         <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
         <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
       </tr>
+      ${items[0]?.PurchaseOrder?.income || items[0]?.PurchaseOrder?.mds || items[0]?.PurchaseOrder?.details ? `
       <tr>
         <td style="padding:4px"></td>
         <td style="padding:4px"></td>
         <td colspan="3" style="padding:4px; text-align:left;">
           <span style="font-size:12px; color:#333;">
-            <p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.income)}</span></p>
-            <p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.mds)}</span></p>
-            <p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0]?.PurchaseOrder?.details)}</span></p>
+            ${items[0]?.PurchaseOrder?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.income)}</span></p>` : ''}
+            ${items[0]?.PurchaseOrder?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.mds)}</span></p>` : ''}
+            ${items[0]?.PurchaseOrder?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.details)}</span></p>` : ''}
           </span>
         </td>
         <td style="padding:4px"></td>
         <td style="padding:4px"></td>
         <td style="padding:4px"></td>
       </tr>
+      ` : ''}
     `
       : "");
 

@@ -93,7 +93,7 @@ type ItemWithPurchaseOrder {
     currentInput: Int
     PurchaseOrder: PurchaseOrderType
     tag : String
-     inventoryNumber : String
+    inventoryNumber : String
     iarId : String
 }
 

@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled } from "@mui/material";
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled, capitalize } from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
+import { capitalizeFirstLetter } from "../../utils/generalUtils";
+import { teal } from "@mui/material/colors";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: "1px solid black",
@@ -114,6 +116,8 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
     return ids.join(", ");
   }, [itemsArray]);
 
+  console.log({ Signatories : signatories, reportData, itemsArray, icsIdsDisplay });
+
   return (
     <>
       <PrintControls sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
@@ -126,17 +130,16 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
-                <TableCell sx={{ width: "5%" }}></TableCell>
-                <TableCell sx={{ width: "3%" }}></TableCell>
                 <TableCell sx={{ width: "6%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "9%" }}></TableCell>
-                <TableCell sx={{ width: "18%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "5%" }}></TableCell>
+                <TableCell sx={{ width: "6%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "10%" }}></TableCell>
+                <TableCell sx={{ width: "15%" }}></TableCell>
+                <TableCell sx={{ width: "20%" }}></TableCell>
               </TableRow>
               <TableRow>
-                <HeaderTableCell colSpan={8}>
+                <HeaderTableCell colSpan={7}>
                   <Box
                     sx={{
                       display: "flex",
@@ -235,7 +238,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                       }}
                     >
                       <Typography sx={{ fontSize: "14px" }}>Entity Name: Carlos Hilado Memorial State University</Typography>
-                      <Typography sx={{ fontSize: "14px" }}>Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}</Typography>
+                      <Typography sx={{ fontSize: "14px" }}>Date: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Typography>
                     </Box>
                   </Box>
                 </HeaderTableCell>
@@ -244,20 +247,17 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
               <TableRow>
                 <StyledTableCell rowSpan={2}>Quantity</StyledTableCell>
                 <StyledTableCell rowSpan={2}>Unit</StyledTableCell>
-                <StyledTableCell colSpan={2} align="center">
+                <StyledTableCell colSpan={3} align="center">
                   Amount
                 </StyledTableCell>
                 <StyledTableCell rowSpan={2} colSpan={2}>
                   Description
                 </StyledTableCell>
-                {/* <StyledTableCell>Inventory</StyledTableCell> */}
-                <StyledTableCell colSpan={2}>Estimated</StyledTableCell>
               </TableRow>
               <TableRow>
-                <StyledTableCell colSpan={2}>Unit Cost</StyledTableCell>
-                {/* <StyledTableCell>Total Cost</StyledTableCell> */}
-                {/* <StyledTableCell>Item No.</StyledTableCell> */}
-                <StyledTableCell colSpan={2}>Useful Life</StyledTableCell>
+                <StyledTableCell>Unit Cost</StyledTableCell>
+                <StyledTableCell>Total Cost</StyledTableCell>
+                <StyledTableCell>Amount</StyledTableCell>
               </TableRow>
             </TableHead>
 
@@ -267,13 +267,18 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                   {itemsArray.map((item, index) => (
                     <StyledTableRow key={item?.id || index}>
                       <StyledTableCell align="center">{item?.actualQuantityReceived || ""}</StyledTableCell>
-                      <StyledTableCell colSpan={2} align="center">
+                      <StyledTableCell align="center">
                         {item?.unit || ""}
                       </StyledTableCell>
-                      {/* <StyledTableCell align="right">
-                      {item?.formatUnitCost || (item?.unitCost ? `₱${item.unitCost.toFixed(2)}` : '')}
-                    </StyledTableCell> */}
-                      <StyledTableCell align="right">{item?.formatAmount || (item?.amount ? `₱${item.amount.toFixed(2)}` : "")}</StyledTableCell>
+                      <StyledTableCell align="right">
+                        {item?.unitCost ? `₱${Number(item.unitCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                      </StyledTableCell>
+                      <StyledTableCell align="right">
+                        {item?.actualQuantityReceived && item?.unitCost ? `₱${(Number(item.actualQuantityReceived) * Number(item.unitCost)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                      </StyledTableCell>
+                      <StyledTableCell align="right">
+                        {item?.amount ? `₱${Number(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                      </StyledTableCell>
                       <StyledTableCell colSpan={2} align="left">
                         <Box>
                           <Typography sx={{ fontWeight: 500 }}>{item?.description || item?.PurchaseOrderItem?.description || ""}</Typography>
@@ -301,68 +306,69 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                           )}
                         </Box>
                       </StyledTableCell>
-                      {/* <StyledTableCell align="center">{item.inventoryNumber|| ''}</StyledTableCell> */}
-                      <StyledTableCell colSpan={2} align="center">
-                        5 years
-                      </StyledTableCell>
                     </StyledTableRow>
                   ))}
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
+                    <StyledTableCell sx={{ fontWeight: 600, textAlign: "right" }}>Total</StyledTableCell>
+                    <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
+                      ₱{itemsArray.reduce((sum, item) => sum + (Number(item?.unitCost) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </StyledTableCell>
+                    <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
+                      ₱{itemsArray.reduce((sum, item) => sum + ((Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </StyledTableCell>
+                    <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
+                      ₱{itemsArray.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
+                  </StyledTableRow>
+                  <StyledTableRow>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "center", padding: 0.5 }}>
                       <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
                     </StyledTableCell>
-                    <StyledTableCell colSpan={2}></StyledTableCell>
                   </StyledTableRow>
 
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell colSpan={2}></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Typography fontSize={12}>
-                        Income: <span>{itemsArray[0]?.PurchaseOrder?.income }</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        MDS: <span>{ itemsArray[0]?.PurchaseOrder?.mds  }</span>
-                      </Typography>
-                      <Typography fontSize={12}>
-                        Details: <span>{ itemsArray[0]?.PurchaseOrder?.details }</span>
-                      </Typography>
+                      {itemsArray[0]?.PurchaseOrder?.income && (
+                        <Typography fontSize={12}>
+                          Income: <span>{itemsArray[0].PurchaseOrder.income}</span>
+                        </Typography>
+                      )}
+                      {itemsArray[0]?.PurchaseOrder?.mds && (
+                        <Typography fontSize={12}>
+                          MDS: <span>{itemsArray[0].PurchaseOrder.mds}</span>
+                        </Typography>
+                      )}
+                      {itemsArray[0]?.PurchaseOrder?.details && (
+                        <Typography fontSize={12}>
+                          Details: <span>{itemsArray[0].PurchaseOrder.details}</span>
+                        </Typography>
+                      )}
                     </StyledTableCell>
-                    <StyledTableCell colSpan={2}></StyledTableCell>
                   </StyledTableRow>
                 </>
               ) : (
                 <StyledTableRow>
                   <StyledTableCell></StyledTableCell>
-                  <StyledTableCell colSpan={2}></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
-                  <StyledTableCell colSpan={2}></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
                   <StyledTableCell colSpan={2}></StyledTableCell>
                 </StyledTableRow>
               )}
-
-              <StyledTableRow>
-                {/* <StyledTableCell colSpan={3} align="right" sx={{ fontWeight: 600 }}>
-                  Total
-                </StyledTableCell> */}
-                {/* <StyledTableCell align="right">{formatTotalAmount}</StyledTableCell> */}
-                <StyledTableCell colSpan={8} sx={{ height: "27px" }}></StyledTableCell>
-              </StyledTableRow>
-
               {/* Move this TableRow inside TableBody */}
               <TableRow>
-                <StyledTableCell colSpan={8}>
-                  <Typography sx={{ fontWeight: "lighter", fontSize: "12px" }}>I hereby acknowledge receipt of the following property/ies issued for my use and for which I am responsible:</Typography>
-                </StyledTableCell>
-              </TableRow>
-
-              {/* Move this TableRow inside TableBody */}
-              <TableRow>
-                <StyledTableCell colSpan={5} sx={{ padding: "20px 0px" }}>
+                <StyledTableCell colSpan={4} sx={{ padding: "20px 0px" }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -385,9 +391,9 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                         textAlign: "center",
                       }}
                     >
-                      <span>{signatories?.recieved_from}</span>
+                      <span>{capitalizeFirstLetter(signatories?.recieved_from || "") }</span>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}></Typography>
+                      <Typography sx={{ fontWeight: 600 }}> {capitalizeFirstLetter(signatories?.metadata?.recieved_from?.role || signatories?.metadata?.recieved_from?.position || "")} </Typography>
                       {/* <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography> */}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
@@ -406,7 +412,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                     </Box>
                   </Box>
                 </StyledTableCell>
-                <StyledTableCell colSpan={3} sx={{ padding: "20px 0px" }}>
+                <StyledTableCell colSpan={2} sx={{ padding: "20px 0px" }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -429,9 +435,9 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                         textAlign: "center",
                       }}
                     >
-                      <span>{signatories?.recieved_by}</span>
+                      <span>{capitalizeFirstLetter(signatories?.recieved_by || "")}</span>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>Custodian</Typography>
+                      <Typography sx={{ fontWeight: 600 }}> {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.role || signatories?.metadata?.recieved_by?.position ||  "")} </Typography>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -455,9 +461,6 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
             {/* Create a TableFooter for the note */}
             <tfoot>
               <TableRow>
-                <StyledTableCell colSpan={8} sx={{ border: "none", fontSize: "10px", padding: "4px 2px", fontStyle: "italic" }}>
-                  Note: This form shall be accomplished in triplicate. The original copy shall be retained by the Supply and/or Property Division/Unit, the duplicate copy for the Accounting Division/Unit and the triplicate copy for the end-user/Accountable Officer.
-                </StyledTableCell>
               </TableRow>
             </tfoot>
           </Table>

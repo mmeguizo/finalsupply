@@ -39,6 +39,7 @@ type PurchaseOrderType {
     category: String
     status: String
     invoice: String
+    campus: String
 }
 
 
@@ -89,6 +90,8 @@ type ItemWithPurchaseOrder {
     income: String
     mds: String
     details: String
+    invoice: String
+    invoiceDate: String
 }
 type IARonly{
     id: ID
@@ -145,9 +148,19 @@ type Mutation {
   # Updated mutation that accepts the simplified input
   updateICSInventoryIDs(input: ICSUpdateInput!): [ItemWithPurchaseOrder]
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
-    revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
-        appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
-    createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
+  revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
+  appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
+  createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
+  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String): UpdateIARInvoicePayload!
+}
+
+type UpdateIARInvoicePayload {
+    success: Boolean!
+    message: String!
+    iarId: String!
+    invoice: String
+    invoiceDate: String
+    updatedCount: Int!
 }
 
 type RevertIARBatchPayload {

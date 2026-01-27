@@ -595,6 +595,49 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to create line item");
       }
     },
+
+    // Update IAR-specific invoice and invoiceDate
+    updateIARInvoice: async (_, { iarId, invoice, invoiceDate }, context) => {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        if (!iarId) {
+          throw new Error("IAR ID is required.");
+        }
+
+        // Build the update object with only provided fields
+        const updateData = {};
+        if (invoice !== undefined) updateData.invoice = invoice;
+        if (invoiceDate !== undefined) updateData.invoiceDate = invoiceDate;
+
+        // Update all records that match the iar_id
+        const [updatedCount] = await inspectionAcceptanceReport.update(
+          updateData,
+          {
+            where: { iarId },
+            transaction: t,
+          }
+        );
+
+        await t.commit();
+
+        return {
+          success: true,
+          message: `Updated ${updatedCount} IAR record(s) with invoice info.`,
+          iarId,
+          invoice: invoice ?? null,
+          invoiceDate: invoiceDate ?? null,
+          updatedCount,
+        };
+      } catch (error) {
+        await t.rollback();
+        console.error("updateIARInvoice error:", error);
+        throw new Error(error.message || "Failed to update IAR invoice");
+      }
+    },
   },
 };
 

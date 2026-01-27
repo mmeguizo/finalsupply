@@ -23,6 +23,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       parId
       iarStatus
       createdAt
+      invoice
+      invoiceDate
       PurchaseOrder {
         id
         poNumber
@@ -43,6 +45,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         income
         mds
         details
+        campus
       },
       PurchaseOrderItem {
         id
