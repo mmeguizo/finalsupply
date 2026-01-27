@@ -43,6 +43,7 @@ import {
   REVERT_IAR_BATCH,
   APPEND_TO_EXISTING_IAR,
   CREATE_LINE_ITEM_FROM_EXISTING,
+  UPDATE_IAR_INVOICE,
 } from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
 import {
@@ -88,6 +89,7 @@ function Row(props: {
   } = props;
   const [open, setOpen] = React.useState(false);
   const [savingInvoice, setSavingInvoice] = React.useState(false);
+  const [savingInvoiceDate, setSavingInvoiceDate] = React.useState(false);
   const [savingIncome, setSavingIncome] = React.useState(false);
   const [savingMds, setSavingMds] = React.useState(false);
   const [savingDetails, setSavingDetails] = React.useState(false);
@@ -132,6 +134,16 @@ function Row(props: {
 
   // Mutation to create a NEW PO item from an existing one (same itemGroupId)
   const [createLineItemFromExisting] = useMutation(CREATE_LINE_ITEM_FROM_EXISTING, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  // Mutation to update IAR-specific invoice
+  const [updateIARInvoice] = useMutation(UPDATE_IAR_INVOICE, {
     awaitRefetchQueries: true,
     refetchQueries: [
       { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
@@ -213,6 +225,12 @@ function Row(props: {
     }
   };
 
+  // IAR-specific invoice (separate from PO main invoice)
+  const iarDefaults = {
+    invoice: row.items?.[0]?.invoice || "",
+    invoiceDate: row.items?.[0]?.invoiceDate || "",
+  };
+
   const poDefaults = {
     invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
     dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
@@ -220,8 +238,8 @@ function Row(props: {
     mds: row.items?.[0]?.PurchaseOrder?.mds || "",
     details: row.items?.[0]?.PurchaseOrder?.details || "",
   };
-  const invoiceValue = invoiceOverride ?? poDefaults.invoice;
-  const dateValue = dateOfPaymentOverride ?? poDefaults.dateOfPayment;
+  const invoiceValue = invoiceOverride ?? iarDefaults.invoice;
+  const dateValue = dateOfPaymentOverride ?? iarDefaults.invoiceDate;
   const incomeValue = incomeOverride ?? poDefaults.income;
   const mdsValue = mdsOverride ?? poDefaults.mds;
   const detailsValue = detailsOverride ?? poDefaults.details;
@@ -268,12 +286,12 @@ function Row(props: {
             <MenuItem value="complete">Complete</MenuItem>
           </Select>
         </TableCell>
-        {/* Invoice input - enter-to-save */}
+        {/* Invoice input - enter-to-save (IAR-specific) */}
         <TableCell>
           <TextField
             size="small"
-            placeholder={poDefaults.invoice || "Hit Enter to save.."}
-            value={invoiceOverride !== undefined ? invoiceOverride : poDefaults.invoice}
+            placeholder={iarDefaults.invoice || "Hit Enter to save.."}
+            value={invoiceOverride !== undefined ? invoiceOverride : iarDefaults.invoice}
             onChange={(e) =>
               onOverrideChange(row.iarId, { invoice: e.target.value })
             }
@@ -284,11 +302,8 @@ function Row(props: {
                 const valueToSave = (target.value || '').trim();
                 try {
                   setSavingInvoice(true);
-                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
-                  if (poId) {
-                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), invoice: valueToSave } } });
-                    onNotify('Invoice saved');
-                  }
+                  await updateIARInvoice({ variables: { iarId: row.iarId, invoice: valueToSave } });
+                  onNotify('Invoice saved');
                 } catch (err) { console.error('Failed to save invoice', err); onNotify('Failed to save invoice','error'); }
                 finally { setSavingInvoice(false); }
               }
@@ -306,19 +321,34 @@ function Row(props: {
             disabled={savingInvoice}
           />
         </TableCell>
-        {/* Invoice Date input */}
+        {/* Invoice Date input - saves on change (IAR-specific) */}
         <TableCell>
           <TextField
             type="date"
             size="small"
-            placeholder={poDefaults.dateOfPayment || "YYYY-MM-DD"}
-            value={dateOfPaymentOverride ?? ""}
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { dateOfPayment: e.target.value })
-            }
+            placeholder={iarDefaults.invoiceDate || "YYYY-MM-DD"}
+            value={dateOfPaymentOverride !== undefined ? dateOfPaymentOverride : iarDefaults.invoiceDate}
+            onChange={async (e) => {
+              const valueToSave = e.target.value;
+              onOverrideChange(row.iarId, { dateOfPayment: valueToSave });
+              try {
+                setSavingInvoiceDate(true);
+                await updateIARInvoice({ variables: { iarId: row.iarId, invoiceDate: valueToSave || null } });
+                onNotify('Invoice date saved');
+              } catch (err) { console.error('Failed to save invoice date', err); onNotify('Failed to save invoice date','error'); }
+              finally { setSavingInvoiceDate(false); }
+            }}
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
             InputLabelProps={{ shrink: true }}
+            InputProps={{
+              endAdornment: savingInvoiceDate ? (
+                <InputAdornment position="end">
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : undefined,
+            }}
+            disabled={savingInvoiceDate}
           />
         </TableCell>
         {/* Income multiline enter-to-save */}
@@ -401,11 +431,11 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.details || "Hit Enter to save..."}
+            placeholder={poDefaults.details || "Hit Shift+Enter to save..."}
             value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
             onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && e.shiftKey) {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
                 const valueToSave = (target.value || '').trim();

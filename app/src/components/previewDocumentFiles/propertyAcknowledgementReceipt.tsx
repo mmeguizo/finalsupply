@@ -148,14 +148,13 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
                 <TableCell sx={{ width: "10%" }}></TableCell>
                 <TableCell sx={{ width: "10%" }}></TableCell>
-                <TableCell sx={{ width: "10%" }}></TableCell>
-                <TableCell sx={{ width: "20%" }}></TableCell>
                 <TableCell sx={{ width: "22%" }}></TableCell>
-                <TableCell sx={{ width: "14%" }}></TableCell>
-                <TableCell sx={{ width: "14%" }}></TableCell>
+                <TableCell sx={{ width: "22%" }}></TableCell>
+                <TableCell sx={{ width: "18%" }}></TableCell>
+                <TableCell sx={{ width: "18%" }}></TableCell>
               </TableRow>
               <TableRow>
-                <HeaderTableCell colSpan={7}>
+                <HeaderTableCell colSpan={6}>
                   <Box
                     sx={{
                       display: "flex",
@@ -267,7 +266,6 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               </TableRow>
 
               <TableRow sx={{ "& th": { padding: "1px 0px" } }}>
-                <StyledTableCell align="left">Inventory Number</StyledTableCell>
                 <StyledTableCell align="left">Quantity</StyledTableCell>
                 <StyledTableCell align="left">Unit</StyledTableCell>
                 <StyledTableCell colSpan={2} align="center">
@@ -283,8 +281,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                 <>
                   {itemsArray.map((row: any, index: any) => (
                     <StyledTableRow key={row?.id ?? index}>
-                      <StyledTableCell align="left">{row?.inventoryNumber || ""}</StyledTableCell>
-                      <StyledTableCell align="left">{row?.quantity ?? ""}</StyledTableCell>
+                      <StyledTableCell align="left">{row?.actualQuantityReceived ?? ""}</StyledTableCell>
                       <StyledTableCell align="left">{row?.unit || ""}</StyledTableCell>
                       <StyledTableCell align="left" colSpan={2}>
                         <Box>
@@ -330,21 +327,8 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "center", padding: 0.5 }}>
                       <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
-                    </StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                  </StyledTableRow>
-                  <StyledTableRow>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Typography fontSize={12}>Income: <span>{poIncome}</span></Typography>
-                      <Typography fontSize={12}>MDS: <span>{poMds}</span></Typography>
-                      <Typography fontSize={12}>Details: <span>{poDetails}</span></Typography>
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
@@ -352,7 +336,6 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
                 </>
               ) : (
                 <StyledTableRow>
-                  <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell colSpan={2}></StyledTableCell>
@@ -364,8 +347,7 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               <StyledTableRow>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
-                <StyledTableCell></StyledTableCell>
-                <StyledTableCell align="right" colSpan={2} sx={{ paddingLeft: "14%", fontWeight: 600 }}>
+                <StyledTableCell align="right" colSpan={2} sx={{ fontWeight: 600 }}>
                   Total
                 </StyledTableCell>
                 <StyledTableCell align="right">{formatTotalUnitCost}</StyledTableCell>
@@ -373,96 +355,58 @@ export default function PropertyAcknowledgementReceipt({ signatories, reportData
               </StyledTableRow>
 
               <StyledTableRow>
-                <StyledTableCell colSpan={7}>Remarks:</StyledTableCell>
-              </StyledTableRow>
-
-              <StyledTableRow>
-                <StyledTableCell colSpan={7}></StyledTableCell>
-              </StyledTableRow>
-
-              <StyledTableRow>
-                <StyledTableCell colSpan={4} sx={{ padding: "1px 1px 1px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px",
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Received from:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "1px 75px",
-                        gap: "13px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center",
-                      }}
-                    >
-                      <Typography sx={{ fontWeight: 600 }}>{signatories?.recieved_from || ""}</Typography>
-                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>{signatories?.metadata?.recieved_from?.role || ""}</Typography>
-                      <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>Position</Typography>
+                <StyledTableCell colSpan={4} sx={{ verticalAlign: "top" }}>
+                  <Typography component="span" sx={{ fontWeight: 600 }}>Remarks: </Typography>
+                  {poDetails && <Typography component="span" sx={{ fontStyle: "italic" }}>{poDetails}</Typography>}
+                </StyledTableCell>
+                <StyledTableCell colSpan={2} sx={{ verticalAlign: "top" }}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box sx={{ width: 14, height: 14, border: "1px solid black", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px" }}>
+                        {poIncome ? "✓" : ""}
+                      </Box>
+                      <Typography sx={{ fontSize: "12px" }}>INCOME</Typography>
                     </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 auto",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "3px",
-                      }}
-                    >
-                      Date: {itemsArray[0]?.PurchaseOrder?.dateOfDelivery || ""}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box sx={{ width: 14, height: 14, border: "1px solid black", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px" }}>
+                        {poMds ? "✓" : ""}
+                      </Box>
+                      <Typography sx={{ fontSize: "12px" }}>MDS</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>
-                <StyledTableCell colSpan={3} sx={{ padding: "1px 1px 16px 1px" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "2px",
-                    }}
-                  >
-                    <Box sx={{ fontWeight: 600 }}>Received by:</Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "0px 40px",
-                        gap: "10px",
-                        height: "125px",
-                        marginTop: "5px",
-                        alignContent: "stretch",
-                        alignItems: "stretch",
-                        justifyContent: "flex-end",
-                        textAlign: "center",
-                      }}
-                    >
-                      {capitalizeFirstLetter(signatories?.recieved_by)}
-                      <Divider sx={{ width: "100%", margin: "0px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>Signature over Printed Name</Typography>
-                      {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.position)}
-                      <Divider sx={{ width: "100%", margin: "0px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}>Position / Office</Typography>
+              </StyledTableRow>
+
+              <StyledTableRow>
+                <StyledTableCell colSpan={3} sx={{ padding: "8px 4px", verticalAlign: "top" }}>
+                  <Box>
+                    <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Received from:</Typography>
+                    <Box sx={{ textAlign: "center", px: 2 }}>
+                      <Typography sx={{ fontWeight: 600, fontStyle: "italic", textDecoration: "underline", mt: 2, mb: 0.25 }}>
+                        {signatories?.recieved_from || ""}
+                      </Typography>
+                      <Typography sx={{ fontSize: "11px" }}>Signature over Printed Name</Typography>
+                      <Typography sx={{ fontWeight: 600, textDecoration: "underline", mt: 1.5, mb: 0.25 }}>
+                        {signatories?.metadata?.recieved_from?.role || ""}
+                      </Typography>
+                      <Typography sx={{ fontSize: "11px" }}>Position / Office</Typography>
+                      <Typography sx={{ mt: 1.5, fontSize: "12px" }}>Date</Typography>
                     </Box>
-                    <Box
-                      sx={{
-                        textAlign: "center",
-                        margin: "0 0",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "2px",
-                      }}
-                    >
-                      Date: {itemsArray[0]?.PurchaseOrder?.dateOfPayment || ""}
+                  </Box>
+                </StyledTableCell>
+                <StyledTableCell colSpan={3} sx={{ padding: "8px 4px", verticalAlign: "top" }}>
+                  <Box>
+                    <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Received by:</Typography>
+                    <Box sx={{ textAlign: "center", px: 2 }}>
+                      <Typography sx={{ fontWeight: 600, fontStyle: "italic", textDecoration: "underline", mt: 2, mb: 0.25 }}>
+                        {capitalizeFirstLetter(signatories?.recieved_by)}
+                      </Typography>
+                      <Typography sx={{ fontSize: "11px" }}>Signature over Printed Name</Typography>
+                      <Typography sx={{ fontWeight: 600, textDecoration: "underline", mt: 1.5, mb: 0.25 }}>
+                        {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.position)}
+                      </Typography>
+                      <Typography sx={{ fontSize: "11px" }}>Position / Office</Typography>
+                      <Typography sx={{ mt: 1.5, fontSize: "12px" }}>Date</Typography>
                     </Box>
                   </Box>
                 </StyledTableCell>

@@ -55,7 +55,6 @@ const PrintControls = styled(Box)({
 export default function RequisitionReport({ signatories, reportData, onPrint, onClose }: genericPreviewProps) {
   const componentRef = useRef(null);
 
-  console.log("signatories", signatories);
 
   // Create and inject print styles dynamically
   useEffect(() => {
@@ -102,6 +101,7 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
 
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData.filter((item) => item !== null && item !== undefined) : reportData ? [reportData] : [];
+  console.log("itemsArray", itemsArray);
 
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -250,8 +250,8 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
                         fontSize: "12px",
                       }}
                     >
-                      <Typography>Division:</Typography>
-                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}></Box>
+                      <Typography>Division: </Typography>
+                      <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}> &nbsp; &nbsp;{itemsArray[0]?.PurchaseOrder?.campus || ""}</Box>
                     </Box>
                     <Box
                       sx={{
@@ -260,8 +260,7 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
                         fontSize: "12px",
                       }}
                     >
-                      <Typography>Office: </Typography>
-
+                      <Typography>Office:</Typography>
                       <Box sx={{ borderBottom: "1px solid #000", width: "100%" }}> &nbsp; &nbsp; {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}</Box>
                     </Box>
                   </Box>
@@ -402,15 +401,16 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Typography fontSize={12}>
+                      {itemsArray[0]?.PurchaseOrder?.income  ? <Typography fontSize={12}>
                         Income: <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.income || "")} </span>
-                      </Typography>
-                      <Typography fontSize={12}>
+                      </Typography> : null}
+                      {itemsArray[0]?.PurchaseOrder?.mds  ? <Typography fontSize={12}>
                         MDS: <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.mds || "")} </span>
-                      </Typography>
-                      <Typography fontSize={12}>
+                      </Typography> : null}
+                      
+                      {itemsArray[0]?.PurchaseOrder?.details  ? <Typography fontSize={12}>
                         Details: <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.details || "")} </span>
-                      </Typography>
+                      </Typography> : null}
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
@@ -451,7 +451,16 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
                 <StyledTableCell colSpan={2}>Purpose:</StyledTableCell>
                 <StyledTableCell colSpan={9}>
                   <Box sx={{ display: "flex", gap: 2 }}>
-                    <Typography>________________________________</Typography>
+                    <Typography sx={{ textDecoration: 'underline' }}>  {itemsArray[0]?.PurchaseOrder?.income  ? <Typography fontSize={12}>
+                        <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.income || "")} </span>
+                      </Typography > : null}
+                      {itemsArray[0]?.PurchaseOrder?.mds  ? <Typography sx={{ textDecoration: 'underline' }} fontSize={12}>
+                       <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.mds || "")} </span>
+                      </Typography> : null}
+                      
+                      {itemsArray[0]?.PurchaseOrder?.details  ? <Typography sx={{ textDecoration: 'underline' }} fontSize={12}>
+                         <span>{capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.details || "")} </span>
+                      </Typography> : null} </Typography>
                   </Box>
                 </StyledTableCell>
               </StyledTableRow>

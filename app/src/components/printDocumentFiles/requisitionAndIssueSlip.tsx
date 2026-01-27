@@ -1,7 +1,10 @@
 import { capitalizeFirstLetter } from "../../utils/generalUtils";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
 
-export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) => {
+export const getRequisitionAndIssueSlip = (
+  signatories: any,
+  reportData: any,
+) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -12,19 +15,31 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
 
   const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
   // Collect unique RIS IDs
-  const risIds = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
+  const risIds = Array.from(
+    new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)),
+  );
   const risIdsDisplay = risIds.join(", ");
 
   // Generate rows for each item (supports array input). description, specification and generalDescription are escaped;
   // specification and generalDescription preserve newlines via nl2br.
   const itemRows = itemsArray
     .map((item, index) => {
-      const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || "");
-      const specRaw = item?.PurchaseOrderItem?.specification || item?.specification || "";
-      const genRaw = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "";
+      const desc = escapeHtml(
+        item?.description || item?.PurchaseOrderItem?.description || "",
+      );
+      const specRaw =
+        item?.PurchaseOrderItem?.specification || item?.specification || "";
+      const genRaw =
+        item?.PurchaseOrderItem?.generalDescription ||
+        item?.generalDescription ||
+        "";
 
-      const specHtml = specRaw ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>` : "";
-      const genHtml = genRaw ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>` : "";
+      const specHtml = specRaw
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>`
+        : "";
+      const genHtml = genRaw
+        ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>`
+        : "";
 
       let row = `
                 <tr>
@@ -44,39 +59,8 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
                 </tr>
       `;
       if (index === itemsArray.length - 1) {
-        row += `
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td colspan="2" style="text-align: center;"><br/>********Nothing Follows********</td>
-          <td></td>
-          <td colspan="2"></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td colspan="2" style="text-align: left;">
-            <br/>
-            <span style="font-size:12px; color:#333;">
-              <p style="font-size:12px;">Income: <span> ${capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.income || "")}</span></p>
-              <p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.mds || "")}</span></p>
-              <p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.details || "")}</span></p>
-            </span>
-          </td>
-          <td></td>
-          <td colspan="2"></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        `;
 
-        row += `
+         row += `
           <tr>
             <td style="height: 100%"></td>
             <td>&nbsp;</td>
@@ -89,6 +73,21 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any) =>
             <td>&nbsp;</td>
           </tr>
         `;
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: center;"><br/>********Nothing Follows********</td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+       
       }
 
       return row;
@@ -408,8 +407,8 @@ tfoot {
                 <tr class="header-2nd-row">
                     <th colspan="7">
                         <div>
-                            <span>Division:</span>
-                            <span>Office:</span>
+                            <span>Division: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.campus || "")}</span>
+                            <span>Office: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.placeOfDelivery || "")}</span>
                         </div>
                     </th>
                     <th></th>
@@ -441,28 +440,15 @@ tfoot {
                 ${itemRows}
             </tbody>
             <tfoot>
-            <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td colspan="2"></td>
-                    <td></td>
-                    <td> </td>
-                    <td> </td>
-                </tr>
                 <tr class="footer-1st-row">
-                    <td colspan="2">
-                        Purpose:
+                    <td colspan="11" style="margin: 8px; padding: 8px;">
+                        Purpose: 
+              ${itemsArray[0]?.PurchaseOrder?.income ? `Income: <span  style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.income)}</span></p>` : ""}
+              ${itemsArray[0]?.PurchaseOrder?.mds ? `MDS: <span style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.mds)}</span></p>` : ""}
+              ${itemsArray[0]?.PurchaseOrder?.details ? `Details: <span style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.details)}</span></p>` : ""}
+                      
                     </td>
-                    <td colspan="9">
-                        <div>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </td>
+                    
                 </tr>
                 <tr class="footer-2nd-row">
                     <td></td>

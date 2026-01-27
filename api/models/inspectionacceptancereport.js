@@ -113,6 +113,18 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       defaultValue: "",
     },
+    // IAR-specific invoice (separate from PO main invoice)
+    invoice: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Invoice number specific to this IAR receipt",
+    },
+    // IAR-specific invoice date
+    invoiceDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: "Invoice date specific to this IAR receipt",
+    },
 
   },
   {
