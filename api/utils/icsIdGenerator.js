@@ -1,8 +1,17 @@
 import inspectionAcceptanceReport from '../models/inspectionacceptancereport.js';
 import { Op, Sequelize } from 'sequelize';
 
-// Assuming you have a sequelize instance exported from connectDB.js for standalone testing
-// import { sequelize } from '../db/connectDB.js';
+// Track the last generated ICS ID within the same batch/request to avoid duplicates
+let lastGeneratedIcsSequenceHigh = 0;
+let lastGeneratedIcsSequenceLow = 0;
+let lastGeneratedIcsYear = null;
+
+// Call this at the start of each new request/transaction to reset batch tracking
+export function resetIcsIdBatch() {
+  lastGeneratedIcsSequenceHigh = 0;
+  lastGeneratedIcsSequenceLow = 0;
+  lastGeneratedIcsYear = null;
+}
 
 /**
  * Generates a new Inventory Custodian Slip (ICS) ID based on item tag.
@@ -28,6 +37,13 @@ export async function generateNewIcsId(tag) {
     throw new Error("Invalid tag provided. Must be 'low' or 'high'.");
   }
 
+  // Reset tracking if year changed
+  if (lastGeneratedIcsYear !== year) {
+    lastGeneratedIcsSequenceHigh = 0;
+    lastGeneratedIcsSequenceLow = 0;
+    lastGeneratedIcsYear = year;
+  }
+
   // The search prefix should only contain the year for an annual series.
   const searchPrefix = `${prefix}-${year}-`;
 
@@ -46,7 +62,7 @@ export async function generateNewIcsId(tag) {
     },
     order: [
       // Order by the numeric part of the ID (NNNN) to get the highest sequence.
-      [Sequelize.literal("CAST(SUBSTRING_INDEX(icsId, '-', -1) AS UNSIGNED)"), 'DESC'],
+      [Sequelize.literal("CAST(REPLACE(SUBSTRING_INDEX(icsId, '-', -1), SUBSTRING(SUBSTRING_INDEX(icsId, '-', -1), -1), '') AS UNSIGNED)"), 'DESC'],
     ],
     attributes: ['icsId'],
   });
@@ -54,13 +70,28 @@ export async function generateNewIcsId(tag) {
   let newSequence = 1;
   if (latestIcs && latestIcs.icsId) {
     const parts = latestIcs.icsId.split('-');
-    // Expected parts: ["PREFIX", "YYYY", "MM", "NNNN"]
+    // Expected parts: ["PREFIX", "YYYY", "MM", "NNNN"] or ["PREFIX", "YYYY", "MM", "NNNNS"] where S is suffix
     if (parts.length === 4) {
-      const lastSequence = parseInt(parts[3], 10); // Extract NNNN part
+      // Remove any suffix like 'B', 'T', 'A', 'F' etc.
+      const numericPart = parts[3].replace(/[A-Za-z]/g, '');
+      const lastSequence = parseInt(numericPart, 10);
       if (!isNaN(lastSequence)) {
         newSequence = lastSequence + 1;
       }
     }
+  }
+
+  // Also check against the last generated sequence in this batch to avoid duplicates
+  const lastGeneratedSequence = tag === 'high' ? lastGeneratedIcsSequenceHigh : lastGeneratedIcsSequenceLow;
+  if (lastGeneratedSequence >= newSequence) {
+    newSequence = lastGeneratedSequence + 1;
+  }
+
+  // Track this generated sequence
+  if (tag === 'high') {
+    lastGeneratedIcsSequenceHigh = newSequence;
+  } else {
+    lastGeneratedIcsSequenceLow = newSequence;
   }
 
   const sequenceStr = newSequence.toString().padStart(4, '0');

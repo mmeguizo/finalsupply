@@ -8,9 +8,9 @@ import { sequelize } from "../db/connectDB.js";
 import { Op } from "sequelize"; // add if not present
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 import { generateNewIarId } from "../utils/iarIdGenerator.js";
-import { generateNewRisId } from "../utils/risIdGenerator.js";
-import { generateNewParId } from "../utils/parIdGenerator.js";
-import { generateNewIcsId } from "../utils/icsIdGenerator.js";
+import { generateNewRisId, resetRisIdBatch } from "../utils/risIdGenerator.js";
+import { generateNewParId, resetParIdBatch } from "../utils/parIdGenerator.js";
+import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js";
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
@@ -283,8 +283,13 @@ const purchaseorderResolver = {
 
         // If items exist, create purchase order items
         if (items && Array.isArray(items) && items.length > 0) {
-          // Use a single ICS ID for the entire batch, regardless of tag (high/low)
-          let batchIcsId = "";
+          // COMMENTED OUT FOR DEMO: Use a single ICS ID for the entire batch, regardless of tag (high/low)
+          // let batchIcsId = "";
+          
+          // Reset batch tracking for individual ID generation
+          resetIcsIdBatch();
+          resetParIdBatch();
+          resetRisIdBatch();
           // Validate that if items are provided, at least one item has meaningful data
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -334,10 +339,15 @@ const purchaseorderResolver = {
               };
               const campusSuffix = campusSuffixMap[campus] || '';
               if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                if (!batchIcsId) {
-                  batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                }
-                icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                // COMMENTED OUT FOR DEMO: Batch ICS ID logic
+                // if (!batchIcsId) {
+                //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                // }
+                // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                
+                // Generate individual ICS ID for each item
+                const gen = await generateNewIcsId(cleanedItems.tag);
+                icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
               }
               if (
                 cleanedItems.category === "property acknowledgement reciept"
@@ -478,8 +488,13 @@ const purchaseorderResolver = {
         // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
           // Use a single ICS ID for the entire update batch, regardless of tag
-          let batchIcsId = "";
+          // let batchIcsId = "";
           // Generate a single IAR ID for all items in this batch
+          
+          // Reset ID batch tracking for this transaction
+          resetIcsIdBatch();
+          resetParIdBatch();
+          resetRisIdBatch();
 
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -575,10 +590,13 @@ const purchaseorderResolver = {
                   risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 }
                 if (effectiveTag === "high" || effectiveTag === "low") {
-                  if (!batchIcsId) {
-                    batchIcsId = await generateNewIcsId(effectiveTag);
-                  }
-                  icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // if (!batchIcsId) {
+                  //   batchIcsId = await generateNewIcsId(effectiveTag);
+                  // }
+                  // icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // Generate individual ICS ID for each item
+                  const individualIcsId = await generateNewIcsId(effectiveTag);
+                  icsIdGen = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
                 }
 
                 // Apply updates + increment actualQuantityReceived
@@ -696,10 +714,13 @@ const purchaseorderResolver = {
                 const campusSuffix = campusSuffixMap[campusValue] || "";
 
                 if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                  if (!batchIcsId) {
-                    batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                  }
-                  icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // if (!batchIcsId) {
+                  //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                  // }
+                  // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                  // Generate individual ICS ID for each item
+                  const individualIcsId = await generateNewIcsId(cleanedItems.tag);
+                  icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
                 }
                 if (item.category === "property acknowledgement reciept") {
                   const gen = await generateNewParId();
