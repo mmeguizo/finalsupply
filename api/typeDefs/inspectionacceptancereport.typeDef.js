@@ -151,7 +151,7 @@ type Mutation {
   revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
-  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String): UpdateIARInvoicePayload!
+  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
 }
 
 type UpdateIARInvoicePayload {
@@ -160,6 +160,9 @@ type UpdateIARInvoicePayload {
     iarId: String!
     invoice: String
     invoiceDate: String
+    income: String
+    mds: String
+    details: String
     updatedCount: Int!
 }
 

@@ -105,13 +105,16 @@ export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
 `;
 
 export const UPDATE_IAR_INVOICE = gql`
-  mutation UpdateIARInvoice($iarId: String!, $invoice: String, $invoiceDate: String) {
-    updateIARInvoice(iarId: $iarId, invoice: $invoice, invoiceDate: $invoiceDate) {
+  mutation UpdateIARInvoice($iarId: String!, $invoice: String, $invoiceDate: String, $income: String, $mds: String, $details: String) {
+    updateIARInvoice(iarId: $iarId, invoice: $invoice, invoiceDate: $invoiceDate, income: $income, mds: $mds, details: $details) {
       success
       message
       iarId
       invoice
       invoiceDate
+      income
+      mds
+      details
       updatedCount
     }
   }

@@ -25,6 +25,9 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       createdAt
       invoice
       invoiceDate
+      income
+      mds
+      details
       PurchaseOrder {
         id
         poNumber

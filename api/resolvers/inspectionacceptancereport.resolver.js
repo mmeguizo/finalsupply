@@ -596,8 +596,8 @@ const inspectionAcceptanceReportResolver = {
       }
     },
 
-    // Update IAR-specific invoice and invoiceDate
-    updateIARInvoice: async (_, { iarId, invoice, invoiceDate }, context) => {
+    // Update IAR-specific invoice, invoiceDate, income, mds, details
+    updateIARInvoice: async (_, { iarId, invoice, invoiceDate, income, mds, details }, context) => {
       const t = await sequelize.transaction();
       try {
         if (!context.isAuthenticated()) {
@@ -612,6 +612,9 @@ const inspectionAcceptanceReportResolver = {
         const updateData = {};
         if (invoice !== undefined) updateData.invoice = invoice;
         if (invoiceDate !== undefined) updateData.invoiceDate = invoiceDate;
+        if (income !== undefined) updateData.income = income;
+        if (mds !== undefined) updateData.mds = mds;
+        if (details !== undefined) updateData.details = details;
 
         // Update all records that match the iar_id
         const [updatedCount] = await inspectionAcceptanceReport.update(
@@ -626,16 +629,19 @@ const inspectionAcceptanceReportResolver = {
 
         return {
           success: true,
-          message: `Updated ${updatedCount} IAR record(s) with invoice info.`,
+          message: `Updated ${updatedCount} IAR record(s).`,
           iarId,
           invoice: invoice ?? null,
           invoiceDate: invoiceDate ?? null,
+          income: income ?? null,
+          mds: mds ?? null,
+          details: details ?? null,
           updatedCount,
         };
       } catch (error) {
         await t.rollback();
         console.error("updateIARInvoice error:", error);
-        throw new Error(error.message || "Failed to update IAR invoice");
+        throw new Error(error.message || "Failed to update IAR");
       }
     },
   },
