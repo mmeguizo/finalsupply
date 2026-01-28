@@ -146,5 +146,29 @@ process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
 
 // Move your existing server start code here
-await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+// await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+
+// ...existing code...
+
+// At the bottom where you start the server
+const PORT = process.env.PORT || 4000;
+
+// If using Apollo Server with Express
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+  console.log(`   Worker ID: ${process.pid}`);
+  
+  // Tell PM2 the app is ready
+  if (process.send) {
+    process.send('ready');
+  }
+});
+
+// ...existing code...
+
+// console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+
+// // Signal PM2 that the app is ready (for cluster mode)
+// if (process.send) {
+//     process.send('ready');
+// }

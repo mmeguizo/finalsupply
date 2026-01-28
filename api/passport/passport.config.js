@@ -10,7 +10,7 @@ export const configurePassport = async () => {
   });
 
   passport.deserializeUser(async (id, done) => {
-    console.log("Deserializing User!...😍");
+    // console.log("Deserializing User!...😍");
     try {
       const user = await User.findByPk(id); // ✅ Sequelize uses findByPk instead of findById
       if (!user) {
