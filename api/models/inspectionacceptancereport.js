@@ -125,6 +125,24 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: "Invoice date specific to this IAR receipt",
     },
+    // IAR-specific income field
+    income: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Income info specific to this IAR",
+    },
+    // IAR-specific MDS field
+    mds: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "MDS info specific to this IAR",
+    },
+    // IAR-specific details field
+    details: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Details specific to this IAR",
+    },
 
   },
   {

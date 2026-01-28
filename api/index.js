@@ -148,3 +148,8 @@ process.on("SIGINT", gracefulShutdown);
 // Move your existing server start code here
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+
+// Signal PM2 that the app is ready (for cluster mode)
+if (process.send) {
+    process.send('ready');
+}
