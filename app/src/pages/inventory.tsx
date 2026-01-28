@@ -225,24 +225,20 @@ function Row(props: {
     }
   };
 
-  // IAR-specific invoice (separate from PO main invoice)
+  // IAR-specific fields (separate from PO)
   const iarDefaults = {
     invoice: row.items?.[0]?.invoice || "",
     invoiceDate: row.items?.[0]?.invoiceDate || "",
+    income: row.items?.[0]?.income || "",
+    mds: row.items?.[0]?.mds || "",
+    details: row.items?.[0]?.details || "",
   };
 
-  const poDefaults = {
-    invoice: row.items?.[0]?.PurchaseOrder?.invoice || "",
-    dateOfPayment: row.items?.[0]?.PurchaseOrder?.dateOfPayment || "",
-    income: row.items?.[0]?.PurchaseOrder?.income || "",
-    mds: row.items?.[0]?.PurchaseOrder?.mds || "",
-    details: row.items?.[0]?.PurchaseOrder?.details || "",
-  };
   const invoiceValue = invoiceOverride ?? iarDefaults.invoice;
   const dateValue = dateOfPaymentOverride ?? iarDefaults.invoiceDate;
-  const incomeValue = incomeOverride ?? poDefaults.income;
-  const mdsValue = mdsOverride ?? poDefaults.mds;
-  const detailsValue = detailsOverride ?? poDefaults.details;
+  const incomeValue = incomeOverride ?? iarDefaults.income;
+  const mdsValue = mdsOverride ?? iarDefaults.mds;
+  const detailsValue = detailsOverride ?? iarDefaults.details;
 
   // Add local state to track status updates
   const [localStatus, setLocalStatus] = React.useState<string | null>(null);
@@ -357,8 +353,8 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.income || "Hit Enter to save.."}
-            value={incomeOverride !== undefined ? incomeOverride : poDefaults.income}
+            placeholder={iarDefaults.income || "Hit Enter to save.."}
+            value={incomeOverride !== undefined ? incomeOverride : iarDefaults.income}
             onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
             onKeyDown={async (e) => {
               if (e.key === 'Enter') {
@@ -367,11 +363,8 @@ function Row(props: {
                 const valueToSave = (target.value || '').trim();
                 try {
                   setSavingIncome(true);
-                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
-                  if (poId) {
-                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), income: valueToSave } } });
-                    onNotify('Income saved');
-                  }
+                  await updateIARInvoice({ variables: { iarId: row.iarId, income: valueToSave } });
+                  onNotify('Income saved');
                 } catch (err) { console.error('Failed to save income', err); onNotify('Failed to save income','error'); }
                 finally { setSavingIncome(false); }
               }
@@ -394,8 +387,8 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.mds || "Hit Enter to save.."}
-            value={mdsOverride !== undefined ? mdsOverride : poDefaults.mds}
+            placeholder={iarDefaults.mds || "Hit Enter to save.."}
+            value={mdsOverride !== undefined ? mdsOverride : iarDefaults.mds}
             onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
             onKeyDown={async (e) => {
               if (e.key === 'Enter') {
@@ -404,11 +397,8 @@ function Row(props: {
                 const valueToSave = (target.value || '').trim();
                 try {
                   setSavingMds(true);
-                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
-                  if (poId) {
-                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), mds: valueToSave } } });
-                    onNotify('MDS saved');
-                  }
+                  await updateIARInvoice({ variables: { iarId: row.iarId, mds: valueToSave } });
+                  onNotify('MDS saved');
                 } catch (err) { console.error('Failed to save mds', err); onNotify('Failed to save MDS','error'); }
                 finally { setSavingMds(false); }
               }
@@ -431,8 +421,8 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={poDefaults.details || "Hit Shift+Enter to save..."}
-            value={detailsOverride !== undefined ? detailsOverride : poDefaults.details}
+            placeholder={iarDefaults.details || "Hit Shift+Enter to save..."}
+            value={detailsOverride !== undefined ? detailsOverride : iarDefaults.details}
             onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
             onKeyDown={async (e) => {
               if (e.key === 'Enter' && e.shiftKey) {
@@ -441,11 +431,8 @@ function Row(props: {
                 const valueToSave = (target.value || '').trim();
                 try {
                   setSavingDetails(true);
-                  const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
-                  if (poId) {
-                    await updatePurchaseOrder({ variables: { input: { id: Number(poId), details: valueToSave } } });
-                    onNotify('Details saved');
-                  }
+                  await updateIARInvoice({ variables: { iarId: row.iarId, details: valueToSave } });
+                  onNotify('Details saved');
                 } catch (err) { console.error('Failed to save details', err); onNotify('Failed to save details','error'); }
                 finally { setSavingDetails(false); }
               }
