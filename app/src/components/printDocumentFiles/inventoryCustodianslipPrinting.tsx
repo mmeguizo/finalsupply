@@ -43,14 +43,14 @@ export const getInventoryTemplateForICS = (
       const unitCostDisplay =
         item?.formatUnitCost ||
         (item?.unitCost ? `₱${Number(item.unitCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
-      const amountDisplay =
-        item?.formatAmount ||
-        (item?.amount ? `₱${Number(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
 
       const unitCost = item?.unitCost || 0;
       const actualQuantityReceived = item?.actualQuantityReceived || 0;
       const totalCost = actualQuantityReceived * unitCost;
       const totalCostDisplay = `₱${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      const inventoryItemNo = item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || "";
+      const estimatedUsefulLife = item?.estimatedUsefulLife || item?.PurchaseOrderItem?.estimatedUsefulLife || "";
 
       let row = `
         <tr>
@@ -58,8 +58,9 @@ export const getInventoryTemplateForICS = (
           <td colspan="2">${escapeHtml(item?.unit || "")}</td>
           <td>${unitCostDisplay}</td>
           <td>${totalCostDisplay}</td>
-          <td>${amountDisplay}</td>
-          <td colspan="2">${desc}${specHtml}${genHtml}</td>
+          <td>${desc}${specHtml}${genHtml}</td>
+          <td style="font-size:10px; text-align:center;">${escapeHtml(inventoryItemNo)}</td>
+          <td style="font-size:10px; text-align:center;">${escapeHtml(estimatedUsefulLife)}</td>
         </tr>
     `;
 
@@ -68,59 +69,22 @@ export const getInventoryTemplateForICS = (
     .join("");
 
   // Calculate totals
-  const totalUnitCost = itemsArray.reduce((sum, item) => sum + (Number(item?.unitCost) || 0), 0);
   const totalCost = itemsArray.reduce((sum, item) => sum + ((Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0)), 0);
-  const totalAmountSum = itemsArray.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0);
+
+  // Check if income or mds has value
+  const hasIncome = itemsArray[0]?.PurchaseOrder?.income;
+  const hasMds = itemsArray[0]?.PurchaseOrder?.mds;
 
   const footerRows = `
   <tr>
     <td></td>
-    <td colspan="2" style="text-align: right; font-weight: 600;">Total</td>
-    <td style="text-align: right; font-weight: 600;">₱${totalUnitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-    <td style="text-align: right; font-weight: 600;">₱${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-    <td style="text-align: right; font-weight: 600;">₱${totalAmountSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-    <td colspan="2"></td>
-  </tr>
-  <tr>
-    <td style="height: 100%"></td>
-    <td colspan="2">&nbsp;</td>
-    <td>&nbsp;</td>
-    <td>&nbsp;</td>
-    <td>&nbsp;</td>
-    <td colspan="2">&nbsp;</td>
-  </tr>
-  <tr>
-    <td></td>
     <td colspan="2"></td>
     <td></td>
     <td></td>
+    <td style="text-align: center;"><br/>********Nothing Follows********</td>
     <td></td>
-    <td colspan="2" style="text-align: center;"><br/>********Nothing Follows********</td>
+    <td></td>
   </tr>
-        ${
-          itemsArray[0]?.PurchaseOrder?.income ||
-          itemsArray[0]?.PurchaseOrder?.mds ||
-          itemsArray[0]?.PurchaseOrder?.details
-            ? `
-        <tr>
-          <td></td>
-          <td colspan="2"></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td colspan="2" style="text-align: left;">
-            <br/>
-            <span style="font-size:12px; color:#333;">
-              ${itemsArray[0]?.PurchaseOrder?.income ? `<p style="font-size:12px;">Income: <span>${itemsArray[0]?.PurchaseOrder?.income}</span></p>` : ""}
-              ${itemsArray[0]?.PurchaseOrder?.mds ? `<p style="font-size:12px;">MDS: <span>${itemsArray[0]?.PurchaseOrder?.mds}</span></p>` : ""}
-              ${itemsArray[0]?.PurchaseOrder?.details ? `<p style="font-size:12px;">Details: <span>${itemsArray[0]?.PurchaseOrder?.details}</span></p>` : ""}
-            </span>
-          </td>
-        </tr> 
-        
-          `
-            : ""
-        }
     `;
 
   return `
@@ -152,28 +116,28 @@ table {
     height: 0;
     & > td {
       &:nth-child(1) {
-        width: 5%;
+        width: 6%;
       }
       &:nth-child(2) {
         width: 3%;
       }
       &:nth-child(3) {
-        width: 6%;
+        width: 5%;
       }
       &:nth-child(4) {
-        width: 8%;
+        width: 10%;
       }
       &:nth-child(5) {
         width: 10%;
       }
       &:nth-child(6) {
-        width: 10%;
+        width: 30%;
       }
       &:nth-child(7) {
-        width: 20%;
+        width: 10%;
       }
       &:nth-child(8) {
-        width: 15%;
+        width: 10%;
       }
     }
   }
@@ -415,13 +379,15 @@ tfoot {
                 <tr class="header-2nd-row">
                     <th rowspan="2">Quantity</th>
                     <th  colspan="2" rowspan="2">Unit</th>
-                    <th colspan="3">Amount</th>
-                    <th rowspan="2" colspan="2">Description</th>
+                    <th colspan="2">Amount</th>
+                    <th rowspan="2">Description</th>
+                    <th colspan="2">Inventory</th>
                 </tr>
                 <tr class="header-3rd-row">
                   <th>Unit Cost</th>
                   <th>Total Cost</th>
-                  <th>Amount</th>
+                  <th style="font-size:10px;">Item No.</th>
+                  <th style="font-size:9px;">Estimated Useful Life</th>
                 </tr>
             </thead>
             <tbody>
@@ -430,7 +396,26 @@ tfoot {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="6" style="padding: 4px 0px;">
+                    <td style="font-weight: 600;">Total</td>
+                    <td colspan="2"></td>
+                    <td style="text-align: right; font-weight: 600;">\u20b1${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="2" style="text-align: left; vertical-align: top; padding: 4px;">
+                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasIncome ? '\u2713' : ''}</div>
+                          <span style="font-size: 12px;">INCOME ${hasIncome ? hasIncome : ''}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasMds ? '\u2713' : ''}</div>
+                          <span style="font-size: 12px;">MDS ${hasMds ? hasMds : ''}</span>
+                        </div>
+                      </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5" style="padding: 4px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600; font-size: 11px;">Received from:</div>
                             <div style="display: flex; flex-direction: column; padding: 2px 40px; gap: 0px; margin-top: 1px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
@@ -445,7 +430,7 @@ tfoot {
                             </div>
                         </div>
                     </td>
-                    <td colspan="2" style="padding: 4px 0px;">
+                    <td colspan="3" style="padding: 4px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600; font-size: 11px;">Received by:</div>
                             <div style="display: flex; flex-direction: column; padding: 2px 40px; gap: 0px; margin-top: 1px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
@@ -462,7 +447,7 @@ tfoot {
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="7" style="border: none; font-size: 10px; padding: 4px 2px; font-style: italic;">
+                    <td colspan="8" style="border: none; font-size: 10px; padding: 4px 2px; font-style: italic;">
                     </td>
                 </tr>
             </tfoot>

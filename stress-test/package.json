@@ -1,0 +1,18 @@
+{
+  "name": "supply-stress-tests",
+  "version": "1.0.0",
+  "description": "Stress testing suite for the Supply Management System",
+  "type": "module",
+  "scripts": {
+    "test:all": "node run-all-tests.js",
+    "test:injection": "node injection-test.js",
+    "test:flow": "node full-flow-test.js",
+    "test:db": "node db-stress-test.js",
+    "test:quick": "node injection-test.js"
+  },
+  "dependencies": {
+    "sequelize": "^6.37.7",
+    "mysql2": "^3.14.0",
+    "dotenv": "^16.4.7"
+  }
+}

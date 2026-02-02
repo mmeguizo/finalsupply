@@ -134,9 +134,9 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                 <TableCell sx={{ width: "6%" }}></TableCell>
                 <TableCell sx={{ width: "10%" }}></TableCell>
                 <TableCell sx={{ width: "10%" }}></TableCell>
-                <TableCell sx={{ width: "10%" }}></TableCell>
-                <TableCell sx={{ width: "15%" }}></TableCell>
-                <TableCell sx={{ width: "20%" }}></TableCell>
+                <TableCell sx={{ width: "30%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
+                <TableCell sx={{ width: "8%" }}></TableCell>
               </TableRow>
               <TableRow>
                 <HeaderTableCell colSpan={7}>
@@ -247,17 +247,21 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
               <TableRow>
                 <StyledTableCell rowSpan={2}>Quantity</StyledTableCell>
                 <StyledTableCell rowSpan={2}>Unit</StyledTableCell>
-                <StyledTableCell colSpan={3} align="center">
+                <StyledTableCell colSpan={2} align="center">
                   Amount
                 </StyledTableCell>
-                <StyledTableCell rowSpan={2} colSpan={2}>
+                <StyledTableCell rowSpan={2}>
                   Description
+                </StyledTableCell>
+                <StyledTableCell colSpan={2} align="center">
+                  Inventory
                 </StyledTableCell>
               </TableRow>
               <TableRow>
                 <StyledTableCell>Unit Cost</StyledTableCell>
                 <StyledTableCell>Total Cost</StyledTableCell>
-                <StyledTableCell>Amount</StyledTableCell>
+                <StyledTableCell>Item No.</StyledTableCell>
+                <StyledTableCell sx={{ fontSize: "10px" }}>Estimated Useful Life</StyledTableCell>
               </TableRow>
             </TableHead>
 
@@ -276,10 +280,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                       <StyledTableCell align="right">
                         {item?.actualQuantityReceived && item?.unitCost ? `₱${(Number(item.actualQuantityReceived) * Number(item.unitCost)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
                       </StyledTableCell>
-                      <StyledTableCell align="right">
-                        {item?.amount ? `₱${Number(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
-                      </StyledTableCell>
-                      <StyledTableCell colSpan={2} align="left">
+                      <StyledTableCell align="left">
                         <Box>
                           <Typography sx={{ fontWeight: 500 }}>{item?.description || item?.PurchaseOrderItem?.description || ""}</Typography>
 
@@ -306,54 +307,74 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                           )}
                         </Box>
                       </StyledTableCell>
+                      <StyledTableCell align="center" sx={{ fontSize: "10px" }}>
+                        {item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || ""}
+                      </StyledTableCell>
+                      <StyledTableCell align="center" sx={{ fontSize: "10px" }}>
+                        {item?.estimatedUsefulLife || item?.PurchaseOrderItem?.estimatedUsefulLife || ""}
+                      </StyledTableCell>
                     </StyledTableRow>
                   ))}
+                  {/* Nothing Follows Row */}
                   <StyledTableRow>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell sx={{ fontWeight: 600, textAlign: "right" }}>Total</StyledTableCell>
-                    <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
-                      ₱{itemsArray.reduce((sum, item) => sum + (Number(item?.unitCost) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell sx={{ textAlign: "center", padding: 0.5 }}>
+                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
                     </StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
+                  </StyledTableRow>
+
+                  {/* Total Row at Bottom */}
+                  <StyledTableRow>
+                    <StyledTableCell sx={{ fontWeight: 600 }}>Total</StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
                       ₱{itemsArray.reduce((sum, item) => sum + ((Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </StyledTableCell>
-                    <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
-                      ₱{itemsArray.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </StyledTableCell>
                     <StyledTableCell colSpan={2}></StyledTableCell>
-                  </StyledTableRow>
-                  <StyledTableRow>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell colSpan={2} sx={{ textAlign: "center", padding: 0.5 }}>
-                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
-                    </StyledTableCell>
-                  </StyledTableRow>
-
-                  <StyledTableRow>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
-                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      {itemsArray[0]?.PurchaseOrder?.income && (
-                        <Typography fontSize={12}>
-                          Income: <span>{itemsArray[0].PurchaseOrder.income}</span>
-                        </Typography>
-                      )}
-                      {itemsArray[0]?.PurchaseOrder?.mds && (
-                        <Typography fontSize={12}>
-                          MDS: <span>{itemsArray[0].PurchaseOrder.mds}</span>
-                        </Typography>
-                      )}
-                      {itemsArray[0]?.PurchaseOrder?.details && (
-                        <Typography fontSize={12}>
-                          Details: <span>{itemsArray[0].PurchaseOrder.details}</span>
-                        </Typography>
-                      )}
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box
+                            sx={{
+                              width: 14,
+                              height: 14,
+                              border: "1px solid black",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "10px",
+                            }}
+                          >
+                            {itemsArray[0]?.PurchaseOrder?.income ? "✓" : ""}
+                          </Box>
+                          <Typography fontSize={12}>
+                            INCOME {itemsArray[0]?.PurchaseOrder?.income ? itemsArray[0].PurchaseOrder.income : ""}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box
+                            sx={{
+                              width: 14,
+                              height: 14,
+                              border: "1px solid black",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "10px",
+                            }}
+                          >
+                            {itemsArray[0]?.PurchaseOrder?.mds ? "✓" : ""}
+                          </Box>
+                          <Typography fontSize={12}>
+                            MDS {itemsArray[0]?.PurchaseOrder?.mds ? itemsArray[0].PurchaseOrder.mds : ""}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </StyledTableCell>
                   </StyledTableRow>
                 </>
@@ -363,10 +384,12 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
                   <StyledTableCell></StyledTableCell>
-                  <StyledTableCell colSpan={2}></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
+                  <StyledTableCell></StyledTableCell>
                 </StyledTableRow>
               )}
-              {/* Move this TableRow inside TableBody */}
+              {/* Signatories Row */}
               <TableRow>
                 <StyledTableCell colSpan={4} sx={{ padding: "20px 0px" }}>
                   <Box
@@ -394,7 +417,6 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                       <span>{capitalizeFirstLetter(signatories?.recieved_from || "") }</span>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                       <Typography sx={{ fontWeight: 600 }}> {capitalizeFirstLetter(signatories?.metadata?.recieved_from?.role || signatories?.metadata?.recieved_from?.position || "")} </Typography>
-                      {/* <Typography sx={{ fontWeight: 600 }}>{itemsArray[0]?.PurchaseOrder?.supplier || ""}</Typography> */}
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -412,7 +434,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                     </Box>
                   </Box>
                 </StyledTableCell>
-                <StyledTableCell colSpan={2} sx={{ padding: "20px 0px" }}>
+                <StyledTableCell colSpan={3} sx={{ padding: "20px 0px" }}>
                   <Box
                     sx={{
                       display: "flex",
