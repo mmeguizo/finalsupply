@@ -119,3 +119,72 @@ export const UPDATE_IAR_INVOICE = gql`
     }
   }
 `;
+
+export const CREATE_SINGLE_ICS_ASSIGNMENT = gql`
+  mutation CreateSingleICSAssignment($input: CreateSingleICSInput!) {
+    createSingleICSAssignment(input: $input) {
+      newItem {
+        id
+        icsId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        category
+        tag
+        iarId
+        risId
+        parId
+        icsReceivedFrom
+        icsReceivedFromPosition
+        icsReceivedBy
+        icsReceivedByPosition
+        icsDepartment
+        icsAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        icsId
+      }
+      generatedIcsId
+    }
+  }
+`;
+
+export const UPDATE_ICS_ASSIGNMENT = gql`
+  mutation UpdateICSAssignment($input: UpdateICSAssignmentInput!) {
+    updateICSAssignment(input: $input) {
+      id
+      icsId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      tag
+      icsDepartment
+      icsReceivedFrom
+      icsReceivedFromPosition
+      icsReceivedBy
+      icsReceivedByPosition
+      icsAssignedDate
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
+    }
+  }
+`;

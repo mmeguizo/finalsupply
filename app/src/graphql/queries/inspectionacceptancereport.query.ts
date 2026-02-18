@@ -139,6 +139,12 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       parId
       iarStatus
       inventoryNumber
+      icsReceivedFrom
+      icsReceivedFromPosition
+      icsReceivedBy
+      icsReceivedByPosition
+      icsDepartment
+      icsAssignedDate
       PurchaseOrder {
         id
         poNumber

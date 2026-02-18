@@ -93,6 +93,12 @@ type ItemWithPurchaseOrder {
     details: String
     invoice: String
     invoiceDate: String
+    icsReceivedFrom: String
+    icsReceivedFromPosition: String
+    icsReceivedBy: String
+    icsReceivedByPosition: String
+    icsDepartment: String
+    icsAssignedDate: String
 }
 type IARonly{
     id: ID
@@ -153,6 +159,8 @@ type Mutation {
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
   updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
+  createSingleICSAssignment(input: CreateSingleICSInput!): CreateICSResponse!
+  updateICSAssignment(input: UpdateICSAssignmentInput!): ItemWithPurchaseOrder!
 }
 
 type UpdateIARInvoicePayload {
@@ -205,6 +213,33 @@ type CreateLineItemResult {
     newItemId: Int!
     iarId: String!
     message: String!
+}
+
+# ICS Assignment types
+input CreateSingleICSInput {
+    sourceItemId: Int!
+    quantity: Int!
+    department: String
+    receivedFrom: String
+    receivedFromPosition: String
+    receivedBy: String
+    receivedByPosition: String
+}
+
+input UpdateICSAssignmentInput {
+    itemId: Int!
+    quantity: Int
+    department: String
+    receivedFrom: String
+    receivedFromPosition: String
+    receivedBy: String
+    receivedByPosition: String
+}
+
+type CreateICSResponse {
+    newItem: ItemWithPurchaseOrder!
+    sourceItem: ItemWithPurchaseOrder!
+    generatedIcsId: String!
 }
 
 

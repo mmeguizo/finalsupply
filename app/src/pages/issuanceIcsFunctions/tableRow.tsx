@@ -19,6 +19,7 @@ import {
   InputAdornment,
   Toolbar,
   TablePagination,
+  Chip,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -29,17 +30,31 @@ import Checkbox from "@mui/material/Checkbox";
 const Row = (props: {
   row: any;
   handleOpenPrintModal: (items: any) => void;
+  handleOpenAssignmentModal?: (item: any) => void;
 }) => {
-  const { row, handleOpenPrintModal } = props;
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal } = props;
   const [open, setOpen] = React.useState(false);
   const [idSearch, setIdSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
-    if (!term) return row.items;
-    return row.items.filter((item: any) => (item.icsId || "").toLowerCase().includes(term));
+    // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
+    let items = row.items.filter((item: any) =>
+      (item.actualQuantityReceived ?? 0) > 0 || item.icsId
+    );
+    if (term) {
+      items = items.filter((item: any) => (item.icsId || "").toLowerCase().includes(term));
+    }
+    return items;
   }, [row.items, idSearch]);
+
+  // Calculate items without ICS ID (need assignment) - exclude items with 0 quantity
+  const unassignedInRow = React.useMemo(() => {
+    return row.items.filter((item: any) => 
+      !item.icsId && (item.actualQuantityReceived ?? 0) > 0
+    );
+  }, [row.items]);
 
   const isItemSelected = (id: string) => selectedIds.has(id);
   const toggleItem = (item: any) => {
@@ -95,15 +110,25 @@ const Row = (props: {
         </TableCell>
         <TableCell>{row.supplier}</TableCell>
         <TableCell>{formatDateString(row.dateOfDelivery)}</TableCell>
-        <TableCell>{row.itemCount} items</TableCell>
+        <TableCell>
+          {row.itemCount} items
+          {unassignedInRow.length > 0 && (
+            <Chip 
+              size="small" 
+              label={`${unassignedInRow.length} unassigned`}
+              color="warning"
+              sx={{ ml: 1 }}
+            />
+          )}
+        </TableCell>
         <TableCell>
           <Button
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items);
+              handleOpenPrintModal(row.items.filter((it: any) => it.icsId));
             }}
-            // disabled={!row.items.some((item: any) => item.parId)}
+            disabled={!row.items.some((item: any) => item.icsId)}
           >
             <PreviewIcon fontSize="medium" />
           </Button>
@@ -115,6 +140,14 @@ const Row = (props: {
                   <Box sx={{ margin: 1 }}>
                     <Typography variant="h6" gutterBottom component="div">
                       ICS Items Details
+                      {unassignedInRow.length > 0 && (
+                        <Chip 
+                          size="small"
+                          label={`${unassignedInRow.length} need ICS assignment`}
+                          color="warning"
+                          sx={{ ml: 2 }}
+                        />
+                      )}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
                       <TextField
@@ -146,7 +179,7 @@ const Row = (props: {
                               inputProps={{ 'aria-label': 'select all filtered' }}
                             />
                           </TableCell>
-                          <TableCell>ICS ID</TableCell>
+                          <TableCell>Assign ICS</TableCell>
                           <TableCell>Description</TableCell>
                           <TableCell>Unit</TableCell>
                           <TableCell align="right">Actual Received</TableCell>
@@ -169,7 +202,20 @@ const Row = (props: {
                               />
                             </TableCell>
                             <TableCell component="th" scope="row">
-                              {item.icsId || "Not Generated"}
+                              <Chip
+                                label={item.icsId || "Click to Assign"}
+                                size="small"
+                                color={item.icsId ? "success" : "warning"}
+                                variant={item.icsId ? "filled" : "outlined"}
+                                clickable
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (handleOpenAssignmentModal) {
+                                    handleOpenAssignmentModal(item);
+                                  }
+                                }}
+                                sx={{ cursor: 'pointer', fontWeight: item.icsId ? 'bold' : 'normal' }}
+                              />
                             </TableCell>
                             <TableCell>{item.description}</TableCell>
                             <TableCell>{item.unit}</TableCell>

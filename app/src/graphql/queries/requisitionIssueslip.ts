@@ -60,6 +60,12 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risId
       parId
       inventoryNumber
+      risReceivedFrom
+      risReceivedFromPosition
+      risReceivedBy
+      risReceivedByPosition
+      risDepartment
+      risAssignedDate
       PurchaseOrder {
         id
         poNumber
