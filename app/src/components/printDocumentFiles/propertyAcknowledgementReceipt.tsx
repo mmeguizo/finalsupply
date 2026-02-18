@@ -44,7 +44,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
 
       let row = `
         <tr>
-          <td>${escapeHtml(item.quantity || item.actualQuantityReceived || "")}</td>
+          <td>${escapeHtml(item.actualQuantityReceived || "")}</td>
           <td>${escapeHtml(item.unit || "")}</td>
           <td colspan="2">
             ${desc}

@@ -40,6 +40,7 @@ type PurchaseOrderType {
     status: String
     invoice: String
     campus: String
+    createdAt: String
 }
 
 

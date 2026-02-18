@@ -80,6 +80,7 @@ type ItemWithPurchaseOrder {
     income: String
     mds: String
     details: String
+    inventoryNumber: String
 }
 
 
@@ -101,6 +102,7 @@ input ItemInput {
     actualQuantityReceived: Int
     tag : String
     iarId : String
+    inventoryNumber: String
 }
 
 

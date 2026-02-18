@@ -49,6 +49,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         mds
         details
         campus
+        createdAt
       },
       PurchaseOrderItem {
         id

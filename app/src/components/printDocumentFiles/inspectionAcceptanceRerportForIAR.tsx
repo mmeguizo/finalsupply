@@ -100,9 +100,12 @@ export const getInspectionReportTemplateForIAR = (
       : "");
 
   const totalAmount = items.reduce(
-    (sum, it) => sum + Number(it?.amount ?? it?.PurchaseOrderItem?.amount ?? 0),
+    (sum, it) => sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
     0
   );
+
+  console.log
+
   const formattedTotal =
     items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
 

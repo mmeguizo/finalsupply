@@ -347,7 +347,7 @@ export default function RequisitionReport({ signatories, reportData, onPrint, on
                 <>
                   {itemsArray.map((item: any, index: any) => (
                     <StyledTableRow key={index}>
-                      <StyledTableCell> </StyledTableCell>
+                      <StyledTableCell>{item.inventoryNumber || ""} </StyledTableCell>
                       <StyledTableCell>{index + 1 || ""}</StyledTableCell>
                       <StyledTableCell>{item.unit || ""}</StyledTableCell>
                       <StyledTableCell colSpan={2}>
