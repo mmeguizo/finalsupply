@@ -80,6 +80,13 @@ type ItemWithPurchaseOrder {
     income: String
     details: String
     mds: String
+    # PAR signatory fields
+    parReceivedFrom: String
+    parReceivedFromPosition: String
+    parReceivedBy: String
+    parReceivedByPosition: String
+    parDepartment: String
+    parAssignedDate: String
 }
 
 
@@ -109,14 +116,94 @@ input PARUpdateInput {
   ids: [ID!]!
 }
 
+# Input for assigning PAR with signatories (new manual workflow)
+input PARAssignmentInput {
+  itemIds: [ID!]!
+  parId: String  # Optional - if not provided, will generate new ID
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+  department: String
+}
+
+# Input for a single split entry when splitting an item's received qty
+input PARSplitEntry {
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+# Input for splitting a single item across multiple PAR groups
+input PARItemSplit {
+  itemId: ID!
+  splits: [PARSplitEntry!]!
+}
+
+# Top-level input for the split-and-assign mutation
+input SplitAndAssignPARInput {
+  itemSplits: [PARItemSplit!]!
+}
+
+# Input for creating a single PAR assignment (saves immediately)
+input CreateSinglePARInput {
+  sourceItemId: ID!
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+# Input for updating an existing PAR assignment
+input UpdatePARAssignmentInput {
+  itemId: ID!
+  quantity: Int
+  department: String
+  receivedFrom: String
+  receivedFromPosition: String
+  receivedBy: String
+  receivedByPosition: String
+}
+
+# Response type for single PAR creation
+type CreatePARResponse {
+  newItem: ItemWithPurchaseOrder!
+  sourceItem: ItemWithPurchaseOrder!
+  generatedParId: String!
+}
+
+# Response type for next PAR ID query
+type NextParIdResponse {
+  nextId: String!
+  currentYear: Int!
+  nextSequence: Int!
+}
+
 type Query {
     propertyAcknowledgmentReport: [ItemWithPurchaseOrder!]
     propertyAcknowledgmentReportForView: [ItemWithPurchaseOrder!]
+    # Get the next available PAR ID without assigning it
+    getNextParId: NextParIdResponse!
+    # Get all existing PAR IDs for the current year (for grouping with existing)
+    getExistingParIds: [String!]!
 }
 
 type Mutation {
   # Updated mutation that accepts the simplified input
   updatePARInventoryIDs(input: PARUpdateInput!): [ItemWithPurchaseOrder]
+  # New mutation for manual PAR assignment with signatories
+  assignPARWithSignatories(input: PARAssignmentInput!): [ItemWithPurchaseOrder]
+  # Split items by quantity and assign separate PAR IDs with signatories
+  splitAndAssignPAR(input: SplitAndAssignPARInput!): [ItemWithPurchaseOrder]
+  # Create a single PAR assignment (saves immediately, clones from source)
+  createSinglePARAssignment(input: CreateSinglePARInput!): CreatePARResponse!
+  # Update an existing PAR assignment
+  updatePARAssignment(input: UpdatePARAssignmentInput!): ItemWithPurchaseOrder!
 }
 
 

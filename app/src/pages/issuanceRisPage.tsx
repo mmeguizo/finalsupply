@@ -20,6 +20,7 @@ import {
   InputAdornment,
   Toolbar,
   TablePagination,
+  Chip,
 } from "@mui/material";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -29,6 +30,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import Checkbox from "@mui/material/Checkbox";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintReportDialogForRIS from "../components/printReportModalForRIS";
+import RisAssignmentModal from "../components/RisAssignmentModal";
 import {
   formatTimestampToDateTime,
   currencyFormat,
@@ -40,19 +42,32 @@ import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/
 import SignatoriesComponent from "../pages/issuanceRisPageFunctions/SignatorySelectionContainer";
 import { risIssuanceSignatories } from "../types/user/userType";
 // Row component for collapsible table
-function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
-  const { row, handleOpenPrintModal } = props;
+function Row(props: { row: any; handleOpenPrintModal: (items: any) => void; handleOpenAssignmentModal?: (item: any) => void }) {
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal } = props;
   const [open, setOpen] = React.useState(false);
   const [idSearch, setIdSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
-    if (!term) return row.items;
-    return row.items.filter((item: any) =>
-      (item.risId || "").toLowerCase().includes(term)
+    // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
+    let items = row.items.filter((item: any) =>
+      (item.actualQuantityReceived ?? 0) > 0 || item.risId
     );
+    if (term) {
+      items = items.filter((item: any) =>
+        (item.risId || "").toLowerCase().includes(term)
+      );
+    }
+    return items;
   }, [row.items, idSearch]);
+
+  // Calculate items without RIS ID (need assignment) - exclude items with 0 quantity
+  const unassignedInRow = React.useMemo(() => {
+    return row.items.filter((item: any) => 
+      !item.risId && (item.actualQuantityReceived ?? 0) > 0
+    );
+  }, [row.items]);
 
   const isItemSelected = (id: string) => selectedIds.has(id);
   const toggleItem = (item: any) => {
@@ -111,13 +126,23 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
         </TableCell>
         <TableCell>{row.supplier}</TableCell>
         <TableCell>{formatDateString(row.dateOfDelivery)}</TableCell>
-        <TableCell>{row.itemCount} items</TableCell>
+        <TableCell>
+          {row.itemCount} items
+          {unassignedInRow.length > 0 && (
+            <Chip 
+              size="small" 
+              label={`${unassignedInRow.length} unassigned`}
+              color="warning"
+              sx={{ ml: 1 }}
+            />
+          )}
+        </TableCell>
         <TableCell>
           <Button
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenPrintModal(row.items);
+              handleOpenPrintModal(row.items.filter((it: any) => it.risId));
             }}
             disabled={!row.items.some((item: any) => item.risId)}
           >
@@ -131,6 +156,14 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
                 RIS Items Details
+                {unassignedInRow.length > 0 && (
+                  <Chip 
+                    size="small"
+                    label={`${unassignedInRow.length} need RIS assignment`}
+                    color="warning"
+                    sx={{ ml: 2 }}
+                  />
+                )}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
                 <TextField
@@ -162,7 +195,7 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
                         inputProps={{ 'aria-label': 'select all filtered' }}
                       />
                     </TableCell>
-                    <TableCell>RIS ID</TableCell>
+                    <TableCell>Assign RIS</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Unit</TableCell>
                     <TableCell align="right">Actual Received</TableCell>
@@ -185,7 +218,20 @@ function Row(props: { row: any; handleOpenPrintModal: (items: any) => void }) {
                         />
                       </TableCell>
                       <TableCell component="th" scope="row">
-                        {item.risId || "Not Generated"}
+                        <Chip
+                          label={item.risId || "Click to Assign"}
+                          size="small"
+                          color={item.risId ? "success" : "warning"}
+                          variant={item.risId ? "filled" : "outlined"}
+                          clickable
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (handleOpenAssignmentModal) {
+                              handleOpenAssignmentModal(item);
+                            }
+                          }}
+                          sx={{ cursor: 'pointer', fontWeight: item.risId ? 'bold' : 'normal' }}
+                        />
                       </TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>{item.unit}</TableCell>
@@ -292,6 +338,10 @@ export default function IssuanceRisPage() {
   const [reportType, setReportType] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
+  
+  // RIS Assignment Modal state
+  const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
+  const [itemToAssign, setItemToAssign] = React.useState<any>(null);
 
   // Pagination state
   const [page, setPage] = React.useState(0);
@@ -333,6 +383,23 @@ export default function IssuanceRisPage() {
   const handleClosePrintModal = () => {
     setOpenPrintModal(false);
     setPrintItem(null);
+  };
+
+  // RIS Assignment Modal handlers
+  const handleOpenAssignmentModal = (item: any) => {
+    setItemToAssign(item);
+    setOpenAssignmentModal(true);
+  };
+
+  const handleCloseAssignmentModal = () => {
+    setOpenAssignmentModal(false);
+    setItemToAssign(null);
+  };
+
+  const handleAssignmentComplete = () => {
+    setOpenAssignmentModal(false);
+    setItemToAssign(null);
+    refetch();
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -488,6 +555,7 @@ export default function IssuanceRisPage() {
                     key={row.id}
                     row={row}
                     handleOpenPrintModal={handleOpenPrintModal}
+                    handleOpenAssignmentModal={handleOpenAssignmentModal}
                   />
                 ))}
               </TableBody>
@@ -518,6 +586,14 @@ export default function IssuanceRisPage() {
         reportType={reportType}
         title={title}
         signatories={signatories}
+      />
+
+      {/* RIS Assignment Modal */}
+      <RisAssignmentModal
+        open={openAssignmentModal}
+        onClose={handleCloseAssignmentModal}
+        item={itemToAssign}
+        onAssignmentComplete={handleAssignmentComplete}
       />
     </PageContainer>
   );

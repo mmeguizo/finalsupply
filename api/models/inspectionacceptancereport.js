@@ -143,6 +143,99 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: "Details specific to this IAR",
     },
+    // PAR-specific signatory fields for per-ID assignment
+    parReceivedFrom: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received From name",
+    },
+    parReceivedFromPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received From position/role",
+    },
+    parReceivedBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received By name",
+    },
+    parReceivedByPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received By position",
+    },
+    parDepartment: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Department assigned for this PAR item",
+    },
+    parAssignedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Date when PAR ID was assigned",
+    },
+    // RIS-specific signatory fields for per-ID assignment
+    risReceivedFrom: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "RIS signatory - Received From name",
+    },
+    risReceivedFromPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "RIS signatory - Received From position/role",
+    },
+    risReceivedBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "RIS signatory - Received By name",
+    },
+    risReceivedByPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "RIS signatory - Received By position",
+    },
+    risDepartment: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Department assigned for this RIS item",
+    },
+    risAssignedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Date when RIS ID was assigned",
+    },
+    // ICS-specific signatory fields for per-ID assignment
+    icsReceivedFrom: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "ICS signatory - Received From name",
+    },
+    icsReceivedFromPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "ICS signatory - Received From position/role",
+    },
+    icsReceivedBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "ICS signatory - Received By name",
+    },
+    icsReceivedByPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "ICS signatory - Received By position",
+    },
+    icsDepartment: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Department assigned for this ICS item",
+    },
+    icsAssignedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Date when ICS ID was assigned",
+    },
 
   },
   {

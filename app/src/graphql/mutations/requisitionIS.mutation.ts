@@ -61,3 +61,61 @@ export const DELETE_PURCHASEORDER = gql`
   }
 `;
 
+// Create a single RIS assignment (saves immediately)
+export const CREATE_SINGLE_RIS_ASSIGNMENT = gql`
+  mutation CreateSingleRISAssignment($input: CreateSingleRISInput!) {
+    createSingleRISAssignment(input: $input) {
+      newItem {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        risId
+        risReceivedFrom
+        risReceivedFromPosition
+        risReceivedBy
+        risReceivedByPosition
+        risDepartment
+        risAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        risId
+      }
+      generatedRisId
+    }
+  }
+`;
+
+// Update an existing RIS assignment
+export const UPDATE_RIS_ASSIGNMENT = gql`
+  mutation UpdateRISAssignment($input: UpdateRISAssignmentInput!) {
+    updateRISAssignment(input: $input) {
+      id
+      itemName
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      risId
+      risReceivedFrom
+      risReceivedFromPosition
+      risReceivedBy
+      risReceivedByPosition
+      risDepartment
+      risAssignedDate
+    }
+  }
+`;
+

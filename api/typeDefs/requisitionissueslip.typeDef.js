@@ -80,6 +80,14 @@ type ItemWithPurchaseOrder {
     income: String
     mds: String
     details: String
+    inventoryNumber: String
+    # RIS signatory fields
+    risReceivedFrom: String
+    risReceivedFromPosition: String
+    risReceivedBy: String
+    risReceivedByPosition: String
+    risDepartment: String
+    risAssignedDate: String
 }
 
 
@@ -101,12 +109,42 @@ input ItemInput {
     actualQuantityReceived: Int
     tag : String
     iarId : String
+    inventoryNumber: String
 }
 
 
 # New input type focused on the specific update need
 input RISUpdateInput {
   ids: [ID!]!
+}
+
+# Input for creating a single RIS assignment (saves immediately)
+input CreateSingleRISInput {
+  sourceItemId: ID!
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+# Input for updating an existing RIS assignment
+input UpdateRISAssignmentInput {
+  itemId: ID!
+  quantity: Int
+  department: String
+  receivedFrom: String
+  receivedFromPosition: String
+  receivedBy: String
+  receivedByPosition: String
+}
+
+# Response type for single RIS creation
+type CreateRISResponse {
+  newItem: ItemWithPurchaseOrder!
+  sourceItem: ItemWithPurchaseOrder!
+  generatedRisId: String!
 }
 
 type Query {
@@ -117,6 +155,10 @@ type Query {
 type Mutation {
   # Updated mutation that accepts the simplified input
   updateRISInventoryIDs(input: RISUpdateInput!): [ItemWithPurchaseOrder]
+  # Create a single RIS assignment (saves immediately, clones from source)
+  createSingleRISAssignment(input: CreateSingleRISInput!): CreateRISResponse!
+  # Update an existing RIS assignment
+  updateRISAssignment(input: UpdateRISAssignmentInput!): ItemWithPurchaseOrder!
 }
 
 

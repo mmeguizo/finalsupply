@@ -23,6 +23,7 @@
   import SignatoriesComponent from "./issuanceIcsFunctions/SignatorySelectionContainer";
   import { formatDateString } from "../utils/generalUtils";
   import PrintReportDialogForICS from "../components/printReportModalForICS";
+  import IcsAssignmentModal from "../components/IcsAssignmentModal";
   import useSignatoryStore from "../stores/signatoryStore";
 
   // Type definition for the signatory data
@@ -54,6 +55,10 @@
     const [openPrintModal, setOpenPrintModal] = React.useState(false);
     const [reportType, setReportType] = React.useState("");
     const [title, setTitle] = React.useState("");
+
+    // ICS Assignment Modal state
+    const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
+    const [itemToAssign, setItemToAssign] = React.useState<any>(null);
 
     // Persist selections across navigation using store
     const getSelections = useSignatoryStore((s) => s.getSelections);
@@ -126,6 +131,23 @@
     const handleClosePrintModal = () => {
       setOpenPrintModal(false);
       setPrintItem(null);
+    };
+
+    // ICS Assignment Modal handlers
+    const handleOpenAssignmentModal = (item: any) => {
+      setItemToAssign(item);
+      setOpenAssignmentModal(true);
+    };
+
+    const handleCloseAssignmentModal = () => {
+      setOpenAssignmentModal(false);
+      setItemToAssign(null);
+    };
+
+    const handleAssignmentComplete = () => {
+      setOpenAssignmentModal(false);
+      setItemToAssign(null);
+      refetch();
     };
 
     // Refetch on window focus/online/visibility change
@@ -203,6 +225,7 @@
                       key={row.id}
                       row={row}
                       handleOpenPrintModal={handleOpenPrintModal}
+                      handleOpenAssignmentModal={handleOpenAssignmentModal}
                     />
                   ))}
                 </TableBody>
@@ -234,6 +257,14 @@
           reportType={reportType}
           title={title}
           signatories={signatories}
+        />
+
+        {/* ICS Assignment Modal */}
+        <IcsAssignmentModal
+          open={openAssignmentModal}
+          onClose={handleCloseAssignmentModal}
+          item={itemToAssign}
+          onAssignmentComplete={handleAssignmentComplete}
         />
       </PageContainer>
     );

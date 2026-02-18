@@ -644,6 +644,157 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to update IAR");
       }
     },
+
+    // Create a single ICS assignment (saves immediately, clones from source)
+    createSingleICSAssignment: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const { sourceItemId, quantity, department, receivedFrom, receivedFromPosition, receivedBy, receivedByPosition } = input;
+
+        // Fetch the source item
+        const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+          include: [PurchaseOrder],
+        });
+
+        if (!sourceItem) {
+          throw new Error(`Source item with ID ${sourceItemId} not found`);
+        }
+
+        const currentReceived = sourceItem.actualQuantityReceived || 0;
+        if (quantity > currentReceived) {
+          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+        }
+        if (quantity <= 0) {
+          throw new Error("Quantity must be greater than 0");
+        }
+
+        const sourceData = sourceItem.toJSON();
+
+        // Validate tag for ICS ID generation
+        if (!sourceData.tag || (sourceData.tag !== 'high' && sourceData.tag !== 'low')) {
+          throw new Error(`Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sourceData.tag}'`);
+        }
+
+        // Generate new ICS ID using the item's tag
+        const newIcsId = await generateNewIcsId(sourceData.tag);
+
+        // Use transaction for atomicity
+        const transaction = await sequelize.transaction();
+
+        try {
+          // Create new record with the assigned quantity and ICS ID
+          const newItem = await inspectionAcceptanceReport.create(
+            {
+              iarId: sourceData.iarId,
+              risId: sourceData.risId,
+              parId: sourceData.parId,
+              purchaseOrderId: sourceData.purchaseOrderId,
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              iarStatus: sourceData.iarStatus,
+              description: sourceData.description,
+              unit: sourceData.unit,
+              quantity: sourceData.quantity,
+              unitCost: sourceData.unitCost,
+              category: sourceData.category,
+              tag: sourceData.tag,
+              isDeleted: 0,
+              createdBy: sourceData.createdBy,
+              updatedBy: sourceData.updatedBy,
+              inventoryNumber: sourceData.inventoryNumber,
+              itemName: sourceData.itemName,
+              invoice: sourceData.invoice,
+              invoiceDate: sourceData.invoiceDate,
+              income: sourceData.income,
+              mds: sourceData.mds,
+              details: sourceData.details,
+              // Assignment-specific fields
+              actualQuantityReceived: quantity,
+              amount: quantity * parseFloat(sourceData.unitCost || 0),
+              icsId: newIcsId,
+              icsReceivedFrom: receivedFrom,
+              icsReceivedFromPosition: receivedFromPosition || '',
+              icsReceivedBy: receivedBy,
+              icsReceivedByPosition: receivedByPosition || '',
+              icsDepartment: department || '',
+              icsAssignedDate: new Date(),
+            },
+            { transaction }
+          );
+
+          // Update source item: reduce actualQuantityReceived
+          const newSourceQty = currentReceived - quantity;
+          await sourceItem.update(
+            { actualQuantityReceived: newSourceQty },
+            { transaction }
+          );
+
+          await transaction.commit();
+
+          // Fetch updated items with associations
+          const updatedNewItem = await inspectionAcceptanceReport.findByPk(newItem.id, {
+            include: [PurchaseOrder],
+          });
+          const updatedSourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+          });
+
+          return {
+            newItem: updatedNewItem,
+            sourceItem: updatedSourceItem,
+            generatedIcsId: newIcsId,
+          };
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error("Error in createSingleICSAssignment:", error);
+        throw new Error(error.message || "Failed to create ICS assignment");
+      }
+    },
+
+    // Update an existing ICS assignment
+    updateICSAssignment: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const { itemId, quantity, department, receivedFrom, receivedFromPosition, receivedBy, receivedByPosition } = input;
+
+        const item = await inspectionAcceptanceReport.findByPk(itemId);
+        if (!item) {
+          throw new Error(`Item with ID ${itemId} not found`);
+        }
+
+        // Build update object with only provided fields
+        const updateData = {};
+        if (quantity !== undefined && quantity !== null) {
+          updateData.actualQuantityReceived = quantity;
+          updateData.amount = quantity * parseFloat(item.unitCost || 0);
+        }
+        if (department !== undefined) updateData.icsDepartment = department;
+        if (receivedFrom !== undefined) updateData.icsReceivedFrom = receivedFrom;
+        if (receivedFromPosition !== undefined) updateData.icsReceivedFromPosition = receivedFromPosition;
+        if (receivedBy !== undefined) updateData.icsReceivedBy = receivedBy;
+        if (receivedByPosition !== undefined) updateData.icsReceivedByPosition = receivedByPosition;
+
+        await item.update(updateData);
+
+        // Return updated item with associations
+        const updatedItem = await inspectionAcceptanceReport.findByPk(itemId, {
+          include: [PurchaseOrder],
+        });
+
+        return updatedItem;
+      } catch (error) {
+        console.error("Error in updateICSAssignment:", error);
+        throw new Error(error.message || "Failed to update ICS assignment");
+      }
+    },
   },
 };
 
