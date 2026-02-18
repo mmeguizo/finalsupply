@@ -143,6 +143,37 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: "Details specific to this IAR",
     },
+    // PAR-specific signatory fields for per-ID assignment
+    parReceivedFrom: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received From name",
+    },
+    parReceivedFromPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received From position/role",
+    },
+    parReceivedBy: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received By name",
+    },
+    parReceivedByPosition: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "PAR signatory - Received By position",
+    },
+    parDepartment: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Department assigned for this PAR item",
+    },
+    parAssignedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Date when PAR ID was assigned",
+    },
 
   },
   {

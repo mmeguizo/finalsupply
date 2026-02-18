@@ -51,6 +51,136 @@ export const UPDATE_PARID = gql`
   }
 `;
 
+// New mutation for manual PAR assignment with per-item signatories
+export const ASSIGN_PAR_WITH_SIGNATORIES = gql`
+  mutation AssignPARWithSignatories($input: PARAssignmentInput!) {
+    assignPARWithSignatories(input: $input) {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      parReceivedFrom
+      parReceivedFromPosition
+      parReceivedBy
+      parReceivedByPosition
+      parDepartment
+      parAssignedDate
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
+    }
+  }
+`;
+
+// Split items by received quantity and assign PAR IDs with per-split signatories
+export const SPLIT_AND_ASSIGN_PAR = gql`
+  mutation SplitAndAssignPAR($input: SplitAndAssignPARInput!) {
+    splitAndAssignPAR(input: $input) {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      parReceivedFrom
+      parReceivedFromPosition
+      parReceivedBy
+      parReceivedByPosition
+      parDepartment
+      parAssignedDate
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
+    }
+  }
+`;
+
+// Create a single PAR assignment (saves immediately)
+export const CREATE_SINGLE_PAR_ASSIGNMENT = gql`
+  mutation CreateSinglePARAssignment($input: CreateSinglePARInput!) {
+    createSinglePARAssignment(input: $input) {
+      newItem {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        parId
+        parReceivedFrom
+        parReceivedFromPosition
+        parReceivedBy
+        parReceivedByPosition
+        parDepartment
+        parAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        parId
+      }
+      generatedParId
+    }
+  }
+`;
+
+// Update an existing PAR assignment
+export const UPDATE_PAR_ASSIGNMENT = gql`
+  mutation UpdatePARAssignment($input: UpdatePARAssignmentInput!) {
+    updatePARAssignment(input: $input) {
+      id
+      itemName
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      parId
+      parReceivedFrom
+      parReceivedFromPosition
+      parReceivedBy
+      parReceivedByPosition
+      parDepartment
+      parAssignedDate
+    }
+  }
+`;
+
 export const DELETE_PURCHASEORDER = gql`
   mutation DeletePurchaseOrder($id: ID!) {
     deletePurchaseOrder(purchaseOrderId: $id) {

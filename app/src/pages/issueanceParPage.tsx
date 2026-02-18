@@ -9,7 +9,7 @@ import {
   TableCell,
   TablePagination,
   CircularProgress,
-  Alert
+  Alert,
 } from "@mui/material";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import * as React from "react";
@@ -25,6 +25,7 @@ import EnhancedTableToolbar from "./issuanceParFunctions/enhancedToolbar";
 import SignatoriesComponent from "./issuanceParFunctions/SignatorySelectionContainer";
 import useSignatoryStore from "../stores/signatoryStore";
 import PrintReportDialogForPAR from "../components/printReportModalForPAR";
+import ParAssignmentModal from "../components/ParAssignmentModal";
 // import { parIssuanceSignatories } from "../types/user/userType";
 
 export default function IssuanceParPage() {
@@ -44,6 +45,10 @@ export default function IssuanceParPage() {
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
   const [reportType, setReportType] = React.useState("");
   const [title, setTitle] = React.useState("");
+  
+  // PAR Assignment Modal state
+  const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
+  const [itemToAssign, setItemToAssign] = React.useState<any>(null);
 
   // Signatory store access
   // Persist selections across navigation using Zustand store
@@ -75,6 +80,14 @@ export default function IssuanceParPage() {
     return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
+  // Get all items without PAR ID (for info display) - exclude items with 0 quantity
+  const unassignedItems = React.useMemo(() => {
+    if (!data?.propertyAcknowledgmentReportForView?.length) return [];
+    return data.propertyAcknowledgmentReportForView.filter((item: any) => 
+      !item.parId && (item.actualQuantityReceived ?? 0) > 0
+    );
+  }, [data]);
+
   const handleOpenPrintModal = (items: any) => {
     console.log('Printing stuff', items);
     const reportTitle = items[0].category.split(" ")
@@ -83,6 +96,23 @@ export default function IssuanceParPage() {
     setTitle(`${reportTitleString} Report`);
     setPrintItem(items);
     setOpenPrintModal(true);
+  };
+
+  // Open assignment modal for a single item
+  const handleOpenAssignmentModal = (item: any) => {
+    setItemToAssign(item);
+    setOpenAssignmentModal(true);
+  };
+
+  const handleCloseAssignmentModal = () => {
+    setOpenAssignmentModal(false);
+    setItemToAssign(null);
+  };
+
+  const handleAssignmentComplete = () => {
+    setOpenAssignmentModal(false);
+    setItemToAssign(null);
+    refetch(); // Refresh data after assignment
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +167,7 @@ export default function IssuanceParPage() {
                   <TableCell>Supplier</TableCell>
                   <TableCell>Delivery Date</TableCell>
                   <TableCell>Items</TableCell>
-                  <TableCell>Print</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -146,6 +176,7 @@ export default function IssuanceParPage() {
                     key={row.id}
                     row={row}
                     handleOpenPrintModal={handleOpenPrintModal}
+                    handleOpenAssignmentModal={handleOpenAssignmentModal}
                   />
                 ))}
               </TableBody>
@@ -162,22 +193,30 @@ export default function IssuanceParPage() {
           />
         </Paper>
         
-        {/* Signatory Selection Component */}
+        {/* Signatory Selection Component - keeping for backward compatibility */}
         <SignatoriesComponent
           signatories={currentSelections}
           onSignatoriesChange={onSignatoriesChange}
         />
       </Stack>
 
-      {/* You can add your PrintReportDialogForPAR component here when ready */}
-  <PrintReportDialogForPAR
-              open={openPrintModal}
-              handleClose={handleClosePrintModal}
-              reportData={printItem}
-              reportType={reportType}
-              title={title}
-              signatories={currentSelections}
-            />
+      {/* Print Report Dialog */}
+      <PrintReportDialogForPAR
+        open={openPrintModal}
+        handleClose={handleClosePrintModal}
+        reportData={printItem}
+        reportType={reportType}
+        title={title}
+        signatories={currentSelections}
+      />
+
+      {/* PAR Assignment Modal */}
+      <ParAssignmentModal
+        open={openAssignmentModal}
+        onClose={handleCloseAssignmentModal}
+        item={itemToAssign}
+        onAssignmentComplete={handleAssignmentComplete}
+      />
     </PageContainer>
   );
 }

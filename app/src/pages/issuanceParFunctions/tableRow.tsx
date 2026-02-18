@@ -19,28 +19,38 @@ import {
   InputAdornment,
   Toolbar,
   TablePagination,
+  Chip,
 } from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import { currencyFormat, formatDateString } from "../../utils/generalUtils";
 import PreviewIcon from "@mui/icons-material/Preview";
 import PrintIcon from "@mui/icons-material/Print";
+
 const Row = (props: {
   row: any;
   handleOpenPrintModal: (items: any) => void;
+  handleOpenAssignmentModal?: (item: any) => void;
 }) => {
-  const { row, handleOpenPrintModal } = props;
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal } = props;
   const [open, setOpen] = React.useState(false);
   const [idSearch, setIdSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
-    if (!term) return row.items;
-    return row.items.filter((item: any) =>
-      (item.parId || "").toLowerCase().includes(term)
+    // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
+    let items = row.items.filter((item: any) =>
+      (item.actualQuantityReceived ?? 0) > 0 || item.parId
     );
+    if (term) {
+      items = items.filter((item: any) =>
+        (item.parId || "").toLowerCase().includes(term)
+      );
+    }
+    return items;
   }, [row.items, idSearch]);
 
   const isItemSelected = (id: string) => selectedIds.has(id);
@@ -83,6 +93,15 @@ const Row = (props: {
     if (items.length) handleOpenPrintModal(items);
   };
 
+  // Calculate items without PAR ID (need assignment) - exclude items with 0 quantity
+  const unassignedInRow = React.useMemo(() => {
+    return row.items.filter((item: any) => 
+      !item.parId && (item.actualQuantityReceived ?? 0) > 0
+    );
+  }, [row.items]);
+
+
+
   return (
     <React.Fragment>
       <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
@@ -100,18 +119,31 @@ const Row = (props: {
         </TableCell>
         <TableCell>{row.supplier}</TableCell>
         <TableCell>{formatDateString(row.dateOfDelivery)}</TableCell>
-        <TableCell>{row.itemCount} items</TableCell>
         <TableCell>
-          <Button
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenPrintModal(row.items);
-            }}
-            disabled={!row.items.some((item: any) => item.parId)}
-          >
-            <PreviewIcon fontSize="medium" />
-          </Button>
+          {row.itemCount} items
+          {unassignedInRow.length > 0 && (
+            <Chip 
+              size="small" 
+              label={`${unassignedInRow.length} unassigned`}
+              color="warning"
+              sx={{ ml: 1 }}
+            />
+          )}
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenPrintModal(row.items.filter((it: any) => it.parId));
+              }}
+              disabled={!row.items.some((item: any) => item.parId)}
+              title="Preview/Print items with PAR ID"
+            >
+              <PreviewIcon fontSize="medium" />
+            </Button>
+          </Box>
         </TableCell>
       </TableRow>
       <TableRow>
@@ -120,8 +152,16 @@ const Row = (props: {
                   <Box sx={{ margin: 1 }}>
                     <Typography variant="h6" gutterBottom component="div">
                       PAR Items Details
+                      {unassignedInRow.length > 0 && (
+                        <Chip 
+                          size="small"
+                          label={`${unassignedInRow.length} need PAR assignment`}
+                          color="warning"
+                          sx={{ ml: 2 }}
+                        />
+                      )}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1, flexWrap: 'wrap' }}>
                       <TextField
                         size="small"
                         label="Search PAR ID"
@@ -151,7 +191,7 @@ const Row = (props: {
                               inputProps={{ 'aria-label': 'select all filtered' }}
                             />
                           </TableCell>
-                          <TableCell>PAR ID</TableCell>
+                          <TableCell>Assign PAR</TableCell>
                           <TableCell>Description</TableCell>
                           <TableCell>Unit</TableCell>
                           <TableCell align="right">Actual Received</TableCell>
@@ -174,7 +214,20 @@ const Row = (props: {
                               />
                             </TableCell>
                             <TableCell component="th" scope="row">
-                              {item.parId || "Not Generated"}
+                              <Chip
+                                label={item.parId || "Click to Assign"}
+                                size="small"
+                                color={item.parId ? "success" : "warning"}
+                                variant={item.parId ? "filled" : "outlined"}
+                                clickable
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (handleOpenAssignmentModal) {
+                                    handleOpenAssignmentModal(item);
+                                  }
+                                }}
+                                sx={{ cursor: 'pointer', fontWeight: item.parId ? 'bold' : 'normal' }}
+                              />
                             </TableCell>
                             <TableCell>{item.description}</TableCell>
                             <TableCell>{item.unit}</TableCell>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,6 +12,7 @@ import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/typ
 import { useQuery, useMutation, useApolloClient } from "@apollo/client";
 import { UPDATE_PARID } from "../graphql/mutations/propertyAR.mutation";
 import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
+
 export default function PrintReportDialogForPAR({
   open,
   handleClose,
@@ -23,10 +24,41 @@ export default function PrintReportDialogForPAR({
   // const [updateICSid] = useMutation(UPDATE_PARID, {
   //   refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
   // });
+
+  // Determine signatories to use - prefer per-item signatories if available
+  const effectiveSignatories = useMemo(() => {
+    const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+    const firstItem = items[0];
+    
+    // Check if the item has per-item PAR signatories (new workflow)
+    if (firstItem?.parReceivedFrom || firstItem?.parReceivedBy) {
+      return {
+        recieved_from: firstItem.parReceivedFrom || '',
+        recieved_by: firstItem.parReceivedBy || '',
+        metadata: {
+          recieved_from: { 
+            position: firstItem.parReceivedFromPosition || '', 
+            role: firstItem.parReceivedFromPosition || '' 
+          },
+          recieved_by: { 
+            position: firstItem.parReceivedByPosition || '', 
+            role: '' 
+          }
+        }
+      };
+    }
+    
+    // Fall back to global signatories
+    return signatories;
+  }, [reportData, signatories]);
+
   const getReportTemplate = (data: any) => {
-    return getPropertyAcknowledgementReciept(signatories, data);
+    return getPropertyAcknowledgementReciept(effectiveSignatories, data);
   };
+  
   console.log("reportData", reportData);
+  console.log("effectiveSignatories", effectiveSignatories);
+  
   const handlePrintReport = async () => {
     try {
       // Extract just the IDs from the reportData
@@ -61,7 +93,7 @@ export default function PrintReportDialogForPAR({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <PropertyAcknowledgementReceipt
-          signatories={signatories}
+          signatories={effectiveSignatories}
           reportData={reportData}
         />
       </DialogContent>

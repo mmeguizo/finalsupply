@@ -14,14 +14,21 @@ const groupedRowsFunction = (data: any) => {
 };
 
 const ObjectEntriesParFunction = (obj: any) => {
-  return Object.entries(obj).map(([poNumber, items]: any) => ({
-    id: items[0].PurchaseOrder?.id || items[0].id,
-    poNumber: poNumber,
-    supplier: items[0].PurchaseOrder?.supplier,
-    dateOfDelivery: items[0].PurchaseOrder?.dateOfDelivery,
-    itemCount: items.length,
-    items: items, // Store all items for this PO
-  }));
+  return Object.entries(obj).map(([poNumber, items]: any) => {
+    // Filter out items with actualQuantityReceived = 0 (fully split/assigned)
+    // but keep items that have a PAR ID assigned (they are valid rows)
+    const visibleItems = items.filter((item: any) => 
+      (item.actualQuantityReceived ?? 0) > 0 || item.parId
+    );
+    return {
+      id: items[0].PurchaseOrder?.id || items[0].id,
+      poNumber: poNumber,
+      supplier: items[0].PurchaseOrder?.supplier,
+      dateOfDelivery: items[0].PurchaseOrder?.dateOfDelivery,
+      itemCount: visibleItems.length,
+      items: visibleItems, // Store only visible items for this PO
+    };
+  }).filter(row => row.items.length > 0); // Remove POs with no visible items
 };
 
 const filteredGroupRows = (rows: any, searchQuery: string) => {

@@ -232,8 +232,8 @@ const purchaseorderResolver = {
 
       console.log("addPurchaseOrder", input, context.req.user);
 
-      const batchIarId = nanoid();
-      const autoIiarIds = await generateNewIarId(input.campus);
+      // const batchIarId = nanoid();
+      // const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories at a higher scope if used for both PO and POItems
       const validCategories = [
         "property acknowledgement reciept",
@@ -287,9 +287,9 @@ const purchaseorderResolver = {
           // let batchIcsId = "";
           
           // Reset batch tracking for individual ID generation
-          resetIcsIdBatch();
-          resetParIdBatch();
-          resetRisIdBatch();
+          // resetIcsIdBatch();
+          // resetParIdBatch();
+          // resetRisIdBatch();
           // Validate that if items are provided, at least one item has meaningful data
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -327,51 +327,55 @@ const purchaseorderResolver = {
 
             // Only create IAR and History if currentInput is provided and greater than 0
             if (item.currentInput && Number(item.currentInput) > 0) {
-              let icsId = "";
-              let parId = "";
-              let risId = "";
+              // let icsId = "";
+              // let parId = "";
+              // let risId = "";
               // derive campus suffix
-              const campusSuffixMap = {
-                Talisay: 'T',
-                Alijis: 'A',
-                Binalbagan: 'B',
-                'Fortune Town': 'F',
-              };
-              const campusSuffix = campusSuffixMap[campus] || '';
-              if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                // COMMENTED OUT FOR DEMO: Batch ICS ID logic
-                // if (!batchIcsId) {
-                //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                // }
-                // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+              // const campusSuffixMap = {
+              //   Talisay: 'T',
+              //   Alijis: 'A',
+              //   Binalbagan: 'B',
+              //   'Fortune Town': 'F',
+              // };
+              // const campusSuffix = campusSuffixMap[campus] || '';
+              // if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
+              //   // COMMENTED OUT FOR DEMO: Batch ICS ID logic
+              //   // if (!batchIcsId) {
+              //   //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+              //   // }
+              //   // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
                 
-                // Generate individual ICS ID for each item
-                const gen = await generateNewIcsId(cleanedItems.tag);
-                icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              }
-              if (
-                cleanedItems.category === "property acknowledgement reciept"
-              ) {
-                const gen = await generateNewParId();
-                parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              }
-              if (cleanedItems.category === "requisition issue slip") {
-                const gen = await generateNewRisId();
-                risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              }
+              //   // Generate individual ICS ID for each item
+              //   const gen = await generateNewIcsId(cleanedItems.tag);
+              //   icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
+              // }
+              // if (
+              //   cleanedItems.category === "property acknowledgement reciept"
+              // ) {
+              //   const gen = await generateNewParId();
+              //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
+              // }
+              // if (cleanedItems.category === "requisition issue slip") {
+              //   const gen = await generateNewRisId();
+              //   risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
+              // }
 
               const iarRow = await inspectionAcceptanceReport.create(
                 {
                   ...cleanedItems,
-                  iarId: autoIiarIds || batchIarId, // Use the same IAR ID for all items in this batch
+                  iarId:"", // Use the same IAR ID for all items in this batch
+                  // iarId: autoIiarIds || batchIarId, // Use the same IAR ID for all items in this batch
                   actualQuantityReceived: item.currentInput, // Already checked it's > 0
                   purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
                   purchaseOrderItemId: newPOI.id, // Link items to the new purchase order
                   createdBy: user.name || user.id, // Track who created the IAR
                   updatedBy: user.name || user.id, // Track who updated the IAR
-                  parId: parId || "", // Use the same PAR ID for all items in this batch
-                  icsId: icsId || "",
-                  risId: risId || "",
+                  parId: "", // no id initially, will be updated in the next step if applicable
+                  icsId:  "",// no id initially, will be updated in the next step if applicable
+                  risId:  "",// no id initially, will be updated in the next step if applicable
+                  // parId: parId || "", // Use the same PAR ID for all items in this batch
+                  // icsId: icsId || "",
+                  // risId: risId || "",
                 },
                 { transaction: t }
               ); // Use transaction
@@ -388,10 +392,14 @@ const purchaseorderResolver = {
                   newActualQuantityReceived: item.currentInput, // Already checked it's > 0
                   previousAmount: 0,
                   newAmount: item.amount,
-                  iarId: iarRow.iarId || null,
-                  parId: iarRow.parId || null,
-                  risId: iarRow.risId || null,
-                  icsId: iarRow.icsId || null,
+                  iarId: "", // no id initially, will be updated in the next step if applicable
+                  parId: "", // no id initially, will be updated in the next step if applicable
+                  risId: "", // no id initially, will be updated in the next step if applicable
+                  icsId: "", // no id initially, will be updated in the next step if applicable
+                  // iarId: iarRow.iarId || null,
+                  // parId: iarRow.parId || null,
+                  // risId: iarRow.risId || null,
+                  // icsId: iarRow.icsId || null,
                   changeType: "quantity_update", // Or "received_update" if more appropriate for initial
                   changedBy: user.name || user.id,
                   changeReason: "Initial item creation with received quantity",
@@ -420,8 +428,8 @@ const purchaseorderResolver = {
 
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
-      const batchIarId = nanoid();
-      const autoIiarIds = await generateNewIarId(input.campus);
+      // const batchIarId = nanoid();
+      // const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
         "property acknowledgement reciept",
@@ -492,9 +500,9 @@ const purchaseorderResolver = {
           // Generate a single IAR ID for all items in this batch
           
           // Reset ID batch tracking for this transaction
-          resetIcsIdBatch();
-          resetParIdBatch();
-          resetRisIdBatch();
+          // resetIcsIdBatch();
+          // resetParIdBatch();
+          // resetRisIdBatch();
 
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid =
@@ -568,36 +576,36 @@ const purchaseorderResolver = {
                 );
                 const newAqr = Math.min(prevAqr + receivedQty, maxAllowable);
 
-                // Doc IDs generation
-                let parIdGen = "";
-                let risIdGen = "";
-                let icsIdGen = "";
-                const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
-                const poRecord = findIfExists;
-                const campusValue = campus ?? poRecord?.campus ?? "";
-                const campusSuffix = campusSuffixMap[campusValue] || "";
+                // // Doc IDs generation
+                // let parIdGen = "";
+                // let risIdGen = "";
+                // let icsIdGen = "";
+                // const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
+                // const poRecord = findIfExists;
+                // const campusValue = campus ?? poRecord?.campus ?? "";
+                // const campusSuffix = campusSuffixMap[campusValue] || "";
 
                 const effectiveCategory =
                   itemUpdates.category !== undefined ? itemUpdates.category : currentItem.category;
                 const effectiveTag = itemUpdates.tag !== undefined ? itemUpdates.tag : currentItem.tag;
 
-                if (effectiveCategory === "property acknowledgement reciept") {
-                  const gen = await generateNewParId();
-                  parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                }
-                if (effectiveCategory === "requisition issue slip") {
-                  const gen = await generateNewRisId();
-                  risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                }
-                if (effectiveTag === "high" || effectiveTag === "low") {
-                  // if (!batchIcsId) {
-                  //   batchIcsId = await generateNewIcsId(effectiveTag);
-                  // }
-                  // icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-                  // Generate individual ICS ID for each item
-                  const individualIcsId = await generateNewIcsId(effectiveTag);
-                  icsIdGen = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
-                }
+                // if (effectiveCategory === "property acknowledgement reciept") {
+                //   const gen = await generateNewParId();
+                //   parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                // }
+                // if (effectiveCategory === "requisition issue slip") {
+                //   const gen = await generateNewRisId();
+                //   risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                // }
+                // if (effectiveTag === "high" || effectiveTag === "low") {
+                //   // if (!batchIcsId) {
+                //   //   batchIcsId = await generateNewIcsId(effectiveTag);
+                //   // }
+                //   // icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                //   // Generate individual ICS ID for each item
+                //   const individualIcsId = await generateNewIcsId(effectiveTag);
+                //   icsIdGen = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
+                // }
 
                 // Apply updates + increment actualQuantityReceived
                 await PurchaseOrderItems.update(
@@ -621,14 +629,18 @@ const purchaseorderResolver = {
                   unitCost: itemUpdates.unitCost ?? currentItem.unitCost,
                   amount: receivedQty * (itemUpdates.unitCost ?? currentItem.unitCost),
                   actualQuantityReceived: receivedQty,
-                  iarId: autoIiarIds || batchIarId,
+                  iarId: "",
+                  // iarId: autoIiarIds || batchIarId,
                   purchaseOrderId: poId,
                   purchaseOrderItemId: currentItem.id,
                   createdBy: user.name || user.id,
                   updatedBy: user.name || user.id,
-                  parId: parIdGen || null,
-                  icsId: icsIdGen || null,
-                  risId: risIdGen || null,
+                  parId: "",
+                  icsId: "",
+                  risId: "",
+                  // parId: parIdGen || null,
+                  // icsId: icsIdGen || null,
+                  // risId: risIdGen || null,
                 });
 
                 // History (received_update, aggregated line)
@@ -644,10 +656,18 @@ const purchaseorderResolver = {
                   previousAmount: currentItem.amount,
                   newAmount:
                     itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
-                  iarId: iarRow.iarId || null,
-                  parId: parIdGen || null,
-                  risId: risIdGen || null,
-                  icsId: icsIdGen || null,
+                  iarId: "",
+                  // iarId: iarRow.iarId || null,
+                  parId: "",
+                  // iarId: iarRow.iarId || ,
+                  risId: "",
+                  // iarId: iarRow.iarId || ,
+                  icsId: "",
+                  // iarId: iarRow.iarId || ,
+                  // iarId: iarRow.iarId || null,
+                  // parId: parIdGen || null,
+                  // risId: risIdGen || null,
+                  // icsId: icsIdGen || null,
                   changeType: "received_update",
                   changedBy: user.name || user.id,
                   changeReason:
@@ -705,43 +725,47 @@ const purchaseorderResolver = {
               });
 
               if (item.currentInput && Number(item.currentInput) > 0) {
-                let icsId = "";
-                let parId = "";
-                let risId = "";
-                const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
-                const poRecord = await PurchaseOrder.findByPk(poId);
-                const campusValue = campus ?? poRecord?.campus ?? "";
-                const campusSuffix = campusSuffixMap[campusValue] || "";
+                // let icsId = "";
+                // let parId = "";
+                // let risId = "";
+                // const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
+                // const poRecord = await PurchaseOrder.findByPk(poId);
+                // const campusValue = campus ?? poRecord?.campus ?? "";
+                // const campusSuffix = campusSuffixMap[campusValue] || "";
 
-                if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                  // if (!batchIcsId) {
-                  //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                  // }
-                  // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-                  // Generate individual ICS ID for each item
-                  const individualIcsId = await generateNewIcsId(cleanedItems.tag);
-                  icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
-                }
-                if (item.category === "property acknowledgement reciept") {
-                  const gen = await generateNewParId();
-                  parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                }
-                if (item.category === "requisition issue slip") {
-                  const gen = await generateNewRisId();
-                  risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                }
+                // if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
+                //   // if (!batchIcsId) {
+                //   //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
+                //   // }
+                //   // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
+                //   // Generate individual ICS ID for each item
+                //   const individualIcsId = await generateNewIcsId(cleanedItems.tag);
+                //   icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
+                // }
+                // if (item.category === "property acknowledgement reciept") {
+                //   const gen = await generateNewParId();
+                //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                // }
+                // if (item.category === "requisition issue slip") {
+                //   const gen = await generateNewRisId();
+                //   risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
+                // }
 
                 const iarRow = await inspectionAcceptanceReport.create({
                   ...cleanedItems,
-                  iarId: autoIiarIds || batchIarId,
+                  iarId:"",
+                  // iarId: autoIiarIds || batchIarId,
                   actualQuantityReceived: item?.currentInput ? item.currentInput : 0,
                   purchaseOrderId: poId,
                   purchaseOrderItemId: newPOI.id,
                   createdBy: user.name || user.id,
                   updatedBy: user.name || user.id,
-                  parId: parId || "",
-                  icsId: icsId || "",
-                  risId: risId || "",
+                  parId: "",
+                  icsId: "",
+                  risId: "",
+                  // parId: parId || "",
+                  // icsId: icsId || "",
+                  // risId: risId || "",
                 });
 
                 await PurchaseOrderItemsHistory.create({
@@ -755,10 +779,14 @@ const purchaseorderResolver = {
                   newActualQuantityReceived: item?.currentInput ? item.currentInput : 0,
                   previousAmount: 0,
                   newAmount: item.amount ? item.amount : 0,
-                  iarId: iarRow.iarId || null,
-                  parId: iarRow.parId || null,
-                  risId: iarRow.risId || null,
-                  icsId: iarRow.icsId || null,
+                  iarId: "",
+                  parId: "",
+                  risId: "",
+                  icsId: "",
+                  // iarId: iarRow.iarId || null,
+                  // parId: iarRow.parId || null,
+                  // risId: iarRow.risId || null,
+                  // icsId: iarRow.icsId || null,
                   changeType: "item_creation",
                   changedBy: user.name || user.id,
                   changeReason: "Initial item creation",
