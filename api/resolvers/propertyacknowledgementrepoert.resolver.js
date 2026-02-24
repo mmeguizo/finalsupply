@@ -39,7 +39,7 @@ const propertyAcknowledgmentReportResolver = {
         const propertyAcknowledgmentReportdata = await inspectionAcceptanceReportResolver.findAll({
           where: {
             isDeleted: false,
-            category: "property acknowledgement reciept"
+            category: "property acknowledgement receipt"
           },
           order: [["createdAt", "DESC"]],
           include: [

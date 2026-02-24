@@ -1,5 +1,5 @@
 export const PURCHASE_ORDER_CATEGORIES = {
-  PAR: "property acknowledgement reciept",
+  PAR: "property acknowledgement receipt",
   ICS: "inventory custodian slip",
   RIS: "requisition issue slip",
 } as const;

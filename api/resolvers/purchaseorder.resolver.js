@@ -236,7 +236,7 @@ const purchaseorderResolver = {
       // const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories at a higher scope if used for both PO and POItems
       const validCategories = [
-        "property acknowledgement reciept",
+        "property acknowledgement receipt",
         "inventory custodian slip",
         "requisition issue slip",
       ];
@@ -350,7 +350,7 @@ const purchaseorderResolver = {
               //   icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
               // }
               // if (
-              //   cleanedItems.category === "property acknowledgement reciept"
+              //   cleanedItems.category === "property acknowledgement receipt"
               // ) {
               //   const gen = await generateNewParId();
               //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
@@ -432,7 +432,7 @@ const purchaseorderResolver = {
       // const autoIiarIds = await generateNewIarId(input.campus);
       // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
-        "property acknowledgement reciept",
+        "property acknowledgement receipt",
         "inventory custodian slip",
         "requisition issue slip",
       ];
@@ -589,7 +589,7 @@ const purchaseorderResolver = {
                   itemUpdates.category !== undefined ? itemUpdates.category : currentItem.category;
                 const effectiveTag = itemUpdates.tag !== undefined ? itemUpdates.tag : currentItem.tag;
 
-                // if (effectiveCategory === "property acknowledgement reciept") {
+                // if (effectiveCategory === "property acknowledgement receipt") {
                 //   const gen = await generateNewParId();
                 //   parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 // }
@@ -742,7 +742,7 @@ const purchaseorderResolver = {
                 //   const individualIcsId = await generateNewIcsId(cleanedItems.tag);
                 //   icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
                 // }
-                // if (item.category === "property acknowledgement reciept") {
+                // if (item.category === "property acknowledgement receipt") {
                 //   const gen = await generateNewParId();
                 //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
                 // }

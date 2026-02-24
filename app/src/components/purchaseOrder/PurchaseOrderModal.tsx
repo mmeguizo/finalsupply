@@ -405,7 +405,7 @@ export default function PurchaseOrderModal({
                     disabled={isFieldDisabled(item.category)}
                     sx={{ "& .MuiSelect-select": { py: 1 } }}
                   >
-                    <MenuItem value={"property acknowledgement reciept"}>
+                    <MenuItem value={"property acknowledgement receipt"}>
                       PAR
                     </MenuItem>
                     <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>

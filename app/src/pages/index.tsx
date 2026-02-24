@@ -64,7 +64,7 @@ export default function DashboardPage() {
       // Create pieChartData based on the counts
        pieChartData = [
         {
-          value: categoryCounts["property acknowledgement reciept"] || 0,
+          value: categoryCounts["property acknowledgement receipt"] || 0,
           label: "PAR",
         },
         {

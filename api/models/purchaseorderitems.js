@@ -64,7 +64,7 @@ const PurchaseOrderItems = sequelize.define(
     },
     category: {
       type: DataTypes.ENUM(
-        "property acknowledgement reciept",
+        "property acknowledgement receipt",
         "inventory custodian slip",
         "requisition issue slip"
       ),

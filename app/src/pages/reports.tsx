@@ -37,7 +37,7 @@ const CategoryOptions = [
   { label: 'Inspection Acceptance Report', value: 'inspection acceptance report' },
   { label: 'Inventory Custodian Slip', value: 'inventory custodian slip' },
   { label: 'Requisition Issue Slip', value: 'requisition issue slip' },
-  { label: 'Property Acknowledgement Reciept', value: 'property acknowledgement reciept' },
+  { label: 'Property Acknowledgement Receipt', value: 'property acknowledgement receipt' },
 ];
 
 // --- IAR Table Component ---
@@ -398,7 +398,7 @@ export default function ReportsPage() {
         return <ICSTableComponent />;
       case 'requisition issue slip':
         return <RISTableComponent />;
-      case 'property acknowledgement reciept':
+      case 'property acknowledgement receipt':
         return <PARTableComponent />;
       default:
         return <Typography sx={{mt: 2}}>Please select a report category to view data.</Typography>;

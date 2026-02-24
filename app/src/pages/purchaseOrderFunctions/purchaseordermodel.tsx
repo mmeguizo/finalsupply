@@ -630,7 +630,7 @@ export default function PurchaseOrderModal({
                           onChange={(e) => updateItem(index, "category", e.target.value)}
                           disabled={(Number(item.actualQuantityReceived ?? 0) > 0) || String(purchaseOrder?.status || formData.status || "").toLowerCase() === "completed"}
                         >
-                          <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
+                          <MenuItem value={"property acknowledgement receipt"}>PAR</MenuItem>
                           <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
                           <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
                         </Select>
