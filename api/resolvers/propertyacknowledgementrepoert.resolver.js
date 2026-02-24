@@ -1,8 +1,8 @@
 import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize models
 import inspectionAcceptanceReportResolver from "../models/inspectionacceptancereport.js";
-import { customAlphabet } from 'nanoid'
-import { Op, Sequelize } from 'sequelize'
-import { sequelize } from '../db/connectDB.js'
+import { customAlphabet } from "nanoid";
+import { Op, Sequelize } from "sequelize";
+import { sequelize } from "../db/connectDB.js";
 
 // const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
 import { generateNewParId, resetParIdBatch } from "../utils/parIdGenerator.js";
@@ -15,11 +15,12 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error("Unauthorized");
         }
         // Fetch a single purchase order by ID
-        const propertyAcknowledgmentReportdata = await inspectionAcceptanceReportResolver.findAll({
-          where: { isDeleted: false },
-          order: [["createdAt", "DESC"]],
-          include: [PurchaseOrder],
-        });
+        const propertyAcknowledgmentReportdata =
+          await inspectionAcceptanceReportResolver.findAll({
+            where: { isDeleted: false },
+            order: [["createdAt", "DESC"]],
+            include: [PurchaseOrder],
+          });
 
         if (!propertyAcknowledgmentReportdata) {
           throw new Error("Purchase order not found");
@@ -36,18 +37,23 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error("Unauthorized");
         }
         // Fetch a single purchase order by ID
-        const propertyAcknowledgmentReportdata = await inspectionAcceptanceReportResolver.findAll({
-          where: {
-            isDeleted: false,
-            category: "property acknowledgement reciept"
-          },
-          order: [["createdAt", "DESC"]],
-          include: [
-            { model: PurchaseOrder },
-            // include PurchaseOrderItems using the alias used in your models / code
-            { model: PurchaseOrderItems, as: "PurchaseOrderItem", required: false }
-          ],
-        });
+        const propertyAcknowledgmentReportdata =
+          await inspectionAcceptanceReportResolver.findAll({
+            where: {
+              isDeleted: false,
+              category: "property acknowledgement reciept",
+            },
+            order: [["createdAt", "DESC"]],
+            include: [
+              { model: PurchaseOrder },
+              // include PurchaseOrderItems using the alias used in your models / code
+              {
+                model: PurchaseOrderItems,
+                as: "PurchaseOrderItem",
+                required: false,
+              },
+            ],
+          });
 
         if (!propertyAcknowledgmentReportdata) {
           throw new Error("Purchase order not found");
@@ -76,7 +82,12 @@ const propertyAcknowledgmentReportResolver = {
             },
           },
           order: [
-            [Sequelize.literal("CAST(REPLACE(SUBSTRING_INDEX(parId, '-', -1), SUBSTRING(SUBSTRING_INDEX(parId, '-', -1), -1), '') AS UNSIGNED)"), 'DESC'],
+            [
+              Sequelize.literal(
+                "CAST(REPLACE(SUBSTRING_INDEX(parId, '-', -1), SUBSTRING(SUBSTRING_INDEX(parId, '-', -1), -1), '') AS UNSIGNED)",
+              ),
+              "DESC",
+            ],
           ],
           attributes: ["parId"],
         });
@@ -85,7 +96,7 @@ const propertyAcknowledgmentReportResolver = {
         if (latestPar && latestPar.parId) {
           const parts = latestPar.parId.split("-");
           if (parts.length === 2) {
-            const numericPart = parts[1].replace(/[A-Za-z]/g, '');
+            const numericPart = parts[1].replace(/[A-Za-z]/g, "");
             const lastSequence = parseInt(numericPart, 10);
             if (!isNaN(lastSequence)) {
               nextSequence = lastSequence + 1;
@@ -97,7 +108,7 @@ const propertyAcknowledgmentReportResolver = {
         return {
           nextId: `${yearPrefix}${formattedSeriesNumber}`,
           currentYear: year,
-          nextSequence: nextSequence
+          nextSequence: nextSequence,
         };
       } catch (error) {
         console.error("Error getting next PAR ID:", error);
@@ -127,7 +138,7 @@ const propertyAcknowledgmentReportResolver = {
           order: [["parId", "ASC"]],
         });
 
-        return items.map(item => item.parId).filter(Boolean);
+        return items.map((item) => item.parId).filter(Boolean);
       } catch (error) {
         console.error("Error getting existing PAR IDs:", error);
         throw new Error(error.message || "Internal server error");
@@ -141,36 +152,36 @@ const propertyAcknowledgmentReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error("Unauthorized");
         }
-        
+
         // Generate a single batch ICS ID for all items
         // const batchParId = nanoid();
         const batchParId = await generateNewParId();
         // console.log("Updating items with IDs:", input.ids);
         console.log("Generated batch ICS ID:", batchParId);
-        
+
         // Find all items by their IDs and update them with the same ICS ID
         const updatedItems = await inspectionAcceptanceReportResolver.update(
           { parId: batchParId },
-          { 
-            where: { 
-              id: { [Op.in]: input.ids } 
+          {
+            where: {
+              id: { [Op.in]: input.ids },
             },
-            returning: true
-          }
+            returning: true,
+          },
         );
         // console.log({updatedItems});
         // console.log({batchParId});
-        
+
         // Fetch the updated items to return them
         const items = await inspectionAcceptanceReportResolver.findAll({
-          where: { 
-            id: { [Op.in]: input.ids } 
+          where: {
+            id: { [Op.in]: input.ids },
           },
-          include: [PurchaseOrder]
+          include: [PurchaseOrder],
         });
 
         // console.log("Updated items:", items);
-        
+
         return items;
       } catch (error) {
         console.error("Error updating ICS IDs:", error);
@@ -185,7 +196,15 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error("Unauthorized");
         }
 
-        const { itemIds, parId, receivedFrom, receivedFromPosition, receivedBy, receivedByPosition, department } = input;
+        const {
+          itemIds,
+          parId,
+          receivedFrom,
+          receivedFromPosition,
+          receivedBy,
+          receivedByPosition,
+          department,
+        } = input;
 
         // Determine the PAR ID to use
         let assignedParId = parId;
@@ -199,29 +218,29 @@ const propertyAcknowledgmentReportResolver = {
 
         // Update all items with the PAR ID and signatories
         await inspectionAcceptanceReportResolver.update(
-          { 
+          {
             parId: assignedParId,
             parReceivedFrom: receivedFrom,
-            parReceivedFromPosition: receivedFromPosition || '',
+            parReceivedFromPosition: receivedFromPosition || "",
             parReceivedBy: receivedBy,
-            parReceivedByPosition: receivedByPosition || '',
-            parDepartment: department || '',
-            parAssignedDate: new Date()
+            parReceivedByPosition: receivedByPosition || "",
+            parDepartment: department || "",
+            parAssignedDate: new Date(),
           },
-          { 
-            where: { 
-              id: { [Op.in]: itemIds } 
+          {
+            where: {
+              id: { [Op.in]: itemIds },
             },
-            returning: true
-          }
+            returning: true,
+          },
         );
 
         // Fetch the updated items to return them
         const items = await inspectionAcceptanceReportResolver.findAll({
-          where: { 
-            id: { [Op.in]: itemIds } 
+          where: {
+            id: { [Op.in]: itemIds },
           },
-          include: [PurchaseOrder]
+          include: [PurchaseOrder],
         });
 
         return items;
@@ -252,20 +271,26 @@ const propertyAcknowledgmentReportResolver = {
             const { itemId, splits } = itemSplit;
 
             // Fetch the original item
-            const original = await inspectionAcceptanceReportResolver.findByPk(itemId, {
-              transaction,
-              include: [PurchaseOrder],
-            });
+            const original = await inspectionAcceptanceReportResolver.findByPk(
+              itemId,
+              {
+                transaction,
+                include: [PurchaseOrder],
+              },
+            );
 
             if (!original) {
               throw new Error(`Item with ID ${itemId} not found`);
             }
 
             // Validate: total split quantities must not exceed actual received
-            const totalSplitQty = splits.reduce((sum, s) => sum + s.quantity, 0);
+            const totalSplitQty = splits.reduce(
+              (sum, s) => sum + s.quantity,
+              0,
+            );
             if (totalSplitQty > original.actualQuantityReceived) {
               throw new Error(
-                `Total split quantity (${totalSplitQty}) exceeds actual received (${original.actualQuantityReceived}) for item "${original.description}"`
+                `Total split quantity (${totalSplitQty}) exceeds actual received (${original.actualQuantityReceived}) for item "${original.description}"`,
               );
             }
 
@@ -280,16 +305,17 @@ const propertyAcknowledgmentReportResolver = {
             await original.update(
               {
                 actualQuantityReceived: firstSplit.quantity,
-                amount: firstSplit.quantity * parseFloat(original.unitCost || 0),
+                amount:
+                  firstSplit.quantity * parseFloat(original.unitCost || 0),
                 parId: firstParId,
                 parReceivedFrom: firstSplit.receivedFrom,
-                parReceivedFromPosition: firstSplit.receivedFromPosition || '',
+                parReceivedFromPosition: firstSplit.receivedFromPosition || "",
                 parReceivedBy: firstSplit.receivedBy,
-                parReceivedByPosition: firstSplit.receivedByPosition || '',
-                parDepartment: firstSplit.department || '',
+                parReceivedByPosition: firstSplit.receivedByPosition || "",
+                parDepartment: firstSplit.department || "",
                 parAssignedDate: new Date(),
               },
-              { transaction }
+              { transaction },
             );
 
             allResultIds.push(original.id);
@@ -302,52 +328,56 @@ const propertyAcknowledgmentReportResolver = {
               // Get the original's raw data for cloning
               const originalData = original.toJSON();
 
-              const clonedRecord = await inspectionAcceptanceReportResolver.create(
-                {
-                  // Copy all original fields
-                  iarId: originalData.iarId,
-                  icsId: originalData.icsId,
-                  risId: originalData.risId,
-                  purchaseOrderId: originalData.purchaseOrderId,
-                  purchaseOrderItemId: originalData.purchaseOrderItemId,
-                  iarStatus: originalData.iarStatus,
-                  description: originalData.description,
-                  unit: originalData.unit,
-                  quantity: originalData.quantity,
-                  unitCost: originalData.unitCost,
-                  category: originalData.category,
-                  tag: originalData.tag,
-                  isDeleted: 0,
-                  createdBy: originalData.createdBy,
-                  updatedBy: originalData.updatedBy,
-                  inventoryNumber: originalData.inventoryNumber,
-                  itemName: originalData.itemName,
-                  invoice: originalData.invoice,
-                  invoiceDate: originalData.invoiceDate,
-                  income: originalData.income,
-                  mds: originalData.mds,
-                  details: originalData.details,
-                  // Split-specific fields
-                  actualQuantityReceived: split.quantity,
-                  amount: split.quantity * parseFloat(originalData.unitCost || 0),
-                  parId: newParId,
-                  parReceivedFrom: split.receivedFrom,
-                  parReceivedFromPosition: split.receivedFromPosition || '',
-                  parReceivedBy: split.receivedBy,
-                  parReceivedByPosition: split.receivedByPosition || '',
-                  parDepartment: split.department || '',
-                  parAssignedDate: new Date(),
-                },
-                { transaction }
-              );
+              const clonedRecord =
+                await inspectionAcceptanceReportResolver.create(
+                  {
+                    // Copy all original fields
+                    iarId: originalData.iarId,
+                    icsId: originalData.icsId,
+                    risId: originalData.risId,
+                    purchaseOrderId: originalData.purchaseOrderId,
+                    purchaseOrderItemId: originalData.purchaseOrderItemId,
+                    iarStatus: originalData.iarStatus,
+                    description: originalData.description,
+                    unit: originalData.unit,
+                    quantity: originalData.quantity,
+                    unitCost: originalData.unitCost,
+                    category: originalData.category,
+                    tag: originalData.tag,
+                    isDeleted: 0,
+                    createdBy: originalData.createdBy,
+                    updatedBy: originalData.updatedBy,
+                    inventoryNumber: originalData.inventoryNumber,
+                    itemName: originalData.itemName,
+                    invoice: originalData.invoice,
+                    invoiceDate: originalData.invoiceDate,
+                    income: originalData.income,
+                    mds: originalData.mds,
+                    details: originalData.details,
+                    // Split-specific fields
+                    actualQuantityReceived: split.quantity,
+                    amount:
+                      split.quantity * parseFloat(originalData.unitCost || 0),
+                    parId: newParId,
+                    parReceivedFrom: split.receivedFrom,
+                    parReceivedFromPosition: split.receivedFromPosition || "",
+                    parReceivedBy: split.receivedBy,
+                    parReceivedByPosition: split.receivedByPosition || "",
+                    parDepartment: split.department || "",
+                    parAssignedDate: new Date(),
+                  },
+                  { transaction },
+                );
 
               allResultIds.push(clonedRecord.id);
             }
 
             // If total split qty is less than original, create a leftover record with no PAR ID
-            const leftover = original.dataValues.actualQuantityReceived !== firstSplit.quantity
-              ? 0
-              : (parseInt(original.getDataValue('quantity')) || 0) - totalSplitQty;
+            const leftover =
+              original.dataValues.actualQuantityReceived !== firstSplit.quantity
+                ? 0
+                : (parseInt(original.getDataValue("quantity")) || 0) -
+                  totalSplitQty;
             // We don't create leftover records — all received quantity must be assigned
           }
 
@@ -377,12 +407,23 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error("Unauthorized");
         }
 
-        const { sourceItemId, quantity, department, receivedFrom, receivedFromPosition, receivedBy, receivedByPosition } = input;
+        const {
+          sourceItemId,
+          quantity,
+          department,
+          receivedFrom,
+          receivedFromPosition,
+          receivedBy,
+          receivedByPosition,
+        } = input;
 
         // Fetch the source item
-        const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
+        const sourceItem = await inspectionAcceptanceReportResolver.findByPk(
+          sourceItemId,
+          {
+            include: [PurchaseOrder],
+          },
+        );
 
         if (!sourceItem) {
           throw new Error(`Source item with ID ${sourceItemId} not found`);
@@ -390,7 +431,9 @@ const propertyAcknowledgmentReportResolver = {
 
         const currentReceived = sourceItem.actualQuantityReceived || 0;
         if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          throw new Error(
+            `Quantity (${quantity}) exceeds available (${currentReceived})`,
+          );
         }
         if (quantity <= 0) {
           throw new Error("Quantity must be greater than 0");
@@ -434,31 +477,33 @@ const propertyAcknowledgmentReportResolver = {
               amount: quantity * parseFloat(sourceData.unitCost || 0),
               parId: newParId,
               parReceivedFrom: receivedFrom,
-              parReceivedFromPosition: receivedFromPosition || '',
+              parReceivedFromPosition: receivedFromPosition || "",
               parReceivedBy: receivedBy,
-              parReceivedByPosition: receivedByPosition || '',
-              parDepartment: department || '',
+              parReceivedByPosition: receivedByPosition || "",
+              parDepartment: department || "",
               parAssignedDate: new Date(),
             },
-            { transaction }
+            { transaction },
           );
 
           // Update source item: reduce actualQuantityReceived
           const newSourceQty = currentReceived - quantity;
           await sourceItem.update(
             { actualQuantityReceived: newSourceQty },
-            { transaction }
+            { transaction },
           );
 
           await transaction.commit();
 
           // Fetch updated items with associations
-          const updatedNewItem = await inspectionAcceptanceReportResolver.findByPk(newItem.id, {
-            include: [PurchaseOrder],
-          });
-          const updatedSourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
-            include: [PurchaseOrder],
-          });
+          const updatedNewItem =
+            await inspectionAcceptanceReportResolver.findByPk(newItem.id, {
+              include: [PurchaseOrder],
+            });
+          const updatedSourceItem =
+            await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
+              include: [PurchaseOrder],
+            });
 
           return {
             newItem: updatedNewItem,
@@ -475,6 +520,263 @@ const propertyAcknowledgmentReportResolver = {
       }
     },
 
+    // Create a multi-item PAR assignment (multiple items share one PAR ID per end user)
+    createMultiItemPARAssignment: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const {
+          items,
+          department,
+          receivedFrom,
+          receivedFromPosition,
+          receivedBy,
+          receivedByPosition,
+        } = input;
+
+        if (!items || items.length === 0) {
+          throw new Error("At least one item is required");
+        }
+
+        // Generate a single PAR ID for all items in this assignment
+        const sharedParId = await generateNewParId();
+
+        const transaction = await sequelize.transaction();
+        const newItemIds = [];
+        const sourceItemIds = [];
+
+        try {
+          for (const entry of items) {
+            const { sourceItemId, quantity } = entry;
+
+            // Fetch the source item
+            const sourceItem =
+              await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
+                include: [PurchaseOrder],
+                transaction,
+              });
+
+            if (!sourceItem) {
+              throw new Error(`Source item with ID ${sourceItemId} not found`);
+            }
+
+            const currentReceived = sourceItem.actualQuantityReceived || 0;
+            if (quantity > currentReceived) {
+              throw new Error(
+                `Quantity (${quantity}) exceeds available (${currentReceived}) for item "${sourceItem.description}"`,
+              );
+            }
+            if (quantity <= 0) {
+              throw new Error("Quantity must be greater than 0");
+            }
+
+            const sourceData = sourceItem.toJSON();
+
+            // Create new record with the assigned quantity and shared PAR ID
+            const newItem = await inspectionAcceptanceReportResolver.create(
+              {
+                iarId: sourceData.iarId,
+                icsId: sourceData.icsId,
+                risId: sourceData.risId,
+                purchaseOrderId: sourceData.purchaseOrderId,
+                purchaseOrderItemId: sourceData.purchaseOrderItemId,
+                iarStatus: sourceData.iarStatus,
+                description: sourceData.description,
+                unit: sourceData.unit,
+                quantity: sourceData.quantity,
+                unitCost: sourceData.unitCost,
+                category: sourceData.category,
+                tag: sourceData.tag,
+                isDeleted: 0,
+                createdBy: sourceData.createdBy,
+                updatedBy: sourceData.updatedBy,
+                inventoryNumber: sourceData.inventoryNumber,
+                itemName: sourceData.itemName,
+                invoice: sourceData.invoice,
+                invoiceDate: sourceData.invoiceDate,
+                income: sourceData.income,
+                mds: sourceData.mds,
+                details: sourceData.details,
+                // Assignment-specific fields — shared PAR ID
+                actualQuantityReceived: quantity,
+                amount: quantity * parseFloat(sourceData.unitCost || 0),
+                parId: sharedParId,
+                parReceivedFrom: receivedFrom,
+                parReceivedFromPosition: receivedFromPosition || "",
+                parReceivedBy: receivedBy,
+                parReceivedByPosition: receivedByPosition || "",
+                parDepartment: department || "",
+                parAssignedDate: new Date(),
+              },
+              { transaction },
+            );
+
+            newItemIds.push(newItem.id);
+
+            // Update source item: reduce actualQuantityReceived
+            const newSourceQty = currentReceived - quantity;
+            await sourceItem.update(
+              { actualQuantityReceived: newSourceQty },
+              { transaction },
+            );
+
+            sourceItemIds.push(sourceItemId);
+          }
+
+          await transaction.commit();
+
+          // Fetch all created items and updated source items
+          const newItems = await inspectionAcceptanceReportResolver.findAll({
+            where: { id: { [Op.in]: newItemIds } },
+            include: [PurchaseOrder],
+          });
+          const sourceItems = await inspectionAcceptanceReportResolver.findAll({
+            where: { id: { [Op.in]: sourceItemIds } },
+            include: [PurchaseOrder],
+          });
+
+          return {
+            newItems,
+            sourceItems,
+            generatedParId: sharedParId,
+          };
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error("Error in createMultiItemPARAssignment:", error);
+        throw new Error(
+          error.message || "Failed to create multi-item PAR assignment",
+        );
+      }
+    },
+
+    // Add an item to an existing PAR ID
+    addItemToExistingPAR: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const { sourceItemId, quantity, existingParId } = input;
+
+        if (!existingParId) {
+          throw new Error("Existing PAR ID is required");
+        }
+
+        // Find an existing item with this PAR ID to copy signatory info
+        const existingPARItem =
+          await inspectionAcceptanceReportResolver.findOne({
+            where: { parId: existingParId, isDeleted: false },
+          });
+
+        if (!existingPARItem) {
+          throw new Error(
+            `No existing item found with PAR ID "${existingParId}"`,
+          );
+        }
+
+        // Fetch the source item
+        const sourceItem = await inspectionAcceptanceReportResolver.findByPk(
+          sourceItemId,
+          {
+            include: [PurchaseOrder],
+          },
+        );
+
+        if (!sourceItem) {
+          throw new Error(`Source item with ID ${sourceItemId} not found`);
+        }
+
+        const currentReceived = sourceItem.actualQuantityReceived || 0;
+        if (quantity > currentReceived) {
+          throw new Error(
+            `Quantity (${quantity}) exceeds available (${currentReceived})`,
+          );
+        }
+        if (quantity <= 0) {
+          throw new Error("Quantity must be greater than 0");
+        }
+
+        const sourceData = sourceItem.toJSON();
+        const transaction = await sequelize.transaction();
+
+        try {
+          // Create new record with the existing PAR ID and copied signatory info
+          const newItem = await inspectionAcceptanceReportResolver.create(
+            {
+              iarId: sourceData.iarId,
+              icsId: sourceData.icsId,
+              risId: sourceData.risId,
+              purchaseOrderId: sourceData.purchaseOrderId,
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              iarStatus: sourceData.iarStatus,
+              description: sourceData.description,
+              unit: sourceData.unit,
+              quantity: sourceData.quantity,
+              unitCost: sourceData.unitCost,
+              category: sourceData.category,
+              tag: sourceData.tag,
+              isDeleted: 0,
+              createdBy: sourceData.createdBy,
+              updatedBy: sourceData.updatedBy,
+              inventoryNumber: sourceData.inventoryNumber,
+              itemName: sourceData.itemName,
+              invoice: sourceData.invoice,
+              invoiceDate: sourceData.invoiceDate,
+              income: sourceData.income,
+              mds: sourceData.mds,
+              details: sourceData.details,
+              // Use existing PAR ID and copy signatory info
+              actualQuantityReceived: quantity,
+              amount: quantity * parseFloat(sourceData.unitCost || 0),
+              parId: existingParId,
+              parReceivedFrom: existingPARItem.parReceivedFrom,
+              parReceivedFromPosition: existingPARItem.parReceivedFromPosition,
+              parReceivedBy: existingPARItem.parReceivedBy,
+              parReceivedByPosition: existingPARItem.parReceivedByPosition,
+              parDepartment: existingPARItem.parDepartment,
+              parAssignedDate: new Date(),
+            },
+            { transaction },
+          );
+
+          // Update source: reduce qty
+          const newSourceQty = currentReceived - quantity;
+          await sourceItem.update(
+            { actualQuantityReceived: newSourceQty },
+            { transaction },
+          );
+
+          await transaction.commit();
+
+          const updatedNewItem =
+            await inspectionAcceptanceReportResolver.findByPk(newItem.id, {
+              include: [PurchaseOrder],
+            });
+          const updatedSourceItem =
+            await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
+              include: [PurchaseOrder],
+            });
+
+          return {
+            newItem: updatedNewItem,
+            sourceItem: updatedSourceItem,
+            parId: existingParId,
+          };
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error("Error in addItemToExistingPAR:", error);
+        throw new Error(error.message || "Failed to add item to existing PAR");
+      }
+    },
+
     // Update an existing PAR assignment
     updatePARAssignment: async (_, { input }, context) => {
       try {
@@ -482,7 +784,15 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error("Unauthorized");
         }
 
-        const { itemId, quantity, department, receivedFrom, receivedFromPosition, receivedBy, receivedByPosition } = input;
+        const {
+          itemId,
+          quantity,
+          department,
+          receivedFrom,
+          receivedFromPosition,
+          receivedBy,
+          receivedByPosition,
+        } = input;
 
         const item = await inspectionAcceptanceReportResolver.findByPk(itemId);
         if (!item) {
@@ -496,25 +806,31 @@ const propertyAcknowledgmentReportResolver = {
           updateData.amount = quantity * parseFloat(item.unitCost || 0);
         }
         if (department !== undefined) updateData.parDepartment = department;
-        if (receivedFrom !== undefined) updateData.parReceivedFrom = receivedFrom;
-        if (receivedFromPosition !== undefined) updateData.parReceivedFromPosition = receivedFromPosition;
+        if (receivedFrom !== undefined)
+          updateData.parReceivedFrom = receivedFrom;
+        if (receivedFromPosition !== undefined)
+          updateData.parReceivedFromPosition = receivedFromPosition;
         if (receivedBy !== undefined) updateData.parReceivedBy = receivedBy;
-        if (receivedByPosition !== undefined) updateData.parReceivedByPosition = receivedByPosition;
+        if (receivedByPosition !== undefined)
+          updateData.parReceivedByPosition = receivedByPosition;
 
         await item.update(updateData);
 
         // Return updated item with associations
-        const updatedItem = await inspectionAcceptanceReportResolver.findByPk(itemId, {
-          include: [PurchaseOrder],
-        });
+        const updatedItem = await inspectionAcceptanceReportResolver.findByPk(
+          itemId,
+          {
+            include: [PurchaseOrder],
+          },
+        );
 
         return updatedItem;
       } catch (error) {
         console.error("Error in updatePARAssignment:", error);
         throw new Error(error.message || "Failed to update PAR assignment");
       }
-    }
-  }
+    },
+  },
 };
 
 export default propertyAcknowledgmentReportResolver;

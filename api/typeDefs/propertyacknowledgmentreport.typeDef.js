@@ -170,11 +170,48 @@ input UpdatePARAssignmentInput {
   receivedByPosition: String
 }
 
+# Input for a single item entry in a multi-item PAR assignment
+input MultiPARItemEntry {
+  sourceItemId: ID!
+  quantity: Int!
+}
+
+# Input for creating a multi-item PAR assignment (multiple items share one PAR ID)
+input CreateMultiItemPARInput {
+  items: [MultiPARItemEntry!]!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+# Input for adding an item to an existing PAR ID
+input AddItemToExistingPARInput {
+  sourceItemId: ID!
+  quantity: Int!
+  existingParId: String!
+}
+
 # Response type for single PAR creation
 type CreatePARResponse {
   newItem: ItemWithPurchaseOrder!
   sourceItem: ItemWithPurchaseOrder!
   generatedParId: String!
+}
+
+# Response type for multi-item PAR creation
+type CreateMultiPARResponse {
+  newItems: [ItemWithPurchaseOrder!]!
+  sourceItems: [ItemWithPurchaseOrder!]!
+  generatedParId: String!
+}
+
+# Response type for adding item to existing PAR
+type AddItemToExistingPARResponse {
+  newItem: ItemWithPurchaseOrder!
+  sourceItem: ItemWithPurchaseOrder!
+  parId: String!
 }
 
 # Response type for next PAR ID query
@@ -202,14 +239,15 @@ type Mutation {
   splitAndAssignPAR(input: SplitAndAssignPARInput!): [ItemWithPurchaseOrder]
   # Create a single PAR assignment (saves immediately, clones from source)
   createSinglePARAssignment(input: CreateSinglePARInput!): CreatePARResponse!
+  # Create a multi-item PAR assignment (multiple items share one PAR ID)
+  createMultiItemPARAssignment(input: CreateMultiItemPARInput!): CreateMultiPARResponse!
+  # Add an item to an existing PAR ID
+  addItemToExistingPAR(input: AddItemToExistingPARInput!): AddItemToExistingPARResponse!
   # Update an existing PAR assignment
   updatePARAssignment(input: UpdatePARAssignmentInput!): ItemWithPurchaseOrder!
 }
 
 
 `;
-
-
-
 
 export default propertyAcknowledgementReportTypeDef;
