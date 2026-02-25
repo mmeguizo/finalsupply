@@ -101,6 +101,9 @@ type ItemWithPurchaseOrder {
     icsAssignedDate: String
     purpose: String
     remarks: String
+    splitGroupId: String
+    splitFromItemId: Int
+    splitIndex: Int
 }
 type IARonly{
     id: ID
@@ -161,6 +164,7 @@ type Mutation {
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
   updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
+  splitAndAssignICS(input: SplitAndAssignICSInput!): [ItemWithPurchaseOrder]
   createSingleICSAssignment(input: CreateSingleICSInput!): CreateICSResponse!
   createMultiItemICSAssignment(input: CreateMultiItemICSInput!): CreateMultiICSResponse!
   addItemToExistingICS(input: AddItemToExistingICSInput!): AddItemToExistingICSResponse!
@@ -225,6 +229,25 @@ type CreateLineItemResult {
     newItemId: Int!
     iarId: String!
     message: String!
+}
+
+# ICS Split & Assign types
+input ICSSplitEntry {
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+input ICSItemSplit {
+  itemId: ID!
+  splits: [ICSSplitEntry!]!
+}
+
+input SplitAndAssignICSInput {
+  itemSplits: [ICSItemSplit!]!
 }
 
 # ICS Assignment types

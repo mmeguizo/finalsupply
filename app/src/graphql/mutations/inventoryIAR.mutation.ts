@@ -285,6 +285,45 @@ export const ADD_ITEM_TO_EXISTING_ICS = gql`
   }
 `;
 
+// Split items by received quantity and assign ICS IDs with per-split signatories
+export const SPLIT_AND_ASSIGN_ICS = gql`
+  mutation SplitAndAssignICS($input: SplitAndAssignICSInput!) {
+    splitAndAssignICS(input: $input) {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      icsReceivedFrom
+      icsReceivedFromPosition
+      icsReceivedBy
+      icsReceivedByPosition
+      icsDepartment
+      icsAssignedDate
+      splitGroupId
+      splitFromItemId
+      splitIndex
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
+    }
+  }
+`;
+
 export const UPDATE_ITEM_PURPOSE = gql`
   mutation UpdateItemPurpose($ids: [ID!]!, $purpose: String!) {
     updateItemPurpose(ids: $ids, purpose: $purpose) {

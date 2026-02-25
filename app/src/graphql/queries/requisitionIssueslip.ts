@@ -67,6 +67,9 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risDepartment
       risAssignedDate
       purpose
+      splitGroupId
+      splitFromItemId
+      splitIndex
       PurchaseOrder {
         id
         poNumber

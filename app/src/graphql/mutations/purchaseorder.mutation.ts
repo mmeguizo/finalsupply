@@ -15,14 +15,14 @@ export const ADD_PURCHASEORDER = gql`
       dateOfConformity
       completed_status_date
       fundsource
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         description
         generalDescription
-        specification   
+        specification
         purchaseOrderId
         unit
         quantity
@@ -56,9 +56,9 @@ export const UPDATE_PURCHASEORDER = gql`
       status
       completed_status_date
       fundsource
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         description
@@ -83,6 +83,31 @@ export const DELETE_PURCHASEORDER = gql`
       id
       poNumber
       supplier
+    }
+  }
+`;
+
+export const UPDATE_ITEM_DELIVERY_STATUS = gql`
+  mutation UpdateItemDeliveryStatus(
+    $itemId: ID!
+    $deliveryStatus: String!
+    $deliveredDate: String
+    $deliveryNotes: String
+  ) {
+    updateItemDeliveryStatus(
+      itemId: $itemId
+      deliveryStatus: $deliveryStatus
+      deliveredDate: $deliveredDate
+      deliveryNotes: $deliveryNotes
+    ) {
+      success
+      message
+      item {
+        id
+        deliveryStatus
+        deliveredDate
+        deliveryNotes
+      }
     }
   }
 `;

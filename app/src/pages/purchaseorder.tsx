@@ -39,6 +39,7 @@ import {
   ADD_PURCHASEORDER,
   UPDATE_PURCHASEORDER,
   DELETE_PURCHASEORDER,
+  UPDATE_ITEM_DELIVERY_STATUS,
 } from "../graphql/mutations/purchaseorder.mutation";
 import ConfirmDialog from "../components/confirmationdialog";
 import NotificationDialog from "../components/notifications";
@@ -51,6 +52,7 @@ import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
 import {
   createPoColumns,
   itemColumns,
+  createItemColumns,
 } from "./purchaseOrderFunctions/purchaseorder_column";
 import { handleSavePurchaseOrder } from "./purchaseOrderFunctions/purchaseOrderOperations";
 import PurchaseOrderPrintModal from "../components/printReportModal";
@@ -115,6 +117,39 @@ export default function PurchaseOrder() {
       { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
     ],
   });
+  const [updateDeliveryStatus] = useMutation(UPDATE_ITEM_DELIVERY_STATUS, {
+    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+  });
+
+  // Handler for delivery status toggle
+  const handleDeliveryStatusChange = React.useCallback(
+    async (itemId: string, newStatus: string) => {
+      try {
+        const { data: result } = await updateDeliveryStatus({
+          variables: { itemId, deliveryStatus: newStatus },
+        });
+        if (result?.updateItemDeliveryStatus?.success) {
+          setNotificationMessage(
+            `Item marked as ${newStatus}`,
+          );
+          setNotificationSeverity("success");
+          setShowNotification(true);
+        }
+      } catch (err) {
+        console.error("Delivery status update failed:", err);
+        setNotificationMessage("Failed to update delivery status");
+        setNotificationSeverity("error");
+        setShowNotification(true);
+      }
+    },
+    [updateDeliveryStatus],
+  );
+
+  // Create item columns with delivery toggle
+  const deliveryItemColumns = React.useMemo(
+    () => createItemColumns(handleDeliveryStatusChange),
+    [handleDeliveryStatusChange],
+  );
   // const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
   //   refetchQueries: [{ query: GET_PURCHASEORDERS }],
   // });
@@ -386,7 +421,7 @@ export default function PurchaseOrder() {
               <Box sx={{ width: "100%", overflow: "hidden" }}>
                 <DataGrid
                   rows={itemRows}
-                  columns={itemColumns}
+                  columns={deliveryItemColumns}
                   hideFooter={itemRows.length <= 10}
                   disableRowSelectionOnClick
                   isCellEditable={() => selectedPO?.status !== "completed"}

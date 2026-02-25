@@ -283,20 +283,13 @@ const propertyAcknowledgmentReportResolver = {
               throw new Error(`Item with ID ${itemId} not found`);
             }
 
-            // Validate: total split quantities must not exceed actual received
-            const totalSplitQty = splits.reduce(
-              (sum, s) => sum + s.quantity,
-              0,
-            );
-            if (totalSplitQty > original.actualQuantityReceived) {
-              throw new Error(
-                `Total split quantity (${totalSplitQty}) exceeds actual received (${original.actualQuantityReceived}) for item "${original.description}"`,
-              );
-            }
-
             if (splits.length === 0) {
               throw new Error("At least one split is required per item");
             }
+
+            // Generate a split group ID to track all pieces back to this original
+            const splitGroupId = `SPL-${original.id}-${Date.now()}`;
+            const originalItemId = original.id;
 
             // First split: update the original record
             const firstSplit = splits[0];
@@ -314,6 +307,9 @@ const propertyAcknowledgmentReportResolver = {
                 parReceivedByPosition: firstSplit.receivedByPosition || "",
                 parDepartment: firstSplit.department || "",
                 parAssignedDate: new Date(),
+                splitGroupId: splitGroupId,
+                splitFromItemId: originalItemId,
+                splitIndex: 1,
               },
               { transaction },
             );

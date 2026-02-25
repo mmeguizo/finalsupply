@@ -73,6 +73,9 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
       income
       mds
       details
+      splitGroupId
+      splitFromItemId
+      splitIndex
       PurchaseOrder {
         id
         poNumber

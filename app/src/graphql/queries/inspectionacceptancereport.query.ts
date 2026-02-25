@@ -28,6 +28,9 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       income
       mds
       details
+      splitGroupId
+      splitFromItemId
+      splitIndex
       PurchaseOrder {
         id
         poNumber
@@ -148,6 +151,9 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       income
       mds
       details
+      splitGroupId
+      splitFromItemId
+      splitIndex
       PurchaseOrder {
         id
         poNumber

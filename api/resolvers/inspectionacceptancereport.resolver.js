@@ -6,7 +6,7 @@ import { sequelize } from "../db/connectDB.js";
 import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
 import { Op, Sequelize } from "sequelize";
-import { generateNewIcsId } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
+import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
@@ -672,6 +672,144 @@ const inspectionAcceptanceReportResolver = {
         await t.rollback();
         console.error("updateIARInvoice error:", error);
         throw new Error(error.message || "Failed to update IAR");
+      }
+    },
+
+    // Split items by quantity and assign separate ICS IDs with per-split signatories
+    splitAndAssignICS: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const { itemSplits } = input;
+        const allResultIds = [];
+
+        // Reset ICS ID batch counter so sequential IDs are generated properly
+        resetIcsIdBatch();
+
+        const transaction = await sequelize.transaction();
+
+        try {
+          for (const itemSplit of itemSplits) {
+            const { itemId, splits } = itemSplit;
+
+            const original = await inspectionAcceptanceReport.findByPk(itemId, {
+              transaction,
+              include: [PurchaseOrder],
+            });
+
+            if (!original) {
+              throw new Error(`Item with ID ${itemId} not found`);
+            }
+
+            if (splits.length === 0) {
+              throw new Error("At least one split is required per item");
+            }
+
+            // Validate tag for ICS ID generation
+            const tag = original.tag;
+            if (!tag || (tag !== "high" && tag !== "low")) {
+              throw new Error(
+                `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${tag}'`,
+              );
+            }
+
+            // Generate a split group ID to track all pieces back to this original
+            const splitGroupId = `SPL-${original.id}-${Date.now()}`;
+            const originalItemId = original.id;
+
+            // First split: update the original record
+            const firstSplit = splits[0];
+            const firstIcsId = await generateNewIcsId(tag);
+
+            await original.update(
+              {
+                actualQuantityReceived: firstSplit.quantity,
+                amount:
+                  firstSplit.quantity * parseFloat(original.unitCost || 0),
+                icsId: firstIcsId,
+                icsReceivedFrom: firstSplit.receivedFrom,
+                icsReceivedFromPosition: firstSplit.receivedFromPosition || "",
+                icsReceivedBy: firstSplit.receivedBy,
+                icsReceivedByPosition: firstSplit.receivedByPosition || "",
+                icsDepartment: firstSplit.department || "",
+                icsAssignedDate: new Date(),
+                splitGroupId: splitGroupId,
+                splitFromItemId: originalItemId,
+                splitIndex: 1,
+              },
+              { transaction },
+            );
+
+            allResultIds.push(original.id);
+
+            // Additional splits: clone the original record
+            for (let i = 1; i < splits.length; i++) {
+              const split = splits[i];
+              const newIcsId = await generateNewIcsId(tag);
+              const originalData = original.toJSON();
+
+              const clonedRecord = await inspectionAcceptanceReport.create(
+                {
+                  iarId: originalData.iarId,
+                  risId: originalData.risId,
+                  parId: originalData.parId,
+                  purchaseOrderId: originalData.purchaseOrderId,
+                  purchaseOrderItemId: originalData.purchaseOrderItemId,
+                  iarStatus: originalData.iarStatus,
+                  description: originalData.description,
+                  unit: originalData.unit,
+                  quantity: originalData.quantity,
+                  unitCost: originalData.unitCost,
+                  category: originalData.category,
+                  tag: originalData.tag,
+                  isDeleted: 0,
+                  createdBy: originalData.createdBy,
+                  updatedBy: originalData.updatedBy,
+                  inventoryNumber: originalData.inventoryNumber,
+                  itemName: originalData.itemName,
+                  invoice: originalData.invoice,
+                  invoiceDate: originalData.invoiceDate,
+                  income: originalData.income,
+                  mds: originalData.mds,
+                  details: originalData.details,
+                  actualQuantityReceived: split.quantity,
+                  amount:
+                    split.quantity * parseFloat(originalData.unitCost || 0),
+                  icsId: newIcsId,
+                  icsReceivedFrom: split.receivedFrom,
+                  icsReceivedFromPosition: split.receivedFromPosition || "",
+                  icsReceivedBy: split.receivedBy,
+                  icsReceivedByPosition: split.receivedByPosition || "",
+                  icsDepartment: split.department || "",
+                  icsAssignedDate: new Date(),
+                  splitGroupId: splitGroupId,
+                  splitFromItemId: originalItemId,
+                  splitIndex: i + 1,
+                },
+                { transaction },
+              );
+
+              allResultIds.push(clonedRecord.id);
+            }
+          }
+
+          await transaction.commit();
+
+          const resultItems = await inspectionAcceptanceReport.findAll({
+            where: { id: { [Op.in]: allResultIds } },
+            include: [PurchaseOrder],
+          });
+
+          return resultItems;
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error("Error in splitAndAssignICS:", error);
+        throw new Error(error.message || "Failed to split and assign ICS");
       }
     },
 

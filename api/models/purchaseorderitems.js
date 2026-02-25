@@ -66,7 +66,7 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.ENUM(
         "property acknowledgement reciept",
         "inventory custodian slip",
-        "requisition issue slip"
+        "requisition issue slip",
       ),
       allowNull: true,
       defaultValue: "requisition issue slip", // Default value
@@ -97,21 +97,37 @@ const PurchaseOrderItems = sequelize.define(
       allowNull: true,
       defaultValue: 0,
     },
+    deliveryStatus: {
+      type: DataTypes.ENUM("pending", "delivered", "partial"),
+      allowNull: true,
+      defaultValue: "pending",
+      comment: "Track item delivery status independently of IAR receipt",
+    },
+    deliveredDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: "Date when item was delivered",
+    },
+    deliveryNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Notes about the delivery (e.g. follow-up needed, backordered)",
+    },
   },
   {
     tableName: "purchase_order_items", // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  }
+  },
 );
 
 // No association is needed here because ponumber is not a foreign key
 PurchaseOrderItems.hasMany(InspectionAcceptanceReport, {
   foreignKey: "purchaseOrderItemId",
 });
- InspectionAcceptanceReport.belongsTo(PurchaseOrderItems, {
-    foreignKey: "purchaseOrderItemId", // maps to purchase_order_item_id
-    as: "PurchaseOrderItem",
-  });
+InspectionAcceptanceReport.belongsTo(PurchaseOrderItems, {
+  foreignKey: "purchaseOrderItemId", // maps to purchase_order_item_id
+  as: "PurchaseOrderItem",
+});
 
 export default PurchaseOrderItems;

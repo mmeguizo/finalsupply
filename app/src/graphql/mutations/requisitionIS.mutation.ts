@@ -192,3 +192,42 @@ export const ADD_ITEM_TO_EXISTING_RIS = gql`
     }
   }
 `;
+
+// Split items by received quantity and assign RIS IDs with per-split signatories
+export const SPLIT_AND_ASSIGN_RIS = gql`
+  mutation SplitAndAssignRIS($input: SplitAndAssignRISInput!) {
+    splitAndAssignRIS(input: $input) {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      risReceivedFrom
+      risReceivedFromPosition
+      risReceivedBy
+      risReceivedByPosition
+      risDepartment
+      risAssignedDate
+      splitGroupId
+      splitFromItemId
+      splitIndex
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
+    }
+  }
+`;

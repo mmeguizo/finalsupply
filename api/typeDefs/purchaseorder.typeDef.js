@@ -70,6 +70,9 @@ type Item {
     tag : String
     inventoryNumber : String
     iarId : String
+    deliveryStatus: String
+    deliveredDate: String
+    deliveryNotes: String
 }
 
 
@@ -95,6 +98,9 @@ type ItemWithPurchaseOrder {
     tag : String
     inventoryNumber : String
     iarId : String
+    splitGroupId: String
+    splitFromItemId: Int
+    splitIndex: Int
 }
 
 type PurchaseOrderType {
@@ -269,6 +275,13 @@ type Mutation {
     addPurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
     updatePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
     deletePurchaseOrderItem(purchaseOrderId: ID!, item: ItemInput!): PurchaseOrder
+    updateItemDeliveryStatus(itemId: ID!, deliveryStatus: String!, deliveredDate: String, deliveryNotes: String): DeliveryStatusPayload!
+}
+
+type DeliveryStatusPayload {
+    success: Boolean!
+    message: String
+    item: Item
 }
 
 

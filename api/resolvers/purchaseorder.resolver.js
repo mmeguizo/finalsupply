@@ -983,6 +983,44 @@ const purchaseorderResolver = {
         throw new Error(e.message || "Failed to revert IAR batch");
       }
     },
+
+    // Update delivery status for a PO item
+    updateItemDeliveryStatus: async (
+      _,
+      { itemId, deliveryStatus, deliveredDate, deliveryNotes },
+      context,
+    ) => {
+      try {
+        const item = await PurchaseOrderItems.findByPk(itemId);
+        if (!item) throw new Error("Item not found");
+
+        const updateData = { deliveryStatus };
+        if (deliveredDate !== undefined)
+          updateData.deliveredDate = deliveredDate;
+        if (deliveryNotes !== undefined)
+          updateData.deliveryNotes = deliveryNotes;
+
+        // Auto-set delivered date if marking as delivered and no date provided
+        if (deliveryStatus === "delivered" && !deliveredDate) {
+          updateData.deliveredDate = new Date().toISOString().split("T")[0];
+        }
+
+        await item.update(updateData);
+
+        return {
+          success: true,
+          message: `Item delivery status updated to ${deliveryStatus}`,
+          item: item.get({ plain: true }),
+        };
+      } catch (error) {
+        console.error("updateItemDeliveryStatus error:", error);
+        return {
+          success: false,
+          message: error.message || "Failed to update delivery status",
+          item: null,
+        };
+      }
+    },
   },
 
   // Custom
