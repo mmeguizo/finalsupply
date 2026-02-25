@@ -83,7 +83,10 @@ export const REVERT_IAR_BATCH = gql`
 `;
 
 export const APPEND_TO_EXISTING_IAR = gql`
-  mutation AppendToExistingIAR($iarId: String!, $items: [AppendIARItemInput!]!) {
+  mutation AppendToExistingIAR(
+    $iarId: String!
+    $items: [AppendIARItemInput!]!
+  ) {
     appendToExistingIAR(iarId: $iarId, items: $items) {
       success
       iarId
@@ -94,7 +97,10 @@ export const APPEND_TO_EXISTING_IAR = gql`
 `;
 
 export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
-  mutation CreateLineItemFromExisting($sourceItemId: Int!, $newItem: CreateLineItemInput!) {
+  mutation CreateLineItemFromExisting(
+    $sourceItemId: Int!
+    $newItem: CreateLineItemInput!
+  ) {
     createLineItemFromExisting(sourceItemId: $sourceItemId, newItem: $newItem) {
       success
       newItemId
@@ -105,8 +111,22 @@ export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
 `;
 
 export const UPDATE_IAR_INVOICE = gql`
-  mutation UpdateIARInvoice($iarId: String!, $invoice: String, $invoiceDate: String, $income: String, $mds: String, $details: String) {
-    updateIARInvoice(iarId: $iarId, invoice: $invoice, invoiceDate: $invoiceDate, income: $income, mds: $mds, details: $details) {
+  mutation UpdateIARInvoice(
+    $iarId: String!
+    $invoice: String
+    $invoiceDate: String
+    $income: String
+    $mds: String
+    $details: String
+  ) {
+    updateIARInvoice(
+      iarId: $iarId
+      invoice: $invoice
+      invoiceDate: $invoiceDate
+      income: $income
+      mds: $mds
+      details: $details
+    ) {
       success
       message
       iarId
@@ -185,6 +205,102 @@ export const UPDATE_ICS_ASSIGNMENT = gql`
         supplier
         dateOfDelivery
       }
+    }
+  }
+`;
+
+// Create a multi-item ICS assignment (multiple items share one ICS ID)
+export const CREATE_MULTI_ITEM_ICS_ASSIGNMENT = gql`
+  mutation CreateMultiItemICSAssignment($input: CreateMultiItemICSInput!) {
+    createMultiItemICSAssignment(input: $input) {
+      newItems {
+        id
+        icsId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        category
+        tag
+        icsReceivedFrom
+        icsReceivedFromPosition
+        icsReceivedBy
+        icsReceivedByPosition
+        icsDepartment
+        icsAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItems {
+        id
+        actualQuantityReceived
+        icsId
+      }
+      generatedIcsId
+    }
+  }
+`;
+
+// Add an item to an existing ICS ID
+export const ADD_ITEM_TO_EXISTING_ICS = gql`
+  mutation AddItemToExistingICS($input: AddItemToExistingICSInput!) {
+    addItemToExistingICS(input: $input) {
+      newItem {
+        id
+        icsId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        category
+        tag
+        icsReceivedFrom
+        icsReceivedFromPosition
+        icsReceivedBy
+        icsReceivedByPosition
+        icsDepartment
+        icsAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        icsId
+      }
+      icsId
+    }
+  }
+`;
+
+export const UPDATE_ITEM_PURPOSE = gql`
+  mutation UpdateItemPurpose($ids: [ID!]!, $purpose: String!) {
+    updateItemPurpose(ids: $ids, purpose: $purpose) {
+      success
+      message
+      updatedCount
+    }
+  }
+`;
+
+export const UPDATE_ITEM_REMARKS = gql`
+  mutation UpdateItemRemarks($ids: [ID!]!, $remarks: String!) {
+    updateItemRemarks(ids: $ids, remarks: $remarks) {
+      success
+      message
+      updatedCount
     }
   }
 `;

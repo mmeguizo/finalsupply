@@ -104,9 +104,14 @@ export default function InspectionAcceptanceReportForIAR({
     purchaseOrder?.dateOfPayment ??
     "") as string;
 
- const totalAmount = formatCurrencyPHP(
-  items.reduce((sum, it) => sum + (Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0)), 0)
-);
+  const totalAmount = formatCurrencyPHP(
+    items.reduce(
+      (sum, it) =>
+        sum +
+        Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
+      0,
+    ),
+  );
 
   // const totalAmount = formatCurrencyPHP(
   //   items.reduce((sum, it) => sum + Number(it?.amount ?? 0), 0)
@@ -405,7 +410,7 @@ export default function InspectionAcceptanceReportForIAR({
                       </BodyTableCell>
                       <BodyTableCell>
                         {formatCurrencyPHP(
-                          (rd.actualQuantityReceived ?? 0) * (rd.unitCost ?? 0)
+                          (rd.actualQuantityReceived ?? 0) * (rd.unitCost ?? 0),
                         ) ?? 0}
                       </BodyTableCell>
                     </StyledTableRow>
@@ -435,32 +440,22 @@ export default function InspectionAcceptanceReportForIAR({
                       colSpan={3}
                       sx={{ textAlign: "left", padding: 0.5 }}
                     >
-                      {items[0]?.PurchaseOrder?.income && (
+                      {items[0]?.income && (
                         <Typography fontSize={12}>
                           Income:{" "}
-                          <span>
-                            {capitalizeFirstLetter(
-                              items[0].PurchaseOrder.income
-                            )}
-                          </span>
+                          <span>{capitalizeFirstLetter(items[0].income)}</span>
                         </Typography>
                       )}
-                      {items[0]?.PurchaseOrder?.mds && (
+                      {items[0]?.mds && (
                         <Typography fontSize={12}>
                           MDS:{" "}
-                          <span>
-                            {capitalizeFirstLetter(items[0].PurchaseOrder.mds)}
-                          </span>
+                          <span>{capitalizeFirstLetter(items[0].mds)}</span>
                         </Typography>
                       )}
-                      {items[0]?.PurchaseOrder?.details && (
+                      {items[0]?.details && (
                         <Typography fontSize={12}>
                           Details:{" "}
-                          <span>
-                            {capitalizeFirstLetter(
-                              items[0].PurchaseOrder.details
-                            )}
-                          </span>
+                          <span>{capitalizeFirstLetter(items[0].details)}</span>
                         </Typography>
                       )}
                     </StyledTableCell>
@@ -583,7 +578,7 @@ export default function InspectionAcceptanceReportForIAR({
                             aspectRatio: "3/2",
                             border: "1px dotted black",
                             backgroundColor: items.every(
-                              (i) => i.iarStatus === "complete"
+                              (i) => i.iarStatus === "complete",
                             )
                               ? "#ccc"
                               : "transparent",
@@ -613,7 +608,7 @@ export default function InspectionAcceptanceReportForIAR({
                             aspectRatio: "3/2",
                             border: "1px dotted black",
                             backgroundColor: items.some(
-                              (i) => i.iarStatus === "partial"
+                              (i) => i.iarStatus === "partial",
                             )
                               ? "#ccc"
                               : "transparent",

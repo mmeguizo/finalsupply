@@ -181,6 +181,76 @@ export const UPDATE_PAR_ASSIGNMENT = gql`
   }
 `;
 
+// Create a multi-item PAR assignment (multiple items share one PAR ID)
+export const CREATE_MULTI_ITEM_PAR_ASSIGNMENT = gql`
+  mutation CreateMultiItemPARAssignment($input: CreateMultiItemPARInput!) {
+    createMultiItemPARAssignment(input: $input) {
+      newItems {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        parId
+        parReceivedFrom
+        parReceivedFromPosition
+        parReceivedBy
+        parReceivedByPosition
+        parDepartment
+        parAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+        }
+      }
+      sourceItems {
+        id
+        actualQuantityReceived
+        parId
+      }
+      generatedParId
+    }
+  }
+`;
+
+// Add an item to an existing PAR ID
+export const ADD_ITEM_TO_EXISTING_PAR = gql`
+  mutation AddItemToExistingPAR($input: AddItemToExistingPARInput!) {
+    addItemToExistingPAR(input: $input) {
+      newItem {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        parId
+        parReceivedFrom
+        parReceivedFromPosition
+        parReceivedBy
+        parReceivedByPosition
+        parDepartment
+        parAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        parId
+      }
+      parId
+    }
+  }
+`;
+
 export const DELETE_PURCHASEORDER = gql`
   mutation DeletePurchaseOrder($id: ID!) {
     deletePurchaseOrder(purchaseOrderId: $id) {
@@ -190,4 +260,3 @@ export const DELETE_PURCHASEORDER = gql`
     }
   }
 `;
-

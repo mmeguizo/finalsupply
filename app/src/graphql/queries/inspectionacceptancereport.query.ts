@@ -50,7 +50,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
         details
         campus
         createdAt
-      },
+      }
       PurchaseOrderItem {
         id
         purchaseOrderId
@@ -117,7 +117,6 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
   }
 `;
 
-
 const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
   query GetAllInspectionAcceptanceReportForICS {
     inspectionAcceptanceReportForICS {
@@ -145,6 +144,10 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       icsReceivedByPosition
       icsDepartment
       icsAssignedDate
+      purpose
+      income
+      mds
+      details
       PurchaseOrder {
         id
         poNumber
@@ -164,8 +167,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
         income
         mds
         details
-      },
-       PurchaseOrderItem {
+      }
+      PurchaseOrderItem {
         id
         purchaseOrderId
         itemName
@@ -198,10 +201,9 @@ const GET_ALL_IAR_FOR_REPORTS = gql`
   }
 `;
 
-
 export {
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT,
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS,
   GET_ALL_IAR_FOR_REPORTS,
-  GET_IAR_ITEMS_BY_IAR_ID
+  GET_IAR_ITEMS_BY_IAR_ID,
 };

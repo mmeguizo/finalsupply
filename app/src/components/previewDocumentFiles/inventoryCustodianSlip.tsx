@@ -1,5 +1,17 @@
 import React, { useRef, useEffect } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled, capitalize } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  styled,
+  capitalize,
+} from "@mui/material";
 import { genericPreviewProps } from "../../types/previewPrintDocument/types";
 import { Divider } from "@mui/material";
 import { escapeHtml, nl2br } from "../../utils/textHelpers";
@@ -53,7 +65,12 @@ const PrintControls = styled(Box)({
   },
 });
 
-export default function InventoryCustodianSlip({ signatories, reportData, onPrint, onClose }: genericPreviewProps) {
+export default function InventoryCustodianSlip({
+  signatories,
+  reportData,
+  onPrint,
+  onClose,
+}: genericPreviewProps) {
   const componentRef = useRef(null);
   // const { inspectionOfficer , supplyOfficer, receivedFrom } = signatories
   // Create and inject print styles dynamically
@@ -100,7 +117,11 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
   }, []);
 
   // Check if reportData is an array, if not, convert it to an array for consistent handling
-  const itemsArray = Array.isArray(reportData) ? reportData.filter((item) => item !== null && item !== undefined) : reportData ? [reportData] : [];
+  const itemsArray = Array.isArray(reportData)
+    ? reportData.filter((item) => item !== null && item !== undefined)
+    : reportData
+      ? [reportData]
+      : [];
 
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -112,21 +133,34 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
 
   // Build a display string of unique ICS IDs
   const icsIdsDisplay = React.useMemo(() => {
-    const ids = Array.from(new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)));
+    const ids = Array.from(
+      new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)),
+    );
     return ids.join(", ");
   }, [itemsArray]);
 
-  console.log({ Signatories : signatories, reportData, itemsArray, icsIdsDisplay });
+  console.log({
+    Signatories: signatories,
+    reportData,
+    itemsArray,
+    icsIdsDisplay,
+  });
 
   return (
     <>
-      <PrintControls sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
+      <PrintControls
+        sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}
+      >
         {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
         {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
       </PrintControls>
 
       <Box id="printable-report" ref={componentRef}>
-        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid black" }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: "1px solid black" }}
+        >
           <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
             <TableHead>
               <TableRow sx={{ visibility: "collapse", height: 0 }}>
@@ -179,9 +213,33 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                           padding: "1rem 0px 3rem 0px",
                         }}
                       >
-                        <Typography sx={{ fontSize: "14px", fontWeight: "normal", textTransform: "uppercase" }}>Republic of the Philippines</Typography>
-                        <Typography sx={{ fontSize: "16px", fontWeight: "bold", textTransform: "uppercase" }}>Carlos Hilado Memorial State University</Typography>
-                        <Typography sx={{ fontSize: "16px", fontWeight: "900", textTransform: "uppercase" }}>Inventory Custodian Slip</Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            fontWeight: "normal",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Republic of the Philippines
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "16px",
+                            fontWeight: "bold",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Carlos Hilado Memorial State University
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "16px",
+                            fontWeight: "900",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Inventory Custodian Slip
+                        </Typography>
                       </Box>
                       <Box
                         sx={{
@@ -221,8 +279,14 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                             marginLeft: "calc(3rem * -1)",
                           }}
                         >
-                          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>ICS No: </Typography>
-                          <Box sx={{ borderBottom: "1px solid #000" }}>{icsIdsDisplay}</Box>
+                          <Typography
+                            sx={{ fontWeight: "bold", fontSize: "12px" }}
+                          >
+                            ICS No:{" "}
+                          </Typography>
+                          <Box sx={{ borderBottom: "1px solid #000" }}>
+                            {icsIdsDisplay}
+                          </Box>
                         </Box>
                       </Box>
                     </Box>
@@ -237,8 +301,17 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                         marginTop: "0.5rem",
                       }}
                     >
-                      <Typography sx={{ fontSize: "14px" }}>Entity Name: Carlos Hilado Memorial State University</Typography>
-                      <Typography sx={{ fontSize: "14px" }}>Date: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Typography>
+                      <Typography sx={{ fontSize: "14px" }}>
+                        Entity Name: Carlos Hilado Memorial State University
+                      </Typography>
+                      <Typography sx={{ fontSize: "14px" }}>
+                        Date:{" "}
+                        {new Date().toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </Typography>
                     </Box>
                   </Box>
                 </HeaderTableCell>
@@ -250,9 +323,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                 <StyledTableCell colSpan={2} align="center">
                   Amount
                 </StyledTableCell>
-                <StyledTableCell rowSpan={2}>
-                  Description
-                </StyledTableCell>
+                <StyledTableCell rowSpan={2}>Description</StyledTableCell>
                 <StyledTableCell colSpan={2} align="center">
                   Inventory
                 </StyledTableCell>
@@ -261,7 +332,9 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                 <StyledTableCell>Unit Cost</StyledTableCell>
                 <StyledTableCell>Total Cost</StyledTableCell>
                 <StyledTableCell>Item No.</StyledTableCell>
-                <StyledTableCell sx={{ fontSize: "10px" }}>Estimated Useful Life</StyledTableCell>
+                <StyledTableCell sx={{ fontSize: "10px" }}>
+                  Estimated Useful Life
+                </StyledTableCell>
               </TableRow>
             </TableHead>
 
@@ -270,48 +343,87 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                 <>
                   {itemsArray.map((item, index) => (
                     <StyledTableRow key={item?.id || index}>
-                      <StyledTableCell align="center">{item?.actualQuantityReceived || ""}</StyledTableCell>
+                      <StyledTableCell align="center">
+                        {item?.actualQuantityReceived || ""}
+                      </StyledTableCell>
                       <StyledTableCell align="center">
                         {item?.unit || ""}
                       </StyledTableCell>
                       <StyledTableCell align="right">
-                        {item?.unitCost ? `₱${Number(item.unitCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                        {item?.unitCost
+                          ? `₱${Number(item.unitCost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : ""}
                       </StyledTableCell>
                       <StyledTableCell align="right">
-                        {item?.actualQuantityReceived && item?.unitCost ? `₱${(Number(item.actualQuantityReceived) * Number(item.unitCost)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                        {item?.actualQuantityReceived && item?.unitCost
+                          ? `₱${(Number(item.actualQuantityReceived) * Number(item.unitCost)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : ""}
                       </StyledTableCell>
                       <StyledTableCell align="left">
                         <Box>
-                          <Typography sx={{ fontWeight: 500 }}>{item?.description || item?.PurchaseOrderItem?.description || ""}</Typography>
+                          <Typography sx={{ fontWeight: 500 }}>
+                            {item?.description ||
+                              item?.PurchaseOrderItem?.description ||
+                              ""}
+                          </Typography>
 
                           {/* specification (escaped + newline -> <br/>) */}
-                          {(item?.PurchaseOrderItem?.specification || item?.specification) && (
+                          {(item?.PurchaseOrderItem?.specification ||
+                            item?.specification) && (
                             <Typography
                               component="div"
-                              sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                              sx={{
+                                fontSize: 12,
+                                color: "text.secondary",
+                                mt: 0.5,
+                                textAlign: "left",
+                              }}
                               dangerouslySetInnerHTML={{
-                                __html: nl2br(escapeHtml(item?.PurchaseOrderItem?.specification || item?.specification || "")),
+                                __html: nl2br(
+                                  escapeHtml(
+                                    item?.PurchaseOrderItem?.specification ||
+                                      item?.specification ||
+                                      "",
+                                  ),
+                                ),
                               }}
                             />
                           )}
 
                           {/* general description (escaped + newline -> <br/>) */}
-                          {(item?.PurchaseOrderItem?.generalDescription || item?.generalDescription) && (
+                          {(item?.PurchaseOrderItem?.generalDescription ||
+                            item?.generalDescription) && (
                             <Typography
                               component="div"
-                              sx={{ fontSize: 12, color: "text.secondary", mt: 0.5, textAlign: "left" }}
+                              sx={{
+                                fontSize: 12,
+                                color: "text.secondary",
+                                mt: 0.5,
+                                textAlign: "left",
+                              }}
                               dangerouslySetInnerHTML={{
-                                __html: nl2br(escapeHtml(item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || "")),
+                                __html: nl2br(
+                                  escapeHtml(
+                                    item?.PurchaseOrderItem
+                                      ?.generalDescription ||
+                                      item?.generalDescription ||
+                                      "",
+                                  ),
+                                ),
                               }}
                             />
                           )}
                         </Box>
                       </StyledTableCell>
                       <StyledTableCell align="center" sx={{ fontSize: "10px" }}>
-                        {item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || ""}
+                        {item?.inventoryItemNo ||
+                          item?.PurchaseOrderItem?.inventoryItemNo ||
+                          ""}
                       </StyledTableCell>
                       <StyledTableCell align="center" sx={{ fontSize: "10px" }}>
-                        {item?.estimatedUsefulLife || item?.PurchaseOrderItem?.estimatedUsefulLife || ""}
+                        {item?.estimatedUsefulLife ||
+                          item?.PurchaseOrderItem?.estimatedUsefulLife ||
+                          ""}
                       </StyledTableCell>
                     </StyledTableRow>
                   ))}
@@ -322,23 +434,72 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell sx={{ textAlign: "center", padding: 0.5 }}>
-                      <Typography sx={{ fontSize: "12px", color: "text.secondary" }}>*****Nothing Follows*****</Typography>
+                      <Typography
+                        sx={{ fontSize: "12px", color: "text.secondary" }}
+                      >
+                        *****Nothing Follows*****
+                      </Typography>
                     </StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                   </StyledTableRow>
+                  {/* Details below Nothing Follows */}
+                  {(itemsArray[0]?.details ||
+                    itemsArray[0]?.PurchaseOrder?.details) && (
+                    <StyledTableRow>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell sx={{ textAlign: "left", padding: 0.5 }}>
+                        <Typography fontSize={12}>
+                          Details:{" "}
+                          {itemsArray[0]?.details ||
+                            itemsArray[0]?.PurchaseOrder?.details}
+                        </Typography>
+                      </StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                    </StyledTableRow>
+                  )}
 
                   {/* Total Row at Bottom */}
                   <StyledTableRow>
-                    <StyledTableCell sx={{ fontWeight: 600 }}>Total</StyledTableCell>
+                    <StyledTableCell sx={{ fontWeight: 600 }}>
+                      Total
+                    </StyledTableCell>
+                    <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell align="right" sx={{ fontWeight: 600 }}>
-                      ₱{itemsArray.reduce((sum, item) => sum + ((Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₱
+                      {itemsArray
+                        .reduce(
+                          (sum, item) =>
+                            sum +
+                            (Number(item?.actualQuantityReceived) || 0) *
+                              (Number(item?.unitCost) || 0),
+                          0,
+                        )
+                        .toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                     </StyledTableCell>
-                    <StyledTableCell colSpan={2}></StyledTableCell>
-                    <StyledTableCell colSpan={2} sx={{ textAlign: "left", padding: 0.5 }}>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <StyledTableCell></StyledTableCell>
+                    <StyledTableCell
+                      colSpan={2}
+                      sx={{ textAlign: "left", padding: 0.5 }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Box
                             sx={{
                               width: 14,
@@ -350,13 +511,23 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                               fontSize: "10px",
                             }}
                           >
-                            {itemsArray[0]?.PurchaseOrder?.income ? "✓" : ""}
+                            {itemsArray[0]?.income ||
+                            itemsArray[0]?.PurchaseOrder?.income
+                              ? "✓"
+                              : ""}
                           </Box>
                           <Typography fontSize={12}>
-                            INCOME {itemsArray[0]?.PurchaseOrder?.income ? itemsArray[0].PurchaseOrder.income : ""}
+                            INCOME{" "}
+                            {itemsArray[0]?.income ||
+                            itemsArray[0]?.PurchaseOrder?.income
+                              ? itemsArray[0]?.income ||
+                                itemsArray[0]?.PurchaseOrder?.income
+                              : ""}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Box
                             sx={{
                               width: 14,
@@ -368,10 +539,18 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                               fontSize: "10px",
                             }}
                           >
-                            {itemsArray[0]?.PurchaseOrder?.mds ? "✓" : ""}
+                            {itemsArray[0]?.mds ||
+                            itemsArray[0]?.PurchaseOrder?.mds
+                              ? "✓"
+                              : ""}
                           </Box>
                           <Typography fontSize={12}>
-                            MDS {itemsArray[0]?.PurchaseOrder?.mds ? itemsArray[0].PurchaseOrder.mds : ""}
+                            MDS{" "}
+                            {itemsArray[0]?.mds ||
+                            itemsArray[0]?.PurchaseOrder?.mds
+                              ? itemsArray[0]?.mds ||
+                                itemsArray[0]?.PurchaseOrder?.mds
+                              : ""}
                           </Typography>
                         </Box>
                       </Box>
@@ -414,9 +593,20 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                         textAlign: "center",
                       }}
                     >
-                      <span>{capitalizeFirstLetter(signatories?.recieved_from || "") }</span>
+                      <span>
+                        {capitalizeFirstLetter(
+                          signatories?.recieved_from || "",
+                        )}
+                      </span>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}> {capitalizeFirstLetter(signatories?.metadata?.recieved_from?.role || signatories?.metadata?.recieved_from?.position || "")} </Typography>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {" "}
+                        {capitalizeFirstLetter(
+                          signatories?.metadata?.recieved_from?.role ||
+                            signatories?.metadata?.recieved_from?.position ||
+                            "",
+                        )}{" "}
+                      </Typography>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -457,9 +647,18 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
                         textAlign: "center",
                       }}
                     >
-                      <span>{capitalizeFirstLetter(signatories?.recieved_by || "")}</span>
+                      <span>
+                        {capitalizeFirstLetter(signatories?.recieved_by || "")}
+                      </span>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
-                      <Typography sx={{ fontWeight: 600 }}> {capitalizeFirstLetter(signatories?.metadata?.recieved_by?.role || signatories?.metadata?.recieved_by?.position ||  "")} </Typography>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {" "}
+                        {capitalizeFirstLetter(
+                          signatories?.metadata?.recieved_by?.role ||
+                            signatories?.metadata?.recieved_by?.position ||
+                            "",
+                        )}{" "}
+                      </Typography>
                       <Divider sx={{ width: "100%", margin: "5px 0" }} />
                     </Box>
                     <Box
@@ -482,8 +681,7 @@ export default function InventoryCustodianSlip({ signatories, reportData, onPrin
 
             {/* Create a TableFooter for the note */}
             <tfoot>
-              <TableRow>
-              </TableRow>
+              <TableRow></TableRow>
             </tfoot>
           </Table>
         </TableContainer>

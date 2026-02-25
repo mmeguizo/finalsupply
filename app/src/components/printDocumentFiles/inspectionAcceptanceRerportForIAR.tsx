@@ -7,7 +7,7 @@ import { escapeHtml, nl2br } from "../../utils/textHelpers";
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
   reportData: any,
-  poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
+  poOverrides?: { invoice?: string; dateOfPayment?: string }, // NEW
 ) => {
   // normalize input to array
   const items: any[] = Array.isArray(reportData)
@@ -17,11 +17,9 @@ export const getInspectionReportTemplateForIAR = (
       : [];
 
   const purchaseOrder = items[0]?.PurchaseOrder || {};
-  const invoiceText = escapeHtml(
-    String(items[0]?.invoice ?? "")
-  );
+  const invoiceText = escapeHtml(String(items[0]?.invoice ?? ""));
   const dateOfPaymentText = escapeHtml(
-    String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? "")
+    String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? ""),
   );
 
   // helpers already imported: escapeHtml, nl2br
@@ -29,7 +27,7 @@ export const getInspectionReportTemplateForIAR = (
     items
       .map((it: any, idx: number) => {
         const desc = escapeHtml(
-          it.description || it.PurchaseOrderItem?.description || ""
+          it.description || it.PurchaseOrderItem?.description || "",
         );
         const specHtml = it.PurchaseOrderItem?.specification
           ? nl2br(it.PurchaseOrderItem.specification)
@@ -39,14 +37,17 @@ export const getInspectionReportTemplateForIAR = (
           : "";
 
         const qty = escapeHtml(
-          String(it.actualQuantityReceived ?? it.quantity ?? "")
+          String(it.actualQuantityReceived ?? it.quantity ?? ""),
         );
         const unit = escapeHtml(it.unit ?? "");
         const unitCost = escapeHtml(
-          String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? "")
+          String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""),
         );
         const amount = escapeHtml(
-          String((it.actualQuantityReceived ?? it.quantity ?? "") * (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? "") )
+          String(
+            (it.actualQuantityReceived ?? it.quantity ?? "") *
+              (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""),
+          ),
         );
         // const amount = escapeHtml(
         //   String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
@@ -80,31 +81,36 @@ export const getInspectionReportTemplateForIAR = (
         <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
         <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
       </tr>
-      ${items[0]?.PurchaseOrder?.income || items[0]?.PurchaseOrder?.mds || items[0]?.PurchaseOrder?.details ? `
+      ${
+        items[0]?.income || items[0]?.mds || items[0]?.details
+          ? `
       <tr>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
-        <td colspan="3" style="padding:4px; text-align:left;">
+        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td colspan="3" style="padding:4px; text-align:left; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;">
           <span style="font-size:12px; color:#333;">
-            ${items[0]?.PurchaseOrder?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.income)}</span></p>` : ''}
-            ${items[0]?.PurchaseOrder?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.mds)}</span></p>` : ''}
-            ${items[0]?.PurchaseOrder?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0].PurchaseOrder.details)}</span></p>` : ''}
+            ${items[0]?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].income)}</span></p>` : ""}
+            ${items[0]?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].mds)}</span></p>` : ""}
+            ${items[0]?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0].details)}</span></p>` : ""}
           </span>
         </td>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
-        <td style="padding:4px"></td>
+        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
       </tr>
-      ` : ''}
+      `
+          : ""
+      }
     `
       : "");
 
   const totalAmount = items.reduce(
-    (sum, it) => sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
-    0
+    (sum, it) =>
+      sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
+    0,
   );
 
-  console.log
+  console.log;
 
   const formattedTotal =
     items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
