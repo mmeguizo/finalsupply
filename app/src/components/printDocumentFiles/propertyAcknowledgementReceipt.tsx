@@ -1,11 +1,17 @@
-export const getPropertyAcknowledgementReciept = (signatories: any, reportData: any) => {
+export const getPropertyAcknowledgementReciept = (
+  signatories: any,
+  reportData: any,
+  remarks?: string,
+) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   console.log("getPropertyAcknowledgementReciept", signatories, reportData);
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
 
   const { recieved_from, recieved_by, metadata } = signatories;
-  const { position: recievedFromPosition, role: recievedFromRole } = metadata?.recieved_from || {};
-  const { position: recievedByPosition, role: recievedByRole } = metadata?.recieved_by || {};
+  const { position: recievedFromPosition, role: recievedFromRole } =
+    metadata?.recieved_from || {};
+  const { position: recievedByPosition, role: recievedByRole } =
+    metadata?.recieved_by || {};
 
   const escapeHtml = (str: any) =>
     String(str ?? "")
@@ -29,18 +35,32 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   };
 
   // Collect all unique PAR IDs from the items
-  const parIds = Array.from(new Set(itemsArray.map((item: any) => item?.parId).filter((id: any) => !!id)));
+  const parIds = Array.from(
+    new Set(
+      itemsArray.map((item: any) => item?.parId).filter((id: any) => !!id),
+    ),
+  );
   const parIdsDisplay = parIds.length ? parIds.join(", ") : "";
 
   // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
   const itemRows = itemsArray
     .map((item, index) => {
-      const desc = escapeHtml(item.description || item.PurchaseOrderItem?.description || "");
-      const spec = item.PurchaseOrderItem?.specification || item.specification || "";
-      const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || "";
+      const desc = escapeHtml(
+        item.description || item.PurchaseOrderItem?.description || "",
+      );
+      const spec =
+        item.PurchaseOrderItem?.specification || item.specification || "";
+      const gen =
+        item.PurchaseOrderItem?.generalDescription ||
+        item.generalDescription ||
+        "";
 
-      const specHtml = spec ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>` : "";
-      const genHtml = gen ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>` : "";
+      const specHtml = spec
+        ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>`
+        : "";
+      const genHtml = gen
+        ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>`
+        : "";
 
       let row = `
         <tr>
@@ -57,19 +77,7 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
       `;
 
       if (index === itemsArray.length - 1) {
-        row += `
-        <tr>
-          <td></td>
-          <td></td>
-          <td colspan="2">
-            <br />
-            <p style="text-align: center;">*****Nothing Follows*****</p>
-          </td>
-          <td></td>
-          <td></td>
-        </tr>
-        `;
-
+        // Spacer row first to push nothing follows to the bottom
         row += `
           <tr>
             <td style="height: 100%"></td>
@@ -79,6 +87,41 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
             <td>&nbsp;</td>
           </tr>
           `;
+
+        row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <p style="text-align: center;">*****Nothing Follows*****</p>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+
+        // Income/MDS/Details below nothing follows
+        const incomeText =
+          itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income || "";
+        const mdsText =
+          itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds || "";
+        const detailsText =
+          itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details || "";
+        if (incomeText || mdsText || detailsText) {
+          row += `
+          <tr>
+            <td></td>
+            <td></td>
+            <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">
+              ${incomeText ? `<div>Income: ${escapeHtml(incomeText)}</div>` : ""}
+              ${mdsText ? `<div>MDS: ${escapeHtml(mdsText)}</div>` : ""}
+              ${detailsText ? `<div>Details: ${escapeHtml(detailsText)}</div>` : ""}
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+          `;
+        }
       }
 
       return row;
@@ -94,12 +137,22 @@ export const getPropertyAcknowledgementReciept = (signatories: any, reportData: 
   const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || "";
 
   // Calculate totals
-  const totalUnitCost = itemsArray.reduce((sum, item) => sum + (parseFloat(item.unitCost) || 0), 0);
-  const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  const totalUnitCost = itemsArray.reduce(
+    (sum, item) => sum + (parseFloat(item.unitCost) || 0),
+    0,
+  );
+  const totalAmount = itemsArray.reduce(
+    (sum, item) => sum + (parseFloat(item.amount) || 0),
+    0,
+  );
 
   // Format totals
-  const formatTotalUnitCost = isNaN(totalUnitCost) ? "" : formatCurrency(totalUnitCost);
-  const formatTotalAmount = isNaN(totalAmount) ? "" : formatCurrency(totalAmount);
+  const formatTotalUnitCost = isNaN(totalUnitCost)
+    ? ""
+    : formatCurrency(totalUnitCost);
+  const formatTotalAmount = isNaN(totalAmount)
+    ? ""
+    : formatCurrency(totalAmount);
 
   return `
 <html lang="en">
@@ -402,13 +455,13 @@ table {
           <td>${formatTotalAmount}</td>
         </tr>
         <tr>
-          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${firstItem.PurchaseOrder?.details ? `<span style="font-style: italic;">${escapeHtml(firstItem.PurchaseOrder.details)}</span>` : ""}</td>
+          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${remarks || firstItem?.remarks ? `<span style="font-style: italic;">${escapeHtml(remarks || firstItem?.remarks || "")}</span>` : ""}</td>
           <td colspan="2" style="padding: 4px; vertical-align: top;">
             <span style="display: inline-flex; align-items: center; margin-right: 15px;">
-              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem.PurchaseOrder?.income ? "✓" : ""}</span> INCOME
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.income || firstItem.PurchaseOrder?.income ? "✓" : ""}</span> INCOME ${escapeHtml(firstItem?.income || firstItem.PurchaseOrder?.income || "")}
             </span>
             <span style="display: inline-flex; align-items: center;">
-              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem.PurchaseOrder?.mds ? "✓" : ""}</span> MDS
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.mds || firstItem.PurchaseOrder?.mds ? "✓" : ""}</span> MDS ${escapeHtml(firstItem?.mds || firstItem.PurchaseOrder?.mds || "")}
             </span>
           </td>
         </tr>

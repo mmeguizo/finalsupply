@@ -9,19 +9,19 @@ const inspectionAcceptanceReport = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    iarId : {
+    iarId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    icsId : {
+    icsId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    risId : {
+    risId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    parId : {
+    parId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -48,8 +48,8 @@ const inspectionAcceptanceReport = sequelize.define(
       index: true,
     },
     iarStatus: {
-      type: DataTypes.ENUM('partial', 'complete','none'),
-      defaultValue: 'none',
+      type: DataTypes.ENUM("partial", "complete", "none"),
+      defaultValue: "none",
       allowNull: true,
     },
     description: {
@@ -81,12 +81,12 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.ENUM(
         "property acknowledgement reciept",
         "inventory custodian slip",
-        "requisition issue slip"
+        "requisition issue slip",
       ),
       allowNull: true,
       defaultValue: "requisition issue slip", // Default value
     },
-    tag : {
+    tag: {
       type: DataTypes.STRING(255),
       allowNull: true,
       defaultValue: "none", // Default value
@@ -104,7 +104,7 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    inventoryNumber : {
+    inventoryNumber: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
@@ -236,13 +236,24 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: "Date when ICS ID was assigned",
     },
-
+    // Purpose field for ICS and RIS printing
+    purpose: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Purpose field for ICS/RIS print reports (manually entered)",
+    },
+    // Remarks field for PAR printing
+    remarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Remarks field for PAR print reports (manually entered)",
+    },
   },
   {
     tableName: "inspection_acceptance_report", // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  }
+  },
 );
 
 // No association is needed here because ponumber is not a foreign key

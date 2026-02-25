@@ -4,6 +4,7 @@ import { escapeHtml, nl2br } from "../../utils/textHelpers";
 export const getRequisitionAndIssueSlip = (
   signatories: any,
   reportData: any,
+  purpose?: string,
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
@@ -59,8 +60,7 @@ export const getRequisitionAndIssueSlip = (
                 </tr>
       `;
       if (index === itemsArray.length - 1) {
-
-         row += `
+        row += `
           <tr>
             <td style="height: 100%"></td>
             <td>&nbsp;</td>
@@ -86,8 +86,6 @@ export const getRequisitionAndIssueSlip = (
           <td></td>
         </tr>
         `;
-
-       
       }
 
       return row;
@@ -442,11 +440,7 @@ tfoot {
             <tfoot>
                 <tr class="footer-1st-row">
                     <td colspan="11" style="margin: 8px; padding: 8px;">
-                        Purpose: 
-              ${itemsArray[0]?.PurchaseOrder?.income ? `Income: <span  style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.income)}</span></p>` : ""}
-              ${itemsArray[0]?.PurchaseOrder?.mds ? `MDS: <span style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.mds)}</span></p>` : ""}
-              ${itemsArray[0]?.PurchaseOrder?.details ? `Details: <span style="font-size:12px; margin: 0;">${capitalizeFirstLetter(itemsArray[0].PurchaseOrder.details)}</span></p>` : ""}
-                      
+                        Purpose: ${escapeHtml(purpose || itemsArray[0]?.purpose || "")}
                     </td>
                     
                 </tr>

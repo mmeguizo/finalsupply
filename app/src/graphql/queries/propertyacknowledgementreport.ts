@@ -69,6 +69,10 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
       parReceivedByPosition
       parDepartment
       parAssignedDate
+      remarks
+      income
+      mds
+      details
       PurchaseOrder {
         id
         poNumber
@@ -88,8 +92,8 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
         income
         mds
         details
-      },
-        PurchaseOrderItem {
+      }
+      PurchaseOrderItem {
         id
         purchaseOrderId
         itemName
@@ -129,10 +133,9 @@ const GET_EXISTING_PAR_IDS = gql`
   }
 `;
 
-
 export {
   GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT,
   GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY,
   GET_NEXT_PAR_ID,
-  GET_EXISTING_PAR_IDS
+  GET_EXISTING_PAR_IDS,
 };

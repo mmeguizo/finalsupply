@@ -99,6 +99,8 @@ type ItemWithPurchaseOrder {
     icsReceivedByPosition: String
     icsDepartment: String
     icsAssignedDate: String
+    purpose: String
+    remarks: String
 }
 type IARonly{
     id: ID
@@ -160,7 +162,17 @@ type Mutation {
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
   updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
   createSingleICSAssignment(input: CreateSingleICSInput!): CreateICSResponse!
+  createMultiItemICSAssignment(input: CreateMultiItemICSInput!): CreateMultiICSResponse!
+  addItemToExistingICS(input: AddItemToExistingICSInput!): AddItemToExistingICSResponse!
   updateICSAssignment(input: UpdateICSAssignmentInput!): ItemWithPurchaseOrder!
+  updateItemPurpose(ids: [ID!]!, purpose: String!): UpdatePurposeRemarksPayload!
+  updateItemRemarks(ids: [ID!]!, remarks: String!): UpdatePurposeRemarksPayload!
+}
+
+type UpdatePurposeRemarksPayload {
+    success: Boolean!
+    message: String!
+    updatedCount: Int!
 }
 
 type UpdateIARInvoicePayload {
@@ -242,10 +254,40 @@ type CreateICSResponse {
     generatedIcsId: String!
 }
 
+# Multi-item ICS assignment types
+input MultiICSItemEntry {
+    sourceItemId: Int!
+    quantity: Int!
+}
+
+input CreateMultiItemICSInput {
+    items: [MultiICSItemEntry!]!
+    department: String
+    receivedFrom: String!
+    receivedFromPosition: String
+    receivedBy: String!
+    receivedByPosition: String
+}
+
+input AddItemToExistingICSInput {
+    sourceItemId: Int!
+    quantity: Int!
+    existingIcsId: String!
+}
+
+type CreateMultiICSResponse {
+    newItems: [ItemWithPurchaseOrder!]!
+    sourceItems: [ItemWithPurchaseOrder!]!
+    generatedIcsId: String!
+}
+
+type AddItemToExistingICSResponse {
+    newItem: ItemWithPurchaseOrder!
+    sourceItem: ItemWithPurchaseOrder!
+    icsId: String!
+}
+
 
 `;
-
-
-
 
 export default inspectionAcceptanceReportTypeDef;

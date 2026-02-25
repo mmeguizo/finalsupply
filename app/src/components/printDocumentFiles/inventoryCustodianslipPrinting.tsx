@@ -4,6 +4,7 @@ import { escapeHtml, nl2br } from "../../utils/textHelpers";
 export const getInventoryTemplateForICS = (
   signatories: any,
   reportData: any,
+  purpose?: string,
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
@@ -13,7 +14,7 @@ export const getInventoryTemplateForICS = (
   }, 0);
 
   // Format the total amount
-  const formatTotalAmount = `₱${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatTotalAmount = `₱${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const icsIds = Array.from(
     new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)),
   );
@@ -42,15 +43,21 @@ export const getInventoryTemplateForICS = (
 
       const unitCostDisplay =
         item?.formatUnitCost ||
-        (item?.unitCost ? `₱${Number(item.unitCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
+        (item?.unitCost
+          ? `₱${Number(item.unitCost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : "");
 
       const unitCost = item?.unitCost || 0;
       const actualQuantityReceived = item?.actualQuantityReceived || 0;
       const totalCost = actualQuantityReceived * unitCost;
-      const totalCostDisplay = `₱${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const totalCostDisplay = `₱${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-      const inventoryItemNo = item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || "";
-      const estimatedUsefulLife = item?.estimatedUsefulLife || item?.PurchaseOrderItem?.estimatedUsefulLife || "";
+      const inventoryItemNo =
+        item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || "";
+      const estimatedUsefulLife =
+        item?.estimatedUsefulLife ||
+        item?.PurchaseOrderItem?.estimatedUsefulLife ||
+        "";
 
       let row = `
         <tr>
@@ -69,11 +76,21 @@ export const getInventoryTemplateForICS = (
     .join("");
 
   // Calculate totals
-  const totalCost = itemsArray.reduce((sum, item) => sum + ((Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0)), 0);
+  const totalCost = itemsArray.reduce(
+    (sum, item) =>
+      sum +
+      (Number(item?.actualQuantityReceived) || 0) *
+        (Number(item?.unitCost) || 0),
+    0,
+  );
 
-  // Check if income or mds has value
-  const hasIncome = itemsArray[0]?.PurchaseOrder?.income;
-  const hasMds = itemsArray[0]?.PurchaseOrder?.mds;
+  // Check if income or mds has value (item-level first, fallback to PO)
+  const hasIncome =
+    itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income;
+  const hasMds = itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds;
+  const hasDetails =
+    itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details;
+  const purposeText = purpose || itemsArray[0]?.purpose || "";
 
   const footerRows = `
   <tr>
@@ -85,6 +102,21 @@ export const getInventoryTemplateForICS = (
     <td></td>
     <td></td>
   </tr>
+  ${
+    hasDetails
+      ? `
+  <tr>
+    <td></td>
+    <td colspan="2"></td>
+    <td></td>
+    <td></td>
+    <td style="text-align: left; font-size: 12px; padding: 4px;">Details: ${escapeHtml(hasDetails)}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  `
+      : ""
+  }
     `;
 
   return `
@@ -398,22 +430,33 @@ tfoot {
                 <tr>
                     <td style="font-weight: 600;">Total</td>
                     <td colspan="2"></td>
-                    <td style="text-align: right; font-weight: 600;">\u20b1${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td></td>
+                    <td style="text-align: right; font-weight: 600;">\u20b1${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td></td>
                     <td colspan="2" style="text-align: left; vertical-align: top; padding: 4px;">
                       <div style="display: flex; flex-direction: column; gap: 4px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
-                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasIncome ? '\u2713' : ''}</div>
-                          <span style="font-size: 12px;">INCOME ${hasIncome ? hasIncome : ''}</span>
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasIncome ? "\u2713" : ""}</div>
+                          <span style="font-size: 12px;">INCOME ${hasIncome ? hasIncome : ""}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasMds ? '\u2713' : ''}</div>
-                          <span style="font-size: 12px;">MDS ${hasMds ? hasMds : ''}</span>
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasMds ? "\u2713" : ""}</div>
+                          <span style="font-size: 12px;">MDS ${hasMds ? hasMds : ""}</span>
                         </div>
                       </div>
                     </td>
                 </tr>
+                ${
+                  purposeText
+                    ? `
+                <tr>
+                    <td colspan="8" style="padding: 4px 8px; font-size: 12px;">
+                      <span style="font-weight: 600;">Purpose:</span> ${escapeHtml(purposeText)}
+                    </td>
+                </tr>
+                `
+                    : ""
+                }
                 <tr>
                     <td colspan="5" style="padding: 4px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">

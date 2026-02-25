@@ -147,6 +147,39 @@ type CreateRISResponse {
   generatedRisId: String!
 }
 
+# Multi-item RIS assignment types
+input MultiRISItemEntry {
+  sourceItemId: ID!
+  quantity: Int!
+}
+
+input CreateMultiItemRISInput {
+  items: [MultiRISItemEntry!]!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+input AddItemToExistingRISInput {
+  sourceItemId: ID!
+  quantity: Int!
+  existingRisId: String!
+}
+
+type CreateMultiRISResponse {
+  newItems: [ItemWithPurchaseOrder!]!
+  sourceItems: [ItemWithPurchaseOrder!]!
+  generatedRisId: String!
+}
+
+type AddItemToExistingRISResponse {
+  newItem: ItemWithPurchaseOrder!
+  sourceItem: ItemWithPurchaseOrder!
+  risId: String!
+}
+
 type Query {
     requisitionIssueSlip: [ItemWithPurchaseOrder!]
     requisitionIssueSlipForView: [ItemWithPurchaseOrder!]
@@ -157,14 +190,15 @@ type Mutation {
   updateRISInventoryIDs(input: RISUpdateInput!): [ItemWithPurchaseOrder]
   # Create a single RIS assignment (saves immediately, clones from source)
   createSingleRISAssignment(input: CreateSingleRISInput!): CreateRISResponse!
+  # Create a multi-item RIS assignment (multiple items share one RIS ID)
+  createMultiItemRISAssignment(input: CreateMultiItemRISInput!): CreateMultiRISResponse!
+  # Add an item to an existing RIS ID
+  addItemToExistingRIS(input: AddItemToExistingRISInput!): AddItemToExistingRISResponse!
   # Update an existing RIS assignment
   updateRISAssignment(input: UpdateRISAssignmentInput!): ItemWithPurchaseOrder!
 }
 
 
 `;
-
-
-
 
 export default requisitionIssueSlipTypeDef;

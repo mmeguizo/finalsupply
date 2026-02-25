@@ -119,3 +119,76 @@ export const UPDATE_RIS_ASSIGNMENT = gql`
   }
 `;
 
+// Create a multi-item RIS assignment (multiple items share one RIS ID)
+export const CREATE_MULTI_ITEM_RIS_ASSIGNMENT = gql`
+  mutation CreateMultiItemRISAssignment($input: CreateMultiItemRISInput!) {
+    createMultiItemRISAssignment(input: $input) {
+      newItems {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        risId
+        risReceivedFrom
+        risReceivedFromPosition
+        risReceivedBy
+        risReceivedByPosition
+        risDepartment
+        risAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItems {
+        id
+        actualQuantityReceived
+        risId
+      }
+      generatedRisId
+    }
+  }
+`;
+
+// Add an item to an existing RIS ID
+export const ADD_ITEM_TO_EXISTING_RIS = gql`
+  mutation AddItemToExistingRIS($input: AddItemToExistingRISInput!) {
+    addItemToExistingRIS(input: $input) {
+      newItem {
+        id
+        itemName
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        risId
+        risReceivedFrom
+        risReceivedFromPosition
+        risReceivedBy
+        risReceivedByPosition
+        risDepartment
+        risAssignedDate
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        risId
+      }
+      risId
+    }
+  }
+`;

@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
 const GET_ALL_REQUISITION_ISSUE_SLIP = gql`
-  query GetAllRequisitionIssueSlip{
+  query GetAllRequisitionIssueSlip {
     requisitionIssueSlip {
       id
       itemName
@@ -66,6 +66,7 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risReceivedByPosition
       risDepartment
       risAssignedDate
+      purpose
       PurchaseOrder {
         id
         poNumber
@@ -86,8 +87,8 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
         mds
         details
         campus
-      },
-       PurchaseOrderItem {
+      }
+      PurchaseOrderItem {
         id
         purchaseOrderId
         itemName
@@ -109,8 +110,7 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
   }
 `;
 
-
 export {
   GET_ALL_REQUISITION_ISSUE_SLIP,
-  GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY
+  GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY,
 };
