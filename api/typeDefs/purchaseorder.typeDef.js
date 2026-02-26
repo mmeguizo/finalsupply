@@ -9,6 +9,7 @@ type PurchaseOrder {
     modeOfProcurement: String
     email: String
     telephone: String
+    tin: String
     campus: String
     placeOfDelivery: String
     dateOfDelivery: String
@@ -110,6 +111,7 @@ type PurchaseOrderType {
     modeOfProcurement: String
     email: String
     telephone: String
+    tin: String
     campus: String
     placeOfDelivery: String
     dateOfDelivery: String
@@ -203,6 +205,7 @@ input UpdatePurchaseOrderInput {
     modeOfProcurement: String
     email: String
     telephone: String
+    tin: String
     campus: String
     placeOfDelivery: String
     dateOfDelivery: String
@@ -229,6 +232,7 @@ input PurchaseOrderInput {
     modeOfProcurement: String
     email: String
     telephone: String
+    tin: String
     campus: String
     placeOfDelivery: String
     dateOfDelivery: String

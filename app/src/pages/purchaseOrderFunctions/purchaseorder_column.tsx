@@ -235,6 +235,7 @@ export const createItemColumns = (
         delivered: "pending",
         partial: "delivered",
       };
+      const hasReceived = Number(params.row.actualQuantityReceived ?? 0) > 0;
       return (
         <Chip
           icon={iconMap[status]}
@@ -242,11 +243,22 @@ export const createItemColumns = (
           color={colorMap[status]}
           size="small"
           variant={status === "pending" ? "outlined" : "filled"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDeliveryStatusChange?.(String(params.row.id), nextStatus[status]);
+          onClick={
+            hasReceived
+              ? (e) => {
+                  e.stopPropagation();
+                  onDeliveryStatusChange?.(
+                    String(params.row.id),
+                    nextStatus[status],
+                  );
+                }
+              : undefined
+          }
+          sx={{
+            cursor: hasReceived ? "pointer" : "default",
+            fontWeight: 500,
+            opacity: hasReceived ? 1 : 0.6,
           }}
-          sx={{ cursor: "pointer", fontWeight: 500 }}
         />
       );
     },

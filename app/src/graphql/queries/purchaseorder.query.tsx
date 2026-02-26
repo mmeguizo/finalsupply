@@ -7,7 +7,9 @@ const GET_PURCHASEORDERS = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery
@@ -56,7 +58,9 @@ const GET_PURCHASEORDER = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery

@@ -350,7 +350,8 @@ export default function MultiRisAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("createMultiRIS error:", err);
       setError(err.message || "Failed to create RIS. Please try again.");
@@ -408,7 +409,8 @@ export default function MultiRisAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("addToExistingRIS error:", err);
       setError(err.message || "Failed to add item to existing RIS.");
@@ -510,7 +512,8 @@ export default function MultiRisAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("splitAndAssignRIS error:", err);
       setError(err.message || "Failed to split and assign RIS.");

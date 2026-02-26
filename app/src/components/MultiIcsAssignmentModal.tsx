@@ -359,7 +359,8 @@ export default function MultiIcsAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("createMultiICS error:", err);
       setError(err.message || "Failed to create ICS. Please try again.");
@@ -417,7 +418,8 @@ export default function MultiIcsAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("addToExistingICS error:", err);
       setError(err.message || "Failed to add item to existing ICS.");
@@ -519,7 +521,8 @@ export default function MultiIcsAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("splitAndAssignICS error:", err);
       setError(err.message || "Failed to split and assign ICS.");

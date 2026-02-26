@@ -251,8 +251,8 @@ const purchaseorderResolver = {
           throw new Error("Unauthorized");
         }
 
-        // Generate IAR ID for this batch (after auth check)
-        const autoIiarIds = await generateNewIarId(campus || "Talisay");
+        // IAR ID generation is now deferred to the "Generate IAR" step
+        // No longer needed during PO creation
 
         // Items are optional - purchase order can be created without items
 
@@ -321,90 +321,15 @@ const purchaseorderResolver = {
             const newPOI = await PurchaseOrderItems.create(
               {
                 ...cleanedItems,
-                actualQuantityReceived: item.currentInput,
+                actualQuantityReceived: 0, // No receiving at PO creation — deferred to Generate IAR step
                 purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
                 itemGroupId: nanoid(), // stable grouping key for UI aggregation
               },
               { transaction: t },
             ); // Use transaction
 
-            // Only create IAR and History if currentInput is provided and greater than 0
-            if (item.currentInput && Number(item.currentInput) > 0) {
-              // let icsId = "";
-              // let parId = "";
-              // let risId = "";
-              // derive campus suffix
-              // const campusSuffixMap = {
-              //   Talisay: 'T',
-              //   Alijis: 'A',
-              //   Binalbagan: 'B',
-              //   'Fortune Town': 'F',
-              // };
-              // const campusSuffix = campusSuffixMap[campus] || '';
-              // if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-              //   // COMMENTED OUT FOR DEMO: Batch ICS ID logic
-              //   // if (!batchIcsId) {
-              //   //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
-              //   // }
-              //   // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-
-              //   // Generate individual ICS ID for each item
-              //   const gen = await generateNewIcsId(cleanedItems.tag);
-              //   icsId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              // }
-              // if (
-              //   cleanedItems.category === "property acknowledgement reciept"
-              // ) {
-              //   const gen = await generateNewParId();
-              //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              // }
-              // if (cleanedItems.category === "requisition issue slip") {
-              //   const gen = await generateNewRisId();
-              //   risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-              // }
-
-              const iarRow = await inspectionAcceptanceReport.create(
-                {
-                  ...cleanedItems,
-                  iarId: autoIiarIds, // Use the same IAR ID for all items in this batch
-                  actualQuantityReceived: item.currentInput, // Already checked it's > 0
-                  purchaseOrderId: newPurchaseorder.id, // Link items to the new purchase order
-                  purchaseOrderItemId: newPOI.id, // Link items to the new purchase order
-                  createdBy: user.name || user.id, // Track who created the IAR
-                  updatedBy: user.name || user.id, // Track who updated the IAR
-                  parId: "", // no id initially, will be updated in the next step if applicable
-                  icsId: "", // no id initially, will be updated in the next step if applicable
-                  risId: "", // no id initially, will be updated in the next step if applicable
-                  // parId: parId || "", // Use the same PAR ID for all items in this batch
-                  // icsId: icsId || "",
-                  // risId: risId || "",
-                },
-                { transaction: t },
-              ); // Use transaction
-
-              await PurchaseOrderItemsHistory.create(
-                {
-                  purchaseOrderItemId: newPOI.id,
-                  purchaseOrderId: newPurchaseorder.id,
-                  itemName: cleanedItems.itemName || "",
-                  description: cleanedItems.description || "",
-                  previousQuantity: 0,
-                  newQuantity: item.quantity,
-                  previousActualQuantityReceived: 0,
-                  newActualQuantityReceived: item.currentInput, // Already checked it's > 0
-                  previousAmount: 0,
-                  newAmount: item.amount,
-                  iarId: iarRow.iarId || autoIiarIds,
-                  parId: iarRow.parId || "",
-                  risId: iarRow.risId || "",
-                  icsId: iarRow.icsId || "",
-                  changeType: "quantity_update", // Or "received_update" if more appropriate for initial
-                  changedBy: user.name || user.id,
-                  changeReason: "Initial item creation with received quantity",
-                },
-                { transaction: t },
-              );
-            }
+            // IAR creation is now deferred to the separate "Generate IAR" step.
+            // No IAR or history records are created during initial PO creation.
           }
         }
         await t.commit(); // Commit the transaction if everything was successful

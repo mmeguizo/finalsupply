@@ -110,6 +110,20 @@ export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
   }
 `;
 
+export const GENERATE_IAR_FROM_PO = gql`
+  mutation GenerateIARFromPO(
+    $purchaseOrderId: Int!
+    $items: [GenerateIARItemInput!]!
+  ) {
+    generateIARFromPO(purchaseOrderId: $purchaseOrderId, items: $items) {
+      success
+      iarId
+      updatedCount
+      message
+    }
+  }
+`;
+
 export const UPDATE_IAR_INVOICE = gql`
   mutation UpdateIARInvoice(
     $iarId: String!

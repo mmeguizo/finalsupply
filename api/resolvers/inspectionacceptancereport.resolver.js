@@ -7,6 +7,7 @@ import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
 import { Op, Sequelize } from "sequelize";
 import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
+import { generateNewIarId } from "../utils/iarIdGenerator.js"; // Import the IAR ID generator function
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
@@ -471,6 +472,161 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to append to IAR");
       }
     },
+
+    /**
+     * Generate IAR from an existing PO.
+     * This is the separate step where items get categorized (PAR/ICS/RIS),
+     * tagged (low/high for ICS), and received quantities are set.
+     * Creates IAR records and updates PO item received qty + delivery status.
+     */
+    generateIARFromPO: async (_, { purchaseOrderId, items }, context) => {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const user = context.req.user;
+
+        if (!purchaseOrderId) {
+          throw new Error("Purchase Order ID is required");
+        }
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error("No items provided");
+        }
+
+        // Validate PO exists
+        const po = await PurchaseOrder.findByPk(purchaseOrderId, {
+          transaction: t,
+        });
+        if (!po || po.isDeleted) {
+          throw new Error("Purchase Order not found");
+        }
+
+        // Generate a single IAR ID for the entire batch
+        const campus = po.campus || "Talisay";
+        const autoIarId = await generateNewIarId(campus);
+
+        let processedCount = 0;
+
+        for (const line of items) {
+          const { purchaseOrderItemId, category, tag, received } = line;
+
+          if (!purchaseOrderItemId || !received || Number(received) <= 0)
+            continue;
+
+          // Lock the POI and validate
+          const poi = await PurchaseOrderItems.findByPk(purchaseOrderItemId, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+          });
+          if (!poi || poi.isDeleted) continue;
+          if (poi.purchaseOrderId !== parseInt(purchaseOrderId)) {
+            throw new Error(
+              `Item ${purchaseOrderItemId} does not belong to PO ${purchaseOrderId}`,
+            );
+          }
+
+          // Calculate remaining and clamp
+          const remaining = Math.max(
+            0,
+            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0),
+          );
+          const delta = Math.min(remaining, Number(received));
+          if (delta <= 0) continue;
+
+          const beforeAqr = Number(poi.actualQuantityReceived || 0);
+          const afterAqr = beforeAqr + delta;
+
+          // Determine delivery status
+          let deliveryStatus = "partial";
+          if (afterAqr >= Number(poi.quantity || 0)) {
+            deliveryStatus = "delivered";
+          }
+
+          // Update PO item: category, tag, received qty, delivery status
+          await PurchaseOrderItems.update(
+            {
+              category: category || poi.category || "requisition issue slip",
+              tag: tag || poi.tag || "",
+              actualQuantityReceived: afterAqr,
+              deliveryStatus,
+              deliveredDate:
+                deliveryStatus === "delivered" ? new Date() : poi.deliveredDate,
+            },
+            { where: { id: poi.id }, transaction: t },
+          );
+
+          // Create IAR record
+          const iarRow = await inspectionAcceptanceReport.create(
+            {
+              itemName: poi.itemName || "",
+              description: poi.description || "",
+              generalDescription: poi.generalDescription || "",
+              specification: poi.specification || "",
+              unit: poi.unit || "",
+              quantity: poi.quantity,
+              unitCost: poi.unitCost,
+              amount: poi.amount,
+              category: category || poi.category || "requisition issue slip",
+              tag: tag || poi.tag || "",
+              inventoryNumber: poi.inventoryNumber || "",
+              iarId: autoIarId,
+              purchaseOrderId: parseInt(purchaseOrderId),
+              purchaseOrderItemId: poi.id,
+              actualQuantityReceived: delta,
+              createdBy: user.name || user.id,
+              updatedBy: user.name || user.id,
+              parId: "",
+              icsId: "",
+              risId: "",
+            },
+            { transaction: t },
+          );
+
+          // History entry
+          await PurchaseOrderItemsHistory.create(
+            {
+              purchaseOrderItemId: poi.id,
+              purchaseOrderId: parseInt(purchaseOrderId),
+              itemName: poi.itemName || "",
+              description: poi.description || "",
+              previousQuantity: poi.quantity,
+              newQuantity: poi.quantity,
+              previousActualQuantityReceived: beforeAqr,
+              newActualQuantityReceived: afterAqr,
+              previousAmount: poi.amount,
+              newAmount: poi.amount,
+              iarId: iarRow.iarId || autoIarId,
+              parId: "",
+              risId: "",
+              icsId: "",
+              changeType: "received_update",
+              changedBy: user.name || user.id,
+              changeReason: "IAR generated from Purchase Order",
+            },
+            { transaction: t },
+          );
+
+          processedCount += 1;
+        }
+
+        await t.commit();
+        return {
+          success: true,
+          iarId: autoIarId,
+          updatedCount: processedCount,
+          message:
+            processedCount > 0
+              ? `Generated IAR ${autoIarId} with ${processedCount} item(s)`
+              : "No items processed (nothing to receive or invalid input)",
+        };
+      } catch (error) {
+        await t.rollback();
+        console.error("generateIARFromPO error:", error);
+        throw new Error(error.message || "Failed to generate IAR");
+      }
+    },
+
     createLineItemFromExisting: async (
       _,
       { sourceItemId, newItem },

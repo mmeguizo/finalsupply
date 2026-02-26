@@ -7,9 +7,16 @@ export const ADD_PURCHASEORDER = gql`
       poNumber
       supplier
       address
+      email
+      telephone
+      tin
       campus
+      placeOfDelivery
       dateOfDelivery
       dateOfPayment
+      deliveryTerms
+      paymentTerms
+      modeOfProcurement
       category
       invoice
       dateOfConformity
@@ -44,7 +51,9 @@ export const UPDATE_PURCHASEORDER = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery

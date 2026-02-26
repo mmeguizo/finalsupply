@@ -365,7 +365,8 @@ export default function MultiParAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("createMultiPAR error:", err);
       setError(err.message || "Failed to create PAR. Please try again.");
@@ -423,7 +424,8 @@ export default function MultiParAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("addToExistingPAR error:", err);
       setError(err.message || "Failed to add item to existing PAR.");
@@ -525,7 +527,8 @@ export default function MultiParAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("splitAndAssignPAR error:", err);
       setError(err.message || "Failed to split and assign PAR.");
