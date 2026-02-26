@@ -14,11 +14,24 @@ import { UPDATE_PURCHASEORDER } from "../../graphql/mutations/purchaseorder.muta
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import PendingIcon from "@mui/icons-material/Pending";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+/**
+ * Check if an item is fully delivered and complete (not editable).
+ */
+export const isItemDeliveredAndComplete = (row: any): boolean => {
+  const qty = Number(row.quantity ?? 0);
+  const received = Number(row.actualQuantityReceived ?? 0);
+  const deliveryStatus = row.deliveryStatus || "pending";
+  return deliveryStatus === "delivered" && qty > 0 && received >= qty;
+};
 // Define columns for purchase orders
 export const createPoColumns = (
   handleOpenEditModal: (po: any) => void,
   handleOpenHistoryModal: (po: any) => void,
   handleOpenPrintModal: (po: any) => void,
+  handleOpenOverview?: (po: any) => void,
 ): GridColDef[] => [
   {
     field: "poNumber",
@@ -189,6 +202,25 @@ export const createPoColumns = (
       </Tooltip>
     ),
   },
+  {
+    field: "overview",
+    headerName: "Overview",
+    width: 80,
+    renderCell: (params) => (
+      <Tooltip title="View PO Overview" placement="top">
+        <IconButton
+          size="small"
+          color="info"
+          onClick={(e: any) => {
+            e.stopPropagation();
+            handleOpenOverview?.(params.row);
+          }}
+        >
+          <VisibilityIcon />
+        </IconButton>
+      </Tooltip>
+    ),
+  },
   // {
   //   field: "print",
   //   headerName: "Print",
@@ -215,11 +247,19 @@ export const createItemColumns = (
   onDeliveryStatusChange?: (itemId: string, newStatus: string) => void,
 ): GridColDef[] => [
   {
+    field: "itemNumber",
+    headerName: "#",
+    width: 50,
+    sortable: false,
+    filterable: false,
+  },
+  {
     field: "deliveryStatus",
     headerName: "Delivery",
     width: 120,
     renderCell: (params) => {
       const status = params.value || "pending";
+      const itemComplete = isItemDeliveredAndComplete(params.row);
       const colorMap: Record<string, "default" | "success" | "warning"> = {
         pending: "default",
         delivered: "success",
@@ -236,6 +276,20 @@ export const createItemColumns = (
         partial: "delivered",
       };
       const hasReceived = Number(params.row.actualQuantityReceived ?? 0) > 0;
+
+      if (itemComplete) {
+        return (
+          <Chip
+            icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+            label="Complete"
+            color="success"
+            size="small"
+            variant="filled"
+            sx={{ fontWeight: 500 }}
+          />
+        );
+      }
+
       return (
         <Chip
           icon={iconMap[status]}
@@ -280,7 +334,7 @@ export const createItemColumns = (
   { field: "unit", headerName: "Unit", width: 100, editable: true },
   {
     field: "actualQuantityReceived",
-    headerName: "Actual Recieved",
+    headerName: "Actual Received",
     type: "number",
     width: 100,
   },

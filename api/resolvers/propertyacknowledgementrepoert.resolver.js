@@ -361,20 +361,15 @@ const propertyAcknowledgmentReportResolver = {
                     parReceivedByPosition: split.receivedByPosition || "",
                     parDepartment: split.department || "",
                     parAssignedDate: new Date(),
+                    splitGroupId: splitGroupId,
+                    splitFromItemId: originalItemId,
+                    splitIndex: i + 1,
                   },
                   { transaction },
                 );
 
               allResultIds.push(clonedRecord.id);
             }
-
-            // If total split qty is less than original, create a leftover record with no PAR ID
-            const leftover =
-              original.dataValues.actualQuantityReceived !== firstSplit.quantity
-                ? 0
-                : (parseInt(original.getDataValue("quantity")) || 0) -
-                  totalSplitQty;
-            // We don't create leftover records — all received quantity must be assigned
           }
 
           await transaction.commit();

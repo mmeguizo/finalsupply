@@ -53,11 +53,13 @@ import {
   createPoColumns,
   itemColumns,
   createItemColumns,
+  isItemDeliveredAndComplete,
 } from "./purchaseOrderFunctions/purchaseorder_column";
 import { handleSavePurchaseOrder } from "./purchaseOrderFunctions/purchaseOrderOperations";
 import PurchaseOrderPrintModal from "../components/printReportModal";
 import PrintReportDialog from "../components/printReportModal";
 import GenerateIarModal from "../components/GenerateIarModal";
+import PurchaseOrderOverview from "../components/PurchaseOrderOverview";
 // @ts-ignore
 import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
 // @ts-ignore
@@ -83,6 +85,9 @@ export default function PurchaseOrder() {
   const [openGenerateIarModal, setOpenGenerateIarModal] = React.useState(false);
   const [generateIarPO, setGenerateIarPO] = React.useState<any>(null);
   const [isGeneratingIar, setIsGeneratingIar] = React.useState(false);
+  // PO Overview drawer state
+  const [openOverview, setOpenOverview] = React.useState(false);
+  const [overviewPO, setOverviewPO] = React.useState<any>(null);
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
   const [notificationMessage, setNotificationMessage] = React.useState("");
@@ -189,9 +194,10 @@ export default function PurchaseOrder() {
   const itemRows = React.useMemo(() => {
     if (!selectedPO?.items) return [];
 
-    return selectedPO.items.map((item: any) => ({
+    return selectedPO.items.map((item: any, index: number) => ({
       id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
+      itemNumber: index + 1,
       formatUnitCost: currencyFormat(item.unitCost),
       formatAmount: currencyFormat(item.amount),
     }));
@@ -328,6 +334,17 @@ export default function PurchaseOrder() {
     setGenerateIarPO(null);
   };
 
+  // PO Overview handlers
+  const handleOpenOverview = (po: any) => {
+    setOverviewPO(po);
+    setOpenOverview(true);
+  };
+
+  const handleCloseOverview = () => {
+    setOpenOverview(false);
+    setOverviewPO(null);
+  };
+
   const handleGenerateIAR = async (purchaseOrderId: number, items: any[]) => {
     setIsGeneratingIar(true);
     try {
@@ -397,8 +414,14 @@ export default function PurchaseOrder() {
         handleOpenEditModal,
         handleOpenHistoryModal,
         handleOpenPrintModal,
+        handleOpenOverview,
       ),
-    [handleOpenEditModal, handleOpenHistoryModal, handleOpenPrintModal],
+    [
+      handleOpenEditModal,
+      handleOpenHistoryModal,
+      handleOpenPrintModal,
+      handleOpenOverview,
+    ],
   );
 
   return (
@@ -503,7 +526,13 @@ export default function PurchaseOrder() {
                   columns={deliveryItemColumns}
                   hideFooter={itemRows.length <= 10}
                   disableRowSelectionOnClick
-                  isCellEditable={() => selectedPO?.status !== "completed"}
+                  isCellEditable={(params) => {
+                    // Block editing if the PO is completed
+                    if (selectedPO?.status === "completed") return false;
+                    // Block editing if the item is delivered and fully received
+                    if (isItemDeliveredAndComplete(params.row)) return false;
+                    return true;
+                  }}
                   processRowUpdate={processItemRowUpdate}
                   onProcessRowUpdateError={(error) => {
                     console.error(error);
@@ -548,6 +577,11 @@ export default function PurchaseOrder() {
         purchaseOrder={generateIarPO}
         onGenerate={handleGenerateIAR}
         isSubmitting={isGeneratingIar}
+      />
+      <PurchaseOrderOverview
+        open={openOverview}
+        onClose={handleCloseOverview}
+        purchaseOrder={overviewPO}
       />
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}

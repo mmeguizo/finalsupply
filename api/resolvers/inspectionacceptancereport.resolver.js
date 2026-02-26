@@ -874,6 +874,20 @@ const inspectionAcceptanceReportResolver = {
             // Generate a split group ID to track all pieces back to this original
             const splitGroupId = `SPL-${original.id}-${Date.now()}`;
             const originalItemId = original.id;
+            const totalSplits = splits.length;
+
+            // Calculate equal amount per split (divide original amount equally)
+            const originalAmount = parseFloat(original.amount || 0);
+            const equalAmountPerSplit = parseFloat(
+              (originalAmount / totalSplits).toFixed(2),
+            );
+            // Handle rounding remainder: give any leftover cents to the first split
+            const firstSplitAmount = parseFloat(
+              (
+                originalAmount -
+                equalAmountPerSplit * (totalSplits - 1)
+              ).toFixed(2),
+            );
 
             // First split: update the original record
             const firstSplit = splits[0];
@@ -882,8 +896,7 @@ const inspectionAcceptanceReportResolver = {
             await original.update(
               {
                 actualQuantityReceived: firstSplit.quantity,
-                amount:
-                  firstSplit.quantity * parseFloat(original.unitCost || 0),
+                amount: firstSplitAmount,
                 icsId: firstIcsId,
                 icsReceivedFrom: firstSplit.receivedFrom,
                 icsReceivedFromPosition: firstSplit.receivedFromPosition || "",
@@ -931,8 +944,7 @@ const inspectionAcceptanceReportResolver = {
                   mds: originalData.mds,
                   details: originalData.details,
                   actualQuantityReceived: split.quantity,
-                  amount:
-                    split.quantity * parseFloat(originalData.unitCost || 0),
+                  amount: equalAmountPerSplit,
                   icsId: newIcsId,
                   icsReceivedFrom: split.receivedFrom,
                   icsReceivedFromPosition: split.receivedFromPosition || "",
