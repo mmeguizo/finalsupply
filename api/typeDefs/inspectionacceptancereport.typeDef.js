@@ -162,7 +162,7 @@ type Mutation {
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
   revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
-  generateIARFromPO(purchaseOrderId: Int!, items: [GenerateIARItemInput!]!): GenerateIARResult!
+  generateIARFromPO(purchaseOrderId: Int!, items: [GenerateIARItemInput!]!, invoice: String): GenerateIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
   updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
   splitAndAssignICS(input: SplitAndAssignICSInput!): [ItemWithPurchaseOrder]

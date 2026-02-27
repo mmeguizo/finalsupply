@@ -70,15 +70,24 @@ export const UPDATE_PURCHASEORDER = gql`
       details
       items {
         id
+        itemName
+        purchaseOrderId
         description
+        generalDescription
+        specification
         unit
         quantity
         unitCost
         amount
         category
+        tag
         isDeleted
         actualQuantityReceived
         inventoryNumber
+        iarId
+        deliveryStatus
+        deliveredDate
+        deliveryNotes
       }
       amount
       invoice

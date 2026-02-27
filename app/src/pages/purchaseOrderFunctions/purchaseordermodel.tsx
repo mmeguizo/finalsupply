@@ -614,17 +614,7 @@ export default function PurchaseOrderModal({
                     }}
                   >
                     {/* use fixed flex widths so the entire row stays on one line */}
-                    {/* Cat and Low/High columns only shown when editing (receiving items into existing PO) */}
-                    {isEditing && (
-                      <Grid item sx={{ flex: "0 0 6%", maxWidth: 90 }}>
-                        <Typography variant="subtitle2">Cat</Typography>
-                      </Grid>
-                    )}
-                    {isEditing && (
-                      <Grid item sx={{ flex: "0 0 6%", maxWidth: 90 }}>
-                        <Typography variant="subtitle2">Low/High</Typography>
-                      </Grid>
-                    )}
+                    {/* Cat/Low-High columns removed: category is set in Generate IAR modal, not here */}
                     <Grid item sx={{ flex: "0 0 4%", maxWidth: 45 }}>
                       <Typography variant="subtitle2">Item #</Typography>
                     </Grid>
@@ -634,7 +624,7 @@ export default function PurchaseOrderModal({
                     <Grid
                       item
                       sx={{
-                        flex: isEditing ? "0 0 10%" : "0 0 14%",
+                        flex: "0 0 14%",
                         minWidth: 100,
                       }}
                     >
@@ -643,7 +633,7 @@ export default function PurchaseOrderModal({
                     <Grid
                       item
                       sx={{
-                        flex: isEditing ? "0 0 16%" : "0 0 20%",
+                        flex: "0 0 18%",
                         minWidth: 144,
                       }}
                     >
@@ -652,7 +642,7 @@ export default function PurchaseOrderModal({
                     <Grid
                       item
                       sx={{
-                        flex: isEditing ? "0 0 16%" : "0 0 20%",
+                        flex: "0 0 18%",
                         minWidth: 144,
                       }}
                     >
@@ -724,60 +714,7 @@ export default function PurchaseOrderModal({
                       {(() => {
                         return null;
                       })()}
-                      {/* Category and Tag columns only shown when editing */}
-                      {isEditing && (
-                        <Grid item sx={{ flex: "0 0 6%", maxWidth: 90 }}>
-                          <Select
-                            fullWidth
-                            size="small"
-                            value={item.category}
-                            onChange={(e) =>
-                              updateItem(index, "category", e.target.value)
-                            }
-                            disabled={
-                              Number(item.actualQuantityReceived ?? 0) > 0 ||
-                              String(
-                                purchaseOrder?.status || formData.status || "",
-                              ).toLowerCase() === "completed"
-                            }
-                          >
-                            <MenuItem
-                              value={"property acknowledgement reciept"}
-                            >
-                              PAR
-                            </MenuItem>
-                            <MenuItem value={"inventory custodian slip"}>
-                              ICS
-                            </MenuItem>
-                            <MenuItem value={"requisition issue slip"}>
-                              RIS
-                            </MenuItem>
-                          </Select>
-                        </Grid>
-                      )}
-
-                      {isEditing && (
-                        <Grid item sx={{ flex: "0 0 6%", maxWidth: 90 }}>
-                          <Select
-                            fullWidth
-                            size="small"
-                            value={item.tag ?? ""}
-                            onChange={(e) =>
-                              updateItem(index, "tag", e.target.value)
-                            }
-                            disabled={
-                              item.category !== "inventory custodian slip" ||
-                              Number(item.actualQuantityReceived ?? 0) > 0 ||
-                              String(
-                                purchaseOrder?.status || formData.status || "",
-                              ).toLowerCase() === "completed"
-                            }
-                          >
-                            <MenuItem value={"low"}>Low</MenuItem>
-                            <MenuItem value={"high"}>High</MenuItem>
-                          </Select>
-                        </Grid>
-                      )}
+                      {/* Category/Tag removed from this modal — set in Generate IAR step only */}
 
                       <Grid item sx={{ flex: "0 0 4%", maxWidth: 45 }}>
                         <Typography
@@ -812,7 +749,7 @@ export default function PurchaseOrderModal({
                       <Grid
                         item
                         sx={{
-                          flex: isEditing ? "0 0 10%" : "0 0 14%",
+                          flex: "0 0 14%",
                           minWidth: 100,
                         }}
                       >
@@ -837,7 +774,7 @@ export default function PurchaseOrderModal({
                       <Grid
                         item
                         sx={{
-                          flex: isEditing ? "0 0 16%" : "0 0 20%",
+                          flex: "0 0 18%",
                           minWidth: 144,
                         }}
                       >
@@ -864,7 +801,7 @@ export default function PurchaseOrderModal({
                       <Grid
                         item
                         sx={{
-                          flex: isEditing ? "0 0 16%" : "0 0 20%",
+                          flex: "0 0 18%",
                           minWidth: 144,
                         }}
                       >
@@ -919,83 +856,89 @@ export default function PurchaseOrderModal({
                       {/* Delivered, Received (currentInput), Balance only shown when editing */}
                       {isEditing && (
                         <Grid item sx={{ flex: "0 0 8%", maxWidth: 85 }}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            disabled
-                            value={item.actualQuantityReceived ?? ""}
-                            inputProps={{ style: { textAlign: "right" } }}
-                          />
+                          {item.id !== "temp" && (
+                            <TextField
+                              fullWidth
+                              size="small"
+                              disabled
+                              value={item.actualQuantityReceived ?? ""}
+                              inputProps={{ style: { textAlign: "right" } }}
+                            />
+                          )}
                         </Grid>
                       )}
 
                       {isEditing && (
                         <Grid item sx={{ flex: "0 0 8%", maxWidth: 85 }}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            value={item.currentInput || ""}
-                            type="number"
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const remaining = Math.max(
-                                0,
+                          {item.id !== "temp" && (
+                            <TextField
+                              fullWidth
+                              size="small"
+                              value={item.currentInput || ""}
+                              type="number"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const remaining = Math.max(
+                                  0,
+                                  Number(item.quantity ?? 0) -
+                                    Number(item.actualQuantityReceived ?? 0),
+                                );
+                                // Allow clearing the input box
+                                if (raw === "") {
+                                  updateItem(index, "currentInput", "");
+                                  return;
+                                }
+                                const numeric = Number(raw);
+                                if (Number.isNaN(numeric)) {
+                                  // ignore non-numeric
+                                  return;
+                                }
+                                const clamped = Math.min(
+                                  Math.max(0, numeric),
+                                  remaining,
+                                );
+                                updateItem(index, "currentInput", clamped);
+                              }}
+                              disabled={
                                 Number(item.quantity ?? 0) -
-                                  Number(item.actualQuantityReceived ?? 0),
-                              );
-                              // Allow clearing the input box
-                              if (raw === "") {
-                                updateItem(index, "currentInput", "");
-                                return;
+                                  Number(item.actualQuantityReceived ?? 0) <=
+                                0
                               }
-                              const numeric = Number(raw);
-                              if (Number.isNaN(numeric)) {
-                                // ignore non-numeric
-                                return;
-                              }
-                              const clamped = Math.min(
-                                Math.max(0, numeric),
-                                remaining,
-                              );
-                              updateItem(index, "currentInput", clamped);
-                            }}
-                            disabled={
-                              Number(item.quantity ?? 0) -
-                                Number(item.actualQuantityReceived ?? 0) <=
-                                0 && item.id !== "temp"
-                            }
-                            placeholder={
-                              Number(item.quantity ?? 0) -
-                                Number(item.actualQuantityReceived ?? 0) <=
-                                0 && item.id !== "temp"
-                                ? "Fully received"
-                                : undefined
-                            }
-                            inputProps={{
-                              style: { textAlign: "right" },
-                              min: 0,
-                              max: Math.max(
-                                0,
+                              placeholder={
                                 Number(item.quantity ?? 0) -
-                                  Number(item.actualQuantityReceived ?? 0),
-                              ),
-                            }}
-                          />
+                                  Number(item.actualQuantityReceived ?? 0) <=
+                                0
+                                  ? "Fully received"
+                                  : undefined
+                              }
+                              inputProps={{
+                                style: { textAlign: "right" },
+                                min: 0,
+                                max: Math.max(
+                                  0,
+                                  Number(item.quantity ?? 0) -
+                                    Number(item.actualQuantityReceived ?? 0),
+                                ),
+                              }}
+                            />
+                          )}
                         </Grid>
                       )}
 
                       {isEditing && (
                         <Grid item sx={{ flex: "0 0 8%", maxWidth: 85 }}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            disabled
-                            value={Math.max(
-                              0,
-                              Number(item.quantity) -
-                                Number(item.actualQuantityReceived),
-                            )}
-                          />
+                          {item.id !== "temp" && (
+                            <TextField
+                              fullWidth
+                              size="small"
+                              disabled
+                              value={Math.max(
+                                0,
+                                Number(item.quantity) -
+                                  Number(item.actualQuantityReceived),
+                              )}
+                            />
+                          )}
                         </Grid>
                       )}
 

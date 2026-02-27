@@ -69,7 +69,7 @@ const PurchaseOrderItems = sequelize.define(
         "requisition issue slip",
       ),
       allowNull: true,
-      defaultValue: "requisition issue slip", // Default value
+      defaultValue: null, // No default — category is set when IAR is generated
     },
     tag: {
       type: DataTypes.STRING(255),

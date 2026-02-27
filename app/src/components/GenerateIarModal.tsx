@@ -31,7 +31,11 @@ interface GenerateIarModalProps {
   open: boolean;
   handleClose: () => void;
   purchaseOrder: any;
-  onGenerate: (purchaseOrderId: number, items: any[]) => Promise<any>;
+  onGenerate: (
+    purchaseOrderId: number,
+    items: any[],
+    invoice: string,
+  ) => Promise<any>;
   isSubmitting: boolean;
 }
 
@@ -61,6 +65,7 @@ export default function GenerateIarModal({
 }: GenerateIarModalProps) {
   const [lineItems, setLineItems] = React.useState<IarLineItem[]>([]);
   const [error, setError] = React.useState<string>("");
+  const [invoice, setInvoice] = React.useState<string>("");
 
   // Initialize line items from PO items
   React.useEffect(() => {
@@ -89,9 +94,12 @@ export default function GenerateIarModal({
           };
         });
       setLineItems(items);
+      // Pre-fill invoice from PO if available; otherwise leave blank for user to fill
+      setInvoice(purchaseOrder.invoice || "");
       setError("");
     } else {
       setLineItems([]);
+      setInvoice("");
     }
   }, [purchaseOrder, open]);
 
@@ -151,6 +159,14 @@ export default function GenerateIarModal({
   const handleSubmit = async () => {
     setError("");
 
+    // Validate invoice
+    if (!invoice || invoice.trim() === "") {
+      setError(
+        "Invoice number is required. Please enter the invoice number before generating the IAR.",
+      );
+      return;
+    }
+
     // Validate selected items
     const selectedItems = lineItems.filter(
       (item) => item.selected && item.received > 0,
@@ -188,7 +204,7 @@ export default function GenerateIarModal({
     }));
 
     try {
-      await onGenerate(Number(purchaseOrder.id), mutationItems);
+      await onGenerate(Number(purchaseOrder.id), mutationItems, invoice.trim());
     } catch (err: any) {
       setError(err.message || "Failed to generate IAR");
     }
@@ -255,6 +271,24 @@ export default function GenerateIarModal({
           items, and the quantity to receive. Items with 0 remaining are already
           fully received.
         </Alert>
+
+        {/* Invoice field — pre-filled from PO if available, required before generating */}
+        <Box sx={{ mb: 2, maxWidth: 420 }}>
+          <TextField
+            fullWidth
+            label="Invoice Number"
+            required
+            size="small"
+            value={invoice}
+            onChange={(e) => setInvoice(e.target.value)}
+            helperText={
+              purchaseOrder?.invoice
+                ? "Pre-filled from Purchase Order — you may edit if needed."
+                : "No invoice on the PO. Enter the invoice number here."
+            }
+            placeholder="e.g. INV-2025-001"
+          />
+        </Box>
 
         <TableContainer component={Paper} variant="outlined">
           <Table size="small" stickyHeader>

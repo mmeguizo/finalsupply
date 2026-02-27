@@ -41,9 +41,9 @@ export const handleSavePurchaseOrder = async (
         const quantityIsValid =
           typeof item.quantity === "number" && item.quantity > 0;
 
-        // Category & tag validation only applies when editing (receiving into existing PO)
-        // When creating a new PO, categorization is deferred to the Generate IAR step
-        if (editingPO) {
+        // Category & tag validation only applies when editing existing (non-temp) items
+        // New items (id === "temp") have no category yet — it's set in the Generate IAR step
+        if (editingPO && item.id && item.id !== "temp") {
           const categoryIsValid = item.category && item.category.trim() !== "";
 
           if (!categoryIsValid) {
@@ -97,10 +97,11 @@ export const handleSavePurchaseOrder = async (
           },
         });
         let data = results.data.updatePurchaseOrder;
+        // Use the returned id to select the PO row — the useEffect in purchaseorder.tsx
+        // will sync selectedPO with the fully-fetched refetch data (which includes all
+        // fields like deliveryStatus, tag, iarId) once the refetch completes.
         handleRowClick(data.id);
         updatedPO = data;
-
-        setSelectedPO(updatedPO);
         handleCloseModal();
         return {
           success: true,

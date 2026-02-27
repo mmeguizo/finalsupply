@@ -20,21 +20,29 @@ import {
   InputAdornment,
   Toolbar,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Autocomplete,
 } from "@mui/material";
 import { PageContainer } from "@toolpad/core/PageContainer";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PreviewIcon from "@mui/icons-material/Preview";
 import SearchIcon from "@mui/icons-material/Search";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import NotificationDialog from "../components/notifications";
 import ConfirmDialog from "../components/confirmationdialog";
 //@ts-ignore
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
 import PrintReportDialogForIAR from "../components/printReportModalForIAR";
 import SignatoriesComponent from "./inventoryFunctions/SignatorySelectionContainer";
+import GenerateIarModal from "../components/GenerateIarModal";
 import {
   formatTimestampToDateTime,
   currencyFormat,
+  formatCategory,
 } from "../utils/generalUtils";
 import { Select, MenuItem, Chip } from "@mui/material";
 import { useMutation } from "@apollo/client";
@@ -44,6 +52,7 @@ import {
   APPEND_TO_EXISTING_IAR,
   CREATE_LINE_ITEM_FROM_EXISTING,
   UPDATE_IAR_INVOICE,
+  GENERATE_IAR_FROM_PO,
 } from "../graphql/mutations/inventoryIAR.mutation";
 // @ts-ignore
 import {
@@ -60,7 +69,10 @@ function Row(props: {
   handleOpenPrintModal: (item: any, iarId: string) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
-  onNotify: (message: string, severity?: "success" | "error" | "info" | "warning") => void;
+  onNotify: (
+    message: string,
+    severity?: "success" | "error" | "info" | "warning",
+  ) => void;
   // allow parent to pass refetch function for cache refresh
   refetch?: () => Promise<any>;
   // overrides
@@ -71,7 +83,13 @@ function Row(props: {
   detailsOverride?: string;
   onOverrideChange: (
     iarId: string,
-    patch: { invoice?: string; dateOfPayment?: string; income?: string; mds?: string; details?: string }
+    patch: {
+      invoice?: string;
+      dateOfPayment?: string;
+      income?: string;
+      mds?: string;
+      details?: string;
+    },
   ) => void;
 }) {
   const {
@@ -96,7 +114,7 @@ function Row(props: {
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
     return row.items.some(
-      (it: any) => Number(it.actualQuantityReceived || 0) > 0
+      (it: any) => Number(it.actualQuantityReceived || 0) > 0,
     );
   }, [row]);
   // Parent Purchase Order completed state (same PO across grouped items)
@@ -133,14 +151,17 @@ function Row(props: {
   });
 
   // Mutation to create a NEW PO item from an existing one (same itemGroupId)
-  const [createLineItemFromExisting] = useMutation(CREATE_LINE_ITEM_FROM_EXISTING, {
-    awaitRefetchQueries: true,
-    refetchQueries: [
-      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
-      { query: GET_PURCHASEORDERS },
-      { query: GET_ALL_DASHBOARD_DATA },
-    ],
-  });
+  const [createLineItemFromExisting] = useMutation(
+    CREATE_LINE_ITEM_FROM_EXISTING,
+    {
+      awaitRefetchQueries: true,
+      refetchQueries: [
+        { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+        { query: GET_PURCHASEORDERS },
+        { query: GET_ALL_DASHBOARD_DATA },
+      ],
+    },
+  );
 
   // Mutation to update IAR-specific invoice
   const [updateIARInvoice] = useMutation(UPDATE_IAR_INVOICE, {
@@ -240,11 +261,11 @@ function Row(props: {
   const mdsValue = mdsOverride ?? iarDefaults.mds;
   const detailsValue = detailsOverride ?? iarDefaults.details;
 
-  // Add local state to track status updates
-  const [localStatus, setLocalStatus] = React.useState<string | null>(null);
-  
-  // Use local status if set, otherwise use row status
-  const displayStatus = localStatus ?? row.iarStatus ?? "none";
+  // Display category as PAR/ICS/RIS abbreviation
+  const displayCategory = React.useMemo(() => {
+    if (!row.category) return "None";
+    return formatCategory(row.category) || "None";
+  }, [row.category]);
 
   return (
     <React.Fragment>
@@ -266,42 +287,51 @@ function Row(props: {
         </TableCell>
         <TableCell>{formatTimestampToDateTime(row.createdAt)}</TableCell>
         <TableCell component="th" scope="row">
-          <Select
-            value={displayStatus}
-            onChange={(e) => {
-              const newStatus = e.target.value;
-              setLocalStatus(newStatus); // Immediately update local state
-              onStatusUpdate(row.iarId, newStatus);
-            }}
+          <Chip
+            label={displayCategory}
             size="small"
-            variant="outlined"
-            sx={{ minWidth: 120 }}
-          >
-            <MenuItem value="none">None</MenuItem>
-            <MenuItem value="partial">Partial</MenuItem>
-            <MenuItem value="complete">Complete</MenuItem>
-          </Select>
+            color={
+              displayCategory === "PAR"
+                ? "primary"
+                : displayCategory === "ICS"
+                  ? "secondary"
+                  : displayCategory === "RIS"
+                    ? "success"
+                    : "default"
+            }
+            sx={{ minWidth: 60, fontWeight: "bold" }}
+          />
         </TableCell>
         {/* Invoice input - enter-to-save (IAR-specific) */}
         <TableCell>
           <TextField
             size="small"
             placeholder={iarDefaults.invoice || "Hit Enter to save.."}
-            value={invoiceOverride !== undefined ? invoiceOverride : iarDefaults.invoice}
+            value={
+              invoiceOverride !== undefined
+                ? invoiceOverride
+                : iarDefaults.invoice
+            }
             onChange={(e) =>
               onOverrideChange(row.iarId, { invoice: e.target.value })
             }
             onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || '').trim();
+                const valueToSave = (target.value || "").trim();
                 try {
                   setSavingInvoice(true);
-                  await updateIARInvoice({ variables: { iarId: row.iarId, invoice: valueToSave } });
-                  onNotify('Invoice saved');
-                } catch (err) { console.error('Failed to save invoice', err); onNotify('Failed to save invoice','error'); }
-                finally { setSavingInvoice(false); }
+                  await updateIARInvoice({
+                    variables: { iarId: row.iarId, invoice: valueToSave },
+                  });
+                  onNotify("Invoice saved");
+                } catch (err) {
+                  console.error("Failed to save invoice", err);
+                  onNotify("Failed to save invoice", "error");
+                } finally {
+                  setSavingInvoice(false);
+                }
               }
             }}
             onClick={(e) => e.stopPropagation()}
@@ -323,16 +353,29 @@ function Row(props: {
             type="date"
             size="small"
             placeholder={iarDefaults.invoiceDate || "YYYY-MM-DD"}
-            value={dateOfPaymentOverride !== undefined ? dateOfPaymentOverride : iarDefaults.invoiceDate}
+            value={
+              dateOfPaymentOverride !== undefined
+                ? dateOfPaymentOverride
+                : iarDefaults.invoiceDate
+            }
             onChange={async (e) => {
               const valueToSave = e.target.value;
               onOverrideChange(row.iarId, { dateOfPayment: valueToSave });
               try {
                 setSavingInvoiceDate(true);
-                await updateIARInvoice({ variables: { iarId: row.iarId, invoiceDate: valueToSave || null } });
-                onNotify('Invoice date saved');
-              } catch (err) { console.error('Failed to save invoice date', err); onNotify('Failed to save invoice date','error'); }
-              finally { setSavingInvoiceDate(false); }
+                await updateIARInvoice({
+                  variables: {
+                    iarId: row.iarId,
+                    invoiceDate: valueToSave || null,
+                  },
+                });
+                onNotify("Invoice date saved");
+              } catch (err) {
+                console.error("Failed to save invoice date", err);
+                onNotify("Failed to save invoice date", "error");
+              } finally {
+                setSavingInvoiceDate(false);
+              }
             }}
             onClick={(e) => e.stopPropagation()}
             sx={{ minWidth: 160 }}
@@ -354,19 +397,29 @@ function Row(props: {
             multiline
             maxRows={3}
             placeholder={iarDefaults.income || "Hit Enter to save.."}
-            value={incomeOverride !== undefined ? incomeOverride : iarDefaults.income}
-            onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
+            value={
+              incomeOverride !== undefined ? incomeOverride : iarDefaults.income
+            }
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { income: e.target.value })
+            }
             onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || '').trim();
+                const valueToSave = (target.value || "").trim();
                 try {
                   setSavingIncome(true);
-                  await updateIARInvoice({ variables: { iarId: row.iarId, income: valueToSave } });
-                  onNotify('Income saved');
-                } catch (err) { console.error('Failed to save income', err); onNotify('Failed to save income','error'); }
-                finally { setSavingIncome(false); }
+                  await updateIARInvoice({
+                    variables: { iarId: row.iarId, income: valueToSave },
+                  });
+                  onNotify("Income saved");
+                } catch (err) {
+                  console.error("Failed to save income", err);
+                  onNotify("Failed to save income", "error");
+                } finally {
+                  setSavingIncome(false);
+                }
               }
             }}
             sx={{ minWidth: 160 }}
@@ -389,18 +442,26 @@ function Row(props: {
             maxRows={3}
             placeholder={iarDefaults.mds || "Hit Enter to save.."}
             value={mdsOverride !== undefined ? mdsOverride : iarDefaults.mds}
-            onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { mds: e.target.value })
+            }
             onKeyDown={async (e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || '').trim();
+                const valueToSave = (target.value || "").trim();
                 try {
                   setSavingMds(true);
-                  await updateIARInvoice({ variables: { iarId: row.iarId, mds: valueToSave } });
-                  onNotify('MDS saved');
-                } catch (err) { console.error('Failed to save mds', err); onNotify('Failed to save MDS','error'); }
-                finally { setSavingMds(false); }
+                  await updateIARInvoice({
+                    variables: { iarId: row.iarId, mds: valueToSave },
+                  });
+                  onNotify("MDS saved");
+                } catch (err) {
+                  console.error("Failed to save mds", err);
+                  onNotify("Failed to save MDS", "error");
+                } finally {
+                  setSavingMds(false);
+                }
               }
             }}
             sx={{ minWidth: 160 }}
@@ -422,19 +483,31 @@ function Row(props: {
             multiline
             maxRows={3}
             placeholder={iarDefaults.details || "Hit Shift+Enter to save..."}
-            value={detailsOverride !== undefined ? detailsOverride : iarDefaults.details}
-            onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
+            value={
+              detailsOverride !== undefined
+                ? detailsOverride
+                : iarDefaults.details
+            }
+            onChange={(e) =>
+              onOverrideChange(row.iarId, { details: e.target.value })
+            }
             onKeyDown={async (e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
+              if (e.key === "Enter" && e.shiftKey) {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || '').trim();
+                const valueToSave = (target.value || "").trim();
                 try {
                   setSavingDetails(true);
-                  await updateIARInvoice({ variables: { iarId: row.iarId, details: valueToSave } });
-                  onNotify('Details saved');
-                } catch (err) { console.error('Failed to save details', err); onNotify('Failed to save details','error'); }
-                finally { setSavingDetails(false); }
+                  await updateIARInvoice({
+                    variables: { iarId: row.iarId, details: valueToSave },
+                  });
+                  onNotify("Details saved");
+                } catch (err) {
+                  console.error("Failed to save details", err);
+                  onNotify("Failed to save details", "error");
+                } finally {
+                  setSavingDetails(false);
+                }
               }
             }}
             sx={{ minWidth: 200 }}
@@ -482,7 +555,6 @@ function Row(props: {
         <TableCell sx={{ p: 0 }} colSpan={12}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ m: 0 }}>
-          
               <Table size="small" aria-label="details" sx={{ width: "100%" }}>
                 <TableHead>
                   <TableRow>
@@ -501,8 +573,7 @@ function Row(props: {
                 </TableHead>
                 <TableBody>
                   {row.items.map((item: any) => {
-
-                    console.log('🔍 Processing item:', item);
+                    console.log("🔍 Processing item:", item);
 
                     const poi = item.PurchaseOrderItem;
                     const isCompleted =
@@ -517,8 +588,9 @@ function Row(props: {
                     const currentUnit = poi?.unit ?? item.unit ?? "";
 
                     // Get itemGroupId - this should exist if items were created via createLineItemFromExisting
-                    const currentItemGroupId = poi?.itemGroupId || item.itemGroupId;
-                    
+                    const currentItemGroupId =
+                      poi?.itemGroupId || item.itemGroupId;
+
                     // console.log('🔍 Item Group Check:', {
                     //   itemId: item.id,
                     //   poiId: poi?.id,
@@ -528,7 +600,9 @@ function Row(props: {
                     // });
 
                     // Determine the base ordered quantity for the group
-                    const baseQuantity = Number(poi?.quantity || item.quantity || 0);
+                    const baseQuantity = Number(
+                      poi?.quantity || item.quantity || 0,
+                    );
 
                     // If NO itemGroupId exists, we need to find items that should be grouped
                     // by matching description, unit, unitCost, etc. (fallback heuristic)
@@ -545,45 +619,58 @@ function Row(props: {
                       const desc = currentDescription;
                       const unit = currentUnit;
                       const cost = Number(poi?.unitCost || item.unitCost || 0);
-                      
+
                       groupedItems = row.items.filter((i: any) => {
                         const iPoi = i.PurchaseOrderItem;
                         const iDesc = iPoi?.description ?? i.description ?? "";
                         const iUnit = iPoi?.unit ?? i.unit ?? "";
                         const iCost = Number(iPoi?.unitCost || i.unitCost || 0);
-                        return iDesc === desc && iUnit === unit && iCost === cost;
+                        return (
+                          iDesc === desc && iUnit === unit && iCost === cost
+                        );
                       });
                     }
 
                     // Sum actualQuantityReceived across ALL items in this logical group
-                    const totalReceivedInGroup = groupedItems.reduce((sum: number, i: any) => {
-                      const iPoi = i.PurchaseOrderItem;
-                      const recv = Number(
-                        iPoi?.actualQuantityReceived || i.actualQuantityReceived || 0
-                      );
-                      return sum + recv;
-                    }, 0);
+                    const totalReceivedInGroup = groupedItems.reduce(
+                      (sum: number, i: any) => {
+                        const iPoi = i.PurchaseOrderItem;
+                        const recv = Number(
+                          iPoi?.actualQuantityReceived ||
+                            i.actualQuantityReceived ||
+                            0,
+                        );
+                        return sum + recv;
+                      },
+                      0,
+                    );
 
                     // Remaining for the WHOLE group, not per row
-                    const remaining = Math.max(0, baseQuantity - totalReceivedInGroup);
-                    
-                    console.log('📊 Remaining Calc:', {
+                    const remaining = Math.max(
+                      0,
+                      baseQuantity - totalReceivedInGroup,
+                    );
+
+                    console.log("📊 Remaining Calc:", {
                       baseQuantity,
                       totalReceivedInGroup,
                       remaining,
-                      groupedItemsCount: groupedItems.length
+                      groupedItemsCount: groupedItems.length,
                     });
 
                     // Show this row's own received (for clarity)
                     const totalReceived = Number(
-                      poi?.actualQuantityReceived || item.actualQuantityReceived || 0
+                      poi?.actualQuantityReceived ||
+                        item.actualQuantityReceived ||
+                        0,
                     );
 
                     // Original PO fields are view-only in this table.
 
                     // CRITICAL: Use itemGroupId as the ONLY draftKey so all items in a group share ONE form
                     // If no itemGroupId (shouldn't happen now), fall back to a stable group key
-                    const draftKey = currentItemGroupId || 
+                    const draftKey =
+                      currentItemGroupId ||
                       `fallback_${currentDescription}_${currentUnit}_${Number(poi?.unitCost || item.unitCost || 0)}`;
                     // Check if ANY item in this group already has a draft open
                     const draft = iarLineDrafts[draftKey] || null;
@@ -594,7 +681,7 @@ function Row(props: {
                         generalDescription?: string;
                         specification?: string;
                         received?: number;
-                      }>
+                      }>,
                     ) => {
                       // If updating received, clamp to [0, remaining]
                       if (patch.received !== undefined) {
@@ -624,13 +711,13 @@ function Row(props: {
                       try {
                         const poiIdNum = parseInt(
                           String(poi?.id ?? item.purchaseOrderItemId),
-                          10
+                          10,
                         );
                         if (!Number.isFinite(poiIdNum)) {
                           console.error(
                             "Invalid purchaseOrderItemId",
                             poi?.id,
-                            item.purchaseOrderItemId
+                            item.purchaseOrderItemId,
                           );
                           return;
                         }
@@ -643,16 +730,20 @@ function Row(props: {
                               quantity: clamped, // New item quantity = what we're receiving now
                               received: clamped, // Immediately mark as received
                               description: draft.description || undefined,
-                              generalDescription: draft.generalDescription || undefined,
+                              generalDescription:
+                                draft.generalDescription || undefined,
                               specification: draft.specification || undefined,
                             },
                           },
                         });
-                        onNotify(`Created new line item (received ${clamped})`, 'success');
+                        onNotify(
+                          `Created new line item (received ${clamped})`,
+                          "success",
+                        );
                         clearDraft();
                       } catch (e) {
                         console.error("Failed to create line item", e);
-                        onNotify("Failed to create line item", 'error');
+                        onNotify("Failed to create line item", "error");
                       }
                     };
 
@@ -689,9 +780,7 @@ function Row(props: {
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography>
-                              {totalReceived}
-                            </Typography>
+                            <Typography>{totalReceived}</Typography>
                           </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">
@@ -706,7 +795,7 @@ function Row(props: {
                               ?.split(" ")
                               .map(
                                 (word: string) =>
-                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                  word.charAt(0).toUpperCase() + word.slice(1),
                               )
                               .join(" ")}
                           </TableCell>
@@ -831,7 +920,8 @@ function Row(props: {
                                 ?.split(" ")
                                 .map(
                                   (word: string) =>
-                                    word.charAt(0).toUpperCase() + word.slice(1)
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1),
                                 )
                                 .join(" ")}
                             </TableCell>
@@ -877,11 +967,12 @@ function Row(props: {
 function EnhancedTableToolbar(props: {
   searchQuery: string;
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onGenerateIar?: () => void;
 }) {
-  const { searchQuery, onSearchChange } = props;
+  const { searchQuery, onSearchChange, onGenerateIar } = props;
 
   return (
-    <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
+    <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, gap: 1 }}>
       <Typography
         sx={{ flex: "1 1 100%" }}
         variant="h6"
@@ -890,6 +981,16 @@ function EnhancedTableToolbar(props: {
       >
         Inventory
       </Typography>
+      {onGenerateIar && (
+        <Button
+          variant="contained"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={onGenerateIar}
+          sx={{ whiteSpace: "nowrap", minWidth: 160, flexShrink: 0 }}
+        >
+          Generate IAR
+        </Button>
+      )}
       <TextField
         variant="outlined"
         size="small"
@@ -915,7 +1016,7 @@ export default function InventoryPage() {
       fetchPolicy: "cache-and-network",
       nextFetchPolicy: "cache-first",
       notifyOnNetworkStatusChange: true,
-    }
+    },
   );
 
   const [iarOverrides, setIarOverrides] = React.useState<
@@ -945,7 +1046,7 @@ export default function InventoryPage() {
 
   const IARSelections = useSignatoryStore((s) => s.IARSelections);
 
-  const  setSelectedIAR = useSignatoryStore((s) => s.setIARSelections);
+  const setSelectedIAR = useSignatoryStore((s) => s.setIARSelections);
   const defaultSelections = React.useMemo(() => ({}), []);
 
   const currentSelections = IARSelections || defaultSelections;
@@ -980,6 +1081,86 @@ export default function InventoryPage() {
     string | null
   >(null);
 
+  // Generate IAR from PO — accessible directly from the IAR page
+  const [openPOSelector, setOpenPOSelector] = React.useState(false);
+  const [selectedPOForIar, setSelectedPOForIar] = React.useState<any>(null);
+  const [openGenerateIarFromPage, setOpenGenerateIarFromPage] =
+    React.useState(false);
+  const [generateIarPOFromPage, setGenerateIarPOFromPage] =
+    React.useState<any>(null);
+  const [isGeneratingIarFromPage, setIsGeneratingIarFromPage] =
+    React.useState(false);
+
+  // Fetch all POs for the selector (Apollo cache, same as PO page; no extra network call if cache warm)
+  const { data: poData } = useQuery(GET_PURCHASEORDERS);
+
+  // POs eligible for generating an IAR: not completed, have at least one item with remaining quantity
+  const eligiblePOs = React.useMemo(() => {
+    if (!poData?.purchaseOrders) return [];
+    return poData.purchaseOrders.filter((po: any) => {
+      if (po.status?.toLowerCase() === "completed") return false;
+      if (!po.items?.length) return false;
+      return po.items.some(
+        (item: any) =>
+          !item.isDeleted &&
+          Number(item.quantity ?? 0) -
+            Number(item.actualQuantityReceived ?? 0) >
+            0,
+      );
+    });
+  }, [poData]);
+
+  const [generateIARFromPOMutation] = useMutation(GENERATE_IAR_FROM_PO, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
+
+  const handleOpenPOSelectorForIar = () => {
+    setSelectedPOForIar(null);
+    setOpenPOSelector(true);
+  };
+
+  const handleConfirmPOSelection = () => {
+    if (!selectedPOForIar) return;
+    setOpenPOSelector(false);
+    setGenerateIarPOFromPage(selectedPOForIar);
+    setOpenGenerateIarFromPage(true);
+  };
+
+  const handleCloseGenerateIarFromPage = () => {
+    setOpenGenerateIarFromPage(false);
+    setGenerateIarPOFromPage(null);
+  };
+
+  const handleGenerateIARFromPage = async (
+    purchaseOrderId: number,
+    items: any[],
+    invoice: string,
+  ) => {
+    setIsGeneratingIarFromPage(true);
+    try {
+      const { data: result } = await generateIARFromPOMutation({
+        variables: { purchaseOrderId, items, invoice },
+      });
+      if (result?.generateIARFromPO?.success) {
+        setNotificationMessage(result.generateIARFromPO.message);
+        setNotificationSeverity("success");
+        setShowNotification(true);
+        handleCloseGenerateIarFromPage();
+      }
+    } catch (err: any) {
+      setNotificationMessage(err.message || "Failed to generate IAR");
+      setNotificationSeverity("error");
+      setShowNotification(true);
+    } finally {
+      setIsGeneratingIarFromPage(false);
+    }
+  };
+
   const handleOpenPrintModal = (poItems: any, iarId: string) => {
     setReportType("inspection");
     setPrintPOI(poItems);
@@ -997,7 +1178,7 @@ export default function InventoryPage() {
     console.log("onSignatoriesChange signatories for IAR:", signatories);
     setSelectedIAR(signatories);
   };
-  
+
   // Add this function after handleClosePrintModal (around line 177)
   const handleStatusUpdate = async (iarId: string, newStatus: string) => {
     try {
@@ -1075,7 +1256,7 @@ export default function InventoryPage() {
   };
 
   const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -1095,7 +1276,7 @@ export default function InventoryPage() {
         acc[iarId].push(item);
         return acc;
       },
-      {}
+      {},
     );
 
     // Create one row per iarId with all items
@@ -1104,6 +1285,7 @@ export default function InventoryPage() {
       po: items[0].PurchaseOrder?.poNumber,
       iarId: items[0].iarId,
       iarStatus: items[0].iarStatus,
+      category: items[0].category, // Category for PAR/ICS/RIS display
       createdAt: items[0].createdAt,
       items: items, // Store all items for this iarId
     }));
@@ -1142,7 +1324,7 @@ export default function InventoryPage() {
   const paginatedRows = React.useMemo(() => {
     return filteredRows.slice(
       page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage
+      page * rowsPerPage + rowsPerPage,
     );
   }, [filteredRows, page, rowsPerPage]);
 
@@ -1172,6 +1354,7 @@ export default function InventoryPage() {
           <EnhancedTableToolbar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
+            onGenerateIar={handleOpenPOSelectorForIar}
           />
           <TableContainer sx={{ px: 0 }}>
             <Table aria-label="collapsible table">
@@ -1200,7 +1383,7 @@ export default function InventoryPage() {
                     handleOpenPrintModal={handleOpenPrintModal}
                     onStatusUpdate={handleStatusUpdate}
                     onRevert={handleRevertIAR}
-                    onNotify={(message, severity = 'success') => {
+                    onNotify={(message, severity = "success") => {
                       setNotificationMessage(message);
                       setNotificationSeverity(severity);
                       setShowNotification(true);
@@ -1208,7 +1391,9 @@ export default function InventoryPage() {
                     refetch={refetch}
                     // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
-                    dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
+                    dateOfPaymentOverride={
+                      iarOverrides[row.iarId]?.dateOfPayment
+                    }
                     incomeOverride={iarOverrides[row.iarId]?.income}
                     mdsOverride={iarOverrides[row.iarId]?.mds}
                     detailsOverride={iarOverrides[row.iarId]?.details}
@@ -1254,6 +1439,60 @@ export default function InventoryPage() {
         signatories={currentSelections}
         // NEW: pass overrides
         poOverrides={poOverrides || undefined}
+      />
+
+      {/* PO selector dialog for generating IAR directly from the Inventory page */}
+      <Dialog
+        open={openPOSelector}
+        onClose={() => setOpenPOSelector(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Select Purchase Order to Generate IAR</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Only Purchase Orders with remaining items to receive are shown.
+          </Typography>
+          <Autocomplete
+            options={eligiblePOs}
+            getOptionLabel={(po: any) =>
+              `PO #${po.poNumber} — ${po.supplier || ""}${po.campus ? ` (${po.campus})` : ""}`
+            }
+            value={selectedPOForIar}
+            onChange={(_e, value) => setSelectedPOForIar(value)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Purchase Order"
+                placeholder="Search by PO number or supplier..."
+                size="small"
+              />
+            )}
+            isOptionEqualToValue={(opt: any, val: any) =>
+              String(opt.id) === String(val.id)
+            }
+            noOptionsText="No eligible Purchase Orders found"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPOSelector(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={!selectedPOForIar}
+            onClick={handleConfirmPOSelection}
+          >
+            Next
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Generate IAR modal launched from the IAR page */}
+      <GenerateIarModal
+        open={openGenerateIarFromPage}
+        handleClose={handleCloseGenerateIarFromPage}
+        purchaseOrder={generateIarPOFromPage}
+        onGenerate={handleGenerateIARFromPage}
+        isSubmitting={isGeneratingIarFromPage}
       />
     </PageContainer>
   );

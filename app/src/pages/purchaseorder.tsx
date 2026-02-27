@@ -81,6 +81,10 @@ export default function PurchaseOrder() {
   const [historyPO, setHistoryPO] = React.useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [deletingPO, setDeletingPO] = React.useState<any>(null);
+  // Confirmation for editing a completed PO
+  const [editCompletedConfirmOpen, setEditCompletedConfirmOpen] =
+    React.useState(false);
+  const [pendingEditPO, setPendingEditPO] = React.useState<any>(null);
   // Generate IAR modal state
   const [openGenerateIarModal, setOpenGenerateIarModal] = React.useState(false);
   const [generateIarPO, setGenerateIarPO] = React.useState<any>(null);
@@ -295,8 +299,23 @@ export default function PurchaseOrder() {
   };
 
   const handleOpenEditModal = (po: any) => {
-    setEditingPO(po);
-    setOpenPOModal(true);
+    if (po.status?.toLowerCase() === "completed") {
+      // Show confirmation before allowing edits to a completed PO
+      setPendingEditPO(po);
+      setEditCompletedConfirmOpen(true);
+    } else {
+      setEditingPO(po);
+      setOpenPOModal(true);
+    }
+  };
+
+  const handleConfirmEditCompleted = (confirmed: boolean) => {
+    setEditCompletedConfirmOpen(false);
+    if (confirmed && pendingEditPO) {
+      setEditingPO(pendingEditPO);
+      setOpenPOModal(true);
+    }
+    setPendingEditPO(null);
   };
 
   const handleOpenHistoryModal = (po: any) => {
@@ -345,11 +364,15 @@ export default function PurchaseOrder() {
     setOverviewPO(null);
   };
 
-  const handleGenerateIAR = async (purchaseOrderId: number, items: any[]) => {
+  const handleGenerateIAR = async (
+    purchaseOrderId: number,
+    items: any[],
+    invoice: string,
+  ) => {
     setIsGeneratingIar(true);
     try {
       const { data: result } = await generateIARFromPOMutation({
-        variables: { purchaseOrderId, items },
+        variables: { purchaseOrderId, items, invoice },
       });
       if (result?.generateIARFromPO?.success) {
         setNotificationMessage(result.generateIARFromPO.message);
@@ -381,8 +404,14 @@ export default function PurchaseOrder() {
   const handleSavePO = async (formData: any) => {
     console.log({ handleSavePO: formData });
 
+    // When the user confirmed editing a completed PO, reset status to pending
+    const effectiveFormData =
+      editingPO?.status?.toLowerCase() === "completed"
+        ? { ...formData, status: "pending" }
+        : formData;
+
     const result = await handleSavePurchaseOrder(
-      formData,
+      effectiveFormData,
       editingPO,
       updatePurchaseOrder,
       addPurchaseOrder,
@@ -582,6 +611,12 @@ export default function PurchaseOrder() {
         open={openOverview}
         onClose={handleCloseOverview}
         purchaseOrder={overviewPO}
+      />
+      {/* Confirmation for editing a completed PO */}
+      <ConfirmDialog
+        open={editCompletedConfirmOpen}
+        message={`This Purchase Order is already COMPLETED. Proceeding will revert its status back to PENDING and the change will be logged in the history. Do you want to continue?`}
+        onClose={handleConfirmEditCompleted}
       />
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}

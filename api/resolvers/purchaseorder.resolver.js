@@ -267,12 +267,13 @@ const purchaseorderResolver = {
           );
         }
 
-        // Ensure poRestData.category has a valid default if it's not set or invalid
+        // Category is not set during PO creation — it's assigned when IAR is generated
+        // Remove any invalid category, allow null/empty
         if (
-          !poRestData.category ||
+          poRestData.category &&
           !validCategories.includes(poRestData.category)
         ) {
-          poRestData.category = "requisition issue slip"; // Default for PurchaseOrder category
+          delete poRestData.category;
         }
 
         // Create new purchase order
@@ -313,9 +314,15 @@ const purchaseorderResolver = {
           for (const item of items) {
             const { id: poId, ...cleanedItems } = item;
 
-            // Validate and set default for item category if necessary
-            if (!validCategories.includes(cleanedItems.category)) {
-              cleanedItems.category = "requisition issue slip";
+            // Category is not set during PO creation — it's assigned when IAR is generated
+            // Remove invalid category values, allow null/empty
+            if (
+              cleanedItems.category &&
+              !validCategories.includes(cleanedItems.category)
+            ) {
+              cleanedItems.category = null;
+            } else if (!cleanedItems.category) {
+              cleanedItems.category = null;
             }
 
             const newPOI = await PurchaseOrderItems.create(
@@ -376,6 +383,14 @@ const purchaseorderResolver = {
         if (!findIfExists) {
           throw new Error("Purchase order not found");
         }
+
+        // Detect if a completed PO is being reverted to pending (initiated by user confirmation)
+        const wasCompleted =
+          String(findIfExists.status || "").toLowerCase() === "completed";
+        const revertingToPending =
+          wasCompleted &&
+          String(poUpdates.status || "").toLowerCase() === "pending";
+
         // Update the purchase order details
         // Update the purchase order
         const [_, affectedRows] = await PurchaseOrder.update(
@@ -384,6 +399,36 @@ const purchaseorderResolver = {
             where: { id: poId },
           },
         );
+
+        // If status was reverted from completed → pending, log a history entry
+        if (revertingToPending) {
+          const poForHistory = await PurchaseOrder.findByPk(poId, {
+            include: [PurchaseOrderItems],
+          });
+          if (
+            poForHistory &&
+            poForHistory.PurchaseOrderItems &&
+            poForHistory.PurchaseOrderItems.length > 0
+          ) {
+            const firstItem = poForHistory.PurchaseOrderItems[0];
+            await PurchaseOrderItemsHistory.create({
+              purchaseOrderItemId: firstItem.id,
+              purchaseOrderId: poId,
+              itemName: firstItem.itemName || "",
+              description: firstItem.description || "",
+              previousQuantity: firstItem.quantity,
+              newQuantity: firstItem.quantity,
+              previousActualQuantityReceived: firstItem.actualQuantityReceived,
+              newActualQuantityReceived: firstItem.actualQuantityReceived,
+              previousAmount: firstItem.amount,
+              newAmount: firstItem.amount,
+              changeType: "status_reverted",
+              changedBy: user.name || user.id,
+              changeReason:
+                "Purchase Order reopened for editing — status reverted from Completed to Pending",
+            });
+          }
+        }
 
         if (markingComplete) {
           // If marking complete, we might update the PO status and log history.
@@ -654,8 +699,14 @@ const purchaseorderResolver = {
             } else {
               // New item path unchanged
               const { id, ...cleanedItems } = item;
-              if (!validCategories.includes(cleanedItems.category)) {
-                cleanedItems.category = "requisition issue slip";
+              // Category is not set during item creation — it's assigned when IAR is generated
+              if (
+                cleanedItems.category &&
+                !validCategories.includes(cleanedItems.category)
+              ) {
+                cleanedItems.category = null;
+              } else if (!cleanedItems.category) {
+                cleanedItems.category = null;
               }
               const newPOI = await PurchaseOrderItems.create({
                 itemName: item.itemName || "",
@@ -666,7 +717,7 @@ const purchaseorderResolver = {
                 quantity: item.quantity ? item.quantity : 0,
                 unitCost: item.unitCost ? item.unitCost : 0,
                 amount: item.amount ? item.amount : 0,
-                category: item.category || "requisition issue slip",
+                category: cleanedItems.category || null,
                 tag: item.tag || "none",
                 inventoryNumber: item.inventoryNumber || "none",
                 actualQuantityReceived: item?.currentInput
@@ -844,13 +895,28 @@ const purchaseorderResolver = {
             transaction: t,
           });
 
-          // Update item AQR
+          // Determine new delivery status after revert
+          const newDeliveryStatus =
+            afterAqr <= 0
+              ? "pending"
+              : afterAqr >= Number(poi.quantity || 0)
+                ? "delivered"
+                : "partial";
+
+          // Update item AQR and reset delivery status
           const [poiUpdated] = await PurchaseOrderItems.update(
-            { actualQuantityReceived: afterAqr },
+            {
+              actualQuantityReceived: afterAqr,
+              deliveryStatus: newDeliveryStatus,
+              deliveredDate:
+                newDeliveryStatus === "pending" ? null : poi.deliveredDate,
+              // Also clear category when fully reverted so it's blank until next IAR
+              ...(afterAqr <= 0 ? { category: null } : {}),
+            },
             { where: { id: poi.id }, transaction: t },
           );
           console.log(
-            `[revertIARBatch] Updated PO Item ${poi.id}: AQR ${beforeAqr} -> ${afterAqr} (rows=${poiUpdated})`,
+            `[revertIARBatch] Updated PO Item ${poi.id}: AQR ${beforeAqr} -> ${afterAqr}, status -> ${newDeliveryStatus} (rows=${poiUpdated})`,
           );
 
           // History

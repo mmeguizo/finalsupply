@@ -401,6 +401,10 @@ const inspectionAcceptanceReportResolver = {
             { where: { id: poi.id }, transaction: t },
           );
 
+          // Determine iarStatus for this append line
+          const appendIarStatus =
+            afterAqr >= Number(poi.quantity || 0) ? "complete" : "partial";
+
           // Create IAR row reusing iarId and inheriting doc IDs if any
           const iarRow = await inspectionAcceptanceReport.create(
             {
@@ -425,6 +429,8 @@ const inspectionAcceptanceReportResolver = {
               parId: existingIar?.parId || null,
               icsId: existingIar?.icsId || null,
               risId: existingIar?.risId || null,
+              // "complete" if this item was fully received, "partial" otherwise
+              iarStatus: appendIarStatus,
             },
             { transaction: t },
           );
@@ -479,7 +485,11 @@ const inspectionAcceptanceReportResolver = {
      * tagged (low/high for ICS), and received quantities are set.
      * Creates IAR records and updates PO item received qty + delivery status.
      */
-    generateIARFromPO: async (_, { purchaseOrderId, items }, context) => {
+    generateIARFromPO: async (
+      _,
+      { purchaseOrderId, items, invoice },
+      context,
+    ) => {
       const t = await sequelize.transaction();
       try {
         if (!context.isAuthenticated()) {
@@ -574,11 +584,16 @@ const inspectionAcceptanceReportResolver = {
               purchaseOrderId: parseInt(purchaseOrderId),
               purchaseOrderItemId: poi.id,
               actualQuantityReceived: delta,
+              // Use invoice from the modal (which may come from the PO or be user-entered)
+              invoice: invoice || po.invoice || "",
               createdBy: user.name || user.id,
               updatedBy: user.name || user.id,
               parId: "",
               icsId: "",
               risId: "",
+              // "complete" if this item was fully received, "partial" otherwise
+              iarStatus:
+                deliveryStatus === "delivered" ? "complete" : "partial",
             },
             { transaction: t },
           );
@@ -736,6 +751,9 @@ const inspectionAcceptanceReportResolver = {
             parId: existingIar?.parId || null,
             icsId: existingIar?.icsId || null,
             risId: existingIar?.risId || null,
+            // "complete" if fully received, "partial" otherwise
+            iarStatus:
+              received >= Number(newPoi.quantity || 0) ? "complete" : "partial",
           },
           { transaction: t },
         );

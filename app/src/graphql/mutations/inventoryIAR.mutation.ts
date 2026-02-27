@@ -114,8 +114,13 @@ export const GENERATE_IAR_FROM_PO = gql`
   mutation GenerateIARFromPO(
     $purchaseOrderId: Int!
     $items: [GenerateIARItemInput!]!
+    $invoice: String
   ) {
-    generateIARFromPO(purchaseOrderId: $purchaseOrderId, items: $items) {
+    generateIARFromPO(
+      purchaseOrderId: $purchaseOrderId
+      items: $items
+      invoice: $invoice
+    ) {
       success
       iarId
       updatedCount

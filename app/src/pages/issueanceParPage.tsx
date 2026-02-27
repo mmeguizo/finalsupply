@@ -130,14 +130,8 @@ export default function IssuanceParPage() {
     );
 
     if (poRow) {
-      // If item already has parId, open legacy single-item modal for editing
-      if (item.parId) {
-        setItemToAssign(item);
-        setOpenAssignmentModal(true);
-        return;
-      }
-
-      // Open multi-item modal with all PO items, pre-selecting the clicked item
+      // Always open multi-item modal so users can re-split, add to existing, or create new PAR
+      // (including items that already have a parId — they may need to be re-split or re-assigned)
       setMultiAssignPOItems(poRow.items);
       setMultiAssignPreSelected([item]);
       setMultiAssignPONumber(poRow.poNumber);
