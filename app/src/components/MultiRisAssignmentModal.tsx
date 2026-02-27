@@ -37,10 +37,13 @@ import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/
 import {
   CREATE_MULTI_ITEM_RIS_ASSIGNMENT,
   ADD_ITEM_TO_EXISTING_RIS,
+  SPLIT_AND_ASSIGN_RIS,
 } from "../graphql/mutations/requisitionIS.mutation";
 import { GET_ALL_USERS } from "../graphql/queries/user.query";
 import useSignatoryStore from "../stores/signatoryStore";
 import { currencyFormat } from "../utils/generalUtils";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -113,6 +116,13 @@ export default function MultiRisAssignmentModal({
     },
   );
 
+  const [splitAndAssignRIS, { loading: splitLoading }] = useMutation(
+    SPLIT_AND_ASSIGN_RIS,
+    {
+      refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
+    },
+  );
+
   /* ---------- Signatories from Zustand store ---------- */
 
   const allSignatories = useSignatoryStore((s) => s.signatories);
@@ -137,6 +147,17 @@ export default function MultiRisAssignmentModal({
   const [addToExistingItem, setAddToExistingItem] = useState<string>("");
   const [addToExistingQty, setAddToExistingQty] = useState<number>(1);
 
+  // For "Split & Assign" tab
+  const [splitSourceItemId, setSplitSourceItemId] = useState<string>("");
+  const [splitRows, setSplitRows] = useState<
+    Array<{
+      quantity: number;
+      department: string;
+      receivedFrom: UserOption | null;
+      receivedBy: UserOption | null;
+    }>
+  >([]);
+
   /* ---------- Effects ---------- */
 
   useEffect(() => {
@@ -151,6 +172,8 @@ export default function MultiRisAssignmentModal({
       setSelectedExistingRisId("");
       setAddToExistingItem("");
       setAddToExistingQty(1);
+      setSplitSourceItemId("");
+      setSplitRows([]);
 
       if (preSelectedItems && preSelectedItems.length > 0) {
         const ids = new Set(preSelectedItems.map((it: any) => String(it.id)));
@@ -169,6 +192,8 @@ export default function MultiRisAssignmentModal({
     if (!open) {
       setSelectedItemIds(new Set());
       setItemQuantities({});
+      setSplitSourceItemId("");
+      setSplitRows([]);
       setError("");
       setSuccessMessage("");
     }
@@ -325,7 +350,8 @@ export default function MultiRisAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("createMultiRIS error:", err);
       setError(err.message || "Failed to create RIS. Please try again.");
@@ -383,16 +409,120 @@ export default function MultiRisAssignmentModal({
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 4000);
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("addToExistingRIS error:", err);
       setError(err.message || "Failed to add item to existing RIS.");
     }
   };
 
+  /* ---------- Split & Assign helpers ---------- */
+
+  const splitSourceItem = useMemo(() => {
+    if (!splitSourceItemId) return null;
+    return availableItems.find(
+      (it: any) => String(it.id) === splitSourceItemId,
+    );
+  }, [availableItems, splitSourceItemId]);
+
+  const splitTotalQty = splitRows.reduce((sum, r) => sum + r.quantity, 0);
+  const splitOriginalQty = splitSourceItem?.actualQuantityReceived || 0;
+
+  const addSplitRow = () => {
+    setSplitRows((prev) => [
+      ...prev,
+      { quantity: 1, department: "", receivedFrom: null, receivedBy: null },
+    ]);
+  };
+
+  const removeSplitRow = (index: number) => {
+    setSplitRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSplitRow = (index: number, field: string, value: any) => {
+    setSplitRows((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+  };
+
+  /* ---------- Submit: Split & Assign ---------- */
+
+  const handleSplitAndAssign = async () => {
+    setError("");
+    setSuccessMessage("");
+
+    if (!splitSourceItemId) {
+      setError("Please select a source item to split.");
+      return;
+    }
+    if (splitRows.length === 0) {
+      setError("Please add at least one split row.");
+      return;
+    }
+    if (splitTotalQty === 0) {
+      setError("Total split quantity must be greater than 0.");
+      return;
+    }
+
+    for (let i = 0; i < splitRows.length; i++) {
+      const row = splitRows[i];
+      if (row.quantity <= 0) {
+        setError(`Split row ${i + 1}: Quantity must be greater than 0.`);
+        return;
+      }
+      if (!row.receivedFrom) {
+        setError(`Split row ${i + 1}: Please select "Received From".`);
+        return;
+      }
+      if (!row.receivedBy) {
+        setError(`Split row ${i + 1}: Please select "Received By".`);
+        return;
+      }
+    }
+
+    try {
+      await splitAndAssignRIS({
+        variables: {
+          input: {
+            itemSplits: [
+              {
+                itemId: splitSourceItemId,
+                splits: splitRows.map((row) => ({
+                  quantity: row.quantity,
+                  department: row.department.trim(),
+                  receivedFrom: row.receivedFrom!.name,
+                  receivedFromPosition:
+                    row.receivedFrom!.position || row.receivedFrom!.role || "",
+                  receivedBy: row.receivedBy!.name,
+                  receivedByPosition: row.receivedBy!.position || "",
+                })),
+              },
+            ],
+          },
+        },
+      });
+
+      setSuccessMessage(
+        `Successfully split "${splitSourceItem?.description || "item"}" into ${splitRows.length} RIS assignment(s)!`,
+      );
+      setSplitSourceItemId("");
+      setSplitRows([]);
+      onAssignmentComplete();
+
+      setTimeout(() => {
+        setSuccessMessage("");
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      console.error("splitAndAssignRIS error:", err);
+      setError(err.message || "Failed to split and assign RIS.");
+    }
+  };
+
   /* ---------- Render ---------- */
 
-  const isLoading = usersLoading || createLoading || addLoading;
+  const isLoading = usersLoading || createLoading || addLoading || splitLoading;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -446,6 +576,11 @@ export default function MultiRisAssignmentModal({
             icon={<LinkIcon />}
             iconPosition="start"
             disabled={existingRISGroups.length === 0}
+          />
+          <Tab
+            label="Split & Assign"
+            icon={<CallSplitIcon />}
+            iconPosition="start"
           />
         </Tabs>
 
@@ -827,6 +962,215 @@ export default function MultiRisAssignmentModal({
                 No existing RIS assignments found for this PO. Use the "Create
                 New RIS" tab to create the first assignment.
               </Alert>
+            )}
+          </Stack>
+        )}
+
+        {/* ========== TAB 2: Split & Assign ========== */}
+        {tabIndex === 2 && (
+          <Stack spacing={2}>
+            <Alert severity="info" sx={{ mb: 1 }}>
+              Split one item into <strong>multiple end users</strong>. Each
+              split gets its own RIS ID. You can split into any number of pieces
+              (e.g. 1 lot → 6 RIS assignments). All splits are tracked back to
+              the original source item.
+            </Alert>
+
+            {/* Source item selection */}
+            <Typography variant="subtitle2" fontWeight="bold">
+              1. Select the source item to split:
+            </Typography>
+            <Autocomplete
+              size="small"
+              options={availableItems.filter(
+                (it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0,
+              )}
+              value={
+                availableItems.find(
+                  (it: any) => String(it.id) === splitSourceItemId,
+                ) || null
+              }
+              onChange={(_, v) => {
+                setSplitSourceItemId(v ? String(v.id) : "");
+                setSplitRows([]);
+              }}
+              getOptionLabel={(o: any) =>
+                `${o.description || o.itemName} — ${o.actualQuantityReceived} ${o.unit || "unit(s)"} available (${currencyFormat(o.unitCost)})`
+              }
+              isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
+              renderInput={(params) => (
+                <TextField {...params} label="Select Source Item" />
+              )}
+            />
+
+            {/* Split rows */}
+            {splitSourceItem && (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    2. Define splits (Original Qty: {splitOriginalQty},
+                    Splitting into: {splitTotalQty}):
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AddCircleOutlineIcon />}
+                    onClick={addSplitRow}
+                  >
+                    Add Split
+                  </Button>
+                </Box>
+
+                {splitRows.map((row, index) => (
+                  <Card
+                    key={index}
+                    variant="outlined"
+                    sx={{ borderColor: "primary.light" }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" color="primary">
+                          Split #{index + 1}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => removeSplitRow(index)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+
+                      <Box sx={{ display: "flex", gap: 2, mb: 1.5 }}>
+                        <TextField
+                          label="Quantity"
+                          type="number"
+                          size="small"
+                          value={row.quantity}
+                          onChange={(e) =>
+                            updateSplitRow(
+                              index,
+                              "quantity",
+                              Math.max(0, parseInt(e.target.value, 10) || 0),
+                            )
+                          }
+                          inputProps={{ min: 1 }}
+                          sx={{ width: 120 }}
+                        />
+                        <TextField
+                          label="Department / Office"
+                          size="small"
+                          value={row.department}
+                          onChange={(e) =>
+                            updateSplitRow(index, "department", e.target.value)
+                          }
+                          sx={{ flexGrow: 1 }}
+                        />
+                      </Box>
+
+                      <Box sx={{ display: "flex", gap: 2 }}>
+                        <Autocomplete
+                          size="small"
+                          options={signatoryOptions}
+                          value={row.receivedFrom}
+                          onChange={(_, v) =>
+                            updateSplitRow(index, "receivedFrom", v)
+                          }
+                          getOptionLabel={(o) => o.label}
+                          isOptionEqualToValue={(o, v) => o.id === v.id}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Received From (Supply Officer)"
+                              required
+                            />
+                          )}
+                          sx={{ flex: 1 }}
+                        />
+                        <Autocomplete
+                          size="small"
+                          options={userOptions}
+                          value={row.receivedBy}
+                          onChange={(_, v) =>
+                            updateSplitRow(index, "receivedBy", v)
+                          }
+                          getOptionLabel={(o) => o.label}
+                          isOptionEqualToValue={(o, v) => o.id === v.id}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Received By (End User)"
+                              required
+                            />
+                          )}
+                          sx={{ flex: 1 }}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {splitRows.length === 0 && (
+                  <Alert severity="info">
+                    Click &quot;Add Split&quot; to define how to divide this
+                    item across end users.
+                  </Alert>
+                )}
+
+                {/* Summary and submit */}
+                {splitRows.length > 0 && (
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2">
+                          <strong>{splitRows.length}</strong> split(s) totaling{" "}
+                          <strong>{splitTotalQty}</strong> unit(s) from original
+                          qty of {splitOriginalQty}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Each split gets its own RIS ID. All splits are tracked
+                          back to the source item.
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        startIcon={
+                          splitLoading ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <CallSplitIcon />
+                          )
+                        }
+                        onClick={handleSplitAndAssign}
+                        disabled={splitLoading || splitTotalQty === 0}
+                      >
+                        Split & Assign ({splitRows.length})
+                      </Button>
+                    </Box>
+                  </Paper>
+                )}
+              </>
             )}
           </Stack>
         )}

@@ -1,6 +1,6 @@
 import { GridColDef } from "@mui/x-data-grid";
 import { formatCategory } from "../../utils/generalUtils";
-import { Button } from "@mui/material";
+import { Button, Chip } from "@mui/material";
 //@ts-ignore
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
@@ -12,11 +12,26 @@ import { useMutation } from "@apollo/client";
 import { UPDATE_PURCHASEORDER } from "../../graphql/mutations/purchaseorder.mutation";
 //@ts-ignore
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import PendingIcon from "@mui/icons-material/Pending";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+/**
+ * Check if an item is fully delivered and complete (not editable).
+ */
+export const isItemDeliveredAndComplete = (row: any): boolean => {
+  const qty = Number(row.quantity ?? 0);
+  const received = Number(row.actualQuantityReceived ?? 0);
+  const deliveryStatus = row.deliveryStatus || "pending";
+  return deliveryStatus === "delivered" && qty > 0 && received >= qty;
+};
 // Define columns for purchase orders
 export const createPoColumns = (
   handleOpenEditModal: (po: any) => void,
   handleOpenHistoryModal: (po: any) => void,
-  handleOpenPrintModal: (po: any) => void
+  handleOpenPrintModal: (po: any) => void,
+  handleOpenOverview?: (po: any) => void,
 ): GridColDef[] => [
   {
     field: "poNumber",
@@ -63,24 +78,31 @@ export const createPoColumns = (
     headerAlign: "right",
     renderCell: (params) => {
       // Move hook outside StatusButton to prevent recreation
-      const [updatePurchaseOrder, { loading }] = useMutation(UPDATE_PURCHASEORDER, {
-        awaitRefetchQueries: true,
-        refetchQueries: ["GET_PURCHASEORDERS", "GET_ALL_PURCHASEORDER_ITEMS"],
-      });
+      const [updatePurchaseOrder, { loading }] = useMutation(
+        UPDATE_PURCHASEORDER,
+        {
+          awaitRefetchQueries: true,
+          refetchQueries: ["GET_PURCHASEORDERS", "GET_ALL_PURCHASEORDER_ITEMS"],
+        },
+      );
 
       const StatusButton = () => {
-        const allItemsComplete = params.row.items.length ? params.row.items.every(
-          (item: any) => item.quantity === item.actualQuantityReceived && item.quantity > 0
-        ) : false;
+        const allItemsComplete = params.row.items.length
+          ? params.row.items.every(
+              (item: any) =>
+                item.quantity === item.actualQuantityReceived &&
+                item.quantity > 0,
+            )
+          : false;
 
         const handleMarkComplete = async (e: React.MouseEvent) => {
           console.log("🎯 Handler called!");
           e.stopPropagation();
           e.preventDefault();
-          
+
           try {
             console.log("🟡 Sending mutation for PO:", params.row.id);
-            
+
             await updatePurchaseOrder({
               variables: {
                 input: {
@@ -91,7 +113,7 @@ export const createPoColumns = (
                 },
               },
             });
-            
+
             console.log("✅ Status updated successfully");
           } catch (error) {
             console.error("❌ Error:", error);
@@ -121,10 +143,10 @@ export const createPoColumns = (
                 handleMarkComplete(e);
               }}
               disabled={loading}
-              sx={{ 
-                fontSize: "0.5rem", 
+              sx={{
+                fontSize: "0.5rem",
                 whiteSpace: "nowrap",
-                cursor: loading ? "wait" : "pointer"
+                cursor: loading ? "wait" : "pointer",
               }}
             >
               {loading ? "Updating..." : "Mark Complete"}
@@ -133,7 +155,8 @@ export const createPoColumns = (
         }
 
         return params.value
-          ? params.value.charAt(0).toUpperCase() + params.value.slice(1).toLowerCase()
+          ? params.value.charAt(0).toUpperCase() +
+              params.value.slice(1).toLowerCase()
           : "";
       };
 
@@ -145,17 +168,17 @@ export const createPoColumns = (
     headerName: "Views Item",
     width: 100,
     renderCell: (params) => (
-        <Tooltip title="Edit" placement="top">
-      <Button
-        size="small"
-        onClick={(e: any) => {
-          e.stopPropagation(); // Prevent row selection
-          // @ts-ignore
-          handleOpenEditModal(params.row);
-        }}
-      >
-        <EditNoteIcon fontSize="large" />
-      </Button>
+      <Tooltip title="Edit" placement="top">
+        <Button
+          size="small"
+          onClick={(e: any) => {
+            e.stopPropagation(); // Prevent row selection
+            // @ts-ignore
+            handleOpenEditModal(params.row);
+          }}
+        >
+          <EditNoteIcon fontSize="large" />
+        </Button>
       </Tooltip>
     ),
   },
@@ -164,18 +187,37 @@ export const createPoColumns = (
     headerName: "Item History",
     width: 100,
     renderCell: (params) => (
-        <Tooltip title="Item History" placement="top">
-      <Button
-        sx={{ whiteSpace: "normal" }}
-        size="small"
-        onClick={(e: any) => {
-          e.stopPropagation(); // Prevent row selection
-          // @ts-ignore
-          handleOpenHistoryModal(params.row);
-        }}
-      >
-        <ManageHistoryIcon fontSize="large" />
-      </Button>
+      <Tooltip title="Item History" placement="top">
+        <Button
+          sx={{ whiteSpace: "normal" }}
+          size="small"
+          onClick={(e: any) => {
+            e.stopPropagation(); // Prevent row selection
+            // @ts-ignore
+            handleOpenHistoryModal(params.row);
+          }}
+        >
+          <ManageHistoryIcon fontSize="large" />
+        </Button>
+      </Tooltip>
+    ),
+  },
+  {
+    field: "overview",
+    headerName: "Overview",
+    width: 80,
+    renderCell: (params) => (
+      <Tooltip title="View PO Overview" placement="top">
+        <IconButton
+          size="small"
+          color="info"
+          onClick={(e: any) => {
+            e.stopPropagation();
+            handleOpenOverview?.(params.row);
+          }}
+        >
+          <VisibilityIcon />
+        </IconButton>
       </Tooltip>
     ),
   },
@@ -200,8 +242,81 @@ export const createPoColumns = (
   // },
 ];
 
-// Define columns for items
-export const itemColumns: GridColDef[] = [
+// Define columns for items (factory function to support delivery status toggle)
+export const createItemColumns = (
+  onDeliveryStatusChange?: (itemId: string, newStatus: string) => void,
+): GridColDef[] => [
+  {
+    field: "itemNumber",
+    headerName: "#",
+    width: 50,
+    sortable: false,
+    filterable: false,
+  },
+  {
+    field: "deliveryStatus",
+    headerName: "Delivery",
+    width: 120,
+    renderCell: (params) => {
+      const status = params.value || "pending";
+      const itemComplete = isItemDeliveredAndComplete(params.row);
+      const colorMap: Record<string, "default" | "success" | "warning"> = {
+        pending: "default",
+        delivered: "success",
+        partial: "warning",
+      };
+      const iconMap: Record<string, any> = {
+        pending: <PendingIcon sx={{ fontSize: 16 }} />,
+        delivered: <LocalShippingIcon sx={{ fontSize: 16 }} />,
+        partial: <PendingIcon sx={{ fontSize: 16 }} />,
+      };
+      const nextStatus: Record<string, string> = {
+        pending: "delivered",
+        delivered: "pending",
+        partial: "delivered",
+      };
+      const hasReceived = Number(params.row.actualQuantityReceived ?? 0) > 0;
+
+      if (itemComplete) {
+        return (
+          <Chip
+            icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+            label="Complete"
+            color="success"
+            size="small"
+            variant="filled"
+            sx={{ fontWeight: 500 }}
+          />
+        );
+      }
+
+      return (
+        <Chip
+          icon={iconMap[status]}
+          label={status.charAt(0).toUpperCase() + status.slice(1)}
+          color={colorMap[status]}
+          size="small"
+          variant={status === "pending" ? "outlined" : "filled"}
+          onClick={
+            hasReceived
+              ? (e) => {
+                  e.stopPropagation();
+                  onDeliveryStatusChange?.(
+                    String(params.row.id),
+                    nextStatus[status],
+                  );
+                }
+              : undefined
+          }
+          sx={{
+            cursor: hasReceived ? "pointer" : "default",
+            fontWeight: 500,
+            opacity: hasReceived ? 1 : 0.6,
+          }}
+        />
+      );
+    },
+  },
   {
     field: "category",
     headerName: "Category",
@@ -219,7 +334,7 @@ export const itemColumns: GridColDef[] = [
   { field: "unit", headerName: "Unit", width: 100, editable: true },
   {
     field: "actualQuantityReceived",
-    headerName: "Actual Recieved",
+    headerName: "Actual Received",
     type: "number",
     width: 100,
   },
@@ -236,4 +351,20 @@ export const itemColumns: GridColDef[] = [
     type: "string",
     width: 120,
   },
+  {
+    field: "deliveredDate",
+    headerName: "Delivered Date",
+    width: 120,
+    valueFormatter: (params) => {
+      if (!params) return "";
+      return new Date(params).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    },
+  },
 ];
+
+// Backward compatible static columns (without delivery toggle)
+export const itemColumns: GridColDef[] = createItemColumns();

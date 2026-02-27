@@ -110,6 +110,25 @@ export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
   }
 `;
 
+export const GENERATE_IAR_FROM_PO = gql`
+  mutation GenerateIARFromPO(
+    $purchaseOrderId: Int!
+    $items: [GenerateIARItemInput!]!
+    $invoice: String
+  ) {
+    generateIARFromPO(
+      purchaseOrderId: $purchaseOrderId
+      items: $items
+      invoice: $invoice
+    ) {
+      success
+      iarId
+      updatedCount
+      message
+    }
+  }
+`;
+
 export const UPDATE_IAR_INVOICE = gql`
   mutation UpdateIARInvoice(
     $iarId: String!
@@ -281,6 +300,45 @@ export const ADD_ITEM_TO_EXISTING_ICS = gql`
         icsId
       }
       icsId
+    }
+  }
+`;
+
+// Split items by received quantity and assign ICS IDs with per-split signatories
+export const SPLIT_AND_ASSIGN_ICS = gql`
+  mutation SplitAndAssignICS($input: SplitAndAssignICSInput!) {
+    splitAndAssignICS(input: $input) {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      icsReceivedFrom
+      icsReceivedFromPosition
+      icsReceivedBy
+      icsReceivedByPosition
+      icsDepartment
+      icsAssignedDate
+      splitGroupId
+      splitFromItemId
+      splitIndex
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        dateOfDelivery
+      }
     }
   }
 `;

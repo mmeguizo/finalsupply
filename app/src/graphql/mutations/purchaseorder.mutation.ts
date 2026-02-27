@@ -7,22 +7,29 @@ export const ADD_PURCHASEORDER = gql`
       poNumber
       supplier
       address
+      email
+      telephone
+      tin
       campus
+      placeOfDelivery
       dateOfDelivery
       dateOfPayment
+      deliveryTerms
+      paymentTerms
+      modeOfProcurement
       category
       invoice
       dateOfConformity
       completed_status_date
       fundsource
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         description
         generalDescription
-        specification   
+        specification
         purchaseOrderId
         unit
         quantity
@@ -44,7 +51,9 @@ export const UPDATE_PURCHASEORDER = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery
@@ -56,20 +65,29 @@ export const UPDATE_PURCHASEORDER = gql`
       status
       completed_status_date
       fundsource
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
+        itemName
+        purchaseOrderId
         description
+        generalDescription
+        specification
         unit
         quantity
         unitCost
         amount
         category
+        tag
         isDeleted
         actualQuantityReceived
         inventoryNumber
+        iarId
+        deliveryStatus
+        deliveredDate
+        deliveryNotes
       }
       amount
       invoice
@@ -83,6 +101,31 @@ export const DELETE_PURCHASEORDER = gql`
       id
       poNumber
       supplier
+    }
+  }
+`;
+
+export const UPDATE_ITEM_DELIVERY_STATUS = gql`
+  mutation UpdateItemDeliveryStatus(
+    $itemId: ID!
+    $deliveryStatus: String!
+    $deliveredDate: String
+    $deliveryNotes: String
+  ) {
+    updateItemDeliveryStatus(
+      itemId: $itemId
+      deliveryStatus: $deliveryStatus
+      deliveredDate: $deliveredDate
+      deliveryNotes: $deliveryNotes
+    ) {
+      success
+      message
+      item {
+        id
+        deliveryStatus
+        deliveredDate
+        deliveryNotes
+      }
     }
   }
 `;

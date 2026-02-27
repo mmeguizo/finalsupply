@@ -30,7 +30,7 @@ const PurchaseOrder = sequelize.define(
       type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
       allowNull: false,
     },
-    dateOfConformity : {
+    dateOfConformity: {
       type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
       allowNull: true, // Allow null for optional date of conformity
     },
@@ -52,12 +52,12 @@ const PurchaseOrder = sequelize.define(
         "closed",
         "cancel",
         "completed",
-        "pending"
+        "pending",
       ),
       allowNull: true,
       defaultValue: "pending", // Default status as 'pending'
     },
-    completed_status_date : {
+    completed_status_date: {
       type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
       allowNull: true,
     },
@@ -86,12 +86,17 @@ const PurchaseOrder = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    tin: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Tax Identification Number of the supplier",
+    },
     campus: {
       type: DataTypes.STRING(50),
       allowNull: true,
       comment: "Campus name: Talisay | Alijis | Binalbagan | Fortune Town",
     },
-    fundsource : {
+    fundsource: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
@@ -109,19 +114,23 @@ const PurchaseOrder = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: "Additional PO details",
-    }
+    },
   },
   {
     tableName: "purchase_orders", // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  }
+  },
 );
 
 // You may add associations if necessary (e.g., PurchaseOrder has many PurchaseOrderItems)
 
 PurchaseOrder.hasMany(PurchaseOrderItems, { foreignKey: "purchaseOrderId" });
-PurchaseOrder.hasMany(InspectionAcceptanceReport, { foreignKey: "purchaseOrderId" });
+PurchaseOrder.hasMany(InspectionAcceptanceReport, {
+  foreignKey: "purchaseOrderId",
+});
 PurchaseOrderItems.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
-InspectionAcceptanceReport.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
+InspectionAcceptanceReport.belongsTo(PurchaseOrder, {
+  foreignKey: "purchaseOrderId",
+});
 export default PurchaseOrder;

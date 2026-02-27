@@ -113,6 +113,9 @@ export const SPLIT_AND_ASSIGN_PAR = gql`
       parReceivedByPosition
       parDepartment
       parAssignedDate
+      splitGroupId
+      splitFromItemId
+      splitIndex
       PurchaseOrder {
         id
         poNumber

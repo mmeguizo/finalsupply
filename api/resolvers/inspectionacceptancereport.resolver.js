@@ -6,7 +6,8 @@ import { sequelize } from "../db/connectDB.js";
 import { customAlphabet } from "nanoid";
 import { omitId } from "../utils/helper.js";
 import { Op, Sequelize } from "sequelize";
-import { generateNewIcsId } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
+import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
+import { generateNewIarId } from "../utils/iarIdGenerator.js"; // Import the IAR ID generator function
 const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
@@ -400,6 +401,10 @@ const inspectionAcceptanceReportResolver = {
             { where: { id: poi.id }, transaction: t },
           );
 
+          // Determine iarStatus for this append line
+          const appendIarStatus =
+            afterAqr >= Number(poi.quantity || 0) ? "complete" : "partial";
+
           // Create IAR row reusing iarId and inheriting doc IDs if any
           const iarRow = await inspectionAcceptanceReport.create(
             {
@@ -424,6 +429,8 @@ const inspectionAcceptanceReportResolver = {
               parId: existingIar?.parId || null,
               icsId: existingIar?.icsId || null,
               risId: existingIar?.risId || null,
+              // "complete" if this item was fully received, "partial" otherwise
+              iarStatus: appendIarStatus,
             },
             { transaction: t },
           );
@@ -471,6 +478,170 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || "Failed to append to IAR");
       }
     },
+
+    /**
+     * Generate IAR from an existing PO.
+     * This is the separate step where items get categorized (PAR/ICS/RIS),
+     * tagged (low/high for ICS), and received quantities are set.
+     * Creates IAR records and updates PO item received qty + delivery status.
+     */
+    generateIARFromPO: async (
+      _,
+      { purchaseOrderId, items, invoice },
+      context,
+    ) => {
+      const t = await sequelize.transaction();
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+        const user = context.req.user;
+
+        if (!purchaseOrderId) {
+          throw new Error("Purchase Order ID is required");
+        }
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error("No items provided");
+        }
+
+        // Validate PO exists
+        const po = await PurchaseOrder.findByPk(purchaseOrderId, {
+          transaction: t,
+        });
+        if (!po || po.isDeleted) {
+          throw new Error("Purchase Order not found");
+        }
+
+        // Generate a single IAR ID for the entire batch
+        const campus = po.campus || "Talisay";
+        const autoIarId = await generateNewIarId(campus);
+
+        let processedCount = 0;
+
+        for (const line of items) {
+          const { purchaseOrderItemId, category, tag, received } = line;
+
+          if (!purchaseOrderItemId || !received || Number(received) <= 0)
+            continue;
+
+          // Lock the POI and validate
+          const poi = await PurchaseOrderItems.findByPk(purchaseOrderItemId, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+          });
+          if (!poi || poi.isDeleted) continue;
+          if (poi.purchaseOrderId !== parseInt(purchaseOrderId)) {
+            throw new Error(
+              `Item ${purchaseOrderItemId} does not belong to PO ${purchaseOrderId}`,
+            );
+          }
+
+          // Calculate remaining and clamp
+          const remaining = Math.max(
+            0,
+            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0),
+          );
+          const delta = Math.min(remaining, Number(received));
+          if (delta <= 0) continue;
+
+          const beforeAqr = Number(poi.actualQuantityReceived || 0);
+          const afterAqr = beforeAqr + delta;
+
+          // Determine delivery status
+          let deliveryStatus = "partial";
+          if (afterAqr >= Number(poi.quantity || 0)) {
+            deliveryStatus = "delivered";
+          }
+
+          // Update PO item: category, tag, received qty, delivery status
+          await PurchaseOrderItems.update(
+            {
+              category: category || poi.category || "requisition issue slip",
+              tag: tag || poi.tag || "",
+              actualQuantityReceived: afterAqr,
+              deliveryStatus,
+              deliveredDate:
+                deliveryStatus === "delivered" ? new Date() : poi.deliveredDate,
+            },
+            { where: { id: poi.id }, transaction: t },
+          );
+
+          // Create IAR record
+          const iarRow = await inspectionAcceptanceReport.create(
+            {
+              itemName: poi.itemName || "",
+              description: poi.description || "",
+              generalDescription: poi.generalDescription || "",
+              specification: poi.specification || "",
+              unit: poi.unit || "",
+              quantity: poi.quantity,
+              unitCost: poi.unitCost,
+              amount: poi.amount,
+              category: category || poi.category || "requisition issue slip",
+              tag: tag || poi.tag || "",
+              inventoryNumber: poi.inventoryNumber || "",
+              iarId: autoIarId,
+              purchaseOrderId: parseInt(purchaseOrderId),
+              purchaseOrderItemId: poi.id,
+              actualQuantityReceived: delta,
+              // Use invoice from the modal (which may come from the PO or be user-entered)
+              invoice: invoice || po.invoice || "",
+              createdBy: user.name || user.id,
+              updatedBy: user.name || user.id,
+              parId: "",
+              icsId: "",
+              risId: "",
+              // "complete" if this item was fully received, "partial" otherwise
+              iarStatus:
+                deliveryStatus === "delivered" ? "complete" : "partial",
+            },
+            { transaction: t },
+          );
+
+          // History entry
+          await PurchaseOrderItemsHistory.create(
+            {
+              purchaseOrderItemId: poi.id,
+              purchaseOrderId: parseInt(purchaseOrderId),
+              itemName: poi.itemName || "",
+              description: poi.description || "",
+              previousQuantity: poi.quantity,
+              newQuantity: poi.quantity,
+              previousActualQuantityReceived: beforeAqr,
+              newActualQuantityReceived: afterAqr,
+              previousAmount: poi.amount,
+              newAmount: poi.amount,
+              iarId: iarRow.iarId || autoIarId,
+              parId: "",
+              risId: "",
+              icsId: "",
+              changeType: "received_update",
+              changedBy: user.name || user.id,
+              changeReason: "IAR generated from Purchase Order",
+            },
+            { transaction: t },
+          );
+
+          processedCount += 1;
+        }
+
+        await t.commit();
+        return {
+          success: true,
+          iarId: autoIarId,
+          updatedCount: processedCount,
+          message:
+            processedCount > 0
+              ? `Generated IAR ${autoIarId} with ${processedCount} item(s)`
+              : "No items processed (nothing to receive or invalid input)",
+        };
+      } catch (error) {
+        await t.rollback();
+        console.error("generateIARFromPO error:", error);
+        throw new Error(error.message || "Failed to generate IAR");
+      }
+    },
+
     createLineItemFromExisting: async (
       _,
       { sourceItemId, newItem },
@@ -580,6 +751,9 @@ const inspectionAcceptanceReportResolver = {
             parId: existingIar?.parId || null,
             icsId: existingIar?.icsId || null,
             risId: existingIar?.risId || null,
+            // "complete" if fully received, "partial" otherwise
+            iarStatus:
+              received >= Number(newPoi.quantity || 0) ? "complete" : "partial",
           },
           { transaction: t },
         );
@@ -672,6 +846,156 @@ const inspectionAcceptanceReportResolver = {
         await t.rollback();
         console.error("updateIARInvoice error:", error);
         throw new Error(error.message || "Failed to update IAR");
+      }
+    },
+
+    // Split items by quantity and assign separate ICS IDs with per-split signatories
+    splitAndAssignICS: async (_, { input }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error("Unauthorized");
+        }
+
+        const { itemSplits } = input;
+        const allResultIds = [];
+
+        // Reset ICS ID batch counter so sequential IDs are generated properly
+        resetIcsIdBatch();
+
+        const transaction = await sequelize.transaction();
+
+        try {
+          for (const itemSplit of itemSplits) {
+            const { itemId, splits } = itemSplit;
+
+            const original = await inspectionAcceptanceReport.findByPk(itemId, {
+              transaction,
+              include: [PurchaseOrder],
+            });
+
+            if (!original) {
+              throw new Error(`Item with ID ${itemId} not found`);
+            }
+
+            if (splits.length === 0) {
+              throw new Error("At least one split is required per item");
+            }
+
+            // Validate tag for ICS ID generation
+            const tag = original.tag;
+            if (!tag || (tag !== "high" && tag !== "low")) {
+              throw new Error(
+                `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${tag}'`,
+              );
+            }
+
+            // Generate a split group ID to track all pieces back to this original
+            const splitGroupId = `SPL-${original.id}-${Date.now()}`;
+            const originalItemId = original.id;
+            const totalSplits = splits.length;
+
+            // Calculate equal amount per split (divide original amount equally)
+            const originalAmount = parseFloat(original.amount || 0);
+            const equalAmountPerSplit = parseFloat(
+              (originalAmount / totalSplits).toFixed(2),
+            );
+            // Handle rounding remainder: give any leftover cents to the first split
+            const firstSplitAmount = parseFloat(
+              (
+                originalAmount -
+                equalAmountPerSplit * (totalSplits - 1)
+              ).toFixed(2),
+            );
+
+            // First split: update the original record
+            const firstSplit = splits[0];
+            const firstIcsId = await generateNewIcsId(tag);
+
+            await original.update(
+              {
+                actualQuantityReceived: firstSplit.quantity,
+                amount: firstSplitAmount,
+                icsId: firstIcsId,
+                icsReceivedFrom: firstSplit.receivedFrom,
+                icsReceivedFromPosition: firstSplit.receivedFromPosition || "",
+                icsReceivedBy: firstSplit.receivedBy,
+                icsReceivedByPosition: firstSplit.receivedByPosition || "",
+                icsDepartment: firstSplit.department || "",
+                icsAssignedDate: new Date(),
+                splitGroupId: splitGroupId,
+                splitFromItemId: originalItemId,
+                splitIndex: 1,
+              },
+              { transaction },
+            );
+
+            allResultIds.push(original.id);
+
+            // Additional splits: clone the original record
+            for (let i = 1; i < splits.length; i++) {
+              const split = splits[i];
+              const newIcsId = await generateNewIcsId(tag);
+              const originalData = original.toJSON();
+
+              const clonedRecord = await inspectionAcceptanceReport.create(
+                {
+                  iarId: originalData.iarId,
+                  risId: originalData.risId,
+                  parId: originalData.parId,
+                  purchaseOrderId: originalData.purchaseOrderId,
+                  purchaseOrderItemId: originalData.purchaseOrderItemId,
+                  iarStatus: originalData.iarStatus,
+                  description: originalData.description,
+                  unit: originalData.unit,
+                  quantity: originalData.quantity,
+                  unitCost: originalData.unitCost,
+                  category: originalData.category,
+                  tag: originalData.tag,
+                  isDeleted: 0,
+                  createdBy: originalData.createdBy,
+                  updatedBy: originalData.updatedBy,
+                  inventoryNumber: originalData.inventoryNumber,
+                  itemName: originalData.itemName,
+                  invoice: originalData.invoice,
+                  invoiceDate: originalData.invoiceDate,
+                  income: originalData.income,
+                  mds: originalData.mds,
+                  details: originalData.details,
+                  actualQuantityReceived: split.quantity,
+                  amount: equalAmountPerSplit,
+                  icsId: newIcsId,
+                  icsReceivedFrom: split.receivedFrom,
+                  icsReceivedFromPosition: split.receivedFromPosition || "",
+                  icsReceivedBy: split.receivedBy,
+                  icsReceivedByPosition: split.receivedByPosition || "",
+                  icsDepartment: split.department || "",
+                  icsAssignedDate: new Date(),
+                  splitGroupId: splitGroupId,
+                  splitFromItemId: originalItemId,
+                  splitIndex: i + 1,
+                },
+                { transaction },
+              );
+
+              allResultIds.push(clonedRecord.id);
+            }
+          }
+
+          await transaction.commit();
+
+          const resultItems = await inspectionAcceptanceReport.findAll({
+            where: { id: { [Op.in]: allResultIds } },
+            include: [PurchaseOrder],
+          });
+
+          return resultItems;
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error("Error in splitAndAssignICS:", error);
+        throw new Error(error.message || "Failed to split and assign ICS");
       }
     },
 

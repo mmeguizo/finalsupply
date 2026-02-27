@@ -248,6 +248,24 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: "Remarks field for PAR print reports (manually entered)",
     },
+    // Split tracking fields
+    splitGroupId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment:
+        "Shared ID among all items created from the same split operation. Traces siblings.",
+    },
+    splitFromItemId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment:
+        "The original IAR item ID this record was split from. Traces back to source.",
+    },
+    splitIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: "1-based index within the split group (1 = first split, etc.)",
+    },
   },
   {
     tableName: "inspection_acceptance_report", // Specify the table name

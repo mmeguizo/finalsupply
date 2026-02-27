@@ -39,6 +39,7 @@ import {
   ADD_PURCHASEORDER,
   UPDATE_PURCHASEORDER,
   DELETE_PURCHASEORDER,
+  UPDATE_ITEM_DELIVERY_STATUS,
 } from "../graphql/mutations/purchaseorder.mutation";
 import ConfirmDialog from "../components/confirmationdialog";
 import NotificationDialog from "../components/notifications";
@@ -51,16 +52,21 @@ import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
 import {
   createPoColumns,
   itemColumns,
+  createItemColumns,
+  isItemDeliveredAndComplete,
 } from "./purchaseOrderFunctions/purchaseorder_column";
 import { handleSavePurchaseOrder } from "./purchaseOrderFunctions/purchaseOrderOperations";
 import PurchaseOrderPrintModal from "../components/printReportModal";
 import PrintReportDialog from "../components/printReportModal";
+import GenerateIarModal from "../components/GenerateIarModal";
+import PurchaseOrderOverview from "../components/PurchaseOrderOverview";
 // @ts-ignore
 import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
 // @ts-ignore
 import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
 // @ts-ignore Add IAR list so inventory can refresh after PO updates
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
+import { GENERATE_IAR_FROM_PO } from "../graphql/mutations/inventoryIAR.mutation";
 
 export default function PurchaseOrder() {
   //for submit loading
@@ -75,6 +81,17 @@ export default function PurchaseOrder() {
   const [historyPO, setHistoryPO] = React.useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [deletingPO, setDeletingPO] = React.useState<any>(null);
+  // Confirmation for editing a completed PO
+  const [editCompletedConfirmOpen, setEditCompletedConfirmOpen] =
+    React.useState(false);
+  const [pendingEditPO, setPendingEditPO] = React.useState<any>(null);
+  // Generate IAR modal state
+  const [openGenerateIarModal, setOpenGenerateIarModal] = React.useState(false);
+  const [generateIarPO, setGenerateIarPO] = React.useState<any>(null);
+  const [isGeneratingIar, setIsGeneratingIar] = React.useState(false);
+  // PO Overview drawer state
+  const [openOverview, setOpenOverview] = React.useState(false);
+  const [overviewPO, setOverviewPO] = React.useState<any>(null);
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
   const [notificationMessage, setNotificationMessage] = React.useState("");
@@ -115,6 +132,46 @@ export default function PurchaseOrder() {
       { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
     ],
   });
+  const [updateDeliveryStatus] = useMutation(UPDATE_ITEM_DELIVERY_STATUS, {
+    refetchQueries: [{ query: GET_PURCHASEORDERS }],
+  });
+
+  const [generateIARFromPOMutation] = useMutation(GENERATE_IAR_FROM_PO, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+    ],
+  });
+
+  // Handler for delivery status toggle
+  const handleDeliveryStatusChange = React.useCallback(
+    async (itemId: string, newStatus: string) => {
+      try {
+        const { data: result } = await updateDeliveryStatus({
+          variables: { itemId, deliveryStatus: newStatus },
+        });
+        if (result?.updateItemDeliveryStatus?.success) {
+          setNotificationMessage(`Item marked as ${newStatus}`);
+          setNotificationSeverity("success");
+          setShowNotification(true);
+        }
+      } catch (err) {
+        console.error("Delivery status update failed:", err);
+        setNotificationMessage("Failed to update delivery status");
+        setNotificationSeverity("error");
+        setShowNotification(true);
+      }
+    },
+    [updateDeliveryStatus],
+  );
+
+  // Create item columns with delivery toggle
+  const deliveryItemColumns = React.useMemo(
+    () => createItemColumns(handleDeliveryStatusChange),
+    [handleDeliveryStatusChange],
+  );
   // const [updatePurchaseOrder] = useMutation(UPDATE_PURCHASEORDER, {
   //   refetchQueries: [{ query: GET_PURCHASEORDERS }],
   // });
@@ -141,9 +198,10 @@ export default function PurchaseOrder() {
   const itemRows = React.useMemo(() => {
     if (!selectedPO?.items) return [];
 
-    return selectedPO.items.map((item: any) => ({
+    return selectedPO.items.map((item: any, index: number) => ({
       id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
       ...item,
+      itemNumber: index + 1,
       formatUnitCost: currencyFormat(item.unitCost),
       formatAmount: currencyFormat(item.amount),
     }));
@@ -186,25 +244,35 @@ export default function PurchaseOrder() {
         return newRow;
       } catch (err: any) {
         console.error("Failed to update item details", err);
-        setNotificationMessage(
-          err?.message || "Failed to update item details"
-        );
+        setNotificationMessage(err?.message || "Failed to update item details");
         setNotificationSeverity("error");
         setShowNotification(true);
         // Revert to old row
         return oldRow;
       }
     },
-    [selectedPO, updatePurchaseOrder]
+    [selectedPO, updatePurchaseOrder],
   );
 
   // Handle row click to show items
   const handleRowClick = (params: GridRowParams) => {
     const clickedPO = data?.purchaseOrders.find(
-      (po: any) => po.id === params.id
+      (po: any) => po.id === params.id,
     );
     setSelectedPO(clickedPO || null);
   };
+
+  // Keep selectedPO in sync when data refreshes (e.g., after generating IAR)
+  React.useEffect(() => {
+    if (selectedPO && data?.purchaseOrders) {
+      const refreshed = data.purchaseOrders.find(
+        (po: any) => po.id === selectedPO.id,
+      );
+      if (refreshed) {
+        setSelectedPO(refreshed);
+      }
+    }
+  }, [data]);
 
   // Function to export PO with items
   const exportPurchaseOrdersWithItemsFunctions = () => {
@@ -231,8 +299,23 @@ export default function PurchaseOrder() {
   };
 
   const handleOpenEditModal = (po: any) => {
-    setEditingPO(po);
-    setOpenPOModal(true);
+    if (po.status?.toLowerCase() === "completed") {
+      // Show confirmation before allowing edits to a completed PO
+      setPendingEditPO(po);
+      setEditCompletedConfirmOpen(true);
+    } else {
+      setEditingPO(po);
+      setOpenPOModal(true);
+    }
+  };
+
+  const handleConfirmEditCompleted = (confirmed: boolean) => {
+    setEditCompletedConfirmOpen(false);
+    if (confirmed && pendingEditPO) {
+      setEditingPO(pendingEditPO);
+      setOpenPOModal(true);
+    }
+    setPendingEditPO(null);
   };
 
   const handleOpenHistoryModal = (po: any) => {
@@ -259,6 +342,54 @@ export default function PurchaseOrder() {
     setPrintPO(null);
   };
 
+  // Generate IAR handlers
+  const handleOpenGenerateIarModal = (po: any) => {
+    setGenerateIarPO(po);
+    setOpenGenerateIarModal(true);
+  };
+
+  const handleCloseGenerateIarModal = () => {
+    setOpenGenerateIarModal(false);
+    setGenerateIarPO(null);
+  };
+
+  // PO Overview handlers
+  const handleOpenOverview = (po: any) => {
+    setOverviewPO(po);
+    setOpenOverview(true);
+  };
+
+  const handleCloseOverview = () => {
+    setOpenOverview(false);
+    setOverviewPO(null);
+  };
+
+  const handleGenerateIAR = async (
+    purchaseOrderId: number,
+    items: any[],
+    invoice: string,
+  ) => {
+    setIsGeneratingIar(true);
+    try {
+      const { data: result } = await generateIARFromPOMutation({
+        variables: { purchaseOrderId, items, invoice },
+      });
+      if (result?.generateIARFromPO?.success) {
+        setNotificationMessage(result.generateIARFromPO.message);
+        setNotificationSeverity("success");
+        setShowNotification(true);
+        handleCloseGenerateIarModal();
+        // The PO data refreshes via refetchQueries; update selectedPO when data refreshes
+      }
+    } catch (err: any) {
+      setNotificationMessage(err.message || "Failed to generate IAR");
+      setNotificationSeverity("error");
+      setShowNotification(true);
+    } finally {
+      setIsGeneratingIar(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setOpenPOModal(false);
   };
@@ -271,18 +402,23 @@ export default function PurchaseOrder() {
 
   //for saving the po or submitting
   const handleSavePO = async (formData: any) => {
+    console.log({ handleSavePO: formData });
 
-    console.log({ handleSavePO: formData })
+    // When the user confirmed editing a completed PO, reset status to pending
+    const effectiveFormData =
+      editingPO?.status?.toLowerCase() === "completed"
+        ? { ...formData, status: "pending" }
+        : formData;
 
     const result = await handleSavePurchaseOrder(
-      formData,
+      effectiveFormData,
       editingPO,
       updatePurchaseOrder,
       addPurchaseOrder,
       handleRowClick,
       setSelectedPO,
       handleCloseModal,
-      setIsSubmitting
+      setIsSubmitting,
     );
 
     // Display notification based on the result
@@ -306,9 +442,15 @@ export default function PurchaseOrder() {
       createPoColumns(
         handleOpenEditModal,
         handleOpenHistoryModal,
-        handleOpenPrintModal
+        handleOpenPrintModal,
+        handleOpenOverview,
       ),
-    [handleOpenEditModal, handleOpenHistoryModal, handleOpenPrintModal]
+    [
+      handleOpenEditModal,
+      handleOpenHistoryModal,
+      handleOpenPrintModal,
+      handleOpenOverview,
+    ],
   );
 
   return (
@@ -377,19 +519,49 @@ export default function PurchaseOrder() {
 
           {selectedPO && (
             <Paper sx={{ width: "100%", overflow: "hidden" }}>
-              <Box p={2} pb={0}>
+              <Box
+                p={2}
+                pb={0}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Typography variant="subtitle1" fontWeight="bold">
                   Items for Purchase Order #{selectedPO.poNumber} -{" "}
                   {selectedPO.supplier}
                 </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleOpenGenerateIarModal(selectedPO)}
+                  disabled={
+                    selectedPO.status?.toLowerCase() === "completed" ||
+                    !selectedPO.items?.some(
+                      (item: any) =>
+                        !item.isDeleted &&
+                        Number(item.quantity ?? 0) -
+                          Number(item.actualQuantityReceived ?? 0) >
+                          0,
+                    )
+                  }
+                >
+                  Generate IAR
+                </Button>
               </Box>
               <Box sx={{ width: "100%", overflow: "hidden" }}>
                 <DataGrid
                   rows={itemRows}
-                  columns={itemColumns}
+                  columns={deliveryItemColumns}
                   hideFooter={itemRows.length <= 10}
                   disableRowSelectionOnClick
-                  isCellEditable={() => selectedPO?.status !== "completed"}
+                  isCellEditable={(params) => {
+                    // Block editing if the PO is completed
+                    if (selectedPO?.status === "completed") return false;
+                    // Block editing if the item is delivered and fully received
+                    if (isItemDeliveredAndComplete(params.row)) return false;
+                    return true;
+                  }}
                   processRowUpdate={processItemRowUpdate}
                   onProcessRowUpdateError={(error) => {
                     console.error(error);
@@ -427,6 +599,24 @@ export default function PurchaseOrder() {
         handleClose={handleClosePrintModal}
         reportData={printPO}
         reportType="inspection"
+      />
+      <GenerateIarModal
+        open={openGenerateIarModal}
+        handleClose={handleCloseGenerateIarModal}
+        purchaseOrder={generateIarPO}
+        onGenerate={handleGenerateIAR}
+        isSubmitting={isGeneratingIar}
+      />
+      <PurchaseOrderOverview
+        open={openOverview}
+        onClose={handleCloseOverview}
+        purchaseOrder={overviewPO}
+      />
+      {/* Confirmation for editing a completed PO */}
+      <ConfirmDialog
+        open={editCompletedConfirmOpen}
+        message={`This Purchase Order is already COMPLETED. Proceeding will revert its status back to PENDING and the change will be logged in the history. Do you want to continue?`}
+        onClose={handleConfirmEditCompleted}
       />
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}

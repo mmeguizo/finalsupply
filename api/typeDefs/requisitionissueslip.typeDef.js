@@ -88,6 +88,9 @@ type ItemWithPurchaseOrder {
     risReceivedByPosition: String
     risDepartment: String
     risAssignedDate: String
+    splitGroupId: String
+    splitFromItemId: Int
+    splitIndex: Int
 }
 
 
@@ -116,6 +119,25 @@ input ItemInput {
 # New input type focused on the specific update need
 input RISUpdateInput {
   ids: [ID!]!
+}
+
+# RIS Split & Assign types
+input RISSplitEntry {
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+input RISItemSplit {
+  itemId: ID!
+  splits: [RISSplitEntry!]!
+}
+
+input SplitAndAssignRISInput {
+  itemSplits: [RISItemSplit!]!
 }
 
 # Input for creating a single RIS assignment (saves immediately)
@@ -188,6 +210,8 @@ type Query {
 type Mutation {
   # Updated mutation that accepts the simplified input
   updateRISInventoryIDs(input: RISUpdateInput!): [ItemWithPurchaseOrder]
+  # Split items by quantity and assign separate RIS IDs with signatories
+  splitAndAssignRIS(input: SplitAndAssignRISInput!): [ItemWithPurchaseOrder]
   # Create a single RIS assignment (saves immediately, clones from source)
   createSingleRISAssignment(input: CreateSingleRISInput!): CreateRISResponse!
   # Create a multi-item RIS assignment (multiple items share one RIS ID)

@@ -7,7 +7,9 @@ const GET_PURCHASEORDERS = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery
@@ -18,9 +20,9 @@ const GET_PURCHASEORDERS = gql`
       category
       status
       modeOfProcurement
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         itemName
@@ -38,6 +40,9 @@ const GET_PURCHASEORDERS = gql`
         tag
         iarId
         inventoryNumber
+        deliveryStatus
+        deliveredDate
+        deliveryNotes
       }
       amount
       invoice
@@ -53,7 +58,9 @@ const GET_PURCHASEORDER = gql`
       supplier
       address
       poNumber
+      email
       telephone
+      tin
       campus
       placeOfDelivery
       dateOfDelivery
@@ -62,9 +69,9 @@ const GET_PURCHASEORDER = gql`
       paymentTerms
       category
       status
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         itemName
@@ -209,9 +216,9 @@ const GET_ALL_DASHBOARD_DATA = gql`
       category
       status
       completed_status_date
-  income
-  mds
-  details
+      income
+      mds
+      details
       items {
         id
         itemName
@@ -264,5 +271,5 @@ export {
   GET_ALL_PURCHASEORDER_ITEMS,
   GET_ALL_DASHBOARD_DATA,
   GET_ITEM_HISTORY,
-  GET_ALL_ICS_PURCHASEORDER_ITEMS
+  GET_ALL_ICS_PURCHASEORDER_ITEMS,
 };

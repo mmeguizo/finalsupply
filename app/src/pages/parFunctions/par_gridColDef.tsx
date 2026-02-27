@@ -1,24 +1,45 @@
 import { GridColDef } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, Chip } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import PreviewIcon from "@mui/icons-material/Preview";
 import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
 import PrintDisabledIcon from "@mui/icons-material/PrintDisabled";
 import { GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
-import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+import IndeterminateCheckBoxIcon from "@mui/icons-material/IndeterminateCheckBox";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
 import { currencyFormat } from "../../utils/generalUtils";
 
 //@ts-ignore
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 // Define columns for inventory items
 export const createItemColumns = (
-  handleOpenPrintModal: (item: any) => void
+  handleOpenPrintModal: (item: any) => void,
 ): GridColDef[] => [
   {
     field: "parId",
     headerName: "PAR ID",
     width: 100,
-    // valueGetter: (params: any) => params.poNumber,
+  },
+  {
+    field: "splitGroupId",
+    headerName: "Split",
+    width: 90,
+    renderCell: (params: GridRenderCellParams) => {
+      if (!params.row.splitGroupId) return null;
+      return (
+        <Tooltip
+          title={`Split from item #${params.row.splitFromItemId} (${params.row.splitIndex} of group)`}
+        >
+          <Chip
+            icon={<CallSplitIcon />}
+            label={`#${params.row.splitIndex}`}
+            size="small"
+            color="secondary"
+            variant="outlined"
+          />
+        </Tooltip>
+      );
+    },
   },
   {
     field: "PurchaseOrder",
@@ -35,7 +56,7 @@ export const createItemColumns = (
     width: 70,
   },
   { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-    {
+  {
     field: "unitCost",
     headerName: "Unit Cost",
     type: "number",
@@ -43,7 +64,6 @@ export const createItemColumns = (
     valueGetter: (params: any) => {
       return currencyFormat(params);
     },
-    
   },
   {
     field: "amount",
@@ -51,7 +71,7 @@ export const createItemColumns = (
     type: "number",
     width: 120,
     valueGetter: (params: any) => {
-      return currencyFormat(params );
+      return currencyFormat(params);
     },
   },
   {

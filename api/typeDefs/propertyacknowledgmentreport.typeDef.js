@@ -87,6 +87,9 @@ type ItemWithPurchaseOrder {
     parReceivedByPosition: String
     parDepartment: String
     parAssignedDate: String
+    splitGroupId: String
+    splitFromItemId: Int
+    splitIndex: Int
 }
 
 

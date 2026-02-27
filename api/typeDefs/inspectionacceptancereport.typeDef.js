@@ -101,6 +101,9 @@ type ItemWithPurchaseOrder {
     icsAssignedDate: String
     purpose: String
     remarks: String
+    splitGroupId: String
+    splitFromItemId: Int
+    splitIndex: Int
 }
 type IARonly{
     id: ID
@@ -159,8 +162,10 @@ type Mutation {
   updateIARStatus(airId: String!, iarStatus: String!): updateIARStatusPayload
   revertIARBatch(iarId: String!, reason: String): RevertIARBatchPayload
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
+  generateIARFromPO(purchaseOrderId: Int!, items: [GenerateIARItemInput!]!, invoice: String): GenerateIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
   updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
+  splitAndAssignICS(input: SplitAndAssignICSInput!): [ItemWithPurchaseOrder]
   createSingleICSAssignment(input: CreateSingleICSInput!): CreateICSResponse!
   createMultiItemICSAssignment(input: CreateMultiItemICSInput!): CreateMultiICSResponse!
   addItemToExistingICS(input: AddItemToExistingICSInput!): AddItemToExistingICSResponse!
@@ -210,6 +215,21 @@ type AppendIARResult {
     message: String!
 }
 
+# Input and result types for generating IAR from a Purchase Order
+input GenerateIARItemInput {
+    purchaseOrderItemId: Int!
+    category: String!
+    tag: String
+    received: Int!
+}
+
+type GenerateIARResult {
+    success: Boolean!
+    iarId: String!
+    updatedCount: Int!
+    message: String!
+}
+
 # New inputs and payloads for creating a new line item from an existing one
 input CreateLineItemInput {
     iarId: String!
@@ -225,6 +245,25 @@ type CreateLineItemResult {
     newItemId: Int!
     iarId: String!
     message: String!
+}
+
+# ICS Split & Assign types
+input ICSSplitEntry {
+  quantity: Int!
+  department: String
+  receivedFrom: String!
+  receivedFromPosition: String
+  receivedBy: String!
+  receivedByPosition: String
+}
+
+input ICSItemSplit {
+  itemId: ID!
+  splits: [ICSSplitEntry!]!
+}
+
+input SplitAndAssignICSInput {
+  itemSplits: [ICSItemSplit!]!
 }
 
 # ICS Assignment types
