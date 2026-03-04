@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useQuery } from "@apollo/client";
+import * as React from 'react';
+import { useQuery } from '@apollo/client';
 import {
   CircularProgress,
   Alert,
@@ -21,28 +21,28 @@ import {
   Toolbar,
   TablePagination,
   Chip,
-} from "@mui/material";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import PreviewIcon from "@mui/icons-material/Preview";
-import PrintIcon from "@mui/icons-material/Print";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import Checkbox from "@mui/material/Checkbox";
-import SearchIcon from "@mui/icons-material/Search";
-import PrintReportDialogForRIS from "../components/printReportModalForRIS";
-import RisAssignmentModal from "../components/RisAssignmentModal";
-import MultiRisAssignmentModal from "../components/MultiRisAssignmentModal";
+} from '@mui/material';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import PreviewIcon from '@mui/icons-material/Preview';
+import PrintIcon from '@mui/icons-material/Print';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import Checkbox from '@mui/material/Checkbox';
+import SearchIcon from '@mui/icons-material/Search';
+import PrintReportDialogForRIS from '../components/printReportModalForRIS';
+import RisAssignmentModal from '../components/RisAssignmentModal';
+import MultiRisAssignmentModal from '../components/MultiRisAssignmentModal';
 import {
   formatTimestampToDateTime,
   currencyFormat,
   capitalizeFirstLetter,
   formatDateString,
-} from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
-import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
-import SignatoriesComponent from "../pages/issuanceRisPageFunctions/SignatorySelectionContainer";
-import { risIssuanceSignatories } from "../types/user/userType";
+} from '../utils/generalUtils';
+import useSignatoryStore from '../stores/signatoryStore';
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from '../graphql/queries/requisitionIssueslip';
+import SignatoriesComponent from '../pages/issuanceRisPageFunctions/SignatorySelectionContainer';
+import { risIssuanceSignatories } from '../types/user/userType';
 // Row component for collapsible table
 function Row(props: {
   row: any;
@@ -50,35 +50,27 @@ function Row(props: {
   handleOpenAssignmentModal?: (item: any) => void;
   handleOpenMultiAssignModal?: (row: any) => void;
 }) {
-  const {
-    row,
-    handleOpenPrintModal,
-    handleOpenAssignmentModal,
-    handleOpenMultiAssignModal,
-  } = props;
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal, handleOpenMultiAssignModal } =
+    props;
   const [open, setOpen] = React.useState(false);
-  const [idSearch, setIdSearch] = React.useState("");
+  const [idSearch, setIdSearch] = React.useState('');
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
     // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
     let items = row.items.filter(
-      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.risId,
+      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.risId
     );
     if (term) {
-      items = items.filter((item: any) =>
-        (item.risId || "").toLowerCase().includes(term),
-      );
+      items = items.filter((item: any) => (item.risId || '').toLowerCase().includes(term));
     }
     return items;
   }, [row.items, idSearch]);
 
   // Calculate items without RIS ID (need assignment) - exclude items with 0 quantity
   const unassignedInRow = React.useMemo(() => {
-    return row.items.filter(
-      (item: any) => !item.risId && (item.actualQuantityReceived ?? 0) > 0,
-    );
+    return row.items.filter((item: any) => !item.risId && (item.actualQuantityReceived ?? 0) > 0);
   }, [row.items]);
 
   const isItemSelected = (id: string) => selectedIds.has(id);
@@ -124,13 +116,9 @@ function Row(props: {
 
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -151,7 +139,7 @@ function Row(props: {
           )}
         </TableCell>
         <TableCell>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             {unassignedInRow.length > 0 && handleOpenMultiAssignModal && (
               <Button
                 size="small"
@@ -196,9 +184,7 @@ function Row(props: {
                   />
                 )}
               </Typography>
-              <Box
-                sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}
-              >
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
                 <TextField
                   size="small"
                   label="Search RIS ID"
@@ -225,13 +211,9 @@ function Row(props: {
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={allFilteredSelected}
-                        indeterminate={
-                          !allFilteredSelected && someFilteredSelected
-                        }
-                        onChange={(e) =>
-                          toggleSelectAllFiltered(e.target.checked)
-                        }
-                        inputProps={{ "aria-label": "select all filtered" }}
+                        indeterminate={!allFilteredSelected && someFilteredSelected}
+                        onChange={(e) => toggleSelectAllFiltered(e.target.checked)}
+                        inputProps={{ 'aria-label': 'select all filtered' }}
                       />
                     </TableCell>
                     <TableCell>Assign RIS</TableCell>
@@ -258,10 +240,10 @@ function Row(props: {
                       </TableCell>
                       <TableCell component="th" scope="row">
                         <Chip
-                          label={item.risId || "Click to Assign"}
+                          label={item.risId || 'Click to Assign'}
                           size="small"
-                          color={item.risId ? "success" : "warning"}
-                          variant={item.risId ? "filled" : "outlined"}
+                          color={item.risId ? 'success' : 'warning'}
+                          variant={item.risId ? 'filled' : 'outlined'}
                           clickable
                           onClick={(e) => {
                             e.stopPropagation();
@@ -270,40 +252,28 @@ function Row(props: {
                             }
                           }}
                           sx={{
-                            cursor: "pointer",
-                            fontWeight: item.risId ? "bold" : "normal",
+                            cursor: 'pointer',
+                            fontWeight: item.risId ? 'bold' : 'normal',
                           }}
                         />
                       </TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>{item.unit}</TableCell>
-                      <TableCell align="right">
-                        {item.actualQuantityReceived}
-                      </TableCell>
+                      <TableCell align="right">{item.actualQuantityReceived}</TableCell>
                       <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.unitCost)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.amount)}
-                      </TableCell>
+                      <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
+                      <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
                       <TableCell>
                         {item.category
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
-                          )
-                          .join(" ")}
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
                       </TableCell>
                       <TableCell>
                         {item.tag
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
-                          )
-                          .join(" ") || "N/A"}
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ') || 'N/A'}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -339,12 +309,7 @@ function EnhancedTableToolbar(props: {
 
   return (
     <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
-      <Typography
-        sx={{ flex: "1 1 100%" }}
-        variant="h6"
-        id="tableTitle"
-        component="div"
-      >
+      <Typography sx={{ flex: '1 1 100%' }} variant="h6" id="tableTitle" component="div">
         Requisition Issue Slip (RIS)
       </Typography>
       <TextField
@@ -370,16 +335,16 @@ export default function IssuanceRisPage() {
   const { data, loading, error, refetch, networkStatus } = useQuery(
     GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY,
     {
-      fetchPolicy: "cache-and-network",
-      nextFetchPolicy: "cache-first",
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
       notifyOnNetworkStatusChange: true,
-    },
+    }
   );
   const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
-  const [reportType, setReportType] = React.useState("");
-  const [title, setTitle] = React.useState("");
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [reportType, setReportType] = React.useState('');
+  const [title, setTitle] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // RIS Assignment Modal state
   const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
@@ -388,13 +353,10 @@ export default function IssuanceRisPage() {
   // Multi-item RIS Assignment Modal state
   const [openMultiAssignModal, setOpenMultiAssignModal] = React.useState(false);
   const [multiAssignPOItems, setMultiAssignPOItems] = React.useState<any[]>([]);
-  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<
-    any[]
-  >([]);
-  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState("");
-  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState("");
-  const [multiAssignExistingRISItems, setMultiAssignExistingRISItems] =
-    React.useState<any[]>([]);
+  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<any[]>([]);
+  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState('');
+  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState('');
+  const [multiAssignExistingRISItems, setMultiAssignExistingRISItems] = React.useState<any[]>([]);
 
   // Pagination state
   const [page, setPage] = React.useState(0);
@@ -402,35 +364,32 @@ export default function IssuanceRisPage() {
 
   // Signatory store
   const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer"),
+    state.getSignatoryByRole('Inspector Officer')
   );
   const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer"),
+    state.getSignatoryByRole('Property And Supply Officer')
   );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From"),
-  );
+  const receivedFrom = useSignatoryStore((state) => state.getSignatoryByRole('Recieved From'));
 
   // Persist selections across navigation using store
   const getSelections = useSignatoryStore((s) => s.getSelections);
   const setSelections = useSignatoryStore((s) => s.setSelections);
   const risDefault: risIssuanceSignatories = React.useMemo(
     () => ({
-      requested_by: "",
-      approved_by: "",
-      issued_by: "",
-      recieved_by: "",
+      requested_by: '',
+      approved_by: '',
+      issued_by: '',
+      recieved_by: '',
     }),
-    [],
+    []
   );
-  const signatories: risIssuanceSignatories =
-    getSelections("ris") || risDefault;
+  const signatories: risIssuanceSignatories = getSelections('ris') || risDefault;
 
   const handleOpenPrintModal = (items: any) => {
-    const reportTitle = items[0]?.category?.split(" ") || [];
+    const reportTitle = items[0]?.category?.split(' ') || [];
     const reportTitleString = reportTitle
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
     setReportType(reportTitle);
     setTitle(`${reportTitleString} Report`);
     setPrintItem(items);
@@ -446,7 +405,7 @@ export default function IssuanceRisPage() {
   const handleOpenAssignmentModal = (item: any) => {
     // Find the PO row that contains this item to get all sibling items
     const poRow = groupedRows.find((row: any) =>
-      row.items.some((it: any) => String(it.id) === String(item.id)),
+      row.items.some((it: any) => String(it.id) === String(item.id))
     );
 
     if (poRow) {
@@ -461,7 +420,7 @@ export default function IssuanceRisPage() {
       setMultiAssignPOItems(poRow.items);
       setMultiAssignPreSelected([item]);
       setMultiAssignPONumber(poRow.poNumber);
-      setMultiAssignSupplier(poRow.supplier || "");
+      setMultiAssignSupplier(poRow.supplier || '');
       setMultiAssignExistingRISItems(poRow.items.filter((it: any) => it.risId));
       setOpenMultiAssignModal(true);
     } else {
@@ -498,7 +457,7 @@ export default function IssuanceRisPage() {
     setMultiAssignPOItems(row.items);
     setMultiAssignPreSelected([]);
     setMultiAssignPONumber(row.poNumber);
-    setMultiAssignSupplier(row.supplier || "");
+    setMultiAssignSupplier(row.supplier || '');
     setMultiAssignExistingRISItems(row.items.filter((it: any) => it.risId));
     setOpenMultiAssignModal(true);
   };
@@ -524,15 +483,15 @@ export default function IssuanceRisPage() {
     const onFocus = () => void safeRefetch();
     const onOnline = () => void safeRefetch();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") void safeRefetch();
+      if (document.visibilityState === 'visible') void safeRefetch();
     };
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("online", onOnline);
-    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("online", onOnline);
-      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [refetch]);
 
@@ -541,9 +500,7 @@ export default function IssuanceRisPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -553,17 +510,14 @@ export default function IssuanceRisPage() {
     if (!data?.requisitionIssueSlipForView?.length) return [];
 
     // Group by PO Number
-    const groups = data.requisitionIssueSlipForView.reduce(
-      (acc: any, item: any) => {
-        const poNumber = item.PurchaseOrder?.poNumber;
-        if (!acc[poNumber]) {
-          acc[poNumber] = [];
-        }
-        acc[poNumber].push(item);
-        return acc;
-      },
-      {},
-    );
+    const groups = data.requisitionIssueSlipForView.reduce((acc: any, item: any) => {
+      const poNumber = item.PurchaseOrder?.poNumber;
+      if (!acc[poNumber]) {
+        acc[poNumber] = [];
+      }
+      acc[poNumber].push(item);
+      return acc;
+    }, {});
 
     // Create one row per PO Number with all items
     return Object.entries(groups).map(([poNumber, items]: any) => ({
@@ -595,11 +549,9 @@ export default function IssuanceRisPage() {
         return (
           // Search in various fields
           (item.risId && item.risId.toLowerCase().includes(lowerCaseQuery)) ||
-          (item.description &&
-            item.description.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.description && item.description.toLowerCase().includes(lowerCaseQuery)) ||
           (item.unit && item.unit.toLowerCase().includes(lowerCaseQuery)) ||
-          (item.category &&
-            item.category.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.category && item.category.toLowerCase().includes(lowerCaseQuery)) ||
           (item.tag && item.tag.toLowerCase().includes(lowerCaseQuery))
         );
       });
@@ -607,36 +559,29 @@ export default function IssuanceRisPage() {
   }, [groupedRows, searchQuery]);
 
   const onSignatoriesChange = (selectedSignatories: risIssuanceSignatories) => {
-    setSelections("ris", selectedSignatories);
+    setSelections('ris', selectedSignatories);
   };
 
   // Apply pagination to the filtered rows
   const paginatedRows = React.useMemo(() => {
-    return filteredRows.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
+    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
   if (loading) return <CircularProgress />;
-  if (error)
-    return <Alert severity="error">Error loading data: {error.message}</Alert>;
+  if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       <Stack
         spacing={3}
         sx={{
-          width: "100%",
-          overflow: "auto",
-          maxHeight: "calc(100vh - 100px)",
+          width: '100%',
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 100px)',
         }}
       >
-        <Paper sx={{ width: "100%" }}>
-          <EnhancedTableToolbar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-          />
+        <Paper sx={{ width: '100%' }}>
+          <EnhancedTableToolbar searchQuery={searchQuery} onSearchChange={handleSearchChange} />
           <TableContainer>
             <Table aria-label="collapsible table">
               <TableHead>
@@ -674,10 +619,7 @@ export default function IssuanceRisPage() {
         </Paper>
 
         {/* Signatory Selection Component */}
-        <SignatoriesComponent
-          signatories={signatories}
-          onSignatoriesChange={onSignatoriesChange}
-        />
+        <SignatoriesComponent signatories={signatories} onSignatoriesChange={onSignatoriesChange} />
       </Stack>
 
       <PrintReportDialogForRIS

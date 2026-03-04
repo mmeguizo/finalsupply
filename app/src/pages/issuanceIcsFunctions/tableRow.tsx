@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   CircularProgress,
   Alert,
@@ -20,49 +20,43 @@ import {
   Toolbar,
   TablePagination,
   Chip,
-} from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import { currencyFormat, formatDateString } from "../../utils/generalUtils";
-import PreviewIcon from "@mui/icons-material/Preview";
-import PrintIcon from "@mui/icons-material/Print";
-import Checkbox from "@mui/material/Checkbox";
+  Tooltip,
+} from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { currencyFormat, formatDateString } from '../../utils/generalUtils';
+import PreviewIcon from '@mui/icons-material/Preview';
+import PrintIcon from '@mui/icons-material/Print';
+import Checkbox from '@mui/material/Checkbox';
 const Row = (props: {
   row: any;
   handleOpenPrintModal: (items: any) => void;
   handleOpenAssignmentModal?: (item: any) => void;
   handleOpenMultiAssignModal?: (row: any) => void;
 }) => {
-  const {
-    row,
-    handleOpenPrintModal,
-    handleOpenAssignmentModal,
-    handleOpenMultiAssignModal,
-  } = props;
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal, handleOpenMultiAssignModal } =
+    props;
   const [open, setOpen] = React.useState(false);
-  const [idSearch, setIdSearch] = React.useState("");
+  const [idSearch, setIdSearch] = React.useState('');
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
     // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
     let items = row.items.filter(
-      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.icsId,
+      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.icsId
     );
     if (term) {
-      items = items.filter((item: any) =>
-        (item.icsId || "").toLowerCase().includes(term),
-      );
+      items = items.filter((item: any) => (item.icsId || '').toLowerCase().includes(term));
     }
     return items;
   }, [row.items, idSearch]);
 
   // Calculate items without ICS ID (need assignment) - exclude items with 0 quantity
   const unassignedInRow = React.useMemo(() => {
-    return row.items.filter(
-      (item: any) => !item.icsId && (item.actualQuantityReceived ?? 0) > 0,
-    );
+    return row.items.filter((item: any) => !item.icsId && (item.actualQuantityReceived ?? 0) > 0);
   }, [row.items]);
 
   const isItemSelected = (id: string) => selectedIds.has(id);
@@ -107,13 +101,9 @@ const Row = (props: {
 
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -134,7 +124,7 @@ const Row = (props: {
           )}
         </TableCell>
         <TableCell>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             {unassignedInRow.length > 0 && handleOpenMultiAssignModal && (
               <Button
                 size="small"
@@ -179,9 +169,7 @@ const Row = (props: {
                   />
                 )}
               </Typography>
-              <Box
-                sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}
-              >
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
                 <TextField
                   size="small"
                   label="Search ICS ID"
@@ -208,13 +196,9 @@ const Row = (props: {
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={allFilteredSelected}
-                        indeterminate={
-                          !allFilteredSelected && someFilteredSelected
-                        }
-                        onChange={(e) =>
-                          toggleSelectAllFiltered(e.target.checked)
-                        }
-                        inputProps={{ "aria-label": "select all filtered" }}
+                        indeterminate={!allFilteredSelected && someFilteredSelected}
+                        onChange={(e) => toggleSelectAllFiltered(e.target.checked)}
+                        inputProps={{ 'aria-label': 'select all filtered' }}
                       />
                     </TableCell>
                     <TableCell>Assign ICS</TableCell>
@@ -226,6 +210,7 @@ const Row = (props: {
                     <TableCell align="right">Amount</TableCell>
                     <TableCell>Category</TableCell>
                     <TableCell>Tag</TableCell>
+                    <TableCell>Details</TableCell>
                     <TableCell>Print</TableCell>
                   </TableRow>
                 </TableHead>
@@ -241,10 +226,10 @@ const Row = (props: {
                       </TableCell>
                       <TableCell component="th" scope="row">
                         <Chip
-                          label={item.icsId || "Click to Assign"}
+                          label={item.icsId || 'Click to Assign'}
                           size="small"
-                          color={item.icsId ? "success" : "warning"}
-                          variant={item.icsId ? "filled" : "outlined"}
+                          color={item.icsId ? 'success' : 'warning'}
+                          variant={item.icsId ? 'filled' : 'outlined'}
                           clickable
                           onClick={(e) => {
                             e.stopPropagation();
@@ -253,40 +238,60 @@ const Row = (props: {
                             }
                           }}
                           sx={{
-                            cursor: "pointer",
-                            fontWeight: item.icsId ? "bold" : "normal",
+                            cursor: 'pointer',
+                            fontWeight: item.icsId ? 'bold' : 'normal',
                           }}
                         />
                       </TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>{item.unit}</TableCell>
-                      <TableCell align="right">
-                        {item.actualQuantityReceived}
-                      </TableCell>
+                      <TableCell align="right">{item.actualQuantityReceived}</TableCell>
                       <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.unitCost)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.amount)}
-                      </TableCell>
+                      <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
+                      <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
                       <TableCell>
                         {item.category
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
-                          )
-                          .join(" ")}
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
                       </TableCell>
                       <TableCell>
                         {item.tag
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ') || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {item.icsId ? (
+                          item.icsDetails ? (
+                            <Tooltip title={item.icsDetails}>
+                              <Chip
+                                label="Has Details"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                              />
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Click to add ICS details">
+                              <Chip
+                                icon={<WarningAmberIcon />}
+                                label="Add Details"
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                                clickable
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenPrintModal([item]);
+                                }}
+                                sx={{ cursor: 'pointer' }}
+                              />
+                            </Tooltip>
                           )
-                          .join(" ") || "N/A"}
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">-</Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button

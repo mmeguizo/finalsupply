@@ -84,11 +84,11 @@ export async function down(queryInterface) {
   const tableName = 'inspection_acceptance_report';
   const columns = [
     'par_received_from',
-    'par_received_from_position', 
+    'par_received_from_position',
     'par_received_by',
     'par_received_by_position',
     'par_department',
-    'par_assigned_date'
+    'par_assigned_date',
   ];
 
   for (const col of columns) {

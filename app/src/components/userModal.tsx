@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,12 +14,12 @@ import {
   FormHelperText,
   Box,
   Typography,
-} from "@mui/material";
-import { useQuery } from "@apollo/client";
+} from '@mui/material';
+import { useQuery } from '@apollo/client';
 //@ts-ignore
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { InputAdornment, IconButton } from "@mui/material";
-import { GET_ALL_DEPARTMENTS } from "../graphql/queries/department.query";
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { InputAdornment, IconButton } from '@mui/material';
+import { GET_ALL_DEPARTMENTS } from '../graphql/queries/department.query';
 
 interface UserModalProps {
   open: boolean;
@@ -28,41 +28,41 @@ interface UserModalProps {
   user: any | null;
 }
 
-const ROLE_OPTIONS = ["admin", "user"];
-const GenderOptions = ["male", "female", "others"];
-const LOCATION_OPTIONS = ["Talisay", "Alijis", "Binalbagan", "Fortune Town"];
+const ROLE_OPTIONS = ['admin', 'user'];
+const GenderOptions = ['male', 'female', 'others'];
+const LOCATION_OPTIONS = ['Talisay', 'Alijis', 'Binalbagan', 'Fortune Town'];
 const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
   // Fetch departments for dropdown
   const { data: departmentsData, loading: departmentsLoading } = useQuery(GET_ALL_DEPARTMENTS);
-  
+
   // State for form fields
   const [formData, setFormData] = useState({
-    name: "",
-    last_name: "",
-    department: "",
-    employee_id: "",
-    gender: "",
-    email: "",
-    position: "",
-    role: "",
-    password: "",
-    confirm_password: "",
-    location: "",
+    name: '',
+    last_name: '',
+    department: '',
+    employee_id: '',
+    gender: '',
+    email: '',
+    position: '',
+    role: '',
+    password: '',
+    confirm_password: '',
+    location: '',
   });
 
   // State for validation errors
   const [errors, setErrors] = useState({
-    name: "",
-    last_name: "",
-    department: "",
-    employee_id: "",
-    gender: "",
-    email: "",
-    position: "",
-    role: "",
-    password: "",
-    confirm_password: "",
-    location: "",
+    name: '',
+    last_name: '',
+    department: '',
+    employee_id: '',
+    gender: '',
+    email: '',
+    position: '',
+    role: '',
+    password: '',
+    confirm_password: '',
+    location: '',
   });
 
   const [showPassword, setShowPassword] = useState(true);
@@ -70,47 +70,47 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || "",
-        last_name: user.last_name || "",
-        department: user.department || "",
+        name: user.name || '',
+        last_name: user.last_name || '',
+        department: user.department || '',
         employee_id: user.employee_id,
-        gender: user.gender || "",
-        email: user.email || "",
-        position: user.position || "",
-        role: user.role || "",
-        password: "",
-        confirm_password: "",
-        location: user.location || "",
+        gender: user.gender || '',
+        email: user.email || '',
+        position: user.position || '',
+        role: user.role || '',
+        password: '',
+        confirm_password: '',
+        location: user.location || '',
       });
     } else {
       // Reset form for new signatory
       setFormData({
-        name: "",
-        last_name: "",
-        department: "",
-        employee_id: "",
-        gender: "",
-        email: "",
-        position: "",
-        role: "",
-        password: "Password123!",
-        confirm_password: "Password123!",
-        location: "",
+        name: '',
+        last_name: '',
+        department: '',
+        employee_id: '',
+        gender: '',
+        email: '',
+        position: '',
+        role: '',
+        password: 'Password123!',
+        confirm_password: 'Password123!',
+        location: '',
       });
     }
     // Reset errors
     setErrors({
-      name: "",
-      last_name: "",
-      department: "",
-      employee_id: "",
-      gender: "",
-      email: "",
-      position: "",
-      role: "",
-      password: "",
-      confirm_password: "",
-      location: "",
+      name: '',
+      last_name: '',
+      department: '',
+      employee_id: '',
+      gender: '',
+      email: '',
+      position: '',
+      role: '',
+      password: '',
+      confirm_password: '',
+      location: '',
     });
   }, [user, open]);
 
@@ -126,7 +126,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
-        [name]: "",
+        [name]: '',
       });
     }
   };
@@ -137,77 +137,76 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
     // const newErrors = { ...errors };
 
     const newErrors = {
-      name: "",
-      last_name: "",
-      department: "",
-      employee_id: "",
-      gender: "",
-      email: "",
-      position: "",
-      role: "",
-      password: "",
-      confirm_password: "",
-      location: "",
+      name: '',
+      last_name: '',
+      department: '',
+      employee_id: '',
+      gender: '',
+      email: '',
+      position: '',
+      role: '',
+      password: '',
+      confirm_password: '',
+      location: '',
     };
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = 'Name is required';
       valid = false;
     }
 
     if (!formData.last_name.trim()) {
-      newErrors.last_name = "Last Name is required";
+      newErrors.last_name = 'Last Name is required';
       valid = false;
     }
 
     if (!formData.department.trim()) {
-      newErrors.department = "Department is required";
+      newErrors.department = 'Department is required';
       valid = false;
     }
 
     if (!formData.employee_id.trim()) {
-      newErrors.employee_id = "Employee ID is required";
+      newErrors.employee_id = 'Employee ID is required';
       valid = false;
     }
 
     if (!formData.position.trim()) {
-      newErrors.position = "Position is required";
+      newErrors.position = 'Position is required';
       valid = false;
     }
 
     if (!formData.location.trim()) {
-      newErrors.role = "Location is required";
+      newErrors.role = 'Location is required';
       valid = false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
       valid = false;
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = 'Please enter a valid email address';
       valid = false;
     }
 
     // Password validation: 12 characters, alphanumeric, 1 number, 1 special character
-    const passwordRegex =
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
     if (!user) {
       // Adding a new user: Password is required
       if (!formData.password) {
-        newErrors.password = "Password is required";
+        newErrors.password = 'Password is required';
         valid = false;
       } else {
         if (!passwordRegex.test(formData.password)) {
           newErrors.password =
-            "Password must be at least 12 characters long, include at least one number, and one special character (@$!%*?&).";
+            'Password must be at least 12 characters long, include at least one number, and one special character (@$!%*?&).';
           valid = false;
         }
         if (!formData.confirm_password) {
-          newErrors.confirm_password = "Confirm password is required";
+          newErrors.confirm_password = 'Confirm password is required';
           valid = false;
         } else if (formData.password !== formData.confirm_password) {
-          newErrors.confirm_password = "Passwords do not match";
+          newErrors.confirm_password = 'Passwords do not match';
           valid = false;
         }
       }
@@ -216,18 +215,18 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
       // Validate only if user is trying to change the password (i.e., password or confirm_password field is not empty)
       if (formData.password || formData.confirm_password) {
         if (!formData.password) {
-          newErrors.password = "Password is required to make a change.";
+          newErrors.password = 'Password is required to make a change.';
           valid = false;
         } else if (!passwordRegex.test(formData.password)) {
           newErrors.password =
-            "Password must be at least 12 characters long, include at least one number, and one special character (@$!%*?&).";
+            'Password must be at least 12 characters long, include at least one number, and one special character (@$!%*?&).';
           valid = false;
         }
         if (!formData.confirm_password) {
-          newErrors.confirm_password = "Please confirm your new password.";
+          newErrors.confirm_password = 'Please confirm your new password.';
           valid = false;
         } else if (formData.password !== formData.confirm_password) {
-          newErrors.confirm_password = "Passwords do not match";
+          newErrors.confirm_password = 'Passwords do not match';
           valid = false;
         }
       }
@@ -257,9 +256,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
       fullWidth
       aria-labelledby="signatory-dialog-title"
     >
-      <DialogTitle id="signatory-dialog-title">
-        {user ? "Edit User" : "Add New User"}
-      </DialogTitle>
+      <DialogTitle id="signatory-dialog-title">{user ? 'Edit User' : 'Add New User'}</DialogTitle>
 
       <DialogContent>
         <Box sx={{ mt: 2 }}>
@@ -305,9 +302,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.department && (
-                  <FormHelperText>{errors.department}</FormHelperText>
-                )}
+                {errors.department && <FormHelperText>{errors.department}</FormHelperText>}
               </FormControl>
             </Grid>
             <Grid item xs={12}>
@@ -351,9 +346,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.gender && (
-                  <FormHelperText>{errors.gender}</FormHelperText>
-                )}
+                {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
               </FormControl>
             </Grid>
 
@@ -385,9 +378,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.location && (
-                  <FormHelperText>{errors.location}</FormHelperText>
-                )}
+                {errors.location && <FormHelperText>{errors.location}</FormHelperText>}
               </FormControl>
             </Grid>
 
@@ -416,19 +407,16 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                 fullWidth
                 label="Password"
                 name="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={handleChange}
                 error={!!errors.password}
                 helperText={errors.password}
-                autoComplete={user ? "new-password" : "current-password"}
+                autoComplete={user ? 'new-password' : 'current-password'}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -441,7 +429,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                 fullWidth
                 label="Confirm Password"
                 name="confirm_password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={formData.confirm_password}
                 onChange={handleChange}
                 error={!!errors.confirm_password}
@@ -449,10 +437,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -469,7 +454,7 @@ const UserModal = ({ open, onClose, onSave, user }: UserModalProps) => {
           Cancel
         </Button>
         <Button onClick={handleSubmit} color="primary" variant="contained">
-          {user ? "Update" : "Save"}
+          {user ? 'Update' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

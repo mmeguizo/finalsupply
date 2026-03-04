@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
   query GetAllInspectionAcceptanceReport {
@@ -151,6 +151,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       income
       mds
       details
+      icsDetails
       splitGroupId
       splitFromItemId
       splitIndex

@@ -1,4 +1,4 @@
-export const getInventoryTemplate = (reportData: any) =>`
+export const getInventoryTemplate = (reportData: any) => `
 <html lang="en">
 <head>
     <meta charset="UTF-8">

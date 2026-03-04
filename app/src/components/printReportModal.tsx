@@ -1,22 +1,16 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
-import InspectionAcceptanceReport from "./previewDocumentFiles/InspectionAcceptanceReport";
-import PropertyAcknowledgementReceipt from "./previewDocumentFiles/propertyAcknowledgementReceipt";
-import RequisitionAndIssueSlip from "./previewDocumentFiles/requisitionAndIssueSlip";
-import InventoryCustodianSlip from "./previewDocumentFiles/inventoryCustodianSlip";
-import { getInspectionReportTemplate } from "./printDocumentFiles/inspectionAcceptanceRerport";
-import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/propertyAcknowledgementReceipt";
-import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
-import { getInventoryTemplate } from "./printDocumentFiles/inventoryCustodianslip";
-import { InspectionReportDialogProps } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
+import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import InspectionAcceptanceReport from './previewDocumentFiles/InspectionAcceptanceReport';
+import PropertyAcknowledgementReceipt from './previewDocumentFiles/propertyAcknowledgementReceipt';
+import RequisitionAndIssueSlip from './previewDocumentFiles/requisitionAndIssueSlip';
+import InventoryCustodianSlip from './previewDocumentFiles/inventoryCustodianSlip';
+import { getInspectionReportTemplate } from './printDocumentFiles/inspectionAcceptanceRerport';
+import { getPropertyAcknowledgementReciept } from './printDocumentFiles/propertyAcknowledgementReceipt';
+import { getRequisitionAndIssueSlip } from './printDocumentFiles/requisitionAndIssueSlip';
+import { getInventoryTemplate } from './printDocumentFiles/inventoryCustodianslip';
+import { InspectionReportDialogProps } from '../types/printReportModal/types';
+import { capitalizeFirstLetter } from '../utils/generalUtils';
+import useSignatoryStore from '../stores/signatoryStore';
 
 export default function PrintReportDialog({
   open,
@@ -26,16 +20,14 @@ export default function PrintReportDialog({
   title,
 }: InspectionReportDialogProps) {
   const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
+    state.getSignatoryByRole('Inspector Officer')
   );
   const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
+    state.getSignatoryByRole('Property And Supply Officer')
   );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  const receivedFrom = useSignatoryStore((state) => state.getSignatoryByRole('Recieved From'));
 
-  console.log(reportData)
+  console.log(reportData);
 
   //add the signatories to the data to be send
   let signatories = {
@@ -49,13 +41,13 @@ export default function PrintReportDialog({
   const getReportTemplate = (data: any) => {
     // Determine the report template based on reportType
     switch (reportType) {
-      case "property":
-        return getPropertyAcknowledgementReciept(signatories,data);
-      case "requisition":
-        return getRequisitionAndIssueSlip(signatories,data);
-      case "inventory":
+      case 'property':
+        return getPropertyAcknowledgementReciept(signatories, data);
+      case 'requisition':
+        return getRequisitionAndIssueSlip(signatories, data);
+      case 'inventory':
         return getInventoryTemplate(data);
-      case "inspection":
+      case 'inspection':
         return getInspectionReportTemplate(signatories, data);
       default:
         return getInspectionReportTemplate(signatories, data);
@@ -67,7 +59,7 @@ export default function PrintReportDialog({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(getReportTemplate(reportData));
       setTimeout(() => {
@@ -81,28 +73,15 @@ export default function PrintReportDialog({
   // If print view is active, render the print-friendly report
   if (showPrintView) {
     switch (reportType) {
-      case "property":
+      case 'property':
         return (
-          <PropertyAcknowledgementReceipt
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
+          <PropertyAcknowledgementReceipt reportData={reportData} onClose={handleClosePrintView} />
         );
-      case "requisition":
-        return (
-          <RequisitionAndIssueSlip
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
-        );
-      case "inventory":
-        return (
-          <InventoryCustodianSlip
-            reportData={reportData}
-            onClose={handleClosePrintView}
-          />
-        );
-      case "inspection":
+      case 'requisition':
+        return <RequisitionAndIssueSlip reportData={reportData} onClose={handleClosePrintView} />;
+      case 'inventory':
+        return <InventoryCustodianSlip reportData={reportData} onClose={handleClosePrintView} />;
+      case 'inspection':
       default:
         return (
           <InspectionAcceptanceReport
@@ -119,11 +98,11 @@ export default function PrintReportDialog({
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        {reportType === "requisition" ? (
+        {reportType === 'requisition' ? (
           <RequisitionAndIssueSlip reportData={reportData} />
-        ) : reportType === "inspection" ? (
+        ) : reportType === 'inspection' ? (
           <InspectionAcceptanceReport reportData={reportData} />
-        ) : reportType === "inventory" ? (
+        ) : reportType === 'inventory' ? (
           <InventoryCustodianSlip reportData={reportData} />
         ) : (
           <PropertyAcknowledgementReceipt reportData={reportData} />

@@ -5,7 +5,9 @@ import { DataTypes } from 'sequelize';
  */
 export async function up(queryInterface) {
   // Only add if it doesn't exist (defensive): MySQL supports SHOW COLUMNS
-  const [results] = await queryInterface.sequelize.query("SHOW COLUMNS FROM `roles` LIKE 'is_active'");
+  const [results] = await queryInterface.sequelize.query(
+    "SHOW COLUMNS FROM `roles` LIKE 'is_active'"
+  );
   if (results && results.Field === 'is_active') {
     return; // already exists
   }
@@ -13,12 +15,14 @@ export async function up(queryInterface) {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true,
-    after: 'description'
+    after: 'description',
   });
 }
 
 export async function down(queryInterface) {
-  const [results] = await queryInterface.sequelize.query("SHOW COLUMNS FROM `roles` LIKE 'is_active'");
+  const [results] = await queryInterface.sequelize.query(
+    "SHOW COLUMNS FROM `roles` LIKE 'is_active'"
+  );
   if (!results || results.Field !== 'is_active') {
     return; // nothing to drop
   }

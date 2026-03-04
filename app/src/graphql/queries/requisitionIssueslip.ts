@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const GET_ALL_REQUISITION_ISSUE_SLIP = gql`
   query GetAllRequisitionIssueSlip {
@@ -67,6 +67,7 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risDepartment
       risAssignedDate
       purpose
+      risDetails
       splitGroupId
       splitFromItemId
       splitIndex
@@ -113,7 +114,4 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
   }
 `;
 
-export {
-  GET_ALL_REQUISITION_ISSUE_SLIP,
-  GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY,
-};
+export { GET_ALL_REQUISITION_ISSUE_SLIP, GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY };

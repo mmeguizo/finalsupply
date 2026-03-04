@@ -5,7 +5,7 @@ export async function up(queryInterface) {
   try {
     // Check if columns already exist before adding them
     const tableDescription = await queryInterface.describeTable('inspection_acceptance_report');
-    
+
     if (!tableDescription.income) {
       await queryInterface.addColumn(
         'inspection_acceptance_report',
@@ -55,7 +55,9 @@ export async function up(queryInterface) {
     }
 
     await transaction.commit();
-    console.log('✅ Migration completed: Added income, mds, details columns to inspection_acceptance_report');
+    console.log(
+      '✅ Migration completed: Added income, mds, details columns to inspection_acceptance_report'
+    );
   } catch (error) {
     await transaction.rollback();
     console.error('❌ Migration failed:', error);
@@ -70,7 +72,9 @@ export async function down(queryInterface) {
     await queryInterface.removeColumn('inspection_acceptance_report', 'mds', { transaction });
     await queryInterface.removeColumn('inspection_acceptance_report', 'details', { transaction });
     await transaction.commit();
-    console.log('✅ Rollback completed: Removed income, mds, details columns from inspection_acceptance_report');
+    console.log(
+      '✅ Rollback completed: Removed income, mds, details columns from inspection_acceptance_report'
+    );
   } catch (error) {
     await transaction.rollback();
     console.error('❌ Rollback failed:', error);

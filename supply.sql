@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 16/01/2026 12:00:20
+ Date: 27/02/2026 10:06:36
 */
 
 SET NAMES utf8mb4;
@@ -29,70 +29,8 @@ CREATE TABLE `department`  (
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `name`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_2`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_3`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_4`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_5`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_6`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_7`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_8`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_9`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_10`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_11`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_12`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_13`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_14`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_15`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_16`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_17`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_18`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_19`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_20`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_21`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_22`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_23`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_24`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_25`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_26`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_27`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_28`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_29`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_30`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_31`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_32`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_33`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_34`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_35`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_36`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_37`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_38`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_39`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_40`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_41`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_42`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_43`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_44`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_45`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_46`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_47`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_48`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_49`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_50`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_51`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_52`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_53`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_54`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_55`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_56`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_57`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_58`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_59`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_60`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_61`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_62`(`name` ASC) USING BTREE,
-  UNIQUE INDEX `name_63`(`name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  UNIQUE INDEX `name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of department
@@ -130,18 +68,44 @@ CREATE TABLE `inspection_acceptance_report`  (
   `updated_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `inventory_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `iar_status` enum('partial','complete','none') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'none',
+  `invoice` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Invoice number specific to this IAR receipt',
+  `invoice_date` date NULL DEFAULT NULL COMMENT 'Invoice date specific to this IAR receipt',
+  `income` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Income info specific to this IAR',
+  `mds` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'MDS info specific to this IAR',
+  `details` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Details specific to this IAR',
+  `par_received_from` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'PAR signatory - Received From name',
+  `par_received_from_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'PAR signatory - Received From position/role',
+  `par_received_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'PAR signatory - Received By name',
+  `par_received_by_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'PAR signatory - Received By position',
+  `par_department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Department assigned for this PAR item',
+  `par_assigned_date` datetime NULL DEFAULT NULL COMMENT 'Date when PAR ID was assigned',
+  `ris_received_from` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'RIS signatory - Received From name',
+  `ris_received_from_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'RIS signatory - Received From position/role',
+  `ris_received_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'RIS signatory - Received By name',
+  `ris_received_by_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'RIS signatory - Received By position',
+  `ris_department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Department assigned for this RIS item',
+  `ris_assigned_date` datetime NULL DEFAULT NULL COMMENT 'Date when RIS ID was assigned',
+  `ics_received_from` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'ICS signatory - Received From name',
+  `ics_received_from_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'ICS signatory - Received From position/role',
+  `ics_received_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'ICS signatory - Received By name',
+  `ics_received_by_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'ICS signatory - Received By position',
+  `ics_department` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Department assigned for this ICS item',
+  `ics_assigned_date` datetime NULL DEFAULT NULL COMMENT 'Date when ICS ID was assigned',
+  `purpose` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Purpose field for ICS/RIS print reports (manually entered)',
+  `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Remarks field for PAR print reports (manually entered)',
+  `split_group_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Shared ID among all items created from the same split operation. Traces siblings.',
+  `split_from_item_id` int NULL DEFAULT NULL COMMENT 'The original IAR item ID this record was split from. Traces back to source.',
+  `split_index` int NULL DEFAULT NULL COMMENT '1-based index within the split group (1 = first split, etc.)',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `purchase_order_id`(`purchase_order_id` ASC) USING BTREE,
   INDEX `purchase_order_item_id`(`purchase_order_item_id` ASC) USING BTREE,
-  CONSTRAINT `inspection_acceptance_report_ibfk_301` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `inspection_acceptance_report_ibfk_302` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 362 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `inspection_acceptance_report_ibfk_687` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `inspection_acceptance_report_ibfk_688` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 497 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of inspection_acceptance_report
 -- ----------------------------
-INSERT INTO `inspection_acceptance_report` VALUES (360, '120925-001-B', 123, '', 'tester', 'tester', 2, 10.00, 20.00, 2, 'property acknowledgement reciept', '', 0, '2025-12-09 02:19:41', '2025-12-09 02:19:41', 262, NULL, NULL, '25-001B', 'Mark Oliver ', 'Mark Oliver ', '213', 'none');
-INSERT INTO `inspection_acceptance_report` VALUES (361, '120925-001-B', 123, '', 'tester', 'tester', 10, 10.00, 100.00, 8, 'property acknowledgement reciept', '', 0, '2025-12-09 02:19:57', '2025-12-09 02:19:57', 263, NULL, NULL, '25-001B', 'Mark Oliver ', 'Mark Oliver ', '213', 'none');
 
 -- ----------------------------
 -- Table structure for purchase_order_items
@@ -159,7 +123,7 @@ CREATE TABLE `purchase_order_items`  (
   `unit_cost` decimal(10, 2) NULL DEFAULT NULL,
   `amount` decimal(10, 2) NULL DEFAULT NULL,
   `actual_quantity_received` int NOT NULL DEFAULT 0,
-  `category` enum('property acknowledgement reciept','inventory custodian slip','requisition issue slip') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'requisition issue slip',
+  `category` enum('property acknowledgement reciept','inventory custodian slip','requisition issue slip') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   `is_deleted` tinyint(1) NULL DEFAULT 0,
@@ -168,16 +132,17 @@ CREATE TABLE `purchase_order_items`  (
   `inventory_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'none',
   `item_group_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Stable grouping key for logical item across updates/receipts',
   `is_receipt_line` tinyint(1) NULL DEFAULT 0 COMMENT 'Optional marker for cloned receipt-only lines',
+  `delivery_status` enum('pending','delivered','partial') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'pending' COMMENT 'Track item delivery status independently of IAR receipt',
+  `delivered_date` date NULL DEFAULT NULL COMMENT 'Date when item was delivered',
+  `delivery_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Notes about the delivery (e.g. follow-up needed, backordered)',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `purchase_order_id`(`purchase_order_id` ASC) USING BTREE,
   CONSTRAINT `purchase_order_items_ibfk_1` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 264 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 324 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of purchase_order_items
 -- ----------------------------
-INSERT INTO `purchase_order_items` VALUES (262, 123, '', 'tester', 'tester', 'tester', 'tester', 10, 10.00, 100.00, 2, 'property acknowledgement reciept', '2025-12-09 02:19:21', '2025-12-09 02:19:41', 0, '', NULL, '213', 'mu60va0roo', 0);
-INSERT INTO `purchase_order_items` VALUES (263, 123, '', 'tester', 'test', 'tester', 'tester', 10, 10.00, 100.00, 8, 'property acknowledgement reciept', '2025-12-09 02:19:57', '2025-12-09 02:19:57', 0, '', NULL, '213', 'mu60va0roo', 1);
 
 -- ----------------------------
 -- Table structure for purchase_order_items_history
@@ -207,14 +172,11 @@ CREATE TABLE `purchase_order_items_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_purchase_order_item_id`(`purchase_order_item_id` ASC) USING BTREE,
   CONSTRAINT `purchase_order_items_history_ibfk_1` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 406 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 543 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of purchase_order_items_history
 -- ----------------------------
-INSERT INTO `purchase_order_items_history` VALUES (403, 262, 10, 10, 0, 2, 100.00, 100.00, 'received_update', 'Mark Oliver ', 'Received qty + details update', '2025-12-09 02:19:41', '2025-12-09 02:19:41', 123, '', 'tester', '120925-001-B', '25-001B', NULL, NULL);
-INSERT INTO `purchase_order_items_history` VALUES (404, 263, 0, 10, 0, 8, 0.00, 100.00, 'item_creation', 'Mark Oliver ', 'New line item created from source item 262 with itemGroupId mu60va0roo', '2025-12-09 02:19:57', '2025-12-09 02:19:57', 123, '', 'tester', '120925-001-B', '25-001B', NULL, NULL);
-INSERT INTO `purchase_order_items_history` VALUES (405, 262, 10, 10, 2, 2, 100.00, 100.00, 'po_completed', 'Mark Oliver ', 'Purchase Order Marked Complete', '2025-12-09 02:30:37', '2025-12-09 02:30:37', NULL, '', NULL, NULL, NULL, NULL, NULL);
 
 -- ----------------------------
 -- Table structure for purchase_orders
@@ -246,13 +208,13 @@ CREATE TABLE `purchase_orders`  (
   `income` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Income source or code',
   `mds` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'MDS reference',
   `details` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Additional PO details',
+  `tin` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Tax Identification Number of the supplier',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 233 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of purchase_orders
 -- ----------------------------
-INSERT INTO `purchase_orders` VALUES (123, '0607-234-25-C', 'direct contracting', 'MIS-DPO', '2025-12-09', '2025-12-09', '2025-12-09', '', 'not more than 30 days', 100.00, 'completed', 0, '2025-12-09 02:19:21', '2026-01-14 06:31:01', 'JT & SONS TRADING CORP', 'talisay city, Negros Occidental, 6115, PH', NULL, '', NULL, '2025-12-09', 'Binalbagan', 'flood control', '13131313', 'mds', 'details');
 
 -- ----------------------------
 -- Table structure for roles
@@ -268,7 +230,7 @@ CREATE TABLE `roles`  (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `name`(`name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of roles
@@ -286,12 +248,26 @@ CREATE TABLE `sessions`  (
   `expires` int UNSIGNED NOT NULL,
   `data` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
   PRIMARY KEY (`session_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sessions
 -- ----------------------------
-INSERT INTO `sessions` VALUES ('JPesUxXEtU86hMBpwfDFqwJwNUVuQtHm', 1769138579, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-01-21T06:27:27.847Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('0fSfO7eg9hbEanN3c_wXIuG0Vok15YMZ', 1772527173, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T08:39:32.761Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('2_79Ts5wIR592MxNk_Ji9w8YeSIwWVVG', 1772523972, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:46:11.792Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('4Z0QWdV8VZFIAv_Aq90fc81GPKvC7JZN', 1772526946, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T08:35:46.187Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('4kk0LZ1VP7LE4VRIyXVO9OdRc07IoFmN', 1772524211, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:50:10.748Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('5p1J2le0oUlWJZwPfjUl68fjBTTcFqDG', 1772523933, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:45:33.465Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('971dd4JQdUJtDC8meGYTUbI_zsbwz-2l', 1772696177, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-04T00:37:26.570Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":2}}');
+INSERT INTO `sessions` VALUES ('BIrcaRyjUVGhcGVFoaILNBpR0ZQjoW8X', 1772523939, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:45:39.385Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('I0zQ48sq-bfqp4HkK4oigNfpuGLkHJey', 1772583828, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-04T00:23:48.067Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('IxEFFQkYoVsl9MJ5r-d6I35eGN2dbr1v', 1772523966, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:46:05.691Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('QPc8MuWDXrBHwib-XIdsGrB5umG0C4Sb', 1772759984, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-04T00:23:26.104Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('TGNCLTW1qqkmV7LAtDnrPg3PszVAFsuj', 1772524003, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:46:42.759Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('_bJTCI7PPTpMl0PxgiBb-C9O-e_LuPl-', 1772523937, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:45:36.544Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
+INSERT INTO `sessions` VALUES ('az-R4sttsXW_fllsuTYCNEJal1VTtq1e', 1772585187, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T08:40:53.312Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":2}}');
+INSERT INTO `sessions` VALUES ('h0iaIhOCvka5Fu8lHS3UQazPs44uq76H', 1772524022, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-03T07:47:01.761Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":2}}');
+INSERT INTO `sessions` VALUES ('rCaP3tgxvTV96evg6JN2hlauK40Y0g83', 1772583670, '{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2026-03-04T00:16:54.187Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"passport\":{\"user\":1}}');
 
 -- ----------------------------
 -- Table structure for signatories
@@ -309,9 +285,9 @@ CREATE TABLE `signatories`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `purchase_order_id`(`purchase_order_id` ASC) USING BTREE,
   INDEX `role_id`(`role_id` ASC) USING BTREE,
-  CONSTRAINT `signatories_ibfk_253` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `signatories_ibfk_254` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `signatories_ibfk_633` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `signatories_ibfk_634` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of signatories
@@ -407,7 +383,7 @@ CREATE TABLE `users`  (
   UNIQUE INDEX `email_61`(`email` ASC) USING BTREE,
   UNIQUE INDEX `email_62`(`email` ASC) USING BTREE,
   UNIQUE INDEX `email_63`(`email` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 51 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of users

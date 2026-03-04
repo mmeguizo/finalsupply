@@ -85,3 +85,32 @@ Return: summary of changes made.
 ❌ Edit/create code (use subagent)  
 ❌ Use `agentName: "Plan"` (always omit it)  
 ❌ "Quick look" at files before delegating
+
+---
+
+## Project Context: Supply Management System
+
+### Current State (Manual Mode)
+The system for adding Purchase Orders (PO) is currently **manual**. In the future, this will be separate - the system will pull pre-filled PO data from an external database where:
+- PO details are already complete
+- Items are already provided
+- Invoice numbers are already filled
+
+Since that external system is not yet available, we currently do **manual adding and editing of PO**. This means:
+- Users manually input PO details
+- Users manually add items
+- Invoice can be added at PO creation, IAR generation, or when editing PO
+- Some fields should be optional to allow flexibility
+
+### Important Design Decisions
+1. **PO Fields**: TIN, telephone, address are optional. Most important required fields: PO Number, Supplier, Place of Delivery
+2. **Invoice**: Optional at IAR generation - can be added on PO, on IAR, or when editing PO
+3. **IAR Generation**: By default, no items should be pre-checked/selected
+4. **Ticket Assignment (PAR/ICS/RIS)**: 
+   - Default quantity should be 0 to prevent accidental submissions
+   - Adding items to existing tickets should COMBINE with existing records, not create duplicates
+5. **Details Fields**:
+   - IAR has its own `details` field (for IAR printing)
+   - ICS has its own `icsDetails` field (separate from IAR)
+   - PAR should have its own `parDetails` field (separate from IAR)
+   - RIS should have its own `risDetails` field (separate from IAR)

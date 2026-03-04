@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,28 +12,28 @@ import {
   styled,
   Button,
   Divider,
-} from "@mui/material";
-import { genericPreviewProps } from "../../types/previewPrintDocument/types";
-import useSignatoryStore from "../../stores/signatoryStore";
-import { capitalizeFirstLetter } from "../../utils/generalUtils";
-import { escapeHtml, nl2br } from "../../utils/textHelpers";
+} from '@mui/material';
+import { genericPreviewProps } from '../../types/previewPrintDocument/types';
+import useSignatoryStore from '../../stores/signatoryStore';
+import { capitalizeFirstLetter } from '../../utils/generalUtils';
+import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  border: "1px solid black",
-  padding: "4px",
-  fontSize: "12px",
-  fontWeight: "normal",
+  border: '1px solid black',
+  padding: '4px',
+  fontSize: '12px',
+  fontWeight: 'normal',
 }));
 
 const StyledTableCellHeader = styled(StyledTableCell)(({ theme }) => ({
-  whiteSpace: "nowrap",
-  textAlign: "left",
-  padding: "0px 6px",
+  whiteSpace: 'nowrap',
+  textAlign: 'left',
+  padding: '0px 6px',
 }));
 
 const StyledTableRow = styled(TableRow)({
-  "&:nth-of-type(odd)": {
-    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  '&:nth-of-type(odd)': {
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
 });
 
@@ -43,25 +43,25 @@ const HeaderTableCell = styled(StyledTableCell)({
 
 // Improved PrintContainer with better print isolation
 const PrintContainer = styled(Box)({
-  "@media print": {
-    position: "fixed",
+  '@media print': {
+    position: 'fixed',
     left: 0,
     top: 0,
-    width: "210mm",
-    height: "297mm",
+    width: '210mm',
+    height: '297mm',
     margin: 0,
     padding: 0,
-    pageBreakAfter: "always",
-    backgroundColor: "white",
+    pageBreakAfter: 'always',
+    backgroundColor: 'white',
     zIndex: 9999,
-    visibility: "visible",
+    visibility: 'visible',
   },
 });
 
 // Controls for buttons that shouldn't print
 const PrintControls = styled(Box)({
-  "@media print": {
-    display: "none !important",
+  '@media print': {
+    display: 'none !important',
   },
 });
 
@@ -76,7 +76,7 @@ export default function RequisitionReport({
   // Create and inject print styles dynamically
   useEffect(() => {
     // Create a style element
-    const style = document.createElement("style");
+    const style = document.createElement('style');
     style.innerHTML = `
       @media print {
         @page {
@@ -122,7 +122,7 @@ export default function RequisitionReport({
     : reportData
       ? [reportData]
       : [];
-  console.log("itemsArray", itemsArray);
+  console.log('itemsArray', itemsArray);
 
   // Calculate total amount from all items
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -134,61 +134,53 @@ export default function RequisitionReport({
 
   // Build a display string of unique RIS IDs from the report data
   const risIdsDisplay = React.useMemo(() => {
-    const ids = Array.from(
-      new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)),
-    );
-    return ids.join(", ");
+    const ids = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
+    return ids.join(', ');
   }, [itemsArray]);
 
   return (
     <>
-      <PrintControls
-        sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}
-      >
+      <PrintControls sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
         {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
         {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
       </PrintControls>
 
       <Box id="printable-report" ref={componentRef}>
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: "1px solid black" }}
-        >
-          <Table sx={{ width: "100%", borderCollapse: "collapse" }}>
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid black' }}>
+          <Table sx={{ width: '100%', borderCollapse: 'collapse' }}>
             <TableHead>
-              <TableRow sx={{ visibility: "collapse", height: 0 }}>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "40%" }}></TableCell>
-                <TableCell sx={{ width: "12%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "4%" }}></TableCell>
-                <TableCell sx={{ width: "4%" }}></TableCell>
-                <TableCell sx={{ width: "8%" }}></TableCell>
-                <TableCell sx={{ width: "12%" }}></TableCell>
-                <TableCell sx={{ width: "20%" }}></TableCell>
+              <TableRow sx={{ visibility: 'collapse', height: 0 }}>
+                <TableCell sx={{ width: '8%' }}></TableCell>
+                <TableCell sx={{ width: '8%' }}></TableCell>
+                <TableCell sx={{ width: '8%' }}></TableCell>
+                <TableCell sx={{ width: '40%' }}></TableCell>
+                <TableCell sx={{ width: '12%' }}></TableCell>
+                <TableCell sx={{ width: '8%' }}></TableCell>
+                <TableCell sx={{ width: '4%' }}></TableCell>
+                <TableCell sx={{ width: '4%' }}></TableCell>
+                <TableCell sx={{ width: '8%' }}></TableCell>
+                <TableCell sx={{ width: '12%' }}></TableCell>
+                <TableCell sx={{ width: '20%' }}></TableCell>
               </TableRow>
               <TableRow>
                 <HeaderTableCell colSpan={11}>
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "4px 0px",
-                      position: "relative",
-                      gap: "0.5em",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      padding: '4px 0px',
+                      position: 'relative',
+                      gap: '0.5em',
                     }}
                   >
                     <Box
                       sx={{
                         flexGrow: 1,
-                        display: "grid",
-                        gridTemplateColumns: "2fr 4fr 2fr",
-                        gridTemplateRows: "90px",
-                        alignItems: "center",
-                        textAlign: "center",
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 4fr 2fr',
+                        gridTemplateRows: '90px',
+                        alignItems: 'center',
+                        textAlign: 'center',
                       }}
                     >
                       <Box>
@@ -197,35 +189,26 @@ export default function RequisitionReport({
                           src="/chmsu-logo.png"
                           alt="CHMSU Logo"
                           sx={{
-                            width: "40%",
-                            height: "40%",
-                            marginTop: "10%",
-                            objectFit: "contain",
+                            width: '40%',
+                            height: '40%',
+                            marginTop: '10%',
+                            objectFit: 'contain',
                           }}
                         />
                       </Box>
                       <Box
                         sx={{
-                          display: "grid",
-                          placeItems: "center",
+                          display: 'grid',
+                          placeItems: 'center',
                         }}
                       >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontSize: "14px", fontWeight: "normal" }}
-                        >
+                        <Typography variant="h6" sx={{ fontSize: '14px', fontWeight: 'normal' }}>
                           REPUBLIC OF THE PHILIPPINES
                         </Typography>
-                        <Typography
-                          variant="h5"
-                          sx={{ fontSize: "16px", fontWeight: 600 }}
-                        >
+                        <Typography variant="h5" sx={{ fontSize: '16px', fontWeight: 600 }}>
                           CARLOS HILADO MEMORIAL STATE UNIVERSITY
                         </Typography>
-                        <Typography
-                          variant="h6"
-                          sx={{ fontSize: "14px", fontWeight: "normal" }}
-                        >
+                        <Typography variant="h6" sx={{ fontSize: '14px', fontWeight: 'normal' }}>
                           REQUISITION AND ISSUE SLIP
                         </Typography>
                       </Box>
@@ -235,26 +218,26 @@ export default function RequisitionReport({
                     <Box
                       sx={{
                         flexGrow: 1,
-                        display: "grid",
-                        gridTemplateColumns: "2fr 4fr 2fr",
-                        gridTemplateRows: "2.5em",
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 4fr 2fr',
+                        gridTemplateRows: '2.5em',
                       }}
                     >
                       <Box></Box>
                       <Box
                         sx={{
-                          display: "grid",
-                          justifyContent: "center",
-                          alignItems: "end",
+                          display: 'grid',
+                          justifyContent: 'center',
+                          alignItems: 'end',
                         }}
                       >
                         No. {risIdsDisplay}
                       </Box>
                       <Box
                         sx={{
-                          display: "grid",
-                          justifyContent: "end",
-                          alignItems: "start",
+                          display: 'grid',
+                          justifyContent: 'end',
+                          alignItems: 'start',
                         }}
                       >
                         Page 1 of 1
@@ -263,13 +246,13 @@ export default function RequisitionReport({
 
                     <Box
                       sx={{
-                        position: "absolute",
-                        top: "3px",
-                        right: "0px",
-                        fontFamily: "serif",
-                        fontStyle: "italic",
-                        fontWeight: "bold",
-                        fontSize: "16px",
+                        position: 'absolute',
+                        top: '3px',
+                        right: '0px',
+                        fontFamily: 'serif',
+                        fontStyle: 'italic',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
                       }}
                     >
                       Appendix 63
@@ -280,68 +263,59 @@ export default function RequisitionReport({
 
               <TableRow>
                 <StyledTableCellHeader colSpan={7}>
-                  <Box sx={{ padding: "10px 0px 0px 0px" }}>
+                  <Box sx={{ padding: '10px 0px 0px 0px' }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        textAlign: "left",
-                        fontSize: "12px",
+                        display: 'flex',
+                        textAlign: 'left',
+                        fontSize: '12px',
                       }}
                     >
                       <Typography>Division: </Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      >
-                        {" "}
+                      <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}>
+                        {' '}
                         &nbsp; &nbsp;
-                        {itemsArray[0]?.PurchaseOrder?.campus || ""}
+                        {itemsArray[0]?.PurchaseOrder?.campus || ''}
                       </Box>
                     </Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        textAlign: "left",
-                        fontSize: "12px",
+                        display: 'flex',
+                        textAlign: 'left',
+                        fontSize: '12px',
                       }}
                     >
                       <Typography>Office:</Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      >
-                        {" "}
-                        &nbsp; &nbsp;{" "}
-                        {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ""}
+                      <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}>
+                        {' '}
+                        &nbsp; &nbsp; {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ''}
                       </Box>
                     </Box>
                   </Box>
                 </StyledTableCellHeader>
                 <HeaderTableCell></HeaderTableCell>
                 <HeaderTableCell colSpan={3}>
-                  <Box sx={{ padding: "10px 0px 0px 0px" }}>
+                  <Box sx={{ padding: '10px 0px 0px 0px' }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        textAlign: "left",
-                        fontSize: "12px",
+                        display: 'flex',
+                        textAlign: 'left',
+                        fontSize: '12px',
                       }}
                     >
                       <Typography>Responsibility Center Code : </Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      ></Box>
+                      <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}></Box>
                     </Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        textAlign: "left",
-                        fontSize: "12px",
+                        display: 'flex',
+                        textAlign: 'left',
+                        fontSize: '12px',
                       }}
                     >
                       <Typography>RIS No. :</Typography>
-                      <Box
-                        sx={{ borderBottom: "1px solid #000", width: "100%" }}
-                      >
-                        {" "}
+                      <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}>
+                        {' '}
                         &nbsp; &nbsp;{risIdsDisplay}
                       </Box>
                     </Box>
@@ -353,9 +327,9 @@ export default function RequisitionReport({
                 <StyledTableCellHeader
                   colSpan={6}
                   sx={{
-                    padding: "4px",
-                    fontWeight: "bold",
-                    fontStyle: "italic",
+                    padding: '4px',
+                    fontWeight: 'bold',
+                    fontStyle: 'italic',
                   }}
                 >
                   Requisition
@@ -363,9 +337,9 @@ export default function RequisitionReport({
                 <StyledTableCellHeader
                   colSpan={3}
                   sx={{
-                    padding: "4px",
-                    fontWeight: "bold",
-                    fontStyle: "italic",
+                    padding: '4px',
+                    fontWeight: 'bold',
+                    fontStyle: 'italic',
                   }}
                 >
                   Stock Available?
@@ -373,16 +347,16 @@ export default function RequisitionReport({
                 <StyledTableCellHeader
                   colSpan={2}
                   sx={{
-                    padding: "4px",
-                    fontWeight: "bold",
-                    fontStyle: "italic",
+                    padding: '4px',
+                    fontWeight: 'bold',
+                    fontStyle: 'italic',
                   }}
                 >
                   Issue
                 </StyledTableCellHeader>
               </TableRow>
 
-              <TableRow sx={{ "& th": { padding: "1px 0px" } }}>
+              <TableRow sx={{ '& th': { padding: '1px 0px' } }}>
                 <StyledTableCell align="center">Stock No.</StyledTableCell>
                 <StyledTableCell align="center">Item No.</StyledTableCell>
                 <StyledTableCell align="center">Unit</StyledTableCell>
@@ -404,36 +378,31 @@ export default function RequisitionReport({
                 <>
                   {itemsArray.map((item: any, index: any) => (
                     <StyledTableRow key={index}>
-                      <StyledTableCell>
-                        {item.inventoryNumber || ""}{" "}
-                      </StyledTableCell>
-                      <StyledTableCell>{index + 1 || ""}</StyledTableCell>
-                      <StyledTableCell>{item.unit || ""}</StyledTableCell>
+                      <StyledTableCell>{item.inventoryNumber || ''} </StyledTableCell>
+                      <StyledTableCell>{index + 1 || ''}</StyledTableCell>
+                      <StyledTableCell>{item.unit || ''}</StyledTableCell>
                       <StyledTableCell colSpan={2}>
                         <Box>
                           <Typography sx={{ fontWeight: 500 }}>
-                            {item.description ||
-                              item.PurchaseOrderItem?.description ||
-                              ""}
+                            {item.description || item.PurchaseOrderItem?.description || ''}
                           </Typography>
 
-                          {(item.PurchaseOrderItem?.specification ||
-                            item.specification) && (
+                          {(item.PurchaseOrderItem?.specification || item.specification) && (
                             <Typography
                               component="div"
                               sx={{
                                 fontSize: 12,
-                                color: "text.secondary",
+                                color: 'text.secondary',
                                 mt: 0.5,
-                                textAlign: "left",
+                                textAlign: 'left',
                               }}
                               dangerouslySetInnerHTML={{
                                 __html: nl2br(
                                   escapeHtml(
                                     item.PurchaseOrderItem?.specification ||
                                       item.specification ||
-                                      "",
-                                  ),
+                                      ''
+                                  )
                                 ),
                               }}
                             />
@@ -445,27 +414,24 @@ export default function RequisitionReport({
                               component="div"
                               sx={{
                                 fontSize: 12,
-                                color: "text.secondary",
+                                color: 'text.secondary',
                                 mt: 0.5,
-                                textAlign: "left",
+                                textAlign: 'left',
                               }}
                               dangerouslySetInnerHTML={{
                                 __html: nl2br(
                                   escapeHtml(
-                                    item.PurchaseOrderItem
-                                      ?.generalDescription ||
+                                    item.PurchaseOrderItem?.generalDescription ||
                                       item.generalDescription ||
-                                      "",
-                                  ),
+                                      ''
+                                  )
                                 ),
                               }}
                             />
                           )}
                         </Box>
                       </StyledTableCell>
-                      <StyledTableCell>
-                        {item.actualQuantityReceived || ""}
-                      </StyledTableCell>
+                      <StyledTableCell>{item.actualQuantityReceived || ''}</StyledTableCell>
                       <StyledTableCell colSpan={2}></StyledTableCell>
                       <StyledTableCell></StyledTableCell>
                       <StyledTableCell> </StyledTableCell>
@@ -477,13 +443,8 @@ export default function RequisitionReport({
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell
-                      colSpan={2}
-                      sx={{ textAlign: "center", padding: 0.5 }}
-                    >
-                      <Typography
-                        sx={{ fontSize: "12px", color: "text.secondary" }}
-                      >
+                    <StyledTableCell colSpan={2} sx={{ textAlign: 'center', padding: 0.5 }}>
+                      <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
                         *****Nothing Follows*****
                       </Typography>
                     </StyledTableCell>
@@ -497,38 +458,31 @@ export default function RequisitionReport({
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
-                    <StyledTableCell
-                      colSpan={2}
-                      sx={{ textAlign: "left", padding: 0.5 }}
-                    >
+                    <StyledTableCell colSpan={2} sx={{ textAlign: 'left', padding: 0.5 }}>
                       {itemsArray[0]?.PurchaseOrder?.income ? (
                         <Typography fontSize={12}>
-                          Income:{" "}
+                          Income:{' '}
                           <span>
-                            {capitalizeFirstLetter(
-                              itemsArray[0]?.PurchaseOrder?.income || "",
-                            )}{" "}
+                            {capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.income || '')}{' '}
                           </span>
                         </Typography>
                       ) : null}
                       {itemsArray[0]?.PurchaseOrder?.mds ? (
                         <Typography fontSize={12}>
-                          MDS:{" "}
+                          MDS:{' '}
                           <span>
-                            {capitalizeFirstLetter(
-                              itemsArray[0]?.PurchaseOrder?.mds || "",
-                            )}{" "}
+                            {capitalizeFirstLetter(itemsArray[0]?.PurchaseOrder?.mds || '')}{' '}
                           </span>
                         </Typography>
                       ) : null}
 
                       {itemsArray[0]?.PurchaseOrder?.details ? (
                         <Typography fontSize={12}>
-                          Details:{" "}
+                          Details:{' '}
                           <span>
                             {capitalizeFirstLetter(
-                              itemsArray[0]?.PurchaseOrder?.details || "",
-                            )}{" "}
+                              itemsArray[0]?.PurchaseOrder?.details || ''
+                            )}{' '}
                           </span>
                         </Typography>
                       ) : null}
@@ -563,9 +517,7 @@ export default function RequisitionReport({
                 <StyledTableCell colSpan={2}></StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell align="right"> </StyledTableCell>
-                <StyledTableCell align="right">
-                  {/* {formatTotalAmount} */ " "}
-                </StyledTableCell>
+                <StyledTableCell align="right">{/* {formatTotalAmount} */ ' '}</StyledTableCell>
               </StyledTableRow>
             </TableBody>
 
@@ -573,10 +525,8 @@ export default function RequisitionReport({
               <StyledTableRow>
                 <StyledTableCell colSpan={2}>Purpose:</StyledTableCell>
                 <StyledTableCell colSpan={9}>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Typography sx={{ fontSize: 12 }}>
-                      {itemsArray[0]?.purpose || ""}
-                    </Typography>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Typography sx={{ fontSize: 12 }}>{itemsArray[0]?.purpose || ''}</Typography>
                   </Box>
                 </StyledTableCell>
               </StyledTableRow>
@@ -601,24 +551,16 @@ export default function RequisitionReport({
               <StyledTableRow>
                 <StyledTableCell colSpan={2}>Printed Name :</StyledTableCell>
                 <StyledTableCell>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.requested_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.requested_by || '')}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={2}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.approved_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.approved_by || '')}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.issued_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.issued_by || '')}</Typography>
                 </StyledTableCell>
                 <StyledTableCell colSpan={3}>
-                  <Typography>
-                    {capitalizeFirstLetter(signatories?.recieved_by || "")}
-                  </Typography>
+                  <Typography>{capitalizeFirstLetter(signatories?.recieved_by || '')}</Typography>
                 </StyledTableCell>
               </StyledTableRow>
 
@@ -626,12 +568,8 @@ export default function RequisitionReport({
                 <StyledTableCell>Designation :</StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell>End User </StyledTableCell>
-                <StyledTableCell colSpan={2}>
-                  AO V / Supply Officer
-                </StyledTableCell>
-                <StyledTableCell colSpan={3}>
-                  Supply Officer Staff
-                </StyledTableCell>
+                <StyledTableCell colSpan={2}>AO V / Supply Officer</StyledTableCell>
+                <StyledTableCell colSpan={3}>Supply Officer Staff</StyledTableCell>
                 <StyledTableCell colSpan={3}>End User</StyledTableCell>
               </StyledTableRow>
 

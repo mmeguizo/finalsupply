@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useQuery } from "@apollo/client";
+import * as React from 'react';
+import { useQuery } from '@apollo/client';
 import {
   CircularProgress,
   Alert,
@@ -25,27 +25,23 @@ import {
   DialogContent,
   DialogActions,
   Autocomplete,
-} from "@mui/material";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import PreviewIcon from "@mui/icons-material/Preview";
-import SearchIcon from "@mui/icons-material/Search";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import NotificationDialog from "../components/notifications";
-import ConfirmDialog from "../components/confirmationdialog";
+} from '@mui/material';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import PreviewIcon from '@mui/icons-material/Preview';
+import SearchIcon from '@mui/icons-material/Search';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import NotificationDialog from '../components/notifications';
+import ConfirmDialog from '../components/confirmationdialog';
 //@ts-ignore
-import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from "../graphql/queries/inspectionacceptancereport.query";
-import PrintReportDialogForIAR from "../components/printReportModalForIAR";
-import SignatoriesComponent from "./inventoryFunctions/SignatorySelectionContainer";
-import GenerateIarModal from "../components/GenerateIarModal";
-import {
-  formatTimestampToDateTime,
-  currencyFormat,
-  formatCategory,
-} from "../utils/generalUtils";
-import { Select, MenuItem, Chip } from "@mui/material";
-import { useMutation } from "@apollo/client";
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from '../graphql/queries/inspectionacceptancereport.query';
+import PrintReportDialogForIAR from '../components/printReportModalForIAR';
+import SignatoriesComponent from './inventoryFunctions/SignatorySelectionContainer';
+import GenerateIarModal from '../components/GenerateIarModal';
+import { formatTimestampToDateTime, currencyFormat, formatCategory } from '../utils/generalUtils';
+import { Select, MenuItem, Chip } from '@mui/material';
+import { useMutation } from '@apollo/client';
 import {
   UPDATE_IAR_STATUS,
   REVERT_IAR_BATCH,
@@ -53,15 +49,12 @@ import {
   CREATE_LINE_ITEM_FROM_EXISTING,
   UPDATE_IAR_INVOICE,
   GENERATE_IAR_FROM_PO,
-} from "../graphql/mutations/inventoryIAR.mutation";
+} from '../graphql/mutations/inventoryIAR.mutation';
 // @ts-ignore
-import {
-  GET_PURCHASEORDERS,
-  GET_ALL_DASHBOARD_DATA,
-} from "../graphql/queries/purchaseorder.query";
+import { GET_PURCHASEORDERS, GET_ALL_DASHBOARD_DATA } from '../graphql/queries/purchaseorder.query';
 // @ts-ignore
-import { UPDATE_PURCHASEORDER } from "../graphql/mutations/purchaseorder.mutation";
-import useSignatoryStore from "../stores/signatoryStore";
+import { UPDATE_PURCHASEORDER } from '../graphql/mutations/purchaseorder.mutation';
+import useSignatoryStore from '../stores/signatoryStore';
 
 // Row component for collapsible table
 function Row(props: {
@@ -69,10 +62,7 @@ function Row(props: {
   handleOpenPrintModal: (item: any, iarId: string) => void;
   onStatusUpdate: (iarId: string, status: string) => void;
   onRevert: (iarId: string) => void;
-  onNotify: (
-    message: string,
-    severity?: "success" | "error" | "info" | "warning",
-  ) => void;
+  onNotify: (message: string, severity?: 'success' | 'error' | 'info' | 'warning') => void;
   // allow parent to pass refetch function for cache refresh
   refetch?: () => Promise<any>;
   // overrides
@@ -89,7 +79,7 @@ function Row(props: {
       income?: string;
       mds?: string;
       details?: string;
-    },
+    }
   ) => void;
 }) {
   const {
@@ -113,21 +103,19 @@ function Row(props: {
   const [savingDetails, setSavingDetails] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
-    return row.items.some(
-      (it: any) => Number(it.actualQuantityReceived || 0) > 0,
-    );
+    return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
   }, [row]);
   // Parent Purchase Order completed state (same PO across grouped items)
-  const poCompleted = row?.items?.[0]?.PurchaseOrder?.status === "completed";
+  const poCompleted = row?.items?.[0]?.PurchaseOrder?.status === 'completed';
 
   // Local state to add a NEW item into the same Purchase Order directly from Inventory
   const [newItemDraft, setNewItemDraft] = React.useState<any>({
-    description: "",
-    unit: "",
+    description: '',
+    unit: '',
     quantity: 0,
     unitCost: 0,
     received: 0,
-    category: "requisition issue slip",
+    category: 'requisition issue slip',
   });
 
   // Mutation to update item details (description/unit) via Purchase Order
@@ -151,17 +139,14 @@ function Row(props: {
   });
 
   // Mutation to create a NEW PO item from an existing one (same itemGroupId)
-  const [createLineItemFromExisting] = useMutation(
-    CREATE_LINE_ITEM_FROM_EXISTING,
-    {
-      awaitRefetchQueries: true,
-      refetchQueries: [
-        { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
-        { query: GET_PURCHASEORDERS },
-        { query: GET_ALL_DASHBOARD_DATA },
-      ],
-    },
-  );
+  const [createLineItemFromExisting] = useMutation(CREATE_LINE_ITEM_FROM_EXISTING, {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT },
+      { query: GET_PURCHASEORDERS },
+      { query: GET_ALL_DASHBOARD_DATA },
+    ],
+  });
 
   // Mutation to update IAR-specific invoice
   const [updateIARInvoice] = useMutation(UPDATE_IAR_INVOICE, {
@@ -188,8 +173,7 @@ function Row(props: {
 
   const handleAddNewItem = async () => {
     try {
-      const poId =
-        row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
+      const poId = row.items?.[0]?.PurchaseOrder?.id || row.items?.[0]?.purchaseOrderId;
       if (!poId) return;
 
       const q = Number(newItemDraft.quantity || 0);
@@ -202,11 +186,11 @@ function Row(props: {
       if (q <= 0 || uc < 0 || recv < 0 || recv > q) return;
 
       const payloadItem = {
-        id: "temp", // signals backend to create a new PO item
+        id: 'temp', // signals backend to create a new PO item
         description: newItemDraft.description,
-        generalDescription: newItemDraft.generalDescription || "",
-        specification: newItemDraft.specification || "",
-        itemName: newItemDraft.itemName || "",
+        generalDescription: newItemDraft.generalDescription || '',
+        specification: newItemDraft.specification || '',
+        itemName: newItemDraft.itemName || '',
         unit: newItemDraft.unit,
         quantity: q,
         unitCost: uc,
@@ -225,34 +209,34 @@ function Row(props: {
       });
 
       // Ensure UI reflects the newly created PO item
-      if (typeof props.refetch === "function") {
+      if (typeof props.refetch === 'function') {
         await props.refetch();
       }
 
       // Reset draft row
       setNewItemDraft({
-        description: "",
-        generalDescription: "",
-        specification: "",
-        itemName: "",
-        unit: "",
+        description: '',
+        generalDescription: '',
+        specification: '',
+        itemName: '',
+        unit: '',
         quantity: 0,
         unitCost: 0,
         received: 0,
-        category: "requisition issue slip",
+        category: 'requisition issue slip',
       });
     } catch (e) {
-      console.error("Failed to add new PO item from Inventory:", e);
+      console.error('Failed to add new PO item from Inventory:', e);
     }
   };
 
   // IAR-specific fields (separate from PO)
   const iarDefaults = {
-    invoice: row.items?.[0]?.invoice || "",
-    invoiceDate: row.items?.[0]?.invoiceDate || "",
-    income: row.items?.[0]?.income || "",
-    mds: row.items?.[0]?.mds || "",
-    details: row.items?.[0]?.details || "",
+    invoice: row.items?.[0]?.invoice || '',
+    invoiceDate: row.items?.[0]?.invoiceDate || '',
+    income: row.items?.[0]?.income || '',
+    mds: row.items?.[0]?.mds || '',
+    details: row.items?.[0]?.details || '',
   };
 
   const invoiceValue = invoiceOverride ?? iarDefaults.invoice;
@@ -263,19 +247,15 @@ function Row(props: {
 
   // Display category as PAR/ICS/RIS abbreviation
   const displayCategory = React.useMemo(() => {
-    if (!row.category) return "None";
-    return formatCategory(row.category) || "None";
+    if (!row.category) return 'None';
+    return formatCategory(row.category) || 'None';
   }, [row.category]);
 
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -291,44 +271,38 @@ function Row(props: {
             label={displayCategory}
             size="small"
             color={
-              displayCategory === "PAR"
-                ? "primary"
-                : displayCategory === "ICS"
-                  ? "secondary"
-                  : displayCategory === "RIS"
-                    ? "success"
-                    : "default"
+              displayCategory === 'PAR'
+                ? 'primary'
+                : displayCategory === 'ICS'
+                  ? 'secondary'
+                  : displayCategory === 'RIS'
+                    ? 'success'
+                    : 'default'
             }
-            sx={{ minWidth: 60, fontWeight: "bold" }}
+            sx={{ minWidth: 60, fontWeight: 'bold' }}
           />
         </TableCell>
         {/* Invoice input - enter-to-save (IAR-specific) */}
         <TableCell>
           <TextField
             size="small"
-            placeholder={iarDefaults.invoice || "Hit Enter to save.."}
-            value={
-              invoiceOverride !== undefined
-                ? invoiceOverride
-                : iarDefaults.invoice
-            }
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { invoice: e.target.value })
-            }
+            placeholder={iarDefaults.invoice || 'Hit Enter to save..'}
+            value={invoiceOverride !== undefined ? invoiceOverride : iarDefaults.invoice}
+            onChange={(e) => onOverrideChange(row.iarId, { invoice: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || "").trim();
+                const valueToSave = (target.value || '').trim();
                 try {
                   setSavingInvoice(true);
                   await updateIARInvoice({
                     variables: { iarId: row.iarId, invoice: valueToSave },
                   });
-                  onNotify("Invoice saved");
+                  onNotify('Invoice saved');
                 } catch (err) {
-                  console.error("Failed to save invoice", err);
-                  onNotify("Failed to save invoice", "error");
+                  console.error('Failed to save invoice', err);
+                  onNotify('Failed to save invoice', 'error');
                 } finally {
                   setSavingInvoice(false);
                 }
@@ -352,11 +326,9 @@ function Row(props: {
           <TextField
             type="date"
             size="small"
-            placeholder={iarDefaults.invoiceDate || "YYYY-MM-DD"}
+            placeholder={iarDefaults.invoiceDate || 'YYYY-MM-DD'}
             value={
-              dateOfPaymentOverride !== undefined
-                ? dateOfPaymentOverride
-                : iarDefaults.invoiceDate
+              dateOfPaymentOverride !== undefined ? dateOfPaymentOverride : iarDefaults.invoiceDate
             }
             onChange={async (e) => {
               const valueToSave = e.target.value;
@@ -369,10 +341,10 @@ function Row(props: {
                     invoiceDate: valueToSave || null,
                   },
                 });
-                onNotify("Invoice date saved");
+                onNotify('Invoice date saved');
               } catch (err) {
-                console.error("Failed to save invoice date", err);
-                onNotify("Failed to save invoice date", "error");
+                console.error('Failed to save invoice date', err);
+                onNotify('Failed to save invoice date', 'error');
               } finally {
                 setSavingInvoiceDate(false);
               }
@@ -396,27 +368,23 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={iarDefaults.income || "Hit Enter to save.."}
-            value={
-              incomeOverride !== undefined ? incomeOverride : iarDefaults.income
-            }
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { income: e.target.value })
-            }
+            placeholder={iarDefaults.income || 'Hit Enter to save..'}
+            value={incomeOverride !== undefined ? incomeOverride : iarDefaults.income}
+            onChange={(e) => onOverrideChange(row.iarId, { income: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || "").trim();
+                const valueToSave = (target.value || '').trim();
                 try {
                   setSavingIncome(true);
                   await updateIARInvoice({
                     variables: { iarId: row.iarId, income: valueToSave },
                   });
-                  onNotify("Income saved");
+                  onNotify('Income saved');
                 } catch (err) {
-                  console.error("Failed to save income", err);
-                  onNotify("Failed to save income", "error");
+                  console.error('Failed to save income', err);
+                  onNotify('Failed to save income', 'error');
                 } finally {
                   setSavingIncome(false);
                 }
@@ -440,25 +408,23 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={iarDefaults.mds || "Hit Enter to save.."}
+            placeholder={iarDefaults.mds || 'Hit Enter to save..'}
             value={mdsOverride !== undefined ? mdsOverride : iarDefaults.mds}
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { mds: e.target.value })
-            }
+            onChange={(e) => onOverrideChange(row.iarId, { mds: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || "").trim();
+                const valueToSave = (target.value || '').trim();
                 try {
                   setSavingMds(true);
                   await updateIARInvoice({
                     variables: { iarId: row.iarId, mds: valueToSave },
                   });
-                  onNotify("MDS saved");
+                  onNotify('MDS saved');
                 } catch (err) {
-                  console.error("Failed to save mds", err);
-                  onNotify("Failed to save MDS", "error");
+                  console.error('Failed to save mds', err);
+                  onNotify('Failed to save MDS', 'error');
                 } finally {
                   setSavingMds(false);
                 }
@@ -482,29 +448,23 @@ function Row(props: {
             size="small"
             multiline
             maxRows={3}
-            placeholder={iarDefaults.details || "Hit Shift+Enter to save..."}
-            value={
-              detailsOverride !== undefined
-                ? detailsOverride
-                : iarDefaults.details
-            }
-            onChange={(e) =>
-              onOverrideChange(row.iarId, { details: e.target.value })
-            }
+            placeholder={iarDefaults.details || 'Hit Shift+Enter to save...'}
+            value={detailsOverride !== undefined ? detailsOverride : iarDefaults.details}
+            onChange={(e) => onOverrideChange(row.iarId, { details: e.target.value })}
             onKeyDown={async (e) => {
-              if (e.key === "Enter" && e.shiftKey) {
+              if (e.key === 'Enter' && e.shiftKey) {
                 e.preventDefault();
                 const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || "").trim();
+                const valueToSave = (target.value || '').trim();
                 try {
                   setSavingDetails(true);
                   await updateIARInvoice({
                     variables: { iarId: row.iarId, details: valueToSave },
                   });
-                  onNotify("Details saved");
+                  onNotify('Details saved');
                 } catch (err) {
-                  console.error("Failed to save details", err);
-                  onNotify("Failed to save details", "error");
+                  console.error('Failed to save details', err);
+                  onNotify('Failed to save details', 'error');
                 } finally {
                   setSavingDetails(false);
                 }
@@ -555,7 +515,7 @@ function Row(props: {
         <TableCell sx={{ p: 0 }} colSpan={12}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ m: 0 }}>
-              <Table size="small" aria-label="details" sx={{ width: "100%" }}>
+              <Table size="small" aria-label="details" sx={{ width: '100%' }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
@@ -573,23 +533,18 @@ function Row(props: {
                 </TableHead>
                 <TableBody>
                   {row.items.map((item: any) => {
-                    console.log("🔍 Processing item:", item);
+                    console.log('🔍 Processing item:', item);
 
                     const poi = item.PurchaseOrderItem;
-                    const isCompleted =
-                      item.PurchaseOrder?.status === "completed";
+                    const isCompleted = item.PurchaseOrder?.status === 'completed';
 
-                    const currentDescription =
-                      poi?.description ?? item.description ?? "";
-                    const currentGenDesc =
-                      poi?.generalDescription ?? item.generalDescription ?? "";
-                    const currentSpec =
-                      poi?.specification ?? item.specification ?? "";
-                    const currentUnit = poi?.unit ?? item.unit ?? "";
+                    const currentDescription = poi?.description ?? item.description ?? '';
+                    const currentGenDesc = poi?.generalDescription ?? item.generalDescription ?? '';
+                    const currentSpec = poi?.specification ?? item.specification ?? '';
+                    const currentUnit = poi?.unit ?? item.unit ?? '';
 
                     // Get itemGroupId - this should exist if items were created via createLineItemFromExisting
-                    const currentItemGroupId =
-                      poi?.itemGroupId || item.itemGroupId;
+                    const currentItemGroupId = poi?.itemGroupId || item.itemGroupId;
 
                     // console.log('🔍 Item Group Check:', {
                     //   itemId: item.id,
@@ -600,9 +555,7 @@ function Row(props: {
                     // });
 
                     // Determine the base ordered quantity for the group
-                    const baseQuantity = Number(
-                      poi?.quantity || item.quantity || 0,
-                    );
+                    const baseQuantity = Number(poi?.quantity || item.quantity || 0);
 
                     // If NO itemGroupId exists, we need to find items that should be grouped
                     // by matching description, unit, unitCost, etc. (fallback heuristic)
@@ -622,36 +575,26 @@ function Row(props: {
 
                       groupedItems = row.items.filter((i: any) => {
                         const iPoi = i.PurchaseOrderItem;
-                        const iDesc = iPoi?.description ?? i.description ?? "";
-                        const iUnit = iPoi?.unit ?? i.unit ?? "";
+                        const iDesc = iPoi?.description ?? i.description ?? '';
+                        const iUnit = iPoi?.unit ?? i.unit ?? '';
                         const iCost = Number(iPoi?.unitCost || i.unitCost || 0);
-                        return (
-                          iDesc === desc && iUnit === unit && iCost === cost
-                        );
+                        return iDesc === desc && iUnit === unit && iCost === cost;
                       });
                     }
 
                     // Sum actualQuantityReceived across ALL items in this logical group
-                    const totalReceivedInGroup = groupedItems.reduce(
-                      (sum: number, i: any) => {
-                        const iPoi = i.PurchaseOrderItem;
-                        const recv = Number(
-                          iPoi?.actualQuantityReceived ||
-                            i.actualQuantityReceived ||
-                            0,
-                        );
-                        return sum + recv;
-                      },
-                      0,
-                    );
+                    const totalReceivedInGroup = groupedItems.reduce((sum: number, i: any) => {
+                      const iPoi = i.PurchaseOrderItem;
+                      const recv = Number(
+                        iPoi?.actualQuantityReceived || i.actualQuantityReceived || 0
+                      );
+                      return sum + recv;
+                    }, 0);
 
                     // Remaining for the WHOLE group, not per row
-                    const remaining = Math.max(
-                      0,
-                      baseQuantity - totalReceivedInGroup,
-                    );
+                    const remaining = Math.max(0, baseQuantity - totalReceivedInGroup);
 
-                    console.log("📊 Remaining Calc:", {
+                    console.log('📊 Remaining Calc:', {
                       baseQuantity,
                       totalReceivedInGroup,
                       remaining,
@@ -660,9 +603,7 @@ function Row(props: {
 
                     // Show this row's own received (for clarity)
                     const totalReceived = Number(
-                      poi?.actualQuantityReceived ||
-                        item.actualQuantityReceived ||
-                        0,
+                      poi?.actualQuantityReceived || item.actualQuantityReceived || 0
                     );
 
                     // Original PO fields are view-only in this table.
@@ -681,7 +622,7 @@ function Row(props: {
                         generalDescription?: string;
                         specification?: string;
                         received?: number;
-                      }>,
+                      }>
                     ) => {
                       // If updating received, clamp to [0, remaining]
                       if (patch.received !== undefined) {
@@ -709,15 +650,12 @@ function Row(props: {
                       const clamped = Math.min(recv, remaining);
                       if (clamped <= 0) return;
                       try {
-                        const poiIdNum = parseInt(
-                          String(poi?.id ?? item.purchaseOrderItemId),
-                          10,
-                        );
+                        const poiIdNum = parseInt(String(poi?.id ?? item.purchaseOrderItemId), 10);
                         if (!Number.isFinite(poiIdNum)) {
                           console.error(
-                            "Invalid purchaseOrderItemId",
+                            'Invalid purchaseOrderItemId',
                             poi?.id,
-                            item.purchaseOrderItemId,
+                            item.purchaseOrderItemId
                           );
                           return;
                         }
@@ -730,20 +668,16 @@ function Row(props: {
                               quantity: clamped, // New item quantity = what we're receiving now
                               received: clamped, // Immediately mark as received
                               description: draft.description || undefined,
-                              generalDescription:
-                                draft.generalDescription || undefined,
+                              generalDescription: draft.generalDescription || undefined,
                               specification: draft.specification || undefined,
                             },
                           },
                         });
-                        onNotify(
-                          `Created new line item (received ${clamped})`,
-                          "success",
-                        );
+                        onNotify(`Created new line item (received ${clamped})`, 'success');
                         clearDraft();
                       } catch (e) {
-                        console.error("Failed to create line item", e);
-                        onNotify("Failed to create line item", "error");
+                        console.error('Failed to create line item', e);
+                        onNotify('Failed to create line item', 'error');
                       }
                     };
 
@@ -751,53 +685,35 @@ function Row(props: {
                       <React.Fragment key={item.id}>
                         <TableRow>
                           <TableCell component="th" scope="row">
-                            <Typography
-                              variant="body2"
-                              sx={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {currentDescription || "-"}
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {currentDescription || '-'}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography
-                              variant="body2"
-                              sx={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {currentGenDesc || "-"}
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {currentGenDesc || '-'}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography
-                              variant="body2"
-                              sx={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {currentSpec || "-"}
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {currentSpec || '-'}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
-                              {currentUnit || "-"}
-                            </Typography>
+                            <Typography variant="body2">{currentUnit || '-'}</Typography>
                           </TableCell>
                           <TableCell align="right">
                             <Typography>{totalReceived}</Typography>
                           </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
-                          <TableCell align="right">
-                            {currencyFormat(item.unitCost)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {currencyFormat(item.amount)}
-                          </TableCell>
+                          <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
+                          <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
                           {/* <TableCell>{item.PurchaseOrder?.poNumber}</TableCell> */}
                           <TableCell>
                             {item.category
-                              ?.split(" ")
-                              .map(
-                                (word: string) =>
-                                  word.charAt(0).toUpperCase() + word.slice(1),
-                              )
-                              .join(" ")}
+                              ?.split(' ')
+                              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(' ')}
                           </TableCell>
                           <TableCell align="center">
                             {!draft && (
@@ -808,9 +724,9 @@ function Row(props: {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateDraft({
-                                    description: "",
-                                    generalDescription: "",
-                                    specification: "",
+                                    description: '',
+                                    generalDescription: '',
+                                    specification: '',
                                     received: 0,
                                   });
                                 }}
@@ -830,10 +746,8 @@ function Row(props: {
                                 placeholder="New Description"
                                 multiline
                                 maxRows={3}
-                                value={draft.description ?? ""}
-                                onChange={(e) =>
-                                  updateDraft({ description: e.target.value })
-                                }
+                                value={draft.description ?? ''}
+                                onChange={(e) => updateDraft({ description: e.target.value })}
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </TableCell>
@@ -845,7 +759,7 @@ function Row(props: {
                                 maxRows={3}
                                 fullWidth
                                 placeholder="New General Desc."
-                                value={draft.generalDescription ?? ""}
+                                value={draft.generalDescription ?? ''}
                                 onChange={(e) =>
                                   updateDraft({
                                     generalDescription: e.target.value,
@@ -862,10 +776,8 @@ function Row(props: {
                                 maxRows={3}
                                 fullWidth
                                 placeholder="New Specification"
-                                value={draft.specification ?? ""}
-                                onChange={(e) =>
-                                  updateDraft({ specification: e.target.value })
-                                }
+                                value={draft.specification ?? ''}
+                                onChange={(e) => updateDraft({ specification: e.target.value })}
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </TableCell>
@@ -874,7 +786,7 @@ function Row(props: {
                               <TextField
                                 size="small"
                                 fullWidth
-                                value={currentUnit || "-"}
+                                value={currentUnit || '-'}
                                 InputProps={{ readOnly: true }}
                                 onClick={(e) => e.stopPropagation()}
                               />
@@ -886,7 +798,7 @@ function Row(props: {
                                 size="small"
                                 sx={{ width: 120 }}
                                 placeholder="Received"
-                                value={draft.received ?? ""}
+                                value={draft.received ?? ''}
                                 onChange={(e) => {
                                   const val = Number(e.target.value);
                                   updateDraft({
@@ -907,31 +819,23 @@ function Row(props: {
                             {/* Quantity */}
                             <TableCell align="right">{item.quantity}</TableCell>
                             {/* Unit Cost */}
-                            <TableCell align="right">
-                              {currencyFormat(item.unitCost)}
-                            </TableCell>
+                            <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
                             {/* Amount */}
-                            <TableCell align="right">
-                              {currencyFormat(item.amount)}
-                            </TableCell>
+                            <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
                             {/* Category */}
                             <TableCell>
                               {item.category
-                                ?.split(" ")
-                                .map(
-                                  (word: string) =>
-                                    word.charAt(0).toUpperCase() +
-                                    word.slice(1),
-                                )
-                                .join(" ")}
+                                ?.split(' ')
+                                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(' ')}
                             </TableCell>
                             {/* Add/Cancel buttons in Add Line column */}
                             <TableCell align="center">
                               <Box
                                 sx={{
-                                  display: "flex",
+                                  display: 'flex',
                                   gap: 1,
-                                  justifyContent: "center",
+                                  justifyContent: 'center',
                                 }}
                               >
                                 <Button
@@ -973,12 +877,7 @@ function EnhancedTableToolbar(props: {
 
   return (
     <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, gap: 1 }}>
-      <Typography
-        sx={{ flex: "1 1 100%" }}
-        variant="h6"
-        id="tableTitle"
-        component="div"
-      >
+      <Typography sx={{ flex: '1 1 100%' }} variant="h6" id="tableTitle" component="div">
         Inventory
       </Typography>
       {onGenerateIar && (
@@ -986,7 +885,7 @@ function EnhancedTableToolbar(props: {
           variant="contained"
           startIcon={<AddCircleOutlineIcon />}
           onClick={onGenerateIar}
-          sx={{ whiteSpace: "nowrap", minWidth: 160, flexShrink: 0 }}
+          sx={{ whiteSpace: 'nowrap', minWidth: 160, flexShrink: 0 }}
         >
           Generate IAR
         </Button>
@@ -1010,14 +909,11 @@ function EnhancedTableToolbar(props: {
 }
 // InventoryPage component
 export default function InventoryPage() {
-  const { data, loading, error, refetch } = useQuery(
-    GET_ALL_INSPECTION_ACCEPTANCE_REPORT,
-    {
-      fetchPolicy: "cache-and-network",
-      nextFetchPolicy: "cache-first",
-      notifyOnNetworkStatusChange: true,
-    },
-  );
+  const { data, loading, error, refetch } = useQuery(GET_ALL_INSPECTION_ACCEPTANCE_REPORT, {
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+    notifyOnNetworkStatusChange: true,
+  });
 
   const [iarOverrides, setIarOverrides] = React.useState<
     Record<
@@ -1038,9 +934,9 @@ export default function InventoryPage() {
 
   const [printPOI, setPrintPOI] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
-  const [reportType, setReportType] = React.useState("");
-  const [title, setTitle] = React.useState("");
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [reportType, setReportType] = React.useState('');
+  const [title, setTitle] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
   // Local signatories state for Inventory printing
   // const [selectedSignatories, setSelectedSignatories] = React.useState<any>({});
 
@@ -1070,26 +966,21 @@ export default function InventoryPage() {
 
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
-  const [notificationMessage, setNotificationMessage] = React.useState("");
+  const [notificationMessage, setNotificationMessage] = React.useState('');
   const [notificationSeverity, setNotificationSeverity] = React.useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
+    'success' | 'error' | 'info' | 'warning'
+  >('success');
 
   // Confirm dialog state for revert
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<
-    string | null
-  >(null);
+  const [pendingIarToRevert, setPendingIarToRevert] = React.useState<string | null>(null);
 
   // Generate IAR from PO — accessible directly from the IAR page
   const [openPOSelector, setOpenPOSelector] = React.useState(false);
   const [selectedPOForIar, setSelectedPOForIar] = React.useState<any>(null);
-  const [openGenerateIarFromPage, setOpenGenerateIarFromPage] =
-    React.useState(false);
-  const [generateIarPOFromPage, setGenerateIarPOFromPage] =
-    React.useState<any>(null);
-  const [isGeneratingIarFromPage, setIsGeneratingIarFromPage] =
-    React.useState(false);
+  const [openGenerateIarFromPage, setOpenGenerateIarFromPage] = React.useState(false);
+  const [generateIarPOFromPage, setGenerateIarPOFromPage] = React.useState<any>(null);
+  const [isGeneratingIarFromPage, setIsGeneratingIarFromPage] = React.useState(false);
 
   // Fetch all POs for the selector (Apollo cache, same as PO page; no extra network call if cache warm)
   const { data: poData } = useQuery(GET_PURCHASEORDERS);
@@ -1098,14 +989,12 @@ export default function InventoryPage() {
   const eligiblePOs = React.useMemo(() => {
     if (!poData?.purchaseOrders) return [];
     return poData.purchaseOrders.filter((po: any) => {
-      if (po.status?.toLowerCase() === "completed") return false;
+      if (po.status?.toLowerCase() === 'completed') return false;
       if (!po.items?.length) return false;
       return po.items.some(
         (item: any) =>
           !item.isDeleted &&
-          Number(item.quantity ?? 0) -
-            Number(item.actualQuantityReceived ?? 0) >
-            0,
+          Number(item.quantity ?? 0) - Number(item.actualQuantityReceived ?? 0) > 0
       );
     });
   }, [poData]);
@@ -1139,7 +1028,7 @@ export default function InventoryPage() {
   const handleGenerateIARFromPage = async (
     purchaseOrderId: number,
     items: any[],
-    invoice: string,
+    invoice: string
   ) => {
     setIsGeneratingIarFromPage(true);
     try {
@@ -1148,13 +1037,13 @@ export default function InventoryPage() {
       });
       if (result?.generateIARFromPO?.success) {
         setNotificationMessage(result.generateIARFromPO.message);
-        setNotificationSeverity("success");
+        setNotificationSeverity('success');
         setShowNotification(true);
         handleCloseGenerateIarFromPage();
       }
     } catch (err: any) {
-      setNotificationMessage(err.message || "Failed to generate IAR");
-      setNotificationSeverity("error");
+      setNotificationMessage(err.message || 'Failed to generate IAR');
+      setNotificationSeverity('error');
       setShowNotification(true);
     } finally {
       setIsGeneratingIarFromPage(false);
@@ -1162,7 +1051,7 @@ export default function InventoryPage() {
   };
 
   const handleOpenPrintModal = (poItems: any, iarId: string) => {
-    setReportType("inspection");
+    setReportType('inspection');
     setPrintPOI(poItems);
     setPoOverrides(iarOverrides[iarId] ?? null);
     setOpenPrintModal(true);
@@ -1175,7 +1064,7 @@ export default function InventoryPage() {
   };
 
   const onSignatoriesChange = (signatories: any) => {
-    console.log("onSignatoriesChange signatories for IAR:", signatories);
+    console.log('onSignatoriesChange signatories for IAR:', signatories);
     setSelectedIAR(signatories);
   };
 
@@ -1191,20 +1080,20 @@ export default function InventoryPage() {
       if (results.data?.updateIARStatus) {
         console.log({ updateIARStatus: results.data.updateIARStatus });
         setNotificationMessage(results.data.updateIARStatus.message);
-        setNotificationSeverity("success");
+        setNotificationSeverity('success');
         setShowNotification(true);
-        console.log("Status updated successfully");
+        console.log('Status updated successfully');
         await refetch(); // Ensure refetch completes before UI updates
       } else {
-        console.error("Failed to update status");
-        setNotificationMessage("Failed to update status");
-        setNotificationSeverity("error");
+        console.error('Failed to update status');
+        setNotificationMessage('Failed to update status');
+        setNotificationSeverity('error');
         setShowNotification(true);
       }
     } catch (error) {
-      console.error("Error updating status:", error);
-      setNotificationMessage("Error updating status");
-      setNotificationSeverity("error");
+      console.error('Error updating status:', error);
+      setNotificationMessage('Error updating status');
+      setNotificationSeverity('error');
       setShowNotification(true);
     }
   };
@@ -1223,22 +1112,22 @@ export default function InventoryPage() {
     }
     try {
       const res = await revertIARBatch({
-        variables: { iarId, reason: "User requested revert" },
+        variables: { iarId, reason: 'User requested revert' },
       });
       if (res.data?.revertIARBatch?.success) {
         setNotificationMessage(res.data.revertIARBatch.message);
-        setNotificationSeverity("success");
+        setNotificationSeverity('success');
         setShowNotification(true);
         await refetch();
       } else {
-        setNotificationMessage("Failed to revert IAR batch.");
-        setNotificationSeverity("error");
+        setNotificationMessage('Failed to revert IAR batch.');
+        setNotificationSeverity('error');
         setShowNotification(true);
       }
     } catch (e: any) {
       console.error(e);
-      setNotificationMessage(e.message || "Error reverting IAR batch");
-      setNotificationSeverity("error");
+      setNotificationMessage(e.message || 'Error reverting IAR batch');
+      setNotificationSeverity('error');
       setShowNotification(true);
     } finally {
       setPendingIarToRevert(null);
@@ -1255,9 +1144,7 @@ export default function InventoryPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -1265,19 +1152,16 @@ export default function InventoryPage() {
   // Group rows by iarId
   const groupedRows = React.useMemo(() => {
     if (!data?.inspectionAcceptanceReport?.length) return [];
-    console.log("Raw IAR data:", data.inspectionAcceptanceReport);
+    console.log('Raw IAR data:', data.inspectionAcceptanceReport);
     // Group by iarId
-    const groups = data.inspectionAcceptanceReport.reduce(
-      (acc: any, item: any) => {
-        const iarId = item.iarId;
-        if (!acc[iarId]) {
-          acc[iarId] = [];
-        }
-        acc[iarId].push(item);
-        return acc;
-      },
-      {},
-    );
+    const groups = data.inspectionAcceptanceReport.reduce((acc: any, item: any) => {
+      const iarId = item.iarId;
+      if (!acc[iarId]) {
+        acc[iarId] = [];
+      }
+      acc[iarId].push(item);
+      return acc;
+    }, {});
 
     // Create one row per iarId with all items
     return Object.entries(groups).map(([id, items]: any) => ({
@@ -1308,11 +1192,9 @@ export default function InventoryPage() {
       return row.items.some((item: any) => {
         return (
           // Search in various fields
-          (item.description &&
-            item.description.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.description && item.description.toLowerCase().includes(lowerCaseQuery)) ||
           (item.unit && item.unit.toLowerCase().includes(lowerCaseQuery)) ||
-          (item.category &&
-            item.category.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.category && item.category.toLowerCase().includes(lowerCaseQuery)) ||
           (item.PurchaseOrder?.poNumber &&
             item.PurchaseOrder.poNumber.toLowerCase().includes(lowerCaseQuery))
         );
@@ -1322,18 +1204,14 @@ export default function InventoryPage() {
 
   // Apply pagination to the filtered rows
   const paginatedRows = React.useMemo(() => {
-    return filteredRows.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
+    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
   if (loading) return <CircularProgress />;
-  if (error)
-    return <Alert severity="error">Error loading data: {error.message}</Alert>;
+  if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       {showNotification && (
         <NotificationDialog
           message={notificationMessage}
@@ -1345,12 +1223,12 @@ export default function InventoryPage() {
       <Stack
         spacing={3}
         sx={{
-          width: "100%",
-          overflow: "auto",
-          maxHeight: "calc(100vh - 100px)",
+          width: '100%',
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 100px)',
         }}
       >
-        <Paper sx={{ width: "100%" }}>
+        <Paper sx={{ width: '100%' }}>
           <EnhancedTableToolbar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -1383,7 +1261,7 @@ export default function InventoryPage() {
                     handleOpenPrintModal={handleOpenPrintModal}
                     onStatusUpdate={handleStatusUpdate}
                     onRevert={handleRevertIAR}
-                    onNotify={(message, severity = "success") => {
+                    onNotify={(message, severity = 'success') => {
                       setNotificationMessage(message);
                       setNotificationSeverity(severity);
                       setShowNotification(true);
@@ -1391,9 +1269,7 @@ export default function InventoryPage() {
                     refetch={refetch}
                     // pass overrides including new financial/meta fields
                     invoiceOverride={iarOverrides[row.iarId]?.invoice}
-                    dateOfPaymentOverride={
-                      iarOverrides[row.iarId]?.dateOfPayment
-                    }
+                    dateOfPaymentOverride={iarOverrides[row.iarId]?.dateOfPayment}
                     incomeOverride={iarOverrides[row.iarId]?.income}
                     mdsOverride={iarOverrides[row.iarId]?.mds}
                     detailsOverride={iarOverrides[row.iarId]?.details}
@@ -1419,7 +1295,7 @@ export default function InventoryPage() {
           />
         </Paper>
         {/* Signatory selection for IAR printing */}
-        <Paper sx={{ width: "100%", p: 2 }}>
+        <Paper sx={{ width: '100%', p: 2 }}>
           <SignatoriesComponent
             signatories={currentSelections}
             onSignatoriesChange={onSignatoriesChange}
@@ -1428,7 +1304,7 @@ export default function InventoryPage() {
       </Stack>
       <ConfirmDialog
         open={confirmOpen}
-        message={`Are you sure you want to revert IAR batch ${pendingIarToRevert || ""}? This will roll back received quantities and hide IAR entries.`}
+        message={`Are you sure you want to revert IAR batch ${pendingIarToRevert || ''}? This will roll back received quantities and hide IAR entries.`}
         onClose={handleConfirmClose}
       />
       <PrintReportDialogForIAR
@@ -1456,7 +1332,7 @@ export default function InventoryPage() {
           <Autocomplete
             options={eligiblePOs}
             getOptionLabel={(po: any) =>
-              `PO #${po.poNumber} — ${po.supplier || ""}${po.campus ? ` (${po.campus})` : ""}`
+              `PO #${po.poNumber} — ${po.supplier || ''}${po.campus ? ` (${po.campus})` : ''}`
             }
             value={selectedPOForIar}
             onChange={(_e, value) => setSelectedPOForIar(value)}
@@ -1468,9 +1344,7 @@ export default function InventoryPage() {
                 size="small"
               />
             )}
-            isOptionEqualToValue={(opt: any, val: any) =>
-              String(opt.id) === String(val.id)
-            }
+            isOptionEqualToValue={(opt: any, val: any) => String(opt.id) === String(val.id)}
             noOptionsText="No eligible Purchase Orders found"
           />
         </DialogContent>

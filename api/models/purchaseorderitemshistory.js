@@ -1,9 +1,9 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js";
-import PurchaseOrderItems from "./purchaseorderitems.js";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js';
+import PurchaseOrderItems from './purchaseorderitems.js';
 
 const PurchaseOrderItemsHistory = sequelize.define(
-  "PurchaseOrderItemsHistory",
+  'PurchaseOrderItemsHistory',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,17 +18,17 @@ const PurchaseOrderItemsHistory = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchase_order_items",
-        key: "id",
+        model: 'purchase_order_items',
+        key: 'id',
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
       index: true,
     },
     itemName: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: "",
+      defaultValue: '',
     },
     description: {
       type: DataTypes.TEXT,
@@ -75,7 +75,15 @@ const PurchaseOrderItemsHistory = sequelize.define(
       allowNull: true,
     },
     changeType: {
-      type: DataTypes.ENUM("quantity_update", "received_update", "amount_update", "marking_complete", "item_creation", "po_completed", "item_details_update"),
+      type: DataTypes.ENUM(
+        'quantity_update',
+        'received_update',
+        'amount_update',
+        'marking_complete',
+        'item_creation',
+        'po_completed',
+        'item_details_update'
+      ),
       allowNull: false,
     },
     changedBy: {
@@ -88,7 +96,7 @@ const PurchaseOrderItemsHistory = sequelize.define(
     },
   },
   {
-    tableName: "purchase_order_items_history",
+    tableName: 'purchase_order_items_history',
     underscored: true,
     timestamps: true,
   }
@@ -96,11 +104,11 @@ const PurchaseOrderItemsHistory = sequelize.define(
 
 // Set up association with PurchaseOrderItems
 PurchaseOrderItemsHistory.belongsTo(PurchaseOrderItems, {
-  foreignKey: "purchaseOrderItemId",
+  foreignKey: 'purchaseOrderItemId',
 });
 
 PurchaseOrderItems.hasMany(PurchaseOrderItemsHistory, {
-  foreignKey: "purchaseOrderItemId",
+  foreignKey: 'purchaseOrderItemId',
 });
 
 export default PurchaseOrderItemsHistory;

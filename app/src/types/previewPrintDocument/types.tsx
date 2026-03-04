@@ -1,4 +1,4 @@
-import { Signatory } from "../signatory/signatoryTypes";
+import { Signatory } from '../signatory/signatoryTypes';
 
 interface InspectionAcceptanceReportProps {
   reportData: {

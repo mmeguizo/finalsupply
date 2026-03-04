@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@apollo/client";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import useSignatoryStore from "../../stores/signatoryStore";
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@apollo/client';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
+import useSignatoryStore from '../../stores/signatoryStore';
 // import { GET_ALL_USERS } from "../../graphql/queries/user.query";
 
 // Enhanced signatory interface with additional fields
@@ -37,10 +37,7 @@ interface UserOption {
   label: string;
 }
 
-const SignatoriesComponent = ({
-  signatories,
-  onSignatoriesChange,
-}: ParPageProps) => {
+const SignatoriesComponent = ({ signatories, onSignatoriesChange }: ParPageProps) => {
   // Enhanced state to store additional information
   const [selectedSignatories, setSelectedSignatories] = useState<any>({
     // recieved_from: signatories.recieved_from || "",
@@ -78,19 +75,19 @@ const SignatoriesComponent = ({
       // refetchUsers();
       fetchSignatories();
     };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [/* refetchUsers, */ fetchSignatories]);
 
   // Update local state when props change
   useEffect(() => {
     setSelectedSignatories({
-      recieved_from: signatories.recieved_from || "",
-      recieved_by: signatories.recieved_by || "",
+      recieved_from: signatories.recieved_from || '',
+      recieved_by: signatories.recieved_by || '',
       metadata: signatories.metadata || {
-        recieved_from: { id: "", position: "", role: "" },
-        recieved_by: { id: "", position: "", role: "" }
-      }
+        recieved_from: { id: '', position: '', role: '' },
+        recieved_by: { id: '', position: '', role: '' },
+      },
     });
   }, [signatories]);
 
@@ -100,23 +97,22 @@ const SignatoriesComponent = ({
     if (newValue) {
       updatedMetadata[role] = {
         id: newValue.id,
-        position: newValue.position || "",
-        role: newValue.role || ""
+        position: newValue.position || '',
+        role: newValue.role || '',
       };
     } else {
-      updatedMetadata[role] = { id: "", position: "", role: "" };
+      updatedMetadata[role] = { id: '', position: '', role: '' };
     }
 
     const displayName = newValue
-      ? [newValue.name, newValue.last_name].filter(Boolean).join(" ")
-      : "";
+      ? [newValue.name, newValue.last_name].filter(Boolean).join(' ')
+      : '';
 
     const updatedSignatories = {
       ...selectedSignatories,
       [role]: displayName,
-      metadata: updatedMetadata
+      metadata: updatedMetadata,
     };
-
 
     setSelectedSignatories(updatedSignatories);
     onSignatoriesChange(updatedSignatories);
@@ -124,14 +120,13 @@ const SignatoriesComponent = ({
 
   // Get dropdown options based on role and format them for Autocomplete
   const getDropdownOptions = (roleKey: string): UserOption[] => {
-
     // console.log("Getting dropdown options for role:", roleKey);
-     return (allSignatories || []).map((signatory: any) => ({
-        id: signatory.id,
-        name: signatory.name,
-        role: signatory.role,
-        label: `${signatory.name} (${signatory.role})`
-      }));
+    return (allSignatories || []).map((signatory: any) => ({
+      id: signatory.id,
+      name: signatory.name,
+      role: signatory.role,
+      label: `${signatory.name} (${signatory.role})`,
+    }));
     // if (roleKey === "recieved_by") {
     //   // Use users for end users (recieved_by)
     //   const users = usersData?.users?.filter((user: any) => user.is_active) || [];
@@ -162,22 +157,25 @@ const SignatoriesComponent = ({
   const findSelectedOption = (roleKey: string, options: UserOption[]) => {
     const meta = selectedSignatories?.metadata?.[roleKey];
 
-
     if (meta?.id) {
-      return options.find(o => o.id === meta.id) || null;
+      return options.find((o) => o.id === meta.id) || null;
     }
-    const value = (selectedSignatories?.[roleKey] || "").trim().toLowerCase();
+    const value = (selectedSignatories?.[roleKey] || '').trim().toLowerCase();
     return (
-      options.find(option => {
-        const optionFullName = [option.name, option.last_name].filter(Boolean).join(" ").trim().toLowerCase();
+      options.find((option) => {
+        const optionFullName = [option.name, option.last_name]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+          .toLowerCase();
         return optionFullName === value || option.name.toLowerCase() === value;
       }) || null
     );
   };
 
   const signatoryRoles = [
-    { key: "recieved_from", label: "Received From", designation: "Supply Officer" },
-    { key: "recieved_by", label: "Received By", designation: "Inspector" },
+    { key: 'recieved_from', label: 'Received From', designation: 'Supply Officer' },
+    { key: 'recieved_by', label: 'Received By', designation: 'Inspector' },
   ];
 
   // if (usersLoading) {
@@ -221,13 +219,12 @@ const SignatoriesComponent = ({
             <TableBody>
               {signatoryRoles.map((role) => {
                 const options = getDropdownOptions(role.key);
-                const isUserRole = role.key === "recieved_by";
+                const isUserRole = role.key === 'recieved_by';
                 const selectedOption = findSelectedOption(role.key, options);
 
                 // console.log("Rendering role:", role.key, "Selected option:", selectedOption);
                 // console.log("Options for role:", role.key, options);
                 // console.log("getDropdownOptions",  options);
-
 
                 return (
                   <TableRow key={role.key}>
@@ -243,8 +240,8 @@ const SignatoriesComponent = ({
                         options={options}
                         getOptionLabel={(option) => option.label}
                         renderInput={(params) => (
-                          <TextField 
-                            {...params} 
+                          <TextField
+                            {...params}
                             placeholder={`Search Signatory...`}
                             size="small"
                             fullWidth
@@ -254,7 +251,7 @@ const SignatoriesComponent = ({
                         isOptionEqualToValue={(option, value) => option.id === value.id}
                         filterOptions={(options, state) => {
                           const inputValue = state.inputValue.toLowerCase().trim();
-                          return options.filter(option => 
+                          return options.filter((option) =>
                             option.label.toLowerCase().includes(inputValue)
                           );
                         }}

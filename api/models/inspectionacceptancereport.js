@@ -1,8 +1,8 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js"; // Assuming you have a Sequelize instance
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js'; // Assuming you have a Sequelize instance
 
 const inspectionAcceptanceReport = sequelize.define(
-  "inspectionAcceptanceReport",
+  'inspectionAcceptanceReport',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -29,27 +29,27 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchase_orders", // FIX: table name
-        key: "id",
+        model: 'purchase_orders', // FIX: table name
+        key: 'id',
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
       index: true,
     },
     purchaseOrderItemId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchase_order_items", // FIX: table name
-        key: "id",
+        model: 'purchase_order_items', // FIX: table name
+        key: 'id',
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
       index: true,
     },
     iarStatus: {
-      type: DataTypes.ENUM("partial", "complete", "none"),
-      defaultValue: "none",
+      type: DataTypes.ENUM('partial', 'complete', 'none'),
+      defaultValue: 'none',
       allowNull: true,
     },
     description: {
@@ -79,17 +79,17 @@ const inspectionAcceptanceReport = sequelize.define(
     },
     category: {
       type: DataTypes.ENUM(
-        "property acknowledgement reciept",
-        "inventory custodian slip",
-        "requisition issue slip",
+        'property acknowledgement reciept',
+        'inventory custodian slip',
+        'requisition issue slip'
       ),
       allowNull: true,
-      defaultValue: "requisition issue slip", // Default value
+      defaultValue: 'requisition issue slip', // Default value
     },
     tag: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: "none", // Default value
+      defaultValue: 'none', // Default value
     },
     isDeleted: {
       type: DataTypes.TINYINT(1),
@@ -111,167 +111,183 @@ const inspectionAcceptanceReport = sequelize.define(
     itemName: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: "",
+      defaultValue: '',
     },
     // IAR-specific invoice (separate from PO main invoice)
     invoice: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "Invoice number specific to this IAR receipt",
+      comment: 'Invoice number specific to this IAR receipt',
     },
     // IAR-specific invoice date
     invoiceDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      comment: "Invoice date specific to this IAR receipt",
+      comment: 'Invoice date specific to this IAR receipt',
     },
     // IAR-specific income field
     income: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Income info specific to this IAR",
+      comment: 'Income info specific to this IAR',
     },
     // IAR-specific MDS field
     mds: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "MDS info specific to this IAR",
+      comment: 'MDS info specific to this IAR',
     },
     // IAR-specific details field
     details: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Details specific to this IAR",
+      comment: 'Details specific to this IAR',
     },
     // PAR-specific signatory fields for per-ID assignment
     parReceivedFrom: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "PAR signatory - Received From name",
+      comment: 'PAR signatory - Received From name',
     },
     parReceivedFromPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "PAR signatory - Received From position/role",
+      comment: 'PAR signatory - Received From position/role',
     },
     parReceivedBy: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "PAR signatory - Received By name",
+      comment: 'PAR signatory - Received By name',
     },
     parReceivedByPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "PAR signatory - Received By position",
+      comment: 'PAR signatory - Received By position',
     },
     parDepartment: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "Department assigned for this PAR item",
+      comment: 'Department assigned for this PAR item',
     },
     parAssignedDate: {
       type: DataTypes.DATE,
       allowNull: true,
-      comment: "Date when PAR ID was assigned",
+      comment: 'Date when PAR ID was assigned',
     },
     // RIS-specific signatory fields for per-ID assignment
     risReceivedFrom: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "RIS signatory - Received From name",
+      comment: 'RIS signatory - Received From name',
     },
     risReceivedFromPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "RIS signatory - Received From position/role",
+      comment: 'RIS signatory - Received From position/role',
     },
     risReceivedBy: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "RIS signatory - Received By name",
+      comment: 'RIS signatory - Received By name',
     },
     risReceivedByPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "RIS signatory - Received By position",
+      comment: 'RIS signatory - Received By position',
     },
     risDepartment: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "Department assigned for this RIS item",
+      comment: 'Department assigned for this RIS item',
     },
     risAssignedDate: {
       type: DataTypes.DATE,
       allowNull: true,
-      comment: "Date when RIS ID was assigned",
+      comment: 'Date when RIS ID was assigned',
     },
     // ICS-specific signatory fields for per-ID assignment
     icsReceivedFrom: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "ICS signatory - Received From name",
+      comment: 'ICS signatory - Received From name',
     },
     icsReceivedFromPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "ICS signatory - Received From position/role",
+      comment: 'ICS signatory - Received From position/role',
     },
     icsReceivedBy: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "ICS signatory - Received By name",
+      comment: 'ICS signatory - Received By name',
     },
     icsReceivedByPosition: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "ICS signatory - Received By position",
+      comment: 'ICS signatory - Received By position',
     },
     icsDepartment: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "Department assigned for this ICS item",
+      comment: 'Department assigned for this ICS item',
     },
     icsAssignedDate: {
       type: DataTypes.DATE,
       allowNull: true,
-      comment: "Date when ICS ID was assigned",
+      comment: 'Date when ICS ID was assigned',
     },
     // Purpose field for ICS and RIS printing
     purpose: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Purpose field for ICS/RIS print reports (manually entered)",
+      comment: 'Purpose field for ICS/RIS print reports (manually entered)',
+    },
+    // ICS-specific details field (separate from IAR details)
+    icsDetails: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Details specific to this ICS item (separate from IAR details)',
+    },
+    // PAR-specific details field (separate from IAR details)
+    parDetails: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Details specific to this PAR item (separate from IAR details)',
+    },
+    // RIS-specific details field (separate from IAR details)
+    risDetails: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Details specific to this RIS item (separate from IAR details)',
     },
     // Remarks field for PAR printing
     remarks: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Remarks field for PAR print reports (manually entered)",
+      comment: 'Remarks field for PAR print reports (manually entered)',
     },
     // Split tracking fields
     splitGroupId: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment:
-        "Shared ID among all items created from the same split operation. Traces siblings.",
+      comment: 'Shared ID among all items created from the same split operation. Traces siblings.',
     },
     splitFromItemId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      comment:
-        "The original IAR item ID this record was split from. Traces back to source.",
+      comment: 'The original IAR item ID this record was split from. Traces back to source.',
     },
     splitIndex: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      comment: "1-based index within the split group (1 = first split, etc.)",
+      comment: '1-based index within the split group (1 = first split, etc.)',
     },
   },
   {
-    tableName: "inspection_acceptance_report", // Specify the table name
+    tableName: 'inspection_acceptance_report', // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  },
+  }
 );
 
 // No association is needed here because ponumber is not a foreign key

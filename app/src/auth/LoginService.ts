@@ -1,7 +1,7 @@
 // src/auth/LoginService.ts
-import { ApolloClient } from "@apollo/client";
-import { LOGIN } from "../graphql/mutations/user.mutation";
-import { SessionsType } from "../types/genericTypes";
+import { ApolloClient } from '@apollo/client';
+import { LOGIN } from '../graphql/mutations/user.mutation';
+import { SessionsType } from '../types/genericTypes';
 
 export const loginUser = async (
   client: ApolloClient<any>,
@@ -29,9 +29,9 @@ export const loginUser = async (
         },
       };
     }
-    
-    throw new Error("Login failed");
+
+    throw new Error('Login failed');
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "An error occurred");
+    throw new Error(error instanceof Error ? error.message : 'An error occurred');
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,31 +14,31 @@ import {
   FormHelperText,
   Box,
   Typography,
-} from "@mui/material";
-import { useQuery } from "@apollo/client";
+} from '@mui/material';
+import { useQuery } from '@apollo/client';
 //@ts-ignore
-import { GET_PURCHASEORDERS } from "../graphql/queries/purchaseorder.query";
-import { GET_ROLES } from "../graphql/queries/role.query"; // Make sure this import exists
+import { GET_PURCHASEORDERS } from '../graphql/queries/purchaseorder.query';
+import { GET_ROLES } from '../graphql/queries/role.query'; // Make sure this import exists
 
 interface SignatoryModalProps {
- open: boolean;
- onClose: () => void;
- onSave: (formData: any) => void;
- signatory: any | null;
+  open: boolean;
+  onClose: () => void;
+  onSave: (formData: any) => void;
+  signatory: any | null;
 }
 
 const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProps) => {
   // State for form fields
   const [formData, setFormData] = useState({
-    name: "",
-    role: "",
-    purchaseOrderId: "",
+    name: '',
+    role: '',
+    purchaseOrderId: '',
   });
 
   // State for validation errors
   const [errors, setErrors] = useState({
-    name: "",
-    role: "",
+    name: '',
+    role: '',
   });
 
   // Get purchase orders for dropdown
@@ -51,38 +51,38 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
   useEffect(() => {
     if (signatory) {
       setFormData({
-        name: signatory.name || "",
-        role: signatory.role || "",
-        purchaseOrderId: signatory.purchaseOrderId || "",
+        name: signatory.name || '',
+        role: signatory.role || '',
+        purchaseOrderId: signatory.purchaseOrderId || '',
       });
     } else {
       // Reset form for new signatory
       setFormData({
-        name: "",
-        role: "",
-        purchaseOrderId: "",
+        name: '',
+        role: '',
+        purchaseOrderId: '',
       });
     }
     // Reset errors
     setErrors({
-      name: "",
-      role: "",
+      name: '',
+      role: '',
     });
   }, [signatory, open]);
 
   // Handle input changes
-  const handleChange = (e : any) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
-    
+
     // Clear error when field is updated
- if (errors[name as keyof typeof errors]) {
+    if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
-        [name]: "",
+        [name]: '',
       });
     }
   };
@@ -93,12 +93,12 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
     const newErrors = { ...errors };
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = 'Name is required';
       valid = false;
     }
 
     if (!formData.role) {
-      newErrors.role = "Role is required";
+      newErrors.role = 'Role is required';
       valid = false;
     }
 
@@ -114,23 +114,23 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
         ...formData,
         purchaseOrderId: formData.purchaseOrderId ? parseInt(formData.purchaseOrderId) : null,
       };
-      
+
       onSave(submitData);
     }
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       aria-labelledby="signatory-dialog-title"
     >
       <DialogTitle id="signatory-dialog-title">
-        {signatory ? "Edit Signatory" : "Add New Signatory"}
+        {signatory ? 'Edit Signatory' : 'Add New Signatory'}
       </DialogTitle>
-      
+
       <DialogContent>
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
@@ -146,7 +146,7 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
                 required
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <FormControl fullWidth error={!!errors.role} required>
                 <InputLabel id="role-label">Role</InputLabel>
@@ -182,7 +182,7 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
                 {errors.role && <FormHelperText>{errors.role}</FormHelperText>}
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel id="purchase-order-label">Purchase Order (Optional)</InputLabel>
@@ -196,7 +196,7 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
                   <MenuItem value="">
                     <em>None</em>
                   </MenuItem>
-                  {poData?.purchaseOrders?.map((po : any) => (
+                  {poData?.purchaseOrders?.map((po: any) => (
                     <MenuItem key={po.id} value={po.id}>
                       PO #{po.poNumber} - {po.supplier}
                     </MenuItem>
@@ -208,13 +208,13 @@ const SignatoryModal = ({ open, onClose, onSave, signatory }: SignatoryModalProp
           </Grid>
         </Box>
       </DialogContent>
-      
+
       <DialogActions>
         <Button onClick={onClose} color="primary">
           Cancel
         </Button>
         <Button onClick={handleSubmit} color="primary" variant="contained">
-          {signatory ? "Update" : "Save"}
+          {signatory ? 'Update' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,14 +7,14 @@ import {
   Button,
   TextField,
   Box,
-} from "@mui/material";
-import PropertyAcknowledgementReceipt from "./previewDocumentFiles/propertyAcknowledgementReceipt";
-import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/propertyAcknowledgementReceipt";
-import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import { UPDATE_PARID } from "../graphql/mutations/propertyAR.mutation";
-import { UPDATE_ITEM_REMARKS } from "../graphql/mutations/inventoryIAR.mutation";
-import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
+} from '@mui/material';
+import PropertyAcknowledgementReceipt from './previewDocumentFiles/propertyAcknowledgementReceipt';
+import { getPropertyAcknowledgementReciept } from './printDocumentFiles/propertyAcknowledgementReceipt';
+import { InspectionReportDialogPropsForIAR } from '../types/printReportModal/types';
+import { useQuery, useMutation, useApolloClient } from '@apollo/client';
+import { UPDATE_PARID } from '../graphql/mutations/propertyAR.mutation';
+import { UPDATE_ITEM_REMARKS } from '../graphql/mutations/inventoryIAR.mutation';
+import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from '../graphql/queries/propertyacknowledgementreport';
 
 export default function PrintReportDialogForPAR({
   open,
@@ -29,42 +29,34 @@ export default function PrintReportDialogForPAR({
   // });
 
   const [updateRemarks] = useMutation(UPDATE_ITEM_REMARKS);
-  const [remarks, setRemarks] = useState("");
+  const [remarks, setRemarks] = useState('');
 
   // Pre-fill remarks from saved data
   useEffect(() => {
     if (open) {
-      const items = Array.isArray(reportData)
-        ? reportData
-        : reportData
-          ? [reportData]
-          : [];
-      setRemarks(items[0]?.remarks || "");
+      const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+      setRemarks(items[0]?.remarks || '');
     }
   }, [open, reportData]);
 
   // Determine signatories to use - prefer per-item signatories if available
   const effectiveSignatories = useMemo(() => {
-    const items = Array.isArray(reportData)
-      ? reportData
-      : reportData
-        ? [reportData]
-        : [];
+    const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
     const firstItem = items[0];
 
     // Check if the item has per-item PAR signatories (new workflow)
     if (firstItem?.parReceivedFrom || firstItem?.parReceivedBy) {
       return {
-        recieved_from: firstItem.parReceivedFrom || "",
-        recieved_by: firstItem.parReceivedBy || "",
+        recieved_from: firstItem.parReceivedFrom || '',
+        recieved_by: firstItem.parReceivedBy || '',
         metadata: {
           recieved_from: {
-            position: firstItem.parReceivedFromPosition || "",
-            role: firstItem.parReceivedFromPosition || "",
+            position: firstItem.parReceivedFromPosition || '',
+            role: firstItem.parReceivedFromPosition || '',
           },
           recieved_by: {
-            position: firstItem.parReceivedByPosition || "",
-            role: "",
+            position: firstItem.parReceivedByPosition || '',
+            role: '',
           },
         },
       };
@@ -75,15 +67,11 @@ export default function PrintReportDialogForPAR({
   }, [reportData, signatories]);
 
   const getReportTemplate = (data: any) => {
-    return getPropertyAcknowledgementReciept(
-      effectiveSignatories,
-      data,
-      remarks,
-    );
+    return getPropertyAcknowledgementReciept(effectiveSignatories, data, remarks);
   };
 
-  console.log("reportData", reportData);
-  console.log("effectiveSignatories", effectiveSignatories);
+  console.log('reportData', reportData);
+  console.log('effectiveSignatories', effectiveSignatories);
 
   const handlePrintReport = async () => {
     try {
@@ -100,7 +88,7 @@ export default function PrintReportDialogForPAR({
       }
 
       // Continue with printing
-      const printWindow = window.open("", "_blank");
+      const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(getReportTemplate(reportData));
         setTimeout(() => {
@@ -110,7 +98,7 @@ export default function PrintReportDialogForPAR({
       }
       handleClose();
     } catch (error) {
-      console.error("Error updating PAR:", error);
+      console.error('Error updating PAR:', error);
     }
   };
   // Otherwise, show the dialog with preview

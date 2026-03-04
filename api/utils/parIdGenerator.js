@@ -1,5 +1,5 @@
-import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
-import { Op, Sequelize } from "sequelize";
+import inspectionAcceptanceReport from '../models/inspectionacceptancereport.js';
+import { Op, Sequelize } from 'sequelize';
 
 // Track the last generated PAR ID within the same batch/request to avoid duplicates
 let lastGeneratedParSequence = 0;
@@ -13,7 +13,7 @@ export function resetParIdBatch() {
 
 export async function generateNewParId() {
   const year = new Date().getFullYear();
-  const yearPrefix = year.toString().slice(-2) + "-";
+  const yearPrefix = year.toString().slice(-2) + '-';
   console.log(yearPrefix);
 
   // Reset tracking if year changed
@@ -29,14 +29,19 @@ export async function generateNewParId() {
       },
     },
     order: [
-      [Sequelize.literal("CAST(REPLACE(SUBSTRING_INDEX(parId, '-', -1), SUBSTRING(SUBSTRING_INDEX(parId, '-', -1), -1), '') AS UNSIGNED)"), 'DESC'],
+      [
+        Sequelize.literal(
+          "CAST(REPLACE(SUBSTRING_INDEX(parId, '-', -1), SUBSTRING(SUBSTRING_INDEX(parId, '-', -1), -1), '') AS UNSIGNED)"
+        ),
+        'DESC',
+      ],
     ],
-    attributes: ["parId"],
+    attributes: ['parId'],
   });
 
   let nextSeriesNumber = 1;
   if (lastestPar && lastestPar.parId) {
-    const parts = lastestPar.parId.split("-");
+    const parts = lastestPar.parId.split('-');
 
     if (parts.length === 2) {
       // Remove any suffix like 'B', 'T', 'A', 'F' etc.
@@ -56,6 +61,6 @@ export async function generateNewParId() {
   // Track this generated sequence
   lastGeneratedParSequence = nextSeriesNumber;
 
-  const formattedSeriesNumber = nextSeriesNumber.toString().padStart(3, "0");
+  const formattedSeriesNumber = nextSeriesNumber.toString().padStart(3, '0');
   return `${yearPrefix}${formattedSeriesNumber}`;
 }

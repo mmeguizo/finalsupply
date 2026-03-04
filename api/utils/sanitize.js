@@ -43,7 +43,7 @@ export function stripHtmlTags(str) {
  */
 export function sanitizeObject(obj, options = { escape: true, stripTags: true }) {
   if (obj === null || obj === undefined) return obj;
-  
+
   if (typeof obj === 'string') {
     let result = obj;
     if (options.stripTags) {
@@ -54,11 +54,11 @@ export function sanitizeObject(obj, options = { escape: true, stripTags: true })
     }
     return result;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item, options));
+    return obj.map((item) => sanitizeObject(item, options));
   }
-  
+
   if (typeof obj === 'object') {
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -66,7 +66,7 @@ export function sanitizeObject(obj, options = { escape: true, stripTags: true })
     }
     return sanitized;
   }
-  
+
   return obj;
 }
 
@@ -150,11 +150,11 @@ export function validateAndSanitize(input, rules = {}) {
  */
 export function sanitizeInput(input) {
   if (!input) return input;
-  
+
   // Deep clone and sanitize
-  return sanitizeObject(input, { 
-    escape: false,  // Don't escape for DB storage (Sequelize handles this)
-    stripTags: true // Do remove HTML tags
+  return sanitizeObject(input, {
+    escape: false, // Don't escape for DB storage (Sequelize handles this)
+    stripTags: true, // Do remove HTML tags
   });
 }
 

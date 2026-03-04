@@ -1,10 +1,10 @@
-import { useNotifications } from "@toolpad/core/useNotifications";
-import * as React from "react";
+import { useNotifications } from '@toolpad/core/useNotifications';
+import * as React from 'react';
 
 type NotificationDialogProps = {
   open?: boolean;
   message: string;
-  severity: "info" | "success" | "warning" | "error";
+  severity: 'info' | 'success' | 'warning' | 'error';
   duration?: number;
   onClose?: () => void;
 };

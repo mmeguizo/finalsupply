@@ -8,18 +8,18 @@ export const useAuth = () => {
   const navigate = useNavigate();
 
   const signIn = useCallback(() => {
-    navigate("/sign-in");
+    navigate('/sign-in');
   }, [navigate]);
 
   const signOut = useCallback(() => {
     setSession(null);
     clearSession();
-    navigate("/sign-in");
+    navigate('/sign-in');
   }, [navigate, setSession]);
 
   return {
     session,
     signIn,
-    signOut
+    signOut,
   };
 };

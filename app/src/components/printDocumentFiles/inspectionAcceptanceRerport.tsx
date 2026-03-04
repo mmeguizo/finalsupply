@@ -1,4 +1,4 @@
-export const getInspectionReportTemplate = (signatories :any, reportData: any) =>`
+export const getInspectionReportTemplate = (signatories: any, reportData: any) => `
        <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -262,7 +262,10 @@ table {
           </tr>
         </thead>
         <tbody>
-        ${reportData?.items?.map((item :any, index : any) => `
+        ${
+          reportData?.items
+            ?.map(
+              (item: any, index: any) => `
           <tr>
             <td>${index + 1}</td>
             <td>${item.unit || ''}</td>
@@ -271,7 +274,10 @@ table {
             <td>${item.unitCost || ''}</td>
             <td>${item.amount || ''}</td>
           </tr>
-        `).join('') || ''}
+        `
+            )
+            .join('') || ''
+        }
         </tbody>
         <tfoot>
           <tr class="total-row">
@@ -325,4 +331,4 @@ table {
   </body>
 </html>
 
-      `
+      `;

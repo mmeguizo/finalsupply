@@ -57,43 +57,6 @@ type PurchaseOrderItemType {
 }
 
 
-type ItemWithPurchaseOrder {
-    id: ID
-    itemName: String
-    purchaseOrderId: String
-    description: String
-    unit: String
-    quantity: Int
-    unitCost: Float
-    amount: Float
-    category: String
-    isDeleted: Boolean
-    actualQuantityReceived: Int
-    currentInput: Int
-    PurchaseOrder: PurchaseOrderType
-    PurchaseOrderItem: PurchaseOrderItemType
-    tag : String
-    iarId : String
-    icsId : String
-    risId : String
-    parId : String
-    income: String
-    mds: String
-    details: String
-    inventoryNumber: String
-    # RIS signatory fields
-    risReceivedFrom: String
-    risReceivedFromPosition: String
-    risReceivedBy: String
-    risReceivedByPosition: String
-    risDepartment: String
-    risAssignedDate: String
-    splitGroupId: String
-    splitFromItemId: Int
-    splitIndex: Int
-}
-
-
 #INPUTS
 
 # input later

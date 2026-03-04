@@ -1,9 +1,9 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js"; // Assuming you have a Sequelize instance
-import InspectionAcceptanceReport from "./inspectionacceptancereport.js";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js'; // Assuming you have a Sequelize instance
+import InspectionAcceptanceReport from './inspectionacceptancereport.js';
 
 const PurchaseOrderItems = sequelize.define(
-  "PurchaseOrderItems",
+  'PurchaseOrderItems',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,11 +18,11 @@ const PurchaseOrderItems = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "purchase_orders", // Correct table name matches PurchaseOrder model's tableName
-        key: "id", // The referenced column in the 'purchaseOrders' table
+        model: 'purchase_orders', // Correct table name matches PurchaseOrder model's tableName
+        key: 'id', // The referenced column in the 'purchaseOrders' table
       },
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
       index: true, // Index for optimization
     },
     itemName: {
@@ -64,9 +64,9 @@ const PurchaseOrderItems = sequelize.define(
     },
     category: {
       type: DataTypes.ENUM(
-        "property acknowledgement reciept",
-        "inventory custodian slip",
-        "requisition issue slip",
+        'property acknowledgement reciept',
+        'inventory custodian slip',
+        'requisition issue slip'
       ),
       allowNull: true,
       defaultValue: null, // No default — category is set when IAR is generated
@@ -74,23 +74,23 @@ const PurchaseOrderItems = sequelize.define(
     tag: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: "none", // Default value
+      defaultValue: 'none', // Default value
     },
     inventoryNumber: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: "none", // Default value
+      defaultValue: 'none', // Default value
     },
     itemGroupId: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      comment: "Stable grouping key for logical item across updates/receipts",
+      comment: 'Stable grouping key for logical item across updates/receipts',
     },
     isReceiptLine: {
       type: DataTypes.TINYINT(1),
       allowNull: true,
       defaultValue: 0,
-      comment: "Optional marker for cloned receipt-only lines",
+      comment: 'Optional marker for cloned receipt-only lines',
     },
     isDeleted: {
       type: DataTypes.TINYINT(1),
@@ -98,36 +98,36 @@ const PurchaseOrderItems = sequelize.define(
       defaultValue: 0,
     },
     deliveryStatus: {
-      type: DataTypes.ENUM("pending", "delivered", "partial"),
+      type: DataTypes.ENUM('pending', 'delivered', 'partial'),
       allowNull: true,
-      defaultValue: "pending",
-      comment: "Track item delivery status independently of IAR receipt",
+      defaultValue: 'pending',
+      comment: 'Track item delivery status independently of IAR receipt',
     },
     deliveredDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      comment: "Date when item was delivered",
+      comment: 'Date when item was delivered',
     },
     deliveryNotes: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Notes about the delivery (e.g. follow-up needed, backordered)",
+      comment: 'Notes about the delivery (e.g. follow-up needed, backordered)',
     },
   },
   {
-    tableName: "purchase_order_items", // Specify the table name
+    tableName: 'purchase_order_items', // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  },
+  }
 );
 
 // No association is needed here because ponumber is not a foreign key
 PurchaseOrderItems.hasMany(InspectionAcceptanceReport, {
-  foreignKey: "purchaseOrderItemId",
+  foreignKey: 'purchaseOrderItemId',
 });
 InspectionAcceptanceReport.belongsTo(PurchaseOrderItems, {
-  foreignKey: "purchaseOrderItemId", // maps to purchase_order_item_id
-  as: "PurchaseOrderItem",
+  foreignKey: 'purchaseOrderItemId', // maps to purchase_order_item_id
+  as: 'PurchaseOrderItem',
 });
 
 export default PurchaseOrderItems;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   CircularProgress,
   Alert,
@@ -10,27 +10,22 @@ import {
   Tooltip,
   Backdrop,
   Grid,
-} from "@mui/material";
-import {
-  DataGrid,
-  GridRowParams,
-  GridToolbar,
-  GridRowSelectionModel,
-} from "@mui/x-data-grid";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import { GET_ALL_DEPARTMENTS, GET_DEPARTMENT } from "../graphql/queries/department.query";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import NotificationDialog from "../components/notifications";
-import { createDepartmentColumns } from "./departmentFunctions/department_gridColDef";
-import { DepartmentToolbar } from "../layouts/ui/departmentToolbar";
-import ConfirmDialog from "../components/confirmationdialog";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import DepartmentModal from "../components/departmentModal";
+} from '@mui/material';
+import { DataGrid, GridRowParams, GridToolbar, GridRowSelectionModel } from '@mui/x-data-grid';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import { GET_ALL_DEPARTMENTS, GET_DEPARTMENT } from '../graphql/queries/department.query';
+import { useQuery, useMutation, useApolloClient } from '@apollo/client';
+import NotificationDialog from '../components/notifications';
+import { createDepartmentColumns } from './departmentFunctions/department_gridColDef';
+import { DepartmentToolbar } from '../layouts/ui/departmentToolbar';
+import ConfirmDialog from '../components/confirmationdialog';
+import { capitalizeFirstLetter } from '../utils/generalUtils';
+import DepartmentModal from '../components/departmentModal';
 import {
   CREATE_DEPARTMENT,
   UPDATE_DEPARTMENT,
   DELETE_DEPARTMENT,
-} from "../graphql/mutations/department.mutation";
+} from '../graphql/mutations/department.mutation';
 
 interface DepartmentType {
   id: string;
@@ -45,40 +40,36 @@ export default function DepartmentPage() {
   const { data, loading, error } = useQuery(GET_ALL_DEPARTMENTS);
   const [openDepartmentModal, setOpenDepartmentModal] = React.useState(false);
   const [showNotification, setShowNotification] = React.useState(false);
-  const [notificationMessage, setNotificationMessage] = React.useState("");
+  const [notificationMessage, setNotificationMessage] = React.useState('');
   const [notificationSeverity, setNotificationSeverity] = React.useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
-  
+    'success' | 'error' | 'info' | 'warning'
+  >('success');
+
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [selectedDepartment, setSelectedDepartment] = React.useState<DepartmentType | null>(
-    null
-  );
+  const [selectedDepartment, setSelectedDepartment] = React.useState<DepartmentType | null>(null);
   const [editingDepartment, setEditingDepartment] = React.useState<DepartmentType | null>(null);
-  const [deletingDepartment, setDeletingDepartment] = React.useState<DepartmentType | null>(
-    null
-  );
+  const [deletingDepartment, setDeletingDepartment] = React.useState<DepartmentType | null>(null);
 
   const [deleteDepartment] = useMutation(DELETE_DEPARTMENT, {
     refetchQueries: [{ query: GET_ALL_DEPARTMENTS }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "departments" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'departments' });
       client.cache.gc();
     },
   });
-  
+
   const [updateDepartment] = useMutation(UPDATE_DEPARTMENT, {
     refetchQueries: [{ query: GET_ALL_DEPARTMENTS }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "departments" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'departments' });
       client.cache.gc();
     },
   });
-  
+
   const [createDepartment] = useMutation(CREATE_DEPARTMENT, {
     refetchQueries: [{ query: GET_ALL_DEPARTMENTS }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "departments" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'departments' });
       client.cache.gc();
     },
   });
@@ -92,7 +83,7 @@ export default function DepartmentPage() {
     setEditingDepartment(department);
     setOpenDepartmentModal(true);
   };
-  
+
   const handleDeleteModal = (department: DepartmentType) => {
     setDeletingDepartment(department);
     setConfirmDialogOpen(true);
@@ -124,12 +115,12 @@ export default function DepartmentPage() {
         setNotificationMessage(
           `Department "${results.data.deleteDepartment.name}" deleted successfully.`
         );
-        setNotificationSeverity("success");
+        setNotificationSeverity('success');
         setShowNotification(true);
         setDeletingDepartment(null);
       } catch (error: any) {
         setNotificationMessage(`Error deleting department: ${error.message}`);
-        setNotificationSeverity("error");
+        setNotificationSeverity('error');
         setShowNotification(true);
       }
     }
@@ -140,7 +131,7 @@ export default function DepartmentPage() {
     setIsSubmitting(true);
     try {
       let updatedDepartmentData: any;
-      
+
       if (editingDepartment) {
         // Update existing department
         const results = await updateDepartment({
@@ -167,15 +158,15 @@ export default function DepartmentPage() {
         updatedDepartmentData = results.data.createDepartment;
         setNotificationMessage(`Department "${department.name}" created successfully.`);
       }
-      
-      setNotificationSeverity("success");
+
+      setNotificationSeverity('success');
       setShowNotification(true);
       setSelectedDepartment(updatedDepartmentData);
       setEditingDepartment(null);
       handleCloseModal();
     } catch (error: any) {
       setNotificationMessage(`Error saving department: ${error.message}`);
-      setNotificationSeverity("error");
+      setNotificationSeverity('error');
       setShowNotification(true);
     } finally {
       setIsSubmitting(false);
@@ -187,7 +178,7 @@ export default function DepartmentPage() {
   };
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       {loading && (
         <Box display="flex" justifyContent="center" p={2}>
           <CircularProgress />
@@ -242,17 +233,16 @@ export default function DepartmentPage() {
               </Typography>
               <Box>
                 <Typography>
-                  <strong>Name:</strong>{" "}
-                  {capitalizeFirstLetter(selectedDepartment.name)}
+                  <strong>Name:</strong> {capitalizeFirstLetter(selectedDepartment.name)}
                 </Typography>
                 <Typography>
-                  <strong>Description:</strong>{" "}
-                  {selectedDepartment.description || "No description provided"}
+                  <strong>Description:</strong>{' '}
+                  {selectedDepartment.description || 'No description provided'}
                 </Typography>
                 <Typography>
-                  <strong>Status:</strong>{" "}
+                  <strong>Status:</strong>{' '}
                   <span style={{ color: selectedDepartment.is_active ? 'green' : 'red' }}>
-                    {selectedDepartment.is_active ? "Active" : "Inactive"}
+                    {selectedDepartment.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </Typography>
               </Box>
@@ -278,7 +268,7 @@ export default function DepartmentPage() {
 
       <Backdrop
         sx={{
-          color: "#fff",
+          color: '#fff',
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
         open={isSubmitting}

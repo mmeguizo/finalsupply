@@ -1,34 +1,32 @@
 export const getPropertyAcknowledgementReciept = (
   signatories: any,
   reportData: any,
-  remarks?: string,
+  remarks?: string
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
-  console.log("getPropertyAcknowledgementReciept", signatories, reportData);
+  console.log('getPropertyAcknowledgementReciept', signatories, reportData);
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
 
   const { recieved_from, recieved_by, metadata } = signatories;
-  const { position: recievedFromPosition, role: recievedFromRole } =
-    metadata?.recieved_from || {};
-  const { position: recievedByPosition, role: recievedByRole } =
-    metadata?.recieved_by || {};
+  const { position: recievedFromPosition, role: recievedFromRole } = metadata?.recieved_from || {};
+  const { position: recievedByPosition, role: recievedByRole } = metadata?.recieved_by || {};
 
   const escapeHtml = (str: any) =>
-    String(str ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
 
-  const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, "<br/>");
+  const nl2br = (s: any) => escapeHtml(s).replace(/\r\n|\r|\n/g, '<br/>');
 
   // Currency formatter for PHP with thousand separators
   const formatCurrency = (value: any) => {
     const num = Number(value) || 0;
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num);
@@ -36,36 +34,28 @@ export const getPropertyAcknowledgementReciept = (
 
   // Collect all unique PAR IDs from the items
   const parIds = Array.from(
-    new Set(
-      itemsArray.map((item: any) => item?.parId).filter((id: any) => !!id),
-    ),
+    new Set(itemsArray.map((item: any) => item?.parId).filter((id: any) => !!id))
   );
-  const parIdsDisplay = parIds.length ? parIds.join(", ") : "";
+  const parIdsDisplay = parIds.length ? parIds.join(', ') : '';
 
   // Generate rows for each item, include specification & generalDescription with newline -> <br/> and a small space
   const itemRows = itemsArray
     .map((item, index) => {
-      const desc = escapeHtml(
-        item.description || item.PurchaseOrderItem?.description || "",
-      );
-      const spec =
-        item.PurchaseOrderItem?.specification || item.specification || "";
-      const gen =
-        item.PurchaseOrderItem?.generalDescription ||
-        item.generalDescription ||
-        "";
+      const desc = escapeHtml(item.description || item.PurchaseOrderItem?.description || '');
+      const spec = item.PurchaseOrderItem?.specification || item.specification || '';
+      const gen = item.PurchaseOrderItem?.generalDescription || item.generalDescription || '';
 
       const specHtml = spec
         ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(spec)}</div>`
-        : "";
+        : '';
       const genHtml = gen
         ? `<div style="margin-top:2px; font-size:12px; color:#333; text-align:left;">${nl2br(gen)}</div>`
-        : "";
+        : '';
 
       let row = `
         <tr>
-          <td>${escapeHtml(item.actualQuantityReceived || "")}</td>
-          <td>${escapeHtml(item.unit || "")}</td>
+          <td>${escapeHtml(item.actualQuantityReceived || '')}</td>
+          <td>${escapeHtml(item.unit || '')}</td>
           <td colspan="2">
             ${desc}
             ${specHtml}
@@ -101,21 +91,18 @@ export const getPropertyAcknowledgementReciept = (
         `;
 
         // Income/MDS/Details below nothing follows
-        const incomeText =
-          itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income || "";
-        const mdsText =
-          itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds || "";
-        const detailsText =
-          itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details || "";
+        const incomeText = itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income || '';
+        const mdsText = itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds || '';
+        const detailsText = itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details || '';
         if (incomeText || mdsText || detailsText) {
           row += `
           <tr>
             <td></td>
             <td></td>
             <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">
-              ${incomeText ? `<div>Income: ${escapeHtml(incomeText)}</div>` : ""}
-              ${mdsText ? `<div>MDS: ${escapeHtml(mdsText)}</div>` : ""}
-              ${detailsText ? `<div>Details: ${escapeHtml(detailsText)}</div>` : ""}
+              ${incomeText ? `<div>Income: ${escapeHtml(incomeText)}</div>` : ''}
+              ${mdsText ? `<div>MDS: ${escapeHtml(mdsText)}</div>` : ''}
+              ${detailsText ? `<div>Details: ${escapeHtml(detailsText)}</div>` : ''}
             </td>
             <td></td>
             <td></td>
@@ -126,33 +113,23 @@ export const getPropertyAcknowledgementReciept = (
 
       return row;
     })
-    .join("");
+    .join('');
 
   // Get the first item for header information
   const firstItem = itemsArray[0] || {};
   // Note: We display all PAR IDs instead of the PO number in the header
-  const poNumber = firstItem.PurchaseOrder?.poNumber || "";
-  const supplier = firstItem.PurchaseOrder?.supplier || "";
-  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || "";
-  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || "";
+  const poNumber = firstItem.PurchaseOrder?.poNumber || '';
+  const supplier = firstItem.PurchaseOrder?.supplier || '';
+  const dateOfDelivery = firstItem.PurchaseOrder?.dateOfDelivery || '';
+  const dateOfPayment = firstItem.PurchaseOrder?.dateOfPayment || '';
 
   // Calculate totals
-  const totalUnitCost = itemsArray.reduce(
-    (sum, item) => sum + (parseFloat(item.unitCost) || 0),
-    0,
-  );
-  const totalAmount = itemsArray.reduce(
-    (sum, item) => sum + (parseFloat(item.amount) || 0),
-    0,
-  );
+  const totalUnitCost = itemsArray.reduce((sum, item) => sum + (parseFloat(item.unitCost) || 0), 0);
+  const totalAmount = itemsArray.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
   // Format totals
-  const formatTotalUnitCost = isNaN(totalUnitCost)
-    ? ""
-    : formatCurrency(totalUnitCost);
-  const formatTotalAmount = isNaN(totalAmount)
-    ? ""
-    : formatCurrency(totalAmount);
+  const formatTotalUnitCost = isNaN(totalUnitCost) ? '' : formatCurrency(totalUnitCost);
+  const formatTotalAmount = isNaN(totalAmount) ? '' : formatCurrency(totalAmount);
 
   return `
 <html lang="en">
@@ -455,13 +432,13 @@ table {
           <td>${formatTotalAmount}</td>
         </tr>
         <tr>
-          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${remarks || firstItem?.remarks ? `<span style="font-style: italic;">${escapeHtml(remarks || firstItem?.remarks || "")}</span>` : ""}</td>
+          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${remarks || firstItem?.remarks ? `<span style="font-style: italic;">${escapeHtml(remarks || firstItem?.remarks || '')}</span>` : ''}</td>
           <td colspan="2" style="padding: 4px; vertical-align: top;">
             <span style="display: inline-flex; align-items: center; margin-right: 15px;">
-              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.income || firstItem.PurchaseOrder?.income ? "✓" : ""}</span> INCOME ${escapeHtml(firstItem?.income || firstItem.PurchaseOrder?.income || "")}
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.income || firstItem.PurchaseOrder?.income ? '✓' : ''}</span> INCOME ${escapeHtml(firstItem?.income || firstItem.PurchaseOrder?.income || '')}
             </span>
             <span style="display: inline-flex; align-items: center;">
-              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.mds || firstItem.PurchaseOrder?.mds ? "✓" : ""}</span> MDS ${escapeHtml(firstItem?.mds || firstItem.PurchaseOrder?.mds || "")}
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.mds || firstItem.PurchaseOrder?.mds ? '✓' : ''}</span> MDS ${escapeHtml(firstItem?.mds || firstItem.PurchaseOrder?.mds || '')}
             </span>
           </td>
         </tr>
@@ -469,9 +446,9 @@ table {
           <td colspan="3" style="padding: 8px 4px; vertical-align: top;">
             <div style="font-weight: 600; margin-bottom: 4px;">Received from:</div>
             <div style="text-align: center; padding: 0 20px;">
-              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_from || ""}</p>
+              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_from || ''}</p>
               <p style="font-size: 11px; margin: 0;">Signature over Printed Name</p>
-              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedFromRole || ""}</p>
+              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedFromRole || ''}</p>
               <p style="font-size: 11px; margin: 0;">Position / Office</p>
               <p style="margin: 12px 0 0 0; font-size: 12px;">Date</p>
             </div>
@@ -479,9 +456,9 @@ table {
           <td colspan="3" style="padding: 8px 4px; vertical-align: top;">
             <div style="font-weight: 600; margin-bottom: 4px;">Received by:</div>
             <div style="text-align: center; padding: 0 20px;">
-              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_by || ""}</p>
+              <p style="font-weight: 600; font-style: italic; text-decoration: underline; margin: 20px 0 2px 0;">${recieved_by || ''}</p>
               <p style="font-size: 11px; margin: 0;">Signature over Printed Name</p>
-              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedByPosition || ""}</p>
+              <p style="font-weight: 600; text-decoration: underline; margin: 12px 0 2px 0;">${recievedByPosition || ''}</p>
               <p style="font-size: 11px; margin: 0;">Position / Office</p>
               <p style="margin: 12px 0 0 0; font-size: 12px;">Date</p>
             </div>

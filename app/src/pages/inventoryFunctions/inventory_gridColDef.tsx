@@ -1,78 +1,73 @@
-import { GridColDef } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
-import Tooltip from "@mui/material/Tooltip";
-import PreviewIcon from "@mui/icons-material/Preview";
-import { currencyFormat } from "../../utils/generalUtils";
+import { GridColDef } from '@mui/x-data-grid';
+import { Button } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
+import PreviewIcon from '@mui/icons-material/Preview';
+import { currencyFormat } from '../../utils/generalUtils';
 
 // Keep the original columns for DataGrid
-export const createItemColumns = (
-  handleOpenPrintModal: (item: any) => void
-): GridColDef[] => [
+export const createItemColumns = (handleOpenPrintModal: (item: any) => void): GridColDef[] => [
   {
-    field: "iarId",
-    headerName: "IAR#",
-    width: 130, 
+    field: 'iarId',
+    headerName: 'IAR#',
+    width: 130,
   },
   {
-    field: "category",
-    headerName: "Category",
+    field: 'category',
+    headerName: 'Category',
     width: 200,
     valueFormatter: (params: any) => {
       let category;
-      category = params.split(" ");
-      return category
-        .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
+      category = params.split(' ');
+      return category.map((word: any) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     },
   },
   {
-    field: "PurchaseOrder",
-    headerName: "P.O. #",
+    field: 'PurchaseOrder',
+    headerName: 'P.O. #',
     width: 100,
     valueGetter: (params: any) => params.poNumber,
   },
-  { field: "description", headerName: "Description", width: 300, flex: 1 },
-  { field: "unit", headerName: "Unit", width: 100 },
+  { field: 'description', headerName: 'Description', width: 300, flex: 1 },
+  { field: 'unit', headerName: 'Unit', width: 100 },
   {
-    field: "actualQuantityReceived",
-    headerName: "Actual Recieved",
-    type: "number",
+    field: 'actualQuantityReceived',
+    headerName: 'Actual Recieved',
+    type: 'number',
     width: 70,
   },
-  { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-   {
-    field: "unitCost",
-    headerName: "Unit Cost",
-    type: "number",
+  { field: 'quantity', headerName: 'Quantity', type: 'number', width: 100 },
+  {
+    field: 'unitCost',
+    headerName: 'Unit Cost',
+    type: 'number',
     width: 80,
     valueGetter: (params: any) => {
       return currencyFormat(params);
     },
-    
   },
   {
-    field: "amount",
-    headerName: "Amount",
-    type: "number",
+    field: 'amount',
+    headerName: 'Amount',
+    type: 'number',
     width: 120,
     valueGetter: (params: any) => {
       return currencyFormat(params);
     },
   },
   {
-    field: "print",
-    headerName: "Print",
+    field: 'print',
+    headerName: 'Print',
     width: 80,
     renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={(e: any) => {
-            e.stopPropagation(); // Prevent row selection
-            handleOpenPrintModal(params.row);
-          }}
-        >
-          <PreviewIcon fontSize="large" />
-        </Button>
+      <Button
+        size="small"
+        onClick={(e: any) => {
+          e.stopPropagation(); // Prevent row selection
+          handleOpenPrintModal(params.row);
+        }}
+      >
+        <PreviewIcon fontSize="large" />
+      </Button>
     ),
   },
 ];

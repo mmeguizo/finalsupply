@@ -37,7 +37,7 @@ interface SignatoryStore {
     };
   };
 
-  IARSelections : any;
+  IARSelections: any;
 
   // Generic persisted selections by context (e.g., 'ris', 'ics', 'par', ...)
   selectionsByContext: Record<string, any>;

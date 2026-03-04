@@ -15,13 +15,16 @@ const roleResolver = {
           where: {
             [Op.and]: [
               { is_active: true }, // boolean column we just added via migration/model
-              { isDeleted: 0 } // model field name (maps to is_deleted due to underscored: true)
-            ]
+              { isDeleted: 0 }, // model field name (maps to is_deleted due to underscored: true)
+            ],
           },
-          order: [["name", "ASC"]]
+          order: [['name', 'ASC']],
         });
 
-        console.log('[role.resolver] roles fetched:', Array.isArray(roles) ? roles.length : 'no-array');
+        console.log(
+          '[role.resolver] roles fetched:',
+          Array.isArray(roles) ? roles.length : 'no-array'
+        );
         return Array.isArray(roles) ? roles : [];
       } catch (err) {
         console.error('[role.resolver] roles query error:', err);
@@ -44,17 +47,14 @@ const roleResolver = {
       try {
         return await Role.count({
           where: {
-            [Op.and]: [
-              { is_active: true },
-              { isDeleted: 0 }
-            ]
-          }
+            [Op.and]: [{ is_active: true }, { isDeleted: 0 }],
+          },
         });
       } catch (err) {
         console.error('countAllRoles query error:', err);
         return 0;
       }
-    }
+    },
   },
 
   Mutation: {
@@ -102,8 +102,8 @@ const roleResolver = {
         console.error('deleteRole mutation error:', err);
         throw new Error('Failed to delete role');
       }
-    }
-  }
+    },
+  },
 };
 
 export default roleResolver;

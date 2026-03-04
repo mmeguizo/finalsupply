@@ -1,5 +1,3 @@
-
-
 interface UserTypes {
   id: string;
   name: string;
@@ -18,13 +16,10 @@ interface UserTypes {
 }
 
 interface risIssuanceSignatories {
-  requested_by : string
-  approved_by : string,
-  issued_by : string,
-  recieved_by : string
+  requested_by: string;
+  approved_by: string;
+  issued_by: string;
+  recieved_by: string;
 }
 
-
-
-
-export type {UserTypes, risIssuanceSignatories}
+export type { UserTypes, risIssuanceSignatories };

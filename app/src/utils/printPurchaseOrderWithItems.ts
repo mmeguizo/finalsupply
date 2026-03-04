@@ -1,7 +1,7 @@
 export const printPurchaseOrdersWithItems = (data: any) => {
-  const printWindow = window.open("", "_blank");
+  const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert("Please allow popups to print purchase orders.");
+    alert('Please allow popups to print purchase orders.');
     return;
   }
 

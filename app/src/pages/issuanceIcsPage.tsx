@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useQuery } from "@apollo/client";
+import * as React from 'react';
+import { useQuery } from '@apollo/client';
 import {
   CircularProgress,
   Alert,
@@ -14,18 +14,18 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-} from "@mui/material";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from "../graphql/queries/inspectionacceptancereport.query";
+} from '@mui/material';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from '../graphql/queries/inspectionacceptancereport.query';
 // Note: signatories are supplied explicitly via the SignatorySelectionContainer
-import { Row } from "./issuanceIcsFunctions/tableRow";
-import EnhancedTableToolbar from "./issuanceIcsFunctions/enhancedToolbar";
-import SignatoriesComponent from "./issuanceIcsFunctions/SignatorySelectionContainer";
-import { formatDateString } from "../utils/generalUtils";
-import PrintReportDialogForICS from "../components/printReportModalForICS";
-import IcsAssignmentModal from "../components/IcsAssignmentModal";
-import MultiIcsAssignmentModal from "../components/MultiIcsAssignmentModal";
-import useSignatoryStore from "../stores/signatoryStore";
+import { Row } from './issuanceIcsFunctions/tableRow';
+import EnhancedTableToolbar from './issuanceIcsFunctions/enhancedToolbar';
+import SignatoriesComponent from './issuanceIcsFunctions/SignatorySelectionContainer';
+import { formatDateString } from '../utils/generalUtils';
+import PrintReportDialogForICS from '../components/printReportModalForICS';
+import IcsAssignmentModal from '../components/IcsAssignmentModal';
+import MultiIcsAssignmentModal from '../components/MultiIcsAssignmentModal';
+import useSignatoryStore from '../stores/signatoryStore';
 
 // Type definition for the signatory data
 interface icsIssuanceSignatories {
@@ -41,21 +41,21 @@ export default function IssuanceIcsPage() {
   const { data, loading, error, refetch, networkStatus } = useQuery(
     GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS,
     {
-      fetchPolicy: "cache-and-network",
-      nextFetchPolicy: "cache-first",
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
       // pollInterval can cause repeated updates; disable if it leads to loops
       // pollInterval: 4000,
       notifyOnNetworkStatusChange: true,
-    },
+    }
   );
 
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
-  const [reportType, setReportType] = React.useState("");
-  const [title, setTitle] = React.useState("");
+  const [reportType, setReportType] = React.useState('');
+  const [title, setTitle] = React.useState('');
 
   // ICS Assignment Modal state
   const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
@@ -64,30 +64,26 @@ export default function IssuanceIcsPage() {
   // Multi-item ICS Assignment Modal state
   const [openMultiAssignModal, setOpenMultiAssignModal] = React.useState(false);
   const [multiAssignPOItems, setMultiAssignPOItems] = React.useState<any[]>([]);
-  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<
-    any[]
-  >([]);
-  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState("");
-  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState("");
-  const [multiAssignExistingICSItems, setMultiAssignExistingICSItems] =
-    React.useState<any[]>([]);
+  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<any[]>([]);
+  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState('');
+  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState('');
+  const [multiAssignExistingICSItems, setMultiAssignExistingICSItems] = React.useState<any[]>([]);
 
   // Persist selections across navigation using store
   const getSelections = useSignatoryStore((s) => s.getSelections);
   const setSelections = useSignatoryStore((s) => s.setSelections);
   const icsDefault: icsIssuanceSignatories = React.useMemo(
     () => ({
-      recieved_from: "",
-      recieved_by: "",
+      recieved_from: '',
+      recieved_by: '',
       metadata: {
-        recieved_from: { position: "", role: "" },
-        recieved_by: { position: "", role: "" },
+        recieved_from: { position: '', role: '' },
+        recieved_by: { position: '', role: '' },
       },
     }),
-    [],
+    []
   );
-  const signatories: icsIssuanceSignatories =
-    getSelections("ics") || icsDefault;
+  const signatories: icsIssuanceSignatories = getSelections('ics') || icsDefault;
 
   // Safer derived list
   const icsList = data?.inspectionAcceptanceReportForICS ?? [];
@@ -98,7 +94,7 @@ export default function IssuanceIcsPage() {
   const groupedRows = React.useMemo(() => {
     if (!icsList.length) return [];
     const groups = icsList.reduce((acc: Record<string, any[]>, item: any) => {
-      const poNumber = item.PurchaseOrder?.poNumber || "Unknown";
+      const poNumber = item.PurchaseOrder?.poNumber || 'Unknown';
       if (!acc[poNumber]) acc[poNumber] = [];
       acc[poNumber].push(item);
       return acc;
@@ -106,8 +102,8 @@ export default function IssuanceIcsPage() {
     return Object.entries(groups).map(([poNumber, items]: any) => ({
       id: items[0].PurchaseOrder?.id || items[0].id,
       poNumber,
-      supplier: items[0].PurchaseOrder?.supplier || "Unknown",
-      dateOfDelivery: items[0].PurchaseOrder?.dateOfDelivery || "",
+      supplier: items[0].PurchaseOrder?.supplier || 'Unknown',
+      dateOfDelivery: items[0].PurchaseOrder?.dateOfDelivery || '',
       itemCount: items.length,
       items,
     }));
@@ -124,26 +120,21 @@ export default function IssuanceIcsPage() {
         row.poNumber.toLowerCase().includes(lowerCaseQuery) ||
         row.supplier.toLowerCase().includes(lowerCaseQuery) ||
         (row.dateOfDelivery &&
-          formatDateString(row.dateOfDelivery)
-            .toLowerCase()
-            .includes(lowerCaseQuery)),
+          formatDateString(row.dateOfDelivery).toLowerCase().includes(lowerCaseQuery))
     );
   }, [groupedRows, searchQuery]);
 
   // Paginated rows
   const paginatedRows = React.useMemo(() => {
-    return filteredRows.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
+    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
   // Handle opening print modal
   const handleOpenPrintModal = (items: any) => {
-    const reportTitle = items[0].category.split(" ");
+    const reportTitle = items[0].category.split(' ');
     const reportTitleString = reportTitle
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
     setReportType(reportTitle);
     setTitle(`${reportTitleString} Report`);
     setPrintItem(items);
@@ -160,7 +151,7 @@ export default function IssuanceIcsPage() {
   const handleOpenAssignmentModal = (item: any) => {
     // Find the PO row that contains this item to get all sibling items
     const poRow = groupedRows.find((row: any) =>
-      row.items.some((it: any) => String(it.id) === String(item.id)),
+      row.items.some((it: any) => String(it.id) === String(item.id))
     );
 
     if (poRow) {
@@ -175,7 +166,7 @@ export default function IssuanceIcsPage() {
       setMultiAssignPOItems(poRow.items);
       setMultiAssignPreSelected([item]);
       setMultiAssignPONumber(poRow.poNumber);
-      setMultiAssignSupplier(poRow.supplier || "");
+      setMultiAssignSupplier(poRow.supplier || '');
       setMultiAssignExistingICSItems(poRow.items.filter((it: any) => it.icsId));
       setOpenMultiAssignModal(true);
     } else {
@@ -212,7 +203,7 @@ export default function IssuanceIcsPage() {
     setMultiAssignPOItems(row.items);
     setMultiAssignPreSelected([]);
     setMultiAssignPONumber(row.poNumber);
-    setMultiAssignSupplier(row.supplier || "");
+    setMultiAssignSupplier(row.supplier || '');
     setMultiAssignExistingICSItems(row.items.filter((it: any) => it.icsId));
     setOpenMultiAssignModal(true);
   };
@@ -222,15 +213,15 @@ export default function IssuanceIcsPage() {
     const onFocus = () => refetch();
     const onOnline = () => refetch();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refetch();
+      if (document.visibilityState === 'visible') refetch();
     };
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("online", onOnline);
-    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("online", onOnline);
-      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [refetch]);
 
@@ -246,37 +237,31 @@ export default function IssuanceIcsPage() {
   };
 
   // Handle rows per page change
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
   // Handle signatory changes
   const onSignatoriesChange = (selectedSignatories: icsIssuanceSignatories) => {
-    setSelections("ics", selectedSignatories);
+    setSelections('ics', selectedSignatories);
   };
 
   if (loading) return <CircularProgress />;
-  if (error)
-    return <Alert severity="error">Error loading data: {error.message}</Alert>;
+  if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       <Stack
         spacing={3}
         sx={{
-          width: "100%",
-          overflow: "auto",
-          maxHeight: "calc(100vh - 100px)",
+          width: '100%',
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 100px)',
         }}
       >
-        <Paper sx={{ width: "100%" }}>
-          <EnhancedTableToolbar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-          />
+        <Paper sx={{ width: '100%' }}>
+          <EnhancedTableToolbar searchQuery={searchQuery} onSearchChange={handleSearchChange} />
           <TableContainer>
             <Table aria-label="collapsible table">
               <TableHead>
@@ -314,10 +299,7 @@ export default function IssuanceIcsPage() {
         </Paper>
 
         {/* Signatory Selection Component */}
-        <SignatoriesComponent
-          signatories={signatories}
-          onSignatoriesChange={onSignatoriesChange}
-        />
+        <SignatoriesComponent signatories={signatories} onSignatoriesChange={onSignatoriesChange} />
       </Stack>
 
       {/* Print Report Dialog */}

@@ -10,42 +10,42 @@ import {
   TablePagination,
   CircularProgress,
   Alert,
-} from "@mui/material";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import * as React from "react";
-import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from "../graphql/queries/propertyacknowledgementreport";
-import { useQuery } from "@apollo/client";
+} from '@mui/material';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import * as React from 'react';
+import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from '../graphql/queries/propertyacknowledgementreport';
+import { useQuery } from '@apollo/client';
 import {
   ObjectEntriesParFunction,
   groupedRowsFunction,
   filteredGroupRows,
-} from "../pages/issuanceParFunctions/row";
-import { Row } from "../pages/issuanceParFunctions/tableRow";
-import EnhancedTableToolbar from "./issuanceParFunctions/enhancedToolbar";
-import SignatoriesComponent from "./issuanceParFunctions/SignatorySelectionContainer";
-import useSignatoryStore from "../stores/signatoryStore";
-import PrintReportDialogForPAR from "../components/printReportModalForPAR";
-import ParAssignmentModal from "../components/ParAssignmentModal";
-import MultiParAssignmentModal from "../components/MultiParAssignmentModal";
+} from '../pages/issuanceParFunctions/row';
+import { Row } from '../pages/issuanceParFunctions/tableRow';
+import EnhancedTableToolbar from './issuanceParFunctions/enhancedToolbar';
+import SignatoriesComponent from './issuanceParFunctions/SignatorySelectionContainer';
+import useSignatoryStore from '../stores/signatoryStore';
+import PrintReportDialogForPAR from '../components/printReportModalForPAR';
+import ParAssignmentModal from '../components/ParAssignmentModal';
+import MultiParAssignmentModal from '../components/MultiParAssignmentModal';
 // import { parIssuanceSignatories } from "../types/user/userType";
 
 export default function IssuanceParPage() {
   const { data, loading, error, refetch } = useQuery(
     GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY,
     {
-      fetchPolicy: "cache-and-network",
-      nextFetchPolicy: "cache-first",
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
       notifyOnNetworkStatusChange: true,
-    },
+    }
   );
 
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [printItem, setPrintItem] = React.useState<any>(null);
   const [openPrintModal, setOpenPrintModal] = React.useState(false);
-  const [reportType, setReportType] = React.useState("");
-  const [title, setTitle] = React.useState("");
+  const [reportType, setReportType] = React.useState('');
+  const [title, setTitle] = React.useState('');
 
   // PAR Assignment Modal state (single item - legacy)
   const [openAssignmentModal, setOpenAssignmentModal] = React.useState(false);
@@ -54,32 +54,25 @@ export default function IssuanceParPage() {
   // Multi-Item PAR Assignment Modal state
   const [openMultiAssignModal, setOpenMultiAssignModal] = React.useState(false);
   const [multiAssignPOItems, setMultiAssignPOItems] = React.useState<any[]>([]);
-  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<
-    any[]
-  >([]);
-  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState("");
-  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState("");
-  const [multiAssignExistingPARItems, setMultiAssignExistingPARItems] =
-    React.useState<any[]>([]);
+  const [multiAssignPreSelected, setMultiAssignPreSelected] = React.useState<any[]>([]);
+  const [multiAssignPONumber, setMultiAssignPONumber] = React.useState('');
+  const [multiAssignSupplier, setMultiAssignSupplier] = React.useState('');
+  const [multiAssignExistingPARItems, setMultiAssignExistingPARItems] = React.useState<any[]>([]);
 
   // Signatory store access
   // Persist selections across navigation using Zustand store
-  const issuanceParSelections = useSignatoryStore(
-    (s) => s.issuanceParSelections,
-  );
-  const setIssuanceParSelections = useSignatoryStore(
-    (s) => s.setIssuanceParSelections,
-  );
+  const issuanceParSelections = useSignatoryStore((s) => s.issuanceParSelections);
+  const setIssuanceParSelections = useSignatoryStore((s) => s.setIssuanceParSelections);
   const defaultSelections = React.useMemo(
     () => ({
-      recieved_from: "",
-      recieved_by: "",
+      recieved_from: '',
+      recieved_by: '',
       metadata: {
-        recieved_from: { position: "", role: "" },
-        recieved_by: { position: "", role: "" },
+        recieved_from: { position: '', role: '' },
+        recieved_by: { position: '', role: '' },
       },
     }),
-    [],
+    []
   );
 
   const currentSelections = issuanceParSelections || defaultSelections;
@@ -96,26 +89,23 @@ export default function IssuanceParPage() {
   }, [groupedRows, searchQuery]);
 
   const paginatedRows = React.useMemo(() => {
-    return filteredRows.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage,
-    );
+    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
   // Get all items without PAR ID (for info display) - exclude items with 0 quantity
   const unassignedItems = React.useMemo(() => {
     if (!data?.propertyAcknowledgmentReportForView?.length) return [];
     return data.propertyAcknowledgmentReportForView.filter(
-      (item: any) => !item.parId && (item.actualQuantityReceived ?? 0) > 0,
+      (item: any) => !item.parId && (item.actualQuantityReceived ?? 0) > 0
     );
   }, [data]);
 
   const handleOpenPrintModal = (items: any) => {
-    console.log("Printing stuff", items);
-    const reportTitle = items[0].category.split(" ");
+    console.log('Printing stuff', items);
+    const reportTitle = items[0].category.split(' ');
     const reportTitleString = reportTitle
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
     setReportType(reportTitle);
     setTitle(`${reportTitleString} Report`);
     setPrintItem(items);
@@ -126,7 +116,7 @@ export default function IssuanceParPage() {
   const handleOpenAssignmentModal = (item: any) => {
     // Find the PO row that contains this item to get all sibling items
     const poRow = groupedRows.find((row: any) =>
-      row.items.some((it: any) => String(it.id) === String(item.id)),
+      row.items.some((it: any) => String(it.id) === String(item.id))
     );
 
     if (poRow) {
@@ -135,7 +125,7 @@ export default function IssuanceParPage() {
       setMultiAssignPOItems(poRow.items);
       setMultiAssignPreSelected([item]);
       setMultiAssignPONumber(poRow.poNumber);
-      setMultiAssignSupplier(poRow.supplier || "");
+      setMultiAssignSupplier(poRow.supplier || '');
       // Items with existing PAR IDs in this PO (for "Add to Existing" tab)
       setMultiAssignExistingPARItems(poRow.items.filter((it: any) => it.parId));
       setOpenMultiAssignModal(true);
@@ -171,7 +161,7 @@ export default function IssuanceParPage() {
     setMultiAssignPOItems(row.items);
     setMultiAssignPreSelected([]); // No pre-selection when opening from row
     setMultiAssignPONumber(row.poNumber);
-    setMultiAssignSupplier(row.supplier || "");
+    setMultiAssignSupplier(row.supplier || '');
     setMultiAssignExistingPARItems(row.items.filter((it: any) => it.parId));
     setOpenMultiAssignModal(true);
   };
@@ -185,9 +175,7 @@ export default function IssuanceParPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -204,24 +192,20 @@ export default function IssuanceParPage() {
   };
 
   if (loading) return <CircularProgress />;
-  if (error)
-    return <Alert severity="error">Error loading data: {error.message}</Alert>;
+  if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       <Stack
         spacing={3}
         sx={{
-          width: "100%",
-          overflow: "auto",
-          maxHeight: "calc(100vh - 100px)",
+          width: '100%',
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 100px)',
         }}
       >
-        <Paper sx={{ width: "100%" }}>
-          <EnhancedTableToolbar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-          />
+        <Paper sx={{ width: '100%' }}>
+          <EnhancedTableToolbar searchQuery={searchQuery} onSearchChange={handleSearchChange} />
           <TableContainer>
             <Table aria-label="collapsible table">
               <TableHead>

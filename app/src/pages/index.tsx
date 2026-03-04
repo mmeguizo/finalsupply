@@ -1,27 +1,19 @@
-import * as React from "react";
-import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-} from "@mui/material";
-import { BarChart } from "@mui/x-charts/BarChart";
-import { PieChart } from "@mui/x-charts/PieChart";
-import { useQuery } from "@apollo/client";
+import * as React from 'react';
+import { Box, Grid, Paper, Typography, Card, CardContent, CardHeader } from '@mui/material';
+import { BarChart } from '@mui/x-charts/BarChart';
+import { PieChart } from '@mui/x-charts/PieChart';
+import { useQuery } from '@apollo/client';
 import {
   currencyFormat,
   formatCategory,
   formatBarChartData,
   currencyFormatWithRoundingSymbol,
-} from "../utils/generalUtils";
+} from '../utils/generalUtils';
 // @ts-ignore
-import { GET_USERS_COUNT } from "../graphql/queries/user.query.js";
+import { GET_USERS_COUNT } from '../graphql/queries/user.query.js';
 // @ts-ignore
-import { GET_ALL_DASHBOARD_DATA } from "../graphql/queries/purchaseorder.query.js";
-import CircularProgress from "@mui/material/CircularProgress";
+import { GET_ALL_DASHBOARD_DATA } from '../graphql/queries/purchaseorder.query.js';
+import CircularProgress from '@mui/material/CircularProgress';
 // Sample data - replace with your actual data
 let pieChartData: any[] = [];
 
@@ -62,34 +54,31 @@ export default function DashboardPage() {
         return acc;
       }, {});
       // Create pieChartData based on the counts
-       pieChartData = [
+      pieChartData = [
         {
-          value: categoryCounts["property acknowledgement reciept"] || 0,
-          label: "PAR",
+          value: categoryCounts['property acknowledgement reciept'] || 0,
+          label: 'PAR',
         },
         {
-          value: categoryCounts["inventory custodian slip"] || 0,
-          label: "ICS",
+          value: categoryCounts['inventory custodian slip'] || 0,
+          label: 'ICS',
         },
-        { value: categoryCounts["requisition issue slip"] || 0, label: "RIS" },
+        { value: categoryCounts['requisition issue slip'] || 0, label: 'RIS' },
       ];
-
 
       setProcessedData({
         totalAmount: data.getAllTotalPurchaseOrderAmount || 0,
         usersCount: usersCountData?.countAllUsers || 0,
         totalItems: data.getTotalPurchaseOrderItems || 0,
         totalOrders: data.getTotalPurchaseOrders || 0,
-        barChartData: formatBarChartData(
-          data.getPurchaseOrderForBarCharts || []
-        ),
+        barChartData: formatBarChartData(data.getPurchaseOrderForBarCharts || []),
         totalCategory: data.getAllCategory || [],
       });
     }
   }, [data, usersCountData]);
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, }} >
+    <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* <Typography variant="h4" gutterBottom>
         Dashboard Overview
       </Typography> */}
@@ -120,9 +109,7 @@ export default function DashboardPage() {
               {isLoading ? (
                 <CircularProgress size={24} />
               ) : (
-                <Typography variant="h5">
-                  {processedData.totalOrders}
-                </Typography>
+                <Typography variant="h5">{processedData.totalOrders}</Typography>
               )}
             </CardContent>
           </Card>
@@ -171,17 +158,13 @@ export default function DashboardPage() {
               loading={isLoading}
               xAxis={[
                 {
-                  scaleType: "band",
-                  data: processedData.barChartData.map(
-                    (item: any) => item.month
-                  ),
+                  scaleType: 'band',
+                  data: processedData.barChartData.map((item: any) => item.month),
                 },
               ]}
               series={[
                 {
-                  data: processedData.barChartData.map(
-                    (item: any) => item.amount
-                  ),
+                  data: processedData.barChartData.map((item: any) => item.amount),
                 },
               ]}
               height={300}
@@ -198,7 +181,7 @@ export default function DashboardPage() {
               series={[
                 {
                   data: pieChartData,
-                  highlightScope: { faded: "global", highlighted: "item" },
+                  highlightScope: { faded: 'global', highlighted: 'item' },
                 },
               ]}
               height={300}

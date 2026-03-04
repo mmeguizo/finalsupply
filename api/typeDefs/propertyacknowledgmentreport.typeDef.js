@@ -56,43 +56,6 @@ type PurchaseOrderItemType {
 }
 
 
-type ItemWithPurchaseOrder {
-    id: ID
-    itemName: String
-    purchaseOrderId: String
-    description: String
-    unit: String
-    quantity: Int
-    unitCost: Float
-    amount: Float
-    category: String
-    isDeleted: Boolean
-    actualQuantityReceived: Int
-    currentInput: Int
-    PurchaseOrder: PurchaseOrderType
-    PurchaseOrderItem: PurchaseOrderItemType
-    inventoryNumber : String
-    tag : String
-    iarId : String
-    icsId : String
-    risId : String
-    parId : String
-    income: String
-    details: String
-    mds: String
-    # PAR signatory fields
-    parReceivedFrom: String
-    parReceivedFromPosition: String
-    parReceivedBy: String
-    parReceivedByPosition: String
-    parDepartment: String
-    parAssignedDate: String
-    splitGroupId: String
-    splitFromItemId: Int
-    splitIndex: Int
-}
-
-
 #INPUTS
 
 # input later

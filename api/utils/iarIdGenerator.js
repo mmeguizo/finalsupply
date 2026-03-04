@@ -1,6 +1,6 @@
-import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
+import inspectionAcceptanceReport from '../models/inspectionacceptancereport.js';
 import { Op, Sequelize } from 'sequelize'; // Import Sequelize for literal
-  
+
 /**
  * Generates a new IAR ID in the format "MMDDYY-XXX-CC".
  * MMDDYY: Month, Day, Year (last two digits) of generation.
@@ -42,13 +42,18 @@ export async function generateNewIarId(userLocation) {
     where: {
       createdAt: {
         [Op.gte]: new Date(`${currentYearFull}-01-01T00:00:00.000Z`),
-        [Op.lt]: new Date(`${currentYearFull + 1}-01-01T00:00:00.000Z`)
-      }
+        [Op.lt]: new Date(`${currentYearFull + 1}-01-01T00:00:00.000Z`),
+      },
     }, // Order by the numeric part of the IAR series number in descending order
     order: [
-      [Sequelize.literal("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(iarId, '-', 2), '-', -1) AS UNSIGNED)"), 'DESC'],
-      ['createdAt', 'DESC'] // Secondary sort by creation date in case series numbers are the same (unlikely but good for consistency)
-    ]
+      [
+        Sequelize.literal(
+          "CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(iarId, '-', 2), '-', -1) AS UNSIGNED)"
+        ),
+        'DESC',
+      ],
+      ['createdAt', 'DESC'], // Secondary sort by creation date in case series numbers are the same (unlikely but good for consistency)
+    ],
   });
 
   let nextSeriesNumber = 1;

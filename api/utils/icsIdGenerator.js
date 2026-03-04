@@ -62,7 +62,12 @@ export async function generateNewIcsId(tag) {
     },
     order: [
       // Order by the numeric part of the ID (NNNN) to get the highest sequence.
-      [Sequelize.literal("CAST(REPLACE(SUBSTRING_INDEX(icsId, '-', -1), SUBSTRING(SUBSTRING_INDEX(icsId, '-', -1), -1), '') AS UNSIGNED)"), 'DESC'],
+      [
+        Sequelize.literal(
+          "CAST(REPLACE(SUBSTRING_INDEX(icsId, '-', -1), SUBSTRING(SUBSTRING_INDEX(icsId, '-', -1), -1), '') AS UNSIGNED)"
+        ),
+        'DESC',
+      ],
     ],
     attributes: ['icsId'],
   });
@@ -82,7 +87,8 @@ export async function generateNewIcsId(tag) {
   }
 
   // Also check against the last generated sequence in this batch to avoid duplicates
-  const lastGeneratedSequence = tag === 'high' ? lastGeneratedIcsSequenceHigh : lastGeneratedIcsSequenceLow;
+  const lastGeneratedSequence =
+    tag === 'high' ? lastGeneratedIcsSequenceHigh : lastGeneratedIcsSequenceLow;
   if (lastGeneratedSequence >= newSequence) {
     newSequence = lastGeneratedSequence + 1;
   }

@@ -39,7 +39,12 @@ export async function generateNewRisId() {
       },
     },
     order: [
-      [Sequelize.literal("CAST(REPLACE(SUBSTRING_INDEX(risId, '-', -1), SUBSTRING(SUBSTRING_INDEX(risId, '-', -1), -1), '') AS UNSIGNED)"), 'DESC'],
+      [
+        Sequelize.literal(
+          "CAST(REPLACE(SUBSTRING_INDEX(risId, '-', -1), SUBSTRING(SUBSTRING_INDEX(risId, '-', -1), -1), '') AS UNSIGNED)"
+        ),
+        'DESC',
+      ],
     ],
     attributes: ['risId'],
   });

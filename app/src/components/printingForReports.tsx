@@ -1,16 +1,10 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
-import { InspectionReportDialogProps } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
-import InspectionAcceptanceForReporting  from "./previewDocumentFiles/InspectionAcceptanceForReporting";
-import {getInspectionReportTemplateForPrinting} from "./printDocumentFiles/inspectionAcceptanceForReporting";
+import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { InspectionReportDialogProps } from '../types/printReportModal/types';
+import { capitalizeFirstLetter } from '../utils/generalUtils';
+import useSignatoryStore from '../stores/signatoryStore';
+import InspectionAcceptanceForReporting from './previewDocumentFiles/InspectionAcceptanceForReporting';
+import { getInspectionReportTemplateForPrinting } from './printDocumentFiles/inspectionAcceptanceForReporting';
 
 export default function ForPrintReporting({
   open,
@@ -19,16 +13,14 @@ export default function ForPrintReporting({
   title,
 }: InspectionReportDialogProps) {
   const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
+    state.getSignatoryByRole('Inspector Officer')
   );
   const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
+    state.getSignatoryByRole('Property And Supply Officer')
   );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  const receivedFrom = useSignatoryStore((state) => state.getSignatoryByRole('Recieved From'));
 
-  console.log("reportData", reportData);
+  console.log('reportData', reportData);
   //add the signatories to the data to be send
   let signatories = {
     inspectionOfficer: capitalizeFirstLetter(InspectorOffice?.name),
@@ -48,7 +40,7 @@ export default function ForPrintReporting({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(getReportTemplate(reportData));
       setTimeout(() => {

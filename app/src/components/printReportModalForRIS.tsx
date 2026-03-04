@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,15 +7,15 @@ import {
   Button,
   TextField,
   Box,
-} from "@mui/material";
-import InspectionAcceptanceReport from "./previewDocumentFiles/InspectionAcceptanceReport";
-import RequisitionReport from "./previewDocumentFiles/requisitionAndIssueSlip";
-import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
-import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import { UPDATE_RISID } from "../graphql/mutations/requisitionIS.mutation";
-import { UPDATE_ITEM_PURPOSE } from "../graphql/mutations/inventoryIAR.mutation";
-import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
+} from '@mui/material';
+import InspectionAcceptanceReport from './previewDocumentFiles/InspectionAcceptanceReport';
+import RequisitionReport from './previewDocumentFiles/requisitionAndIssueSlip';
+import { getRequisitionAndIssueSlip } from './printDocumentFiles/requisitionAndIssueSlip';
+import { InspectionReportDialogPropsForIAR } from '../types/printReportModal/types';
+import { useQuery, useMutation, useApolloClient } from '@apollo/client';
+import { UPDATE_RISID } from '../graphql/mutations/requisitionIS.mutation';
+import { UPDATE_ITEM_PURPOSE } from '../graphql/mutations/inventoryIAR.mutation';
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from '../graphql/queries/requisitionIssueslip';
 export default function PrintReportDialogForRIS({
   open,
   handleClose,
@@ -29,17 +29,13 @@ export default function PrintReportDialogForRIS({
   });
 
   const [updatePurpose] = useMutation(UPDATE_ITEM_PURPOSE);
-  const [purpose, setPurpose] = useState("");
+  const [purpose, setPurpose] = useState('');
 
   // Pre-fill purpose from saved data
   useEffect(() => {
     if (open) {
-      const items = Array.isArray(reportData)
-        ? reportData
-        : reportData
-          ? [reportData]
-          : [];
-      setPurpose(items[0]?.purpose || "");
+      const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+      setPurpose(items[0]?.purpose || '');
     }
   }, [open, reportData]);
 
@@ -62,7 +58,7 @@ export default function PrintReportDialogForRIS({
       }
 
       // Continue with printing
-      const printWindow = window.open("", "_blank");
+      const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(getReportTemplate(reportData));
         setTimeout(() => {
@@ -72,7 +68,7 @@ export default function PrintReportDialogForRIS({
       }
       handleClose();
     } catch (error) {
-      console.error("Error updating RIS:", error);
+      console.error('Error updating RIS:', error);
     }
   };
   // Otherwise, show the dialog with preview

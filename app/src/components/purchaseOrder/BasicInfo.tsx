@@ -1,8 +1,8 @@
-import React from "react";
-import { Grid, TextField } from "@mui/material";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
-import { PurchaseOrderFormData } from "../../types/purchaseOrder";
+import React from 'react';
+import { Grid, TextField } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { PurchaseOrderFormData } from '../../types/purchaseOrder';
 
 interface BasicInfoProps {
   formData: PurchaseOrderFormData;
@@ -71,7 +71,7 @@ export const BasicInfo: React.FC<BasicInfoProps> = ({
           <DatePicker
             label="Payment Date"
             value={formData.dateofpayment}
-            onChange={(date) => handleDateChange(date, "dateofpayment")}
+            onChange={(date) => handleDateChange(date, 'dateofpayment')}
             disabled={true}
           />
         </LocalizationProvider>

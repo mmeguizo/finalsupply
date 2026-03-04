@@ -1,42 +1,39 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
-import InspectionAcceptanceReportForIAR from "./previewDocumentFiles/InspectionAcceptanceReportForIAR";
-import PropertyAcknowledgementReceipt from "./previewDocumentFiles/propertyAcknowledgementReceipt";
-import RequisitionAndIssueSlip from "./previewDocumentFiles/requisitionAndIssueSlip";
-import InventoryCustodianSlip from "./previewDocumentFiles/inventoryCustodianSlip";
-import { getInspectionReportTemplateForIAR } from "./printDocumentFiles/inspectionAcceptanceRerportForIAR";
-import { getPropertyAcknowledgementReciept } from "./printDocumentFiles/propertyAcknowledgementReceipt";
-import { getRequisitionAndIssueSlip } from "./printDocumentFiles/requisitionAndIssueSlip";
-import { getInventoryTemplate } from "./printDocumentFiles/inventoryCustodianslip";
-import { InspectionReportDialogPropsForIAR } from "../types/printReportModal/types";
+import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import InspectionAcceptanceReportForIAR from './previewDocumentFiles/InspectionAcceptanceReportForIAR';
+import PropertyAcknowledgementReceipt from './previewDocumentFiles/propertyAcknowledgementReceipt';
+import RequisitionAndIssueSlip from './previewDocumentFiles/requisitionAndIssueSlip';
+import InventoryCustodianSlip from './previewDocumentFiles/inventoryCustodianSlip';
+import { getInspectionReportTemplateForIAR } from './printDocumentFiles/inspectionAcceptanceRerportForIAR';
+import { getPropertyAcknowledgementReciept } from './printDocumentFiles/propertyAcknowledgementReceipt';
+import { getRequisitionAndIssueSlip } from './printDocumentFiles/requisitionAndIssueSlip';
+import { getInventoryTemplate } from './printDocumentFiles/inventoryCustodianslip';
+import { InspectionReportDialogPropsForIAR } from '../types/printReportModal/types';
 
 type Props = InspectionReportDialogPropsForIAR & {
-  poOverrides?: { invoice?: string; dateOfPayment?: string; income?: string; mds?: string; details?: string };
+  poOverrides?: {
+    invoice?: string;
+    dateOfPayment?: string;
+    income?: string;
+    mds?: string;
+    details?: string;
+  };
 };
-
-
 
 export default function PrintReportDialogForIAR({
   open,
   handleClose,
   reportData,
-  reportType = "inspection",
+  reportType = 'inspection',
   title,
   signatories = {},
-  poOverrides
+  poOverrides,
 }: Props) {
-
   const [showPrintView, setShowPrintView] = useState(false);
-  console.log("reportData:", reportData);
+  console.log('reportData:', reportData);
 
   React.useEffect(() => {
-    console.log("reportData:", reportData);
+    console.log('reportData:', reportData);
   }, [signatories]);
 
   const getReportTemplate = (data: any) => {
@@ -48,7 +45,7 @@ export default function PrintReportDialogForIAR({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(getReportTemplate(reportData));
       setTimeout(() => {
@@ -62,14 +59,13 @@ export default function PrintReportDialogForIAR({
   // If print view is active, render the print-friendly report
   if (showPrintView) {
     return (
-          <InspectionAcceptanceReportForIAR
-            signatories={signatories}
-            reportData={reportData}
-            onClose={handleClosePrintView}
-            poOverrides={poOverrides}
-          />
-        );
-   
+      <InspectionAcceptanceReportForIAR
+        signatories={signatories}
+        reportData={reportData}
+        onClose={handleClosePrintView}
+        poOverrides={poOverrides}
+      />
+    );
   }
 
   // Otherwise, show the dialog with preview
@@ -92,4 +88,3 @@ export default function PrintReportDialogForIAR({
     </Dialog>
   );
 }
-

@@ -1,8 +1,8 @@
-import * as React from "react";
-import { create } from "zustand";
+import * as React from 'react';
+import { create } from 'zustand';
 // @ts-ignore
-import { GET_SIGNATORIES } from "../graphql/queries/signatory.query";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
+import { GET_SIGNATORIES } from '../graphql/queries/signatory.query';
+import { useQuery, useMutation, useApolloClient } from '@apollo/client';
 import {
   CircularProgress,
   Alert,
@@ -13,31 +13,31 @@ import {
   Button,
   Tooltip,
   Backdrop,
-} from "@mui/material";
-import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
-import { PageContainer } from "@toolpad/core/PageContainer";
+} from '@mui/material';
+import { DataGrid, GridColDef, GridRowParams } from '@mui/x-data-grid';
+import { PageContainer } from '@toolpad/core/PageContainer';
 //@ts-ignore
-import AddIcon from "@mui/icons-material/Add";
+import AddIcon from '@mui/icons-material/Add';
 //@ts-ignore
-import SignatoryModal from "../components/signatorymodel";
+import SignatoryModal from '../components/signatorymodel';
 import {
   ADD_SIGNATORY,
   UPDATE_SIGNATORY,
   DELETE_SIGNATORY,
   REACTIVATE_SIGNATORY,
-} from "../graphql/mutations/signatory.mutation";
-import ConfirmDialog from "../components/confirmationdialog";
-import NotificationDialog from "../components/notifications";
+} from '../graphql/mutations/signatory.mutation';
+import ConfirmDialog from '../components/confirmationdialog';
+import NotificationDialog from '../components/notifications';
 // import { CustomToolbarForTable } from "../layouts/ui/customtoolbarfortable";
 // Add this import
 //@ts-ignore
-import { SignatoryToolbar } from "../layouts/ui/SignatoryToolbar";
-import DrawIcon from "@mui/icons-material/Draw";
+import { SignatoryToolbar } from '../layouts/ui/SignatoryToolbar';
+import DrawIcon from '@mui/icons-material/Draw';
 //@ts-ignore
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { SignatoryTypes } from "../types/signatory/signatoryTypes";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { SignatoryTypes } from '../types/signatory/signatoryTypes';
 // Add this interface at the top of your file
-import useSignatoryStore from "../stores/signatoryStore";
+import useSignatoryStore from '../stores/signatoryStore';
 
 export default function Signatory() {
   // State management
@@ -46,21 +46,18 @@ export default function Signatory() {
   const [openSignatoryModal, setOpenSignatoryModal] = React.useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
 
-  const [selectedSignatory, setSelectedSignatory] =
-    React.useState<SignatoryTypes | null>(null);
-  const [editingSignatory, setEditingSignatory] =
-    React.useState<SignatoryTypes | null>(null);
-  const [deletingSignatory, setDeletingSignatory] =
-    React.useState<SignatoryTypes | null>(null);
+  const [selectedSignatory, setSelectedSignatory] = React.useState<SignatoryTypes | null>(null);
+  const [editingSignatory, setEditingSignatory] = React.useState<SignatoryTypes | null>(null);
+  const [deletingSignatory, setDeletingSignatory] = React.useState<SignatoryTypes | null>(null);
 
   const fetchSignatories = useSignatoryStore((state) => state.fetchSignatories);
 
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
-  const [notificationMessage, setNotificationMessage] = React.useState("");
+  const [notificationMessage, setNotificationMessage] = React.useState('');
   const [notificationSeverity, setNotificationSeverity] = React.useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
+    'success' | 'error' | 'info' | 'warning'
+  >('success');
 
   const client = useApolloClient();
 
@@ -68,7 +65,7 @@ export default function Signatory() {
   const [addSignatory] = useMutation(ADD_SIGNATORY, {
     refetchQueries: [{ query: GET_SIGNATORIES }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "signatories" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'signatories' });
       client.cache.gc();
     },
   });
@@ -76,7 +73,7 @@ export default function Signatory() {
   const [updateSignatory] = useMutation(UPDATE_SIGNATORY, {
     refetchQueries: [{ query: GET_SIGNATORIES }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "signatories" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'signatories' });
       client.cache.gc();
     },
   });
@@ -96,9 +93,7 @@ export default function Signatory() {
 
   // Handle row click to show details
   const handleRowClick = (params: GridRowParams) => {
-    const clickedSignatory = data?.signatories.find(
-      (signatory: any) => signatory.id === params.id
-    );
+    const clickedSignatory = data?.signatories.find((signatory: any) => signatory.id === params.id);
     setSelectedSignatory(clickedSignatory || null);
   };
 
@@ -155,19 +150,15 @@ export default function Signatory() {
       handleCloseModal();
 
       // Show success notification
-      setNotificationMessage(
-        `Signatory ${editingSignatory ? "updated" : "added"} successfully`
-      );
-      setNotificationSeverity("success");
+      setNotificationMessage(`Signatory ${editingSignatory ? 'updated' : 'added'} successfully`);
+      setNotificationSeverity('success');
       setShowNotification(true);
     } catch (err) {
-      console.error("Error saving signatory:", err);
+      console.error('Error saving signatory:', err);
 
       // Show error notification
-      setNotificationMessage(
-        `Error ${editingSignatory ? "updating" : "adding"} signatory`
-      );
-      setNotificationSeverity("error");
+      setNotificationMessage(`Error ${editingSignatory ? 'updating' : 'adding'} signatory`);
+      setNotificationSeverity('error');
       setShowNotification(true);
     } finally {
       setIsSubmitting(false);
@@ -183,10 +174,8 @@ export default function Signatory() {
         });
 
         if (data?.deleteSignatory) {
-          setNotificationMessage(
-            `Signatory ${deletingSignatory.name} deleted successfully`
-          );
-          setNotificationSeverity("success");
+          setNotificationMessage(`Signatory ${deletingSignatory.name} deleted successfully`);
+          setNotificationSeverity('success');
           setShowNotification(true);
 
           // Clear selectedSignatory if it was the deleted one
@@ -195,10 +184,10 @@ export default function Signatory() {
           }
         }
       } catch (error) {
-        console.error("Error deleting signatory:", error);
+        console.error('Error deleting signatory:', error);
 
-        setNotificationMessage("Error deleting signatory");
-        setNotificationSeverity("error");
+        setNotificationMessage('Error deleting signatory');
+        setNotificationSeverity('error');
         setShowNotification(true);
       }
     }
@@ -220,15 +209,15 @@ export default function Signatory() {
 
   // Define signatory columns for DataGrid
   const signatoryColumns: GridColDef[] = [
-    { field: "name", headerName: "Name", flex: 1 },
-    { field: "role", headerName: "Role", flex: 1 },
+    { field: 'name', headerName: 'Name', flex: 1 },
+    { field: 'role', headerName: 'Role', flex: 1 },
     {
-      field: "actions",
-      headerName: "Actions",
+      field: 'actions',
+      headerName: 'Actions',
       flex: 0.5,
       sortable: false,
       renderCell: (params) => (
-        <Stack direction="row" sx={{ marginTop: "6%" }} spacing={1}>
+        <Stack direction="row" sx={{ marginTop: '6%' }} spacing={1}>
           <Tooltip title="Edit">
             {/* <Button
               size="small"
@@ -239,7 +228,7 @@ export default function Signatory() {
             </Button> */}
             <DrawIcon
               color="warning"
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: 'pointer' }}
               onClick={() => handleOpenEditModal(params.row)}
             />
           </Tooltip>
@@ -254,7 +243,7 @@ export default function Signatory() {
             </Button> */}
             <DeleteForeverIcon
               color="error"
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: 'pointer' }}
               onClick={() => handleDeleteModal(params.row)}
             />
           </Tooltip>
@@ -264,7 +253,7 @@ export default function Signatory() {
   ];
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       {loading && (
         <Box display="flex" justifyContent="center" p={2}>
           <CircularProgress />
@@ -344,8 +333,7 @@ export default function Signatory() {
                 </Typography>
                 {selectedSignatory.purchaseOrderId && (
                   <Typography>
-                    <strong>Purchase Order ID:</strong>{" "}
-                    {selectedSignatory.purchaseOrderId}
+                    <strong>Purchase Order ID:</strong> {selectedSignatory.purchaseOrderId}
                   </Typography>
                 )}
               </Box>
@@ -371,7 +359,7 @@ export default function Signatory() {
 
       <Backdrop
         sx={{
-          color: "#fff",
+          color: '#fff',
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
         open={isSubmitting}

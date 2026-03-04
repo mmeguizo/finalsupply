@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,19 +23,15 @@ import {
   IconButton,
   Tooltip,
   Checkbox,
-} from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+} from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface GenerateIarModalProps {
   open: boolean;
   handleClose: () => void;
   purchaseOrder: any;
-  onGenerate: (
-    purchaseOrderId: number,
-    items: any[],
-    invoice: string,
-  ) => Promise<any>;
+  onGenerate: (purchaseOrderId: number, items: any[], invoice: string) => Promise<any>;
   isSubmitting: boolean;
 }
 
@@ -64,8 +60,8 @@ export default function GenerateIarModal({
   isSubmitting,
 }: GenerateIarModalProps) {
   const [lineItems, setLineItems] = React.useState<IarLineItem[]>([]);
-  const [error, setError] = React.useState<string>("");
-  const [invoice, setInvoice] = React.useState<string>("");
+  const [error, setError] = React.useState<string>('');
+  const [invoice, setInvoice] = React.useState<string>('');
 
   // Initialize line items from PO items
   React.useEffect(() => {
@@ -78,28 +74,28 @@ export default function GenerateIarModal({
           const remaining = Math.max(0, qty - received);
           return {
             purchaseOrderItemId: item.id,
-            description: item.description || "",
-            specification: item.specification || "",
-            generalDescription: item.generalDescription || "",
-            unit: item.unit || "",
+            description: item.description || '',
+            specification: item.specification || '',
+            generalDescription: item.generalDescription || '',
+            unit: item.unit || '',
             quantity: qty,
             actualQuantityReceived: received,
             remaining,
-            category: item.category || "",
-            tag: item.tag || "",
+            category: item.category || '',
+            tag: item.tag || '',
             received: 0, // default to 0 so user types the received qty
-            selected: remaining > 0, // auto-select items with remaining qty
+            selected: false, // By default, no items are checked - user must explicitly select
             unitCost: Number(item.unitCost ?? 0),
-            inventoryNumber: item.inventoryNumber || "",
+            inventoryNumber: item.inventoryNumber || '',
           };
         });
       setLineItems(items);
       // Pre-fill invoice from PO if available; otherwise leave blank for user to fill
-      setInvoice(purchaseOrder.invoice || "");
-      setError("");
+      setInvoice(purchaseOrder.invoice || '');
+      setError('');
     } else {
       setLineItems([]);
-      setInvoice("");
+      setInvoice('');
     }
   }, [purchaseOrder, open]);
 
@@ -109,12 +105,12 @@ export default function GenerateIarModal({
       updated[index] = { ...updated[index], [field]: value };
 
       // If changing category away from ICS, clear tag
-      if (field === "category" && value !== "inventory custodian slip") {
-        updated[index].tag = "";
+      if (field === 'category' && value !== 'inventory custodian slip') {
+        updated[index].tag = '';
       }
 
       // Clamp received to remaining
-      if (field === "received") {
+      if (field === 'received') {
         const numeric = Number(value);
         if (isNaN(numeric) || numeric < 0) {
           updated[index].received = 0;
@@ -143,7 +139,7 @@ export default function GenerateIarModal({
       prev.map((item) => ({
         ...item,
         selected: item.remaining > 0,
-      })),
+      }))
     );
   };
 
@@ -152,30 +148,21 @@ export default function GenerateIarModal({
       prev.map((item) => ({
         ...item,
         selected: false,
-      })),
+      }))
     );
   };
 
   const handleSubmit = async () => {
-    setError("");
+    setError('');
 
-    // Validate invoice
-    if (!invoice || invoice.trim() === "") {
-      setError(
-        "Invoice number is required. Please enter the invoice number before generating the IAR.",
-      );
-      return;
-    }
+    // Invoice is now optional - can be added later on PO edit or IAR
+    // Removed: if (!invoice || invoice.trim() === '') { ... }
 
     // Validate selected items
-    const selectedItems = lineItems.filter(
-      (item) => item.selected && item.received > 0,
-    );
+    const selectedItems = lineItems.filter((item) => item.selected && item.received > 0);
 
     if (selectedItems.length === 0) {
-      setError(
-        "Please select at least one item with a received quantity greater than 0.",
-      );
+      setError('Please select at least one item with a received quantity greater than 0.');
       return;
     }
 
@@ -183,13 +170,13 @@ export default function GenerateIarModal({
     for (const item of selectedItems) {
       if (!item.category) {
         setError(
-          `Item "${item.description || "N/A"}" must have a category (PAR/ICS/RIS) selected.`,
+          `Item "${item.description || 'N/A'}" must have a category (PAR/ICS/RIS) selected.`
         );
         return;
       }
-      if (item.category === "inventory custodian slip" && !item.tag) {
+      if (item.category === 'inventory custodian slip' && !item.tag) {
         setError(
-          `Item "${item.description || "N/A"}" is ICS and must have a tag (Low/High) selected.`,
+          `Item "${item.description || 'N/A'}" is ICS and must have a tag (Low/High) selected.`
         );
         return;
       }
@@ -206,13 +193,11 @@ export default function GenerateIarModal({
     try {
       await onGenerate(Number(purchaseOrder.id), mutationItems, invoice.trim());
     } catch (err: any) {
-      setError(err.message || "Failed to generate IAR");
+      setError(err.message || 'Failed to generate IAR');
     }
   };
 
-  const selectedCount = lineItems.filter(
-    (i) => i.selected && i.received > 0,
-  ).length;
+  const selectedCount = lineItems.filter((i) => i.selected && i.received > 0).length;
   const totalReceiving = lineItems
     .filter((i) => i.selected)
     .reduce((sum, i) => sum + i.received, 0);
@@ -223,7 +208,7 @@ export default function GenerateIarModal({
       onClose={handleClose}
       maxWidth="xl"
       fullWidth
-      PaperProps={{ sx: { minHeight: "50vh" } }}
+      PaperProps={{ sx: { minHeight: '50vh' } }}
     >
       <DialogTitle>
         <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -232,19 +217,10 @@ export default function GenerateIarModal({
               Generate IAR
             </Typography>
             {purchaseOrder && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 PO #{purchaseOrder.poNumber} — {purchaseOrder.supplier}
                 {purchaseOrder.campus && (
-                  <Chip
-                    label={purchaseOrder.campus}
-                    size="small"
-                    color="primary"
-                    sx={{ ml: 1 }}
-                  />
+                  <Chip label={purchaseOrder.campus} size="small" color="primary" sx={{ ml: 1 }} />
                 )}
               </Typography>
             )}
@@ -252,7 +228,7 @@ export default function GenerateIarModal({
           <Box>
             <Chip
               label={`${selectedCount} item(s) selected`}
-              color={selectedCount > 0 ? "success" : "default"}
+              color={selectedCount > 0 ? 'success' : 'default'}
               size="small"
             />
           </Box>
@@ -261,15 +237,14 @@ export default function GenerateIarModal({
 
       <DialogContent dividers>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
             {error}
           </Alert>
         )}
 
         <Alert severity="info" sx={{ mb: 2 }}>
-          Select items to receive, set the category (PAR/ICS/RIS), tag for ICS
-          items, and the quantity to receive. Items with 0 remaining are already
-          fully received.
+          Select items to receive, set the category (PAR/ICS/RIS), tag for ICS items, and the
+          quantity to receive. Items with 0 remaining are already fully received.
         </Alert>
 
         {/* Invoice field — pre-filled from PO if available, required before generating */}
@@ -283,8 +258,8 @@ export default function GenerateIarModal({
             onChange={(e) => setInvoice(e.target.value)}
             helperText={
               purchaseOrder?.invoice
-                ? "Pre-filled from Purchase Order — you may edit if needed."
-                : "No invoice on the PO. Enter the invoice number here."
+                ? 'Pre-filled from Purchase Order — you may edit if needed.'
+                : 'No invoice on the PO. Enter the invoice number here.'
             }
             placeholder="e.g. INV-2025-001"
           />
@@ -294,40 +269,30 @@ export default function GenerateIarModal({
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox" sx={{ fontWeight: "bold" }}>
+                <TableCell padding="checkbox" sx={{ fontWeight: 'bold' }}>
                   <Checkbox
                     indeterminate={
                       selectedCount > 0 &&
-                      selectedCount <
-                        lineItems.filter((i) => i.remaining > 0).length
+                      selectedCount < lineItems.filter((i) => i.remaining > 0).length
                     }
                     checked={
                       lineItems.filter((i) => i.remaining > 0).length > 0 &&
-                      selectedCount ===
-                        lineItems.filter((i) => i.remaining > 0).length
+                      selectedCount === lineItems.filter((i) => i.remaining > 0).length
                     }
-                    onChange={(e) =>
-                      e.target.checked ? selectAll() : deselectAll()
-                    }
+                    onChange={(e) => (e.target.checked ? selectAll() : deselectAll())}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Specification</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Gen. Desc</TableCell>
-                <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>
-                  Qty
-                </TableCell>
-                <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Specification</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Gen. Desc</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Qty</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
                   Already Received
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>
-                  Remaining
-                </TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Category</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Tag</TableCell>
-                <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>
-                  Receive Qty
-                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Remaining</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Tag</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Receive Qty</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -339,9 +304,7 @@ export default function GenerateIarModal({
                     sx={{
                       opacity: fullyReceived ? 0.5 : 1,
                       backgroundColor:
-                        item.selected && !fullyReceived
-                          ? "action.selected"
-                          : "inherit",
+                        item.selected && !fullyReceived ? 'action.selected' : 'inherit',
                     }}
                   >
                     <TableCell padding="checkbox">
@@ -357,12 +320,8 @@ export default function GenerateIarModal({
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Tooltip title={item.specification || ""}>
-                        <Typography
-                          variant="body2"
-                          noWrap
-                          sx={{ maxWidth: 180 }}
-                        >
+                      <Tooltip title={item.specification || ''}>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 180 }}>
                           {item.specification}
                         </Typography>
                       </Tooltip>
@@ -382,7 +341,7 @@ export default function GenerateIarModal({
                             sx={{
                               fontSize: 16,
                               ml: 0.5,
-                              verticalAlign: "middle",
+                              verticalAlign: 'middle',
                             }}
                           />
                         </Tooltip>
@@ -393,9 +352,7 @@ export default function GenerateIarModal({
                       <Select
                         size="small"
                         value={item.category}
-                        onChange={(e) =>
-                          updateLine(index, "category", e.target.value)
-                        }
+                        onChange={(e) => updateLine(index, 'category', e.target.value)}
                         disabled={fullyReceived || !item.selected}
                         sx={{ minWidth: 100 }}
                         displayEmpty
@@ -403,12 +360,8 @@ export default function GenerateIarModal({
                         <MenuItem value="" disabled>
                           <em>Select</em>
                         </MenuItem>
-                        <MenuItem value="property acknowledgement reciept">
-                          PAR
-                        </MenuItem>
-                        <MenuItem value="inventory custodian slip">
-                          ICS
-                        </MenuItem>
+                        <MenuItem value="property acknowledgement reciept">PAR</MenuItem>
+                        <MenuItem value="inventory custodian slip">ICS</MenuItem>
                         <MenuItem value="requisition issue slip">RIS</MenuItem>
                       </Select>
                     </TableCell>
@@ -416,13 +369,11 @@ export default function GenerateIarModal({
                       <Select
                         size="small"
                         value={item.tag}
-                        onChange={(e) =>
-                          updateLine(index, "tag", e.target.value)
-                        }
+                        onChange={(e) => updateLine(index, 'tag', e.target.value)}
                         disabled={
                           fullyReceived ||
                           !item.selected ||
-                          item.category !== "inventory custodian slip"
+                          item.category !== 'inventory custodian slip'
                         }
                         sx={{ minWidth: 80 }}
                         displayEmpty
@@ -439,14 +390,12 @@ export default function GenerateIarModal({
                         size="small"
                         type="number"
                         value={item.received}
-                        onChange={(e) =>
-                          updateLine(index, "received", Number(e.target.value))
-                        }
+                        onChange={(e) => updateLine(index, 'received', Number(e.target.value))}
                         disabled={fullyReceived || !item.selected}
                         inputProps={{
                           min: 0,
                           max: item.remaining,
-                          style: { textAlign: "center", width: 60 },
+                          style: { textAlign: 'center', width: 60 },
                         }}
                       />
                     </TableCell>
@@ -456,11 +405,7 @@ export default function GenerateIarModal({
               {lineItems.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ py: 2 }}
-                    >
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                       No items in this purchase order.
                     </Typography>
                   </TableCell>
@@ -471,7 +416,7 @@ export default function GenerateIarModal({
         </TableContainer>
 
         {selectedCount > 0 && (
-          <Box sx={{ mt: 2, display: "flex", gap: 2, alignItems: "center" }}>
+          <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
             <Chip
               label={`Total receiving: ${totalReceiving} unit(s)`}
               color="primary"
@@ -492,9 +437,7 @@ export default function GenerateIarModal({
           disabled={isSubmitting || selectedCount === 0}
           startIcon={<SaveIcon />}
         >
-          {isSubmitting
-            ? "Generating..."
-            : `Generate IAR (${selectedCount} items)`}
+          {isSubmitting ? 'Generating...' : `Generate IAR (${selectedCount} items)`}
         </Button>
       </DialogActions>
     </Dialog>

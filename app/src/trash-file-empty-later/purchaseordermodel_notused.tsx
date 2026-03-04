@@ -1,6 +1,6 @@
 /*eslint no-unused-vars: "off"*/
 
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,26 +10,26 @@ import {
   TextField,
   Typography,
   IconButton,
-} from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 // @ts-ignore
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteIcon from '@mui/icons-material/Delete';
 // @ts-ignore
-import AddIcon from "@mui/icons-material/Add";
+import AddIcon from '@mui/icons-material/Add';
 // @ts-ignore
 // import Grid from "@mui/material/Grid2";
 import Grid from '@mui/material/Grid';
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 // import LoadingButton from "@mui/lab/LoadingButton";
-import SaveIcon from "@mui/icons-material/Save";
-import { Unstable_NumberInput as NumberInput } from "@mui/base/Unstable_NumberInput";
+import SaveIcon from '@mui/icons-material/Save';
+import { Unstable_NumberInput as NumberInput } from '@mui/base/Unstable_NumberInput';
 // @ts-ignore
-import NumberInputBasic from "./numberInput";
-import dayjs from "dayjs";
-import { Dayjs } from "dayjs";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import NumberInputBasic from './numberInput';
+import dayjs from 'dayjs';
+import { Dayjs } from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -45,8 +45,6 @@ export default function PurchaseOrderModal({
   handleSave,
   isSubmitting,
 }: PurchaseOrderModalProps) {
- 
-
   // Add this near the top of the component with other state declarations
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
   const [recievedLimit, setrecievedLimit] = React.useState(0);
@@ -54,26 +52,22 @@ export default function PurchaseOrderModal({
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
-    poNumber: purchaseOrder?.poNumber || "",
-    supplier: purchaseOrder?.supplier || "",
-    address: purchaseOrder?.address || "",
-    placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
-    deliveryTerms: purchaseOrder?.deliveryTerms || "",
-    paymentTerms: purchaseOrder?.paymentTerms || "",
-    dateOfDelivery: purchaseOrder?.dateOfDelivery
-      ? dayjs(purchaseOrder.dateOfDelivery)
-      : dayjs(),
+    poNumber: purchaseOrder?.poNumber || '',
+    supplier: purchaseOrder?.supplier || '',
+    address: purchaseOrder?.address || '',
+    placeOfDelivery: purchaseOrder?.placeOfDelivery || '',
+    deliveryTerms: purchaseOrder?.deliveryTerms || '',
+    paymentTerms: purchaseOrder?.paymentTerms || '',
+    dateOfDelivery: purchaseOrder?.dateOfDelivery ? dayjs(purchaseOrder.dateOfDelivery) : dayjs(),
     // dateofdelivery: purchaseOrder?.dateofdelivery
     //   ? new Date(Number(purchaseOrder.dateofdelivery))
     //   : null,
-    dateOfPayment: purchaseOrder?.dateOfPayment
-      ? dayjs(purchaseOrder.dateOfPayment)
-      : dayjs(),
-    modeOfProcurement: purchaseOrder?.modeOfProcurement || "",
+    dateOfPayment: purchaseOrder?.dateOfPayment ? dayjs(purchaseOrder.dateOfPayment) : dayjs(),
+    modeOfProcurement: purchaseOrder?.modeOfProcurement || '',
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
-    status: purchaseOrder?.status || "",
-    invoice: purchaseOrder?.invoice || "",
+    status: purchaseOrder?.status || '',
+    invoice: purchaseOrder?.invoice || '',
   });
 
   // if adding item remove disabled in input
@@ -92,7 +86,7 @@ export default function PurchaseOrderModal({
   // };
   const isIndexFieldDisabled = (existingValue: any, field: string, itemIndex: number) => {
     // If editing (purchaseOrder exists) and value exists and not adding new item
-    if (field ) {
+    if (field) {
       // If adding new item, only enable the last item's category
       if (addingItem && itemIndex === formData.items.length - 1) {
         return false;
@@ -100,7 +94,7 @@ export default function PurchaseOrderModal({
       // Otherwise, disable if purchase order exists and has items
       return purchaseOrder && purchaseOrder.items.length !== 0 && existingValue;
     }
-    
+
     // For other fields, use the original logic
     // if (purchaseOrder && purchaseOrder.items.length !== 0 && existingValue && !addingItem) {
     //   return true;
@@ -108,11 +102,9 @@ export default function PurchaseOrderModal({
     return false;
   };
 
-
   React.useEffect(() => {
     if (purchaseOrder) {
-
-      if(purchaseOrder.status === "completed"){
+      if (purchaseOrder.status === 'completed') {
         setAddItemButtonDisable(true);
       }
       // Map items properly before setting state
@@ -126,20 +118,19 @@ export default function PurchaseOrderModal({
 
       // Set the formData with the latest purchaseOrder values
       setFormData({
-        poNumber: purchaseOrder.poNumber || "",
-        supplier: purchaseOrder.supplier || "",
-        address: purchaseOrder.address || "",
-        placeOfDelivery: purchaseOrder.placeOfDelivery || "",
+        poNumber: purchaseOrder.poNumber || '',
+        supplier: purchaseOrder.supplier || '',
+        address: purchaseOrder.address || '',
+        placeOfDelivery: purchaseOrder.placeOfDelivery || '',
         dateOfPayment: dayjs(),
         dateOfDelivery: dayjs(),
-        deliveryTerms: purchaseOrder.deliveryTerms || "",
-        paymentTerms: purchaseOrder.paymentTerms || "",
-        modeOfProcurement: purchaseOrder.modeOfProcurement || "",
+        deliveryTerms: purchaseOrder.deliveryTerms || '',
+        paymentTerms: purchaseOrder.paymentTerms || '',
+        modeOfProcurement: purchaseOrder.modeOfProcurement || '',
         items: mappedItems || [],
         amount: purchaseOrder.amount || 0,
-        status: purchaseOrder.status || "",
-        invoice: purchaseOrder.invoice || "",
-       
+        status: purchaseOrder.status || '',
+        invoice: purchaseOrder.invoice || '',
       });
 
       // Reset additional states
@@ -148,19 +139,19 @@ export default function PurchaseOrderModal({
     } else {
       // Reset formData when adding new PO
       setFormData({
-        poNumber: "",
-        supplier: "",
-        address: "",
-        placeOfDelivery: "",
-        modeOfProcurement: "",
-        deliveryTerms: "",
-        paymentTerms: "",
+        poNumber: '',
+        supplier: '',
+        address: '',
+        placeOfDelivery: '',
+        modeOfProcurement: '',
+        deliveryTerms: '',
+        paymentTerms: '',
         dateOfPayment: dayjs(),
         dateOfDelivery: dayjs(),
         items: [],
         amount: 0,
-        status: "",
-        invoice: "",
+        status: '',
+        invoice: '',
       });
     }
   }, [purchaseOrder, open]); // Depend on both purchaseOrder and open
@@ -178,7 +169,7 @@ export default function PurchaseOrderModal({
   const handleDateChange = (date: Dayjs | null, field: string) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: date ? date.format("YYYY-MM-DD HH:mm:ss") : "",
+      [field]: date ? date.format('YYYY-MM-DD HH:mm:ss') : '',
     }));
   };
 
@@ -190,29 +181,26 @@ export default function PurchaseOrderModal({
       items: [
         ...formData.items,
         {
-          category: "",
-          itemName: "",
-          description: "",
-          unit: "",
+          category: '',
+          itemName: '',
+          description: '',
+          unit: '',
           quantity: 0,
           unitCost: 0,
           amount: 0,
           actualQuantityReceived: 0,
-          tag: "", // Add this field
+          tag: '', // Add this field
         },
       ],
     });
   };
 
-
-
   const updateItem = (index: number, field: string, value: any) => {
     const updatedItems = [...formData.items];
     const item = updatedItems[index];
     // Ensure currentInput does not exceed the remaining quantity
-    if (field === "currentInput") {
-      const remaining =
-        Number(item.quantity) - Number(item.actualQuantityReceived);
+    if (field === 'currentInput') {
+      const remaining = Number(item.quantity) - Number(item.actualQuantityReceived);
       value = Math.min(Math.max(value, 0), remaining); // Clamp value between 0 and remaining
     }
     updatedItems[index] = {
@@ -220,12 +208,11 @@ export default function PurchaseOrderModal({
       [field]: value,
     };
     // Auto-calculate amount if quantity or unitCost changes
-    if (field === "quantity" || field === "unitCost") {
+    if (field === 'quantity' || field === 'unitCost') {
       updatedItems[index].amount =
-        Number(updatedItems[index].quantity) *
-        Number(updatedItems[index].unitCost);
+        Number(updatedItems[index].quantity) * Number(updatedItems[index].unitCost);
     }
-      
+
     setFormData({
       ...formData,
       items: updatedItems,
@@ -236,26 +223,24 @@ export default function PurchaseOrderModal({
   const onSubmit = () => {
     // Clean items - remove __typename and handle _id appropriately
     const cleanedItems = formData.items.map((item: any) => {
-      
       delete item.recievelimit;
       // delete this since we will increment this on the backend no need an input here
       delete item.actualQuantityReceived;
       //remove later for test purposes
-      item.itemName = "";
+      item.itemName = '';
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
-
 
     // Format dates for GraphQL
     const formattedData = {
       ...formData,
       items: cleanedItems,
-      deliveryTerms: formData.deliveryTerms || "",
-      modeOfProcurement: formData.modeOfProcurement || "",
-      paymentTerms: formData.paymentTerms || "",
-      address : formData.address || "",
-      placeOfDelivery: formData.placeOfDelivery || "",
+      deliveryTerms: formData.deliveryTerms || '',
+      modeOfProcurement: formData.modeOfProcurement || '',
+      paymentTerms: formData.paymentTerms || '',
+      address: formData.address || '',
+      placeOfDelivery: formData.placeOfDelivery || '',
       poNumber: parseInt(formData.poNumber),
     };
     // Remove __typename, status from the main object if it exists
@@ -265,13 +250,10 @@ export default function PurchaseOrderModal({
     handleSave(cleanData);
   };
 
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {purchaseOrder
-          ? "Update Recieved Item or Invoice"
-          : "Add Purchase Order"}
+        {purchaseOrder ? 'Update Recieved Item or Invoice' : 'Add Purchase Order'}
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -308,7 +290,7 @@ export default function PurchaseOrderModal({
               disabled={purchaseOrder ? true : false}
             />
           </Grid>
-         
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -326,9 +308,7 @@ export default function PurchaseOrderModal({
                 name="dateOfPayment"
                 label="Payment Date"
                 value={dayjs(formData.dateOfPayment)}
-                onChange={(newValue) =>
-                  handleDateChange(newValue, "dateOfPayment")
-                }
+                onChange={(newValue) => handleDateChange(newValue, 'dateOfPayment')}
                 disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
@@ -339,9 +319,7 @@ export default function PurchaseOrderModal({
                 name="dateOfDelivery"
                 label="Delivery Date"
                 value={dayjs(formData.dateOfDelivery)}
-                onChange={(newValue) =>
-                  handleDateChange(newValue, "dateOfDelivery")
-                }
+                onChange={(newValue) => handleDateChange(newValue, 'dateOfDelivery')}
                 disabled={purchaseOrder ? true : false}
               />
             </LocalizationProvider>
@@ -349,10 +327,7 @@ export default function PurchaseOrderModal({
 
           {/* Items Section */}
           <Grid item xs={12}>
-            <Typography
-              variant="h6"
-              sx={{ mt: 2, mb: 2, display: "flex", alignItems: "center" }}
-            >
+            <Typography variant="h6" sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center' }}>
               Items
               <Button
                 startIcon={<AddIcon />}
@@ -362,7 +337,7 @@ export default function PurchaseOrderModal({
                 sx={{ ml: 2 }}
                 disabled={addItemButton}
               >
-                Add Item 
+                Add Item
               </Button>
             </Typography>
 
@@ -375,7 +350,7 @@ export default function PurchaseOrderModal({
                   mb: 2,
                   px: 2,
                   py: 1,
-                  backgroundColor: "background.default",
+                  backgroundColor: 'background.default',
                   borderRadius: 1,
                 }}
               >
@@ -415,10 +390,10 @@ export default function PurchaseOrderModal({
                 sx={{
                   mb: 1,
                   p: 0.5,
-                  alignItems: "center",
-                  "&:hover": { backgroundColor: "action.hover" },
+                  alignItems: 'center',
+                  '&:hover': { backgroundColor: 'action.hover' },
                   borderBottom: 1,
-                  borderColor: "divider",
+                  borderColor: 'divider',
                 }}
               >
                 <Grid item xs={1}>
@@ -426,41 +401,41 @@ export default function PurchaseOrderModal({
                     fullWidth
                     size="small"
                     value={item.category}
-                    onChange={(e) => updateItem(index, "category", e.target.value)}
+                    onChange={(e) => updateItem(index, 'category', e.target.value)}
                     label="Category"
                     disabled={isIndexFieldDisabled(item.category, 'category', index)}
                   >
-                    <MenuItem value={"property acknowledgement reciept"}>PAR</MenuItem>
-                    <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
-                    <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
+                    <MenuItem value={'property acknowledgement reciept'}>PAR</MenuItem>
+                    <MenuItem value={'inventory custodian slip'}>ICS</MenuItem>
+                    <MenuItem value={'requisition issue slip'}>RIS</MenuItem>
                   </Select>
                 </Grid>
 
                 {/* Add Tag dropdown for ICS items */}
-                {item.category === "inventory custodian slip" && (
+                {item.category === 'inventory custodian slip' && (
                   <Grid item xs={1}>
                     <Select
                       fullWidth
                       size="small"
-                      value={item.tag || ""}
-                      onChange={(e) => updateItem(index, "tag", e.target.value)}
+                      value={item.tag || ''}
+                      onChange={(e) => updateItem(index, 'tag', e.target.value)}
                       label="Tag"
                       disabled={isIndexFieldDisabled(item.tag, 'tag', index)}
                     >
-                      <MenuItem value={"low"}>Low Value</MenuItem>
-                      <MenuItem value={"high"}>High Value</MenuItem>
+                      <MenuItem value={'low'}>Low Value</MenuItem>
+                      <MenuItem value={'high'}>High Value</MenuItem>
                     </Select>
                   </Grid>
                 )}
 
                 {/* Adjust the width of description based on whether tag is showing */}
-                <Grid item xs={item.category === "inventory custodian slip" ? 2 : 3}>
+                <Grid item xs={item.category === 'inventory custodian slip' ? 2 : 3}>
                   <TextField
                     fullWidth
                     size="small"
                     placeholder="Description"
                     value={item.description}
-                    onChange={(e) => updateItem(index, "description", e.target.value)}
+                    onChange={(e) => updateItem(index, 'description', e.target.value)}
                     disabled={isIndexFieldDisabled(item.description, 'description', index)}
                   />
                 </Grid>
@@ -478,25 +453,34 @@ export default function PurchaseOrderModal({
                     }`}
                     inputProps={{
                       min: 0,
-                      max: Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) || 0,
-                      style: { textAlign: "right" }
+                      max:
+                        Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived)) ||
+                        0,
+                      style: { textAlign: 'right' },
                     }}
-                    value={item.currentInput || ""}
+                    value={item.currentInput || ''}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-                      const remaining = Math.max(0, Number(item.quantity) - Number(item.actualQuantityReceived));
+                      const remaining = Math.max(
+                        0,
+                        Number(item.quantity) - Number(item.actualQuantityReceived)
+                      );
                       if (value >= 0 && value <= remaining) {
-                        updateItem(index, "currentInput", value);
+                        updateItem(index, 'currentInput', value);
                       } else if (value > remaining) {
-                        updateItem(index, "currentInput", remaining);
+                        updateItem(index, 'currentInput', remaining);
                       }
                     }}
-                    disabled={Number(item.quantity) === Number(item.actualQuantityReceived) || !item.category}
+                    disabled={
+                      Number(item.quantity) === Number(item.actualQuantityReceived) ||
+                      !item.category
+                    }
                     sx={{
-                      "& input": { textAlign: "right" },
-                      backgroundColor: Number(item.actualQuantityReceived) === Number(item.quantity) 
-                        ? "action.disabledBackground" 
-                        : "transparent"
+                      '& input': { textAlign: 'right' },
+                      backgroundColor:
+                        Number(item.actualQuantityReceived) === Number(item.quantity)
+                          ? 'action.disabledBackground'
+                          : 'transparent',
                     }}
                   />
                 </Grid>
@@ -506,10 +490,10 @@ export default function PurchaseOrderModal({
                     size="small"
                     type="number"
                     placeholder="Qty"
-                    inputProps={{ min: 0, style: { textAlign: "right" } }}
+                    inputProps={{ min: 0, style: { textAlign: 'right' } }}
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.quantity, "quantity",index)}
+                    onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                    disabled={isIndexFieldDisabled(item.quantity, 'quantity', index)}
                   />
                 </Grid>
 
@@ -519,8 +503,8 @@ export default function PurchaseOrderModal({
                     size="small"
                     placeholder="Unit"
                     value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    disabled={isIndexFieldDisabled(item.unit,"unit",index)}
+                    onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                    disabled={isIndexFieldDisabled(item.unit, 'unit', index)}
                   />
                 </Grid>
 
@@ -542,12 +526,14 @@ export default function PurchaseOrderModal({
                     type="number"
                     placeholder="Unit Cost"
                     value={item.unitCost}
-                    onChange={(e) => updateItem(index, "unitCost", Number(e.target.value))}
-                    disabled={isIndexFieldDisabled(item.unitCost,"unitCost", index)}
+                    onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                    disabled={isIndexFieldDisabled(item.unitCost, 'unitCost', index)}
                     InputProps={{
-                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
+                      startAdornment: (
+                        <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
+                      ),
                     }}
-                    sx={{ "& input": { textAlign: "right" } }}
+                    sx={{ '& input': { textAlign: 'right' } }}
                   />
                 </Grid>
 
@@ -561,9 +547,11 @@ export default function PurchaseOrderModal({
                     disabled={true}
                     InputProps={{
                       readOnly: true,
-                      startAdornment: <Typography sx={{ color: "text.secondary", mr: 0.5 }}>₱</Typography>
+                      startAdornment: (
+                        <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
+                      ),
                     }}
-                    sx={{ "& input": { textAlign: "right" } }}
+                    sx={{ '& input': { textAlign: 'right' } }}
                   />
                 </Grid>
               </Grid>
@@ -736,7 +724,8 @@ export default function PurchaseOrderModal({
             ))}
 */
 
- {/* <Grid item xs={12} md={6}>
+{
+  /* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Mode of Procurement"
@@ -746,8 +735,10 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid> */}
-          {/* <Grid item xs={12} md={6}>
+          </Grid> */
+}
+{
+  /* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Delivery Terms"
@@ -756,8 +747,10 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid> */}
-          {/* <Grid item xs={12} md={6}>
+          </Grid> */
+}
+{
+  /* <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Payment Terms"
@@ -767,8 +760,10 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid> */}
-          {/* <Grid item xs={12} md={12}>
+          </Grid> */
+}
+{
+  /* <Grid item xs={12} md={12}>
             <TextField
               fullWidth
               label="Address"
@@ -777,4 +772,5 @@ export default function PurchaseOrderModal({
               onChange={handleChange}
               disabled={purchaseOrder ? true : false}
             />
-          </Grid> */}
+          </Grid> */
+}

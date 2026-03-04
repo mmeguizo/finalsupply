@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,7 +14,7 @@ import {
   FormHelperText,
   Box,
   Typography,
-} from "@mui/material";
+} from '@mui/material';
 
 interface DepartmentType {
   id?: string;
@@ -29,15 +29,10 @@ interface DepartmentModalProps {
   department: DepartmentType | null;
 }
 
-const DepartmentModal: React.FC<DepartmentModalProps> = ({
-  open,
-  onClose,
-  onSave,
-  department,
-}) => {
+const DepartmentModal: React.FC<DepartmentModalProps> = ({ open, onClose, onSave, department }) => {
   const [formData, setFormData] = useState<DepartmentType>({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,13 +41,13 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({
     if (department) {
       setFormData({
         id: department.id,
-        name: department.name || "",
-        description: department.description || "",
+        name: department.name || '',
+        description: department.description || '',
       });
     } else {
       setFormData({
-        name: "",
-        description: "",
+        name: '',
+        description: '',
       });
     }
     setErrors({});
@@ -69,7 +64,7 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: "",
+        [name]: '',
       }));
     }
   };
@@ -78,7 +73,7 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Department name is required";
+      newErrors.name = 'Department name is required';
     }
 
     setErrors(newErrors);
@@ -93,9 +88,7 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {department ? "Edit Department" : "Add New Department"}
-      </DialogTitle>
+      <DialogTitle>{department ? 'Edit Department' : 'Add New Department'}</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>

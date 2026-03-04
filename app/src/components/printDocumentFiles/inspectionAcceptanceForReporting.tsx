@@ -1,7 +1,6 @@
-
 export const getInspectionReportTemplateForPrinting = (signatories: any, reportData: any) => {
   const itemsArray = Array.isArray(reportData)
-    ? reportData.filter(item => item !== null && item !== undefined)
+    ? reportData.filter((item) => item !== null && item !== undefined)
     : [];
 
   const firstItem = itemsArray[0];
@@ -18,18 +17,17 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
   // const invoiceDate = purchaseOrder?.dateOfDelivery ? formatTimestampToDateTimeForPrinting(purchaseOrder.dateOfDelivery) : '';
   const dateInspected = purchaseOrder?.dateOfDelivery || '';
   // const dateInspected = purchaseOrder?.dateOfDelivery ? formatTimestampToDateTimeForPrinting(purchaseOrder.dateOfDelivery) : '';
-  const dateReceived = purchaseOrder?.dateOfDelivery ||  '';
+  const dateReceived = purchaseOrder?.dateOfDelivery || '';
   // const dateReceived = purchaseOrder?.dateOfDelivery ? formatTimestampToDateTimeForPrinting(purchaseOrder.dateOfDelivery) : '';
 
-  const airId = reportData[0]?.iarId
-  || '';
+  const airId = reportData[0]?.iarId || '';
 
   const totalAmount = itemsArray.reduce((sum, item) => {
     return sum + (item?.amount || 0);
   }, 0);
   const formatTotalAmount = `₱${totalAmount.toFixed(2)}`;
 
-  const isComplete = purchaseOrder?.status === "completed";
+  const isComplete = purchaseOrder?.status === 'completed';
 
   return `
     <!DOCTYPE html>
@@ -302,7 +300,9 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
             </tr>
           </thead>
           <tbody>
-            ${itemsArray.map((item: any, index: any) => `
+            ${itemsArray
+              .map(
+                (item: any, index: any) => `
               <tr>
                 <td>${index + 1}</td>
                 <td>${item.unit || ''}</td>
@@ -311,8 +311,12 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
                 <td>${item.unitCost || ''}</td>
                 <td>${item.amount || ''}</td>
               </tr>
-            `).join('')}
-            ${itemsArray.length === 0 ? `
+            `
+              )
+              .join('')}
+            ${
+              itemsArray.length === 0
+                ? `
               <tr>
                 <td></td>
                 <td></td>
@@ -321,7 +325,9 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
                 <td></td>
                 <td></td>
               </tr>
-            ` : ''}
+            `
+                : ''
+            }
           </tbody>
           <tfoot>
             <tr class="total-row">

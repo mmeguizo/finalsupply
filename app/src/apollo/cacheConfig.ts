@@ -1,10 +1,10 @@
-import { InMemoryCache } from "@apollo/client";
+import { InMemoryCache } from '@apollo/client';
 
 export const cache = new InMemoryCache({
   typePolicies: {
     // Ensure proper normalization for entities
     PurchaseOrder: {
-      keyFields: ["id"],
+      keyFields: ['id'],
       fields: {
         items: {
           // Replace items array on fetch/mutation to avoid duplications
@@ -16,13 +16,13 @@ export const cache = new InMemoryCache({
     },
     // Normalize types returned by IAR queries
     PurchaseOrderType: {
-      keyFields: ["id"],
+      keyFields: ['id'],
     },
     PurchaseOrderItemType: {
-      keyFields: ["id"],
+      keyFields: ['id'],
     },
     PurchaseOrderItem: {
-      keyFields: ["id"],
+      keyFields: ['id'],
     },
     Query: {
       fields: {

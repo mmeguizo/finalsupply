@@ -100,7 +100,24 @@ type ItemWithPurchaseOrder {
     icsDepartment: String
     icsAssignedDate: String
     purpose: String
+    icsDetails: String
+    parDetails: String
+    risDetails: String
     remarks: String
+    # PAR signatory fields
+    parReceivedFrom: String
+    parReceivedFromPosition: String
+    parReceivedBy: String
+    parReceivedByPosition: String
+    parDepartment: String
+    parAssignedDate: String
+    # RIS signatory fields
+    risReceivedFrom: String
+    risReceivedFromPosition: String
+    risReceivedBy: String
+    risReceivedByPosition: String
+    risDepartment: String
+    risAssignedDate: String
     splitGroupId: String
     splitFromItemId: Int
     splitIndex: Int
@@ -172,6 +189,9 @@ type Mutation {
   updateICSAssignment(input: UpdateICSAssignmentInput!): ItemWithPurchaseOrder!
   updateItemPurpose(ids: [ID!]!, purpose: String!): UpdatePurposeRemarksPayload!
   updateItemRemarks(ids: [ID!]!, remarks: String!): UpdatePurposeRemarksPayload!
+  updateIcsDetails(id: ID!, icsDetails: String!): UpdatePurposeRemarksPayload!
+  updateParDetails(id: ID!, parDetails: String!): UpdatePurposeRemarksPayload!
+  updateRisDetails(id: ID!, risDetails: String!): UpdatePurposeRemarksPayload!
 }
 
 type UpdatePurposeRemarksPayload {
