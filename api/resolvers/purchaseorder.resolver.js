@@ -350,6 +350,31 @@ const purchaseorderResolver = {
         'inventory custodian slip',
         'requisition issue slip',
       ];
+      const normalizeExistingItemClassification = (field, value) => {
+        if (field !== 'category' && field !== 'tag') {
+          return value;
+        }
+
+        if (value === undefined || value === null) {
+          return undefined;
+        }
+
+        if (typeof value === 'string') {
+          const trimmedValue = value.trim();
+
+          if (trimmedValue === '') {
+            return undefined;
+          }
+
+          if (field === 'category' && !validCategories.includes(trimmedValue)) {
+            return undefined;
+          }
+
+          return trimmedValue;
+        }
+
+        return field === 'category' ? undefined : value;
+      };
 
       try {
         if (!context.isAuthenticated()) {
@@ -484,8 +509,10 @@ const purchaseorderResolver = {
                 'tag',
                 'inventoryNumber',
               ].forEach((field) => {
-                if (item[field] !== undefined && item[field] !== currentItem[field]) {
-                  itemUpdates[field] = item[field];
+                const nextValue = normalizeExistingItemClassification(field, item[field]);
+
+                if (nextValue !== undefined && nextValue !== currentItem[field]) {
+                  itemUpdates[field] = nextValue;
                   detailsChanged = true;
                 }
               });

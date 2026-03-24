@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   Button,
   Box,
@@ -147,6 +148,7 @@ export default function MultiIcsAssignmentModal({
       receivedBy: UserOption | null;
     }>
   >([]);
+  const [splitConfirmOpen, setSplitConfirmOpen] = useState(false);
 
   /* ---------- Effects ---------- */
 
@@ -445,6 +447,12 @@ export default function MultiIcsAssignmentModal({
       setError('Total split quantity must be greater than 0.');
       return;
     }
+    if (splitTotalQty !== splitOriginalQty) {
+      setError(
+        `Total split quantity (${splitTotalQty}) must equal original quantity (${splitOriginalQty}). Please adjust split quantities.`
+      );
+      return;
+    }
 
     for (let i = 0; i < splitRows.length; i++) {
       const row = splitRows[i];
@@ -462,6 +470,10 @@ export default function MultiIcsAssignmentModal({
       }
     }
 
+    setSplitConfirmOpen(true);
+  };
+
+  const executeSplit = async () => {
     try {
       await splitAndAssignICS({
         variables: {
@@ -935,6 +947,7 @@ export default function MultiIcsAssignmentModal({
                     variant="outlined"
                     startIcon={<AddCircleOutlineIcon />}
                     onClick={addSplitRow}
+                    disabled={splitTotalQty >= splitOriginalQty}
                   >
                     Add Split
                   </Button>
@@ -973,10 +986,13 @@ export default function MultiIcsAssignmentModal({
                             updateSplitRow(
                               index,
                               'quantity',
-                              Math.max(0, parseInt(e.target.value, 10) || 0)
+                              Math.min(
+                                splitOriginalQty,
+                                Math.max(0, parseInt(e.target.value, 10) || 0)
+                              )
                             )
                           }
-                          inputProps={{ min: 1 }}
+                          inputProps={{ min: 1, max: splitOriginalQty }}
                           sx={{ width: 120 }}
                         />
                         <TextField
@@ -1039,10 +1055,19 @@ export default function MultiIcsAssignmentModal({
                       }}
                     >
                       <Box>
-                        <Typography variant="body2">
+                        <Typography
+                          variant="body2"
+                          color={splitTotalQty !== splitOriginalQty ? 'error' : 'text.primary'}
+                        >
                           <strong>{splitRows.length}</strong> split(s) totaling{' '}
                           <strong>{splitTotalQty}</strong> unit(s) from original qty of{' '}
                           {splitOriginalQty}
+                          {splitTotalQty !== splitOriginalQty && (
+                            <>
+                              {' '}
+                              — <strong>must equal {splitOriginalQty}</strong>
+                            </>
+                          )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Each split gets its own ICS ID. All splits are tracked back to the source
@@ -1057,7 +1082,9 @@ export default function MultiIcsAssignmentModal({
                           splitLoading ? <CircularProgress size={20} /> : <CallSplitIcon />
                         }
                         onClick={handleSplitAndAssign}
-                        disabled={splitLoading || splitTotalQty === 0}
+                        disabled={
+                          splitLoading || splitTotalQty === 0 || splitTotalQty !== splitOriginalQty
+                        }
                       >
                         Split & Assign ({splitRows.length})
                       </Button>
@@ -1073,6 +1100,42 @@ export default function MultiIcsAssignmentModal({
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
+
+      <Dialog open={splitConfirmOpen} onClose={() => setSplitConfirmOpen(false)}>
+        <DialogTitle>Confirm Split</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You are about to split "{splitSourceItem?.description || 'item'}" (qty:{' '}
+            {splitOriginalQty}) into {splitRows.length} part(s). This action can only be reversed by
+            reverting the IAR.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 1 }}>
+            {splitRows.map((row, i) => (
+              <span key={i}>
+                Split #{i + 1}: {row.quantity} unit(s){i < splitRows.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 1, fontWeight: 'bold', color: 'warning.main' }}>
+            Are you sure you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSplitConfirmOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setSplitConfirmOpen(false);
+              executeSplit();
+            }}
+            variant="contained"
+            color="primary"
+          >
+            Yes, Split
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

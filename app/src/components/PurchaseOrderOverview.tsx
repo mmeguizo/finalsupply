@@ -94,7 +94,7 @@ export default function PurchaseOrderOverview({
   // Category breakdown
   const categoryMap: Record<string, number> = {};
   activeItems.forEach((i: any) => {
-    const cat = i.category || 'Uncategorized';
+    const cat = i.category ?? 'Uncategorized';
     categoryMap[cat] = (categoryMap[cat] || 0) + 1;
   });
 
@@ -326,7 +326,7 @@ export default function PurchaseOrderOverview({
               {Object.entries(categoryMap).map(([cat, count]) => (
                 <Chip
                   key={cat}
-                  label={`${formatCategory(cat) || cat}: ${count}`}
+                  label={`${cat !== 'Uncategorized' ? formatCategory(cat) : 'Uncategorized'}: ${count}`}
                   size="small"
                   variant="outlined"
                   color="primary"

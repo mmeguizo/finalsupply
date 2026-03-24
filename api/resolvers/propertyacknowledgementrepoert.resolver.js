@@ -282,6 +282,21 @@ const propertyAcknowledgmentReportResolver = {
               throw new Error('At least one split is required per item');
             }
 
+            // Validate total split quantity equals original
+            const totalSplitQty = splits.reduce((sum, s) => sum + Number(s.quantity), 0);
+            const originalQty = Number(original.actualQuantityReceived || 0);
+            if (totalSplitQty !== originalQty) {
+              throw new Error(
+                `Total split quantity (${totalSplitQty}) must equal original quantity (${originalQty}).`
+              );
+            }
+            // Validate each split quantity is positive
+            for (const split of splits) {
+              if (!split.quantity || Number(split.quantity) <= 0) {
+                throw new Error('Each split must have a quantity greater than 0.');
+              }
+            }
+
             // Generate a split group ID to track all pieces back to this original
             const splitGroupId = `SPL-${original.id}-${Date.now()}`;
             const originalItemId = original.id;
@@ -700,9 +715,12 @@ const propertyAcknowledgmentReportResolver = {
 
             await transaction.commit();
 
-            resultItem = await inspectionAcceptanceReportResolver.findByPk(existingItemWithSameSource.id, {
-              include: [PurchaseOrder],
-            });
+            resultItem = await inspectionAcceptanceReportResolver.findByPk(
+              existingItemWithSameSource.id,
+              {
+                include: [PurchaseOrder],
+              }
+            );
           } else {
             // CREATE NEW: No existing item with same source, create a new record
             const newItem = await inspectionAcceptanceReportResolver.create(

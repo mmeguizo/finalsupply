@@ -255,6 +255,7 @@ export default function PurchaseOrder() {
 
   // Handle row click to show items
   const handleRowClick = (params: GridRowParams) => {
+    console.log({ handleRowClick: params });
     const clickedPO = data?.purchaseOrders.find((po: any) => po.id === params.id);
     setSelectedPO(clickedPO || null);
   };

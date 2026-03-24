@@ -1,5 +1,13 @@
 import { ApolloClient } from '@apollo/client';
 
+const shouldOmitExistingPlaceholderValue = (value: unknown): boolean => {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  return typeof value === 'string' && value.trim() === '';
+};
+
 export const handleSavePurchaseOrder = async (
   formData: any,
   editingPO: any,
@@ -36,27 +44,7 @@ export const handleSavePurchaseOrder = async (
         const itemNameIsValid = item.itemName && item.itemName.trim() !== '';
         const quantityIsValid = typeof item.quantity === 'number' && item.quantity > 0;
 
-        // Category & tag validation only applies when editing existing (non-temp) items
-        // New items (id === "temp") have no category yet — it's set in the Generate IAR step
-        if (editingPO && item.id && item.id !== 'temp') {
-          const categoryIsValid = item.category && item.category.trim() !== '';
-
-          if (!categoryIsValid) {
-            return {
-              success: false,
-              message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have a category selected.`,
-            };
-          }
-
-          if (item.category === 'inventory custodian slip') {
-            if (item.tag === '' || !item.tag) {
-              return {
-                success: false,
-                message: `Item ${index + 1} (Description: "${item.description || 'N/A'}") must have a tag selected.`,
-              };
-            }
-          }
-        }
+        // Category & tag validation removed — category is set in the Generate IAR step, not in PO modal
 
         // An item is considered invalid if it has a category but lacks both a name and a positive quantity.
         if (!itemNameIsValid && !quantityIsValid) {
@@ -74,6 +62,22 @@ export const handleSavePurchaseOrder = async (
 
     const cleanedItems = formData.items.map((item: any) => {
       const { __typename, iarId, ...cleanItem } = item;
+
+      if (editingPO && cleanItem.id && cleanItem.id !== 'temp') {
+        if (shouldOmitExistingPlaceholderValue(cleanItem.category)) {
+          delete cleanItem.category;
+        }
+
+        if (shouldOmitExistingPlaceholderValue(cleanItem.tag)) {
+          delete cleanItem.tag;
+        }
+      }
+
+      // New temp items should not carry currentInput — IAR creation is deferred to Generate IAR step
+      if (!cleanItem.id || cleanItem.id === 'temp') {
+        delete cleanItem.currentInput;
+      }
+
       return cleanItem;
     });
     const { __typename, ...cleanFormData } = formData;

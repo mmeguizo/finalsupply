@@ -29,6 +29,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import dayjs from 'dayjs';
 import { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import Tooltip from '@mui/material/Tooltip';
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -53,6 +54,18 @@ export default function PurchaseOrderModal({
   const [recievedLimit, setrecievedLimit] = React.useState(0);
   const [addItemButton, setAddItemButtonDisable] = React.useState(false);
   const isEditing = !!purchaseOrder;
+  const [receivingItems, setReceivingItems] = React.useState<Set<number>>(new Set());
+  const toggleReceiving = (index: number) => {
+    setReceivingItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState<any>({
@@ -144,6 +157,7 @@ export default function PurchaseOrderModal({
       });
       setAddingItem(false);
       setHasSubmitted(false);
+      setReceivingItems(new Set());
     } else {
       // Reset when adding new PO to avoid stale state from previous edit session
       setAddItemButtonDisable(false);
@@ -270,8 +284,9 @@ export default function PurchaseOrderModal({
       };
     }
     if (field === 'quantity' || field === 'unitCost') {
-      updatedItems[index].amount =
-        Number(updatedItems[index].quantity) * Number(updatedItems[index].unitCost);
+      const qty = Number(updatedItems[index].quantity) || 0;
+      const cost = Number(updatedItems[index].unitCost) || 0;
+      updatedItems[index].amount = qty * cost;
     }
 
     setFormData({
@@ -287,6 +302,9 @@ export default function PurchaseOrderModal({
       delete item.recievelimit;
       // delete this since we will increment this on the backend no need an input here
       delete item.actualQuantityReceived;
+      if (!isEditing) {
+        delete item.currentInput;
+      }
       //remove later for test purposes
       // item.itemName = "";
       item.id = item.id ? item.id : 'temp';
@@ -624,20 +642,10 @@ export default function PurchaseOrderModal({
                     <Grid item sx={{ flex: '0 0 8%', maxWidth: 90 }}>
                       <Typography variant="subtitle2">Qty</Typography>
                     </Grid>
-                    {/* Delivered, Received, Balance columns only shown when editing */}
+                    {/* Receive column only shown when editing */}
                     {isEditing && (
-                      <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                        <Typography variant="subtitle2">Delivered</Typography>
-                      </Grid>
-                    )}
-                    {isEditing && (
-                      <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                        <Typography variant="subtitle2">Received</Typography>
-                      </Grid>
-                    )}
-                    {isEditing && (
-                      <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                        <Typography variant="subtitle2">Balance</Typography>
+                      <Grid item sx={{ flex: '0 0 8%', maxWidth: 90, textAlign: 'center' }}>
+                        <Typography variant="subtitle2">Receive</Typography>
                       </Grid>
                     )}
                     <Grid item sx={{ flex: '0 0 7%', maxWidth: 100 }}>
@@ -655,303 +663,374 @@ export default function PurchaseOrderModal({
                   </Grid>
 
                   {formData.items.map((item: any, index: any) => (
-                    <Grid
-                      container
-                      spacing={1}
-                      key={index}
-                      alignItems="center"
-                      sx={{
-                        mb: 0.5,
-                        p: 0.5,
-                        '&:hover': { backgroundColor: 'action.hover' },
-                        borderBottom: 1,
-                        borderColor: 'divider',
-                        flexWrap: 'nowrap',
-                      }}
-                    >
-                      {(() => {
-                        // Lock most fields once any units have been received
-                        const hasReceived = Number(item.actualQuantityReceived ?? 0) > 0;
-                        const isCompleted =
-                          String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                          'completed';
-                        const lockFields = hasReceived || isCompleted;
-                        return null;
-                      })()}
-                      {/** Helper booleans for clarity inside JSX below */}
-                      {(() => {
-                        return null;
-                      })()}
-                      {/* Category/Tag removed from this modal — set in Generate IAR step only */}
+                    <React.Fragment key={index}>
+                      <Grid
+                        container
+                        spacing={1}
+                        alignItems="center"
+                        sx={{
+                          mb: 0.5,
+                          p: 0.5,
+                          '&:hover': { backgroundColor: 'action.hover' },
+                          borderBottom: 1,
+                          borderColor: 'divider',
+                          flexWrap: 'nowrap',
+                        }}
+                      >
+                        {(() => {
+                          // Lock most fields once any units have been received
+                          const hasReceived = Number(item.actualQuantityReceived ?? 0) > 0;
+                          const isCompleted =
+                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
+                            'completed';
+                          const lockFields = hasReceived || isCompleted;
+                          return null;
+                        })()}
+                        {/** Helper booleans for clarity inside JSX below */}
+                        {(() => {
+                          return null;
+                        })()}
+                        {/* Category/Tag removed from this modal — set in Generate IAR step only */}
 
-                      <Grid item sx={{ flex: '0 0 4%', maxWidth: 45 }}>
-                        <Typography
-                          variant="body2"
+                        <Grid item sx={{ flex: '0 0 4%', maxWidth: 45 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              textAlign: 'center',
+                              color: 'text.secondary',
+                            }}
+                          >
+                            {formData.items.length - index}
+                          </Typography>
+                        </Grid>
+
+                        <Grid item sx={{ flex: '0 0 7%', maxWidth: 70 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={item.inventoryNumber ?? ''}
+                            onChange={(e) => updateItem(index, 'inventoryNumber', e.target.value)}
+                            disabled={
+                              Number(item.actualQuantityReceived ?? 0) > 0 ||
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed'
+                            }
+                          />
+                        </Grid>
+
+                        <Grid
+                          item
                           sx={{
-                            fontWeight: 600,
-                            textAlign: 'center',
-                            color: 'text.secondary',
+                            flex: '0 0 14%',
+                            minWidth: 100,
                           }}
                         >
-                          {formData.items.length - index}
-                        </Typography>
-                      </Grid>
-
-                      <Grid item sx={{ flex: '0 0 7%', maxWidth: 70 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={item.inventoryNumber ?? ''}
-                          onChange={(e) => updateItem(index, 'inventoryNumber', e.target.value)}
-                          disabled={
-                            Number(item.actualQuantityReceived ?? 0) > 0 ||
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed'
-                          }
-                        />
-                      </Grid>
-
-                      <Grid
-                        item
-                        sx={{
-                          flex: '0 0 14%',
-                          minWidth: 100,
-                        }}
-                      >
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={item.description ?? ''}
-                          onChange={(e) => updateItem(index, 'description', e.target.value)}
-                          disabled={
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed' ||
-                            (Number(item.quantity ?? 0) > 0 &&
-                              Number(item.quantity ?? 0) ===
-                                Number(item.actualQuantityReceived ?? 0))
-                          }
-                        />
-                      </Grid>
-
-                      <Grid
-                        item
-                        sx={{
-                          flex: '0 0 18%',
-                          minWidth: 144,
-                        }}
-                      >
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={item.specification ?? ''}
-                          onChange={(e) => updateItem(index, 'specification', e.target.value)}
-                          multiline
-                          maxRows={2}
-                          disabled={
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed' ||
-                            (Number(item.quantity ?? 0) > 0 &&
-                              Number(item.quantity ?? 0) ===
-                                Number(item.actualQuantityReceived ?? 0))
-                          }
-                        />
-                      </Grid>
-
-                      <Grid
-                        item
-                        sx={{
-                          flex: '0 0 18%',
-                          minWidth: 144,
-                        }}
-                      >
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={item.generalDescription ?? ''}
-                          onChange={(e) => updateItem(index, 'generalDescription', e.target.value)}
-                          multiline
-                          maxRows={2}
-                          disabled={
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed' ||
-                            (Number(item.quantity ?? 0) > 0 &&
-                              Number(item.quantity ?? 0) ===
-                                Number(item.actualQuantityReceived ?? 0))
-                          }
-                        />
-                      </Grid>
-
-                      <Grid item sx={{ flex: '0 0 8%', maxWidth: 90 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="number"
-                          value={item.quantity ?? 0}
-                          onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                          // Disable if any quantity has already been received OR PO completed
-                          disabled={
-                            Number(item.actualQuantityReceived ?? 0) > 0 ||
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed'
-                          }
-                          inputProps={{ style: { textAlign: 'right' } }}
-                        />
-                      </Grid>
-
-                      {/* Delivered, Received (currentInput), Balance only shown when editing */}
-                      {isEditing && (
-                        <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                          {item.id !== 'temp' && (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              disabled
-                              value={item.actualQuantityReceived ?? ''}
-                              inputProps={{ style: { textAlign: 'right' } }}
-                            />
-                          )}
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={item.description ?? ''}
+                            onChange={(e) => updateItem(index, 'description', e.target.value)}
+                            disabled={
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed' ||
+                              (Number(item.quantity ?? 0) > 0 &&
+                                Number(item.quantity ?? 0) ===
+                                  Number(item.actualQuantityReceived ?? 0))
+                            }
+                          />
                         </Grid>
-                      )}
 
-                      {isEditing && (
-                        <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                          {item.id !== 'temp' && (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={item.currentInput || ''}
-                              type="number"
-                              onChange={(e) => {
-                                const raw = e.target.value;
-                                const remaining = Math.max(
+                        <Grid
+                          item
+                          sx={{
+                            flex: '0 0 18%',
+                            minWidth: 144,
+                          }}
+                        >
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={item.specification ?? ''}
+                            onChange={(e) => updateItem(index, 'specification', e.target.value)}
+                            multiline
+                            maxRows={2}
+                            disabled={
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed' ||
+                              (Number(item.quantity ?? 0) > 0 &&
+                                Number(item.quantity ?? 0) ===
+                                  Number(item.actualQuantityReceived ?? 0))
+                            }
+                          />
+                        </Grid>
+
+                        <Grid
+                          item
+                          sx={{
+                            flex: '0 0 18%',
+                            minWidth: 144,
+                          }}
+                        >
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={item.generalDescription ?? ''}
+                            onChange={(e) =>
+                              updateItem(index, 'generalDescription', e.target.value)
+                            }
+                            multiline
+                            maxRows={2}
+                            disabled={
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed' ||
+                              (Number(item.quantity ?? 0) > 0 &&
+                                Number(item.quantity ?? 0) ===
+                                  Number(item.actualQuantityReceived ?? 0))
+                            }
+                          />
+                        </Grid>
+
+                        <Grid item sx={{ flex: '0 0 8%', maxWidth: 90 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="number"
+                            value={Number.isNaN(Number(item.quantity)) ? 0 : (item.quantity ?? 0)}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              updateItem(index, 'quantity', Number.isNaN(val) ? 0 : val);
+                            }}
+                            // Disable if any quantity has already been received OR PO completed
+                            disabled={
+                              Number(item.actualQuantityReceived ?? 0) > 0 ||
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed'
+                            }
+                            inputProps={{ style: { textAlign: 'right' } }}
+                          />
+                        </Grid>
+
+                        {/* Receive button — opens expandable section below the row */}
+                        {isEditing && (
+                          <Grid item sx={{ flex: '0 0 8%', maxWidth: 90, textAlign: 'center' }}>
+                            {item.id !== 'temp' &&
+                              (() => {
+                                const balance = Math.max(
                                   0,
-                                  Number(item.quantity ?? 0) -
-                                    Number(item.actualQuantityReceived ?? 0)
+                                  (Number(item.quantity) || 0) -
+                                    (Number(item.actualQuantityReceived) || 0)
                                 );
-                                // Allow clearing the input box
-                                if (raw === '') {
-                                  updateItem(index, 'currentInput', '');
-                                  return;
+                                const fullyReceived = balance <= 0;
+
+                                if (!item.category) {
+                                  return (
+                                    <Tooltip
+                                      disableHoverListener
+                                      title="Generate IAR to set category before receiving"
+                                    >
+                                      <Button
+                                        size="small"
+                                        variant={
+                                          receivingItems.has(index) ? 'contained' : 'outlined'
+                                        }
+                                        disabled={true}
+                                        sx={{
+                                          fontSize: '0.65rem',
+                                          minWidth: 0,
+                                          px: 1,
+                                          py: 0.25,
+                                          textTransform: 'none',
+                                        }}
+                                      >
+                                        No Category Yet
+                                      </Button>
+                                    </Tooltip>
+                                  );
                                 }
-                                const numeric = Number(raw);
-                                if (Number.isNaN(numeric)) {
-                                  // ignore non-numeric
-                                  return;
-                                }
-                                const clamped = Math.min(Math.max(0, numeric), remaining);
-                                updateItem(index, 'currentInput', clamped);
-                              }}
-                              disabled={
-                                Number(item.quantity ?? 0) -
-                                  Number(item.actualQuantityReceived ?? 0) <=
-                                0
-                              }
-                              placeholder={
-                                Number(item.quantity ?? 0) -
-                                  Number(item.actualQuantityReceived ?? 0) <=
-                                0
-                                  ? 'Fully received'
-                                  : undefined
-                              }
-                              inputProps={{
-                                style: { textAlign: 'right' },
-                                min: 0,
-                                max: Math.max(
-                                  0,
-                                  Number(item.quantity ?? 0) -
-                                    Number(item.actualQuantityReceived ?? 0)
-                                ),
-                              }}
-                            />
-                          )}
+
+                                return (
+                                  <Button
+                                    size="small"
+                                    variant={receivingItems.has(index) ? 'contained' : 'outlined'}
+                                    onClick={() => toggleReceiving(index)}
+                                    disabled={fullyReceived}
+                                    sx={{
+                                      fontSize: '0.65rem',
+                                      minWidth: 0,
+                                      px: 1,
+                                      py: 0.25,
+                                      textTransform: 'none',
+                                    }}
+                                  >
+                                    {fullyReceived
+                                      ? '✓ Done'
+                                      : receivingItems.has(index)
+                                        ? 'Close'
+                                        : `Receive (${balance} remaining)`}
+                                  </Button>
+                                );
+                              })()}
+                          </Grid>
+                        )}
+
+                        <Grid item sx={{ flex: '0 0 7%', maxWidth: 100 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={item.unit ?? ''}
+                            onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                            disabled={
+                              Number(item.actualQuantityReceived ?? 0) > 0 ||
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed'
+                            }
+                          />
                         </Grid>
-                      )}
 
-                      {isEditing && (
-                        <Grid item sx={{ flex: '0 0 8%', maxWidth: 85 }}>
-                          {item.id !== 'temp' && (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              disabled
-                              value={Math.max(
-                                0,
-                                Number(item.quantity) - Number(item.actualQuantityReceived)
-                              )}
-                            />
-                          )}
+                        <Grid item sx={{ flex: '0 0 9%', maxWidth: 120 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="number"
+                            value={Number.isNaN(Number(item.unitCost)) ? 0 : (item.unitCost ?? 0)}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              updateItem(index, 'unitCost', Number.isNaN(val) ? 0 : val);
+                            }}
+                            InputProps={{
+                              startAdornment: (
+                                <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
+                              ),
+                            }}
+                            sx={{ '& input': { textAlign: 'right' } }}
+                            disabled={
+                              Number(item.actualQuantityReceived ?? 0) > 0 ||
+                              String(
+                                purchaseOrder?.status || formData.status || ''
+                              ).toLowerCase() === 'completed'
+                            }
+                          />
                         </Grid>
-                      )}
 
-                      <Grid item sx={{ flex: '0 0 7%', maxWidth: 100 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={item.unit ?? ''}
-                          onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                          disabled={
-                            Number(item.actualQuantityReceived ?? 0) > 0 ||
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed'
-                          }
-                        />
-                      </Grid>
+                        <Grid item sx={{ flex: '0 0 9%', maxWidth: 120 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            disabled
+                            value={Number.isNaN(Number(item.amount)) ? 0 : (item.amount ?? 0)}
+                            InputProps={{
+                              startAdornment: (
+                                <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
+                              ),
+                            }}
+                            sx={{ '& input': { textAlign: 'right' } }}
+                          />
+                        </Grid>
 
-                      <Grid item sx={{ flex: '0 0 9%', maxWidth: 120 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="number"
-                          value={item.unitCost ?? 0}
-                          onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
-                          InputProps={{
-                            startAdornment: (
-                              <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
-                            ),
+                        <Grid
+                          item
+                          sx={{
+                            flex: '0 0 5%',
+                            maxWidth: 60,
+                            textAlign: 'center',
                           }}
-                          sx={{ '& input': { textAlign: 'right' } }}
-                          disabled={
-                            Number(item.actualQuantityReceived ?? 0) > 0 ||
-                            String(purchaseOrder?.status || formData.status || '').toLowerCase() ===
-                              'completed'
-                          }
-                        />
-                      </Grid>
-
-                      <Grid item sx={{ flex: '0 0 9%', maxWidth: 120 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          disabled
-                          value={item.amount ?? 0}
-                          InputProps={{
-                            startAdornment: (
-                              <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
-                            ),
-                          }}
-                          sx={{ '& input': { textAlign: 'right' } }}
-                        />
-                      </Grid>
-
-                      <Grid
-                        item
-                        sx={{
-                          flex: '0 0 5%',
-                          maxWidth: 60,
-                          textAlign: 'center',
-                        }}
-                      >
-                        <IconButton
-                          onClick={() => removeItem(index)}
-                          color="error"
-                          size="small"
-                          disabled={purchaseOrder && item.id && item.id !== 'temp'}
-                          title="Remove"
                         >
-                          <DeleteIcon />
-                        </IconButton>
+                          <IconButton
+                            onClick={() => removeItem(index)}
+                            color="error"
+                            size="small"
+                            disabled={purchaseOrder && item.id && item.id !== 'temp'}
+                            title="Remove"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Grid>
                       </Grid>
-                    </Grid>
+
+                      {/* Expandable Receive Section */}
+                      {isEditing && receivingItems.has(index) && item.id !== 'temp' && (
+                        <Box
+                          sx={{
+                            ml: 2,
+                            mr: 2,
+                            mb: 1,
+                            p: 1.5,
+                            backgroundColor: 'action.hover',
+                            borderRadius: 1,
+                            borderLeft: 3,
+                            borderColor: 'primary.main',
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                            Receive items for:{' '}
+                            {item.description ||
+                              item.itemName ||
+                              `Item #${formData.items.length - index}`}
+                          </Typography>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item>
+                              <Typography variant="body2" color="text.secondary">
+                                Already Delivered:{' '}
+                                <strong>{Number(item.actualQuantityReceived) || 0}</strong>
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Typography variant="body2" color="text.secondary">
+                                Remaining:{' '}
+                                <strong>
+                                  {Math.max(
+                                    0,
+                                    (Number(item.quantity) || 0) -
+                                      (Number(item.actualQuantityReceived) || 0)
+                                  )}
+                                </strong>
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <TextField
+                                size="small"
+                                label="Qty to Receive"
+                                type="number"
+                                value={item.currentInput || ''}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  const remaining = Math.max(
+                                    0,
+                                    (Number(item.quantity) || 0) -
+                                      (Number(item.actualQuantityReceived) || 0)
+                                  );
+                                  if (raw === '') {
+                                    updateItem(index, 'currentInput', '');
+                                    return;
+                                  }
+                                  const numeric = Number(raw);
+                                  if (Number.isNaN(numeric)) return;
+                                  const clamped = Math.min(Math.max(0, numeric), remaining);
+                                  updateItem(index, 'currentInput', clamped);
+                                }}
+                                inputProps={{
+                                  min: 0,
+                                  max: Math.max(
+                                    0,
+                                    (Number(item.quantity) || 0) -
+                                      (Number(item.actualQuantityReceived) || 0)
+                                  ),
+                                  style: { textAlign: 'right' },
+                                }}
+                                sx={{ width: 130 }}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      )}
+                    </React.Fragment>
                   ))}
                 </Box>
               </Box>

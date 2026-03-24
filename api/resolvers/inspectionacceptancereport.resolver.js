@@ -435,6 +435,31 @@ const inspectionAcceptanceReportResolver = {
           appended += 1;
         }
 
+        // After processing all items, determine PO-level iarStatus.
+        // iarStatus should be "complete" only if ALL items on the PO are fully received.
+        if (appended > 0 && existingIar) {
+          const allPoItems = await PurchaseOrderItems.findAll({
+            where: { purchaseOrderId: existingIar.purchaseOrderId, isDeleted: false },
+            attributes: ['id', 'quantity', 'actualQuantityReceived'],
+            transaction: t,
+          });
+
+          const allFullyReceived = allPoItems.every(
+            (item) => Number(item.actualQuantityReceived || 0) >= Number(item.quantity || 0)
+          );
+
+          const finalIarStatus = allFullyReceived ? 'complete' : 'partial';
+
+          // Bulk-update all IAR records in this batch to the correct PO-level status
+          await inspectionAcceptanceReport.update(
+            { iarStatus: finalIarStatus },
+            {
+              where: { iarId },
+              transaction: t,
+            }
+          );
+        }
+
         await t.commit();
         return {
           success: true,
@@ -587,6 +612,31 @@ const inspectionAcceptanceReportResolver = {
           );
 
           processedCount += 1;
+        }
+
+        // After processing all items, determine PO-level iarStatus.
+        // iarStatus should be "complete" only if ALL items on the PO are fully received.
+        if (processedCount > 0) {
+          const allPoItems = await PurchaseOrderItems.findAll({
+            where: { purchaseOrderId: parseInt(purchaseOrderId), isDeleted: false },
+            attributes: ['id', 'quantity', 'actualQuantityReceived'],
+            transaction: t,
+          });
+
+          const allFullyReceived = allPoItems.every(
+            (item) => Number(item.actualQuantityReceived || 0) >= Number(item.quantity || 0)
+          );
+
+          const finalIarStatus = allFullyReceived ? 'complete' : 'partial';
+
+          // Bulk-update all IAR records in this batch to the correct PO-level status
+          await inspectionAcceptanceReport.update(
+            { iarStatus: finalIarStatus },
+            {
+              where: { iarId: autoIarId },
+              transaction: t,
+            }
+          );
         }
 
         await t.commit();
@@ -831,6 +881,21 @@ const inspectionAcceptanceReportResolver = {
               throw new Error(
                 `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${tag}'`
               );
+            }
+
+            // Validate total split quantity equals original
+            const totalSplitQty = splits.reduce((sum, s) => sum + Number(s.quantity), 0);
+            const originalQty = Number(original.actualQuantityReceived || 0);
+            if (totalSplitQty !== originalQty) {
+              throw new Error(
+                `Total split quantity (${totalSplitQty}) must equal original quantity (${originalQty}).`
+              );
+            }
+            // Validate each split quantity is positive
+            for (const split of splits) {
+              if (!split.quantity || Number(split.quantity) <= 0) {
+                throw new Error('Each split must have a quantity greater than 0.');
+              }
             }
 
             // Generate a split group ID to track all pieces back to this original
