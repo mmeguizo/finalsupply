@@ -2,6 +2,7 @@
 export const ROUTE_ROLES = {
   '': ['admin', 'user'], // Dashboard (default route)
   signatories: ['admin'],
+  department: ['admin'],
   roles: ['admin'],
   purchaseorder: ['user', 'admin'],
   inventory: ['user', 'admin'],

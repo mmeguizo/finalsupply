@@ -630,15 +630,6 @@ export default function PurchaseOrderModal({
                     >
                       <Typography variant="subtitle2">Specs</Typography>
                     </Grid>
-                    <Grid
-                      item
-                      sx={{
-                        flex: '0 0 18%',
-                        minWidth: 144,
-                      }}
-                    >
-                      <Typography variant="subtitle2">Gen. Desc</Typography>
-                    </Grid>
                     <Grid item sx={{ flex: '0 0 8%', maxWidth: 90 }}>
                       <Typography variant="subtitle2">Qty</Typography>
                     </Grid>
@@ -755,33 +746,6 @@ export default function PurchaseOrderModal({
                             size="small"
                             value={item.specification ?? ''}
                             onChange={(e) => updateItem(index, 'specification', e.target.value)}
-                            multiline
-                            maxRows={2}
-                            disabled={
-                              String(
-                                purchaseOrder?.status || formData.status || ''
-                              ).toLowerCase() === 'completed' ||
-                              (Number(item.quantity ?? 0) > 0 &&
-                                Number(item.quantity ?? 0) ===
-                                  Number(item.actualQuantityReceived ?? 0))
-                            }
-                          />
-                        </Grid>
-
-                        <Grid
-                          item
-                          sx={{
-                            flex: '0 0 18%',
-                            minWidth: 144,
-                          }}
-                        >
-                          <TextField
-                            fullWidth
-                            size="small"
-                            value={item.generalDescription ?? ''}
-                            onChange={(e) =>
-                              updateItem(index, 'generalDescription', e.target.value)
-                            }
                             multiline
                             maxRows={2}
                             disabled={

@@ -31,6 +31,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       splitGroupId
       splitFromItemId
       splitIndex
+      iarQuantityDisplay
       PurchaseOrder {
         id
         poNumber
@@ -97,6 +98,7 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
       risId
       parId
       iarStatus
+      iarQuantityDisplay
       PurchaseOrder {
         id
         poNumber

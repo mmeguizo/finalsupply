@@ -567,7 +567,7 @@ export default function IssuanceRisPage() {
     return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
-  if (loading) return <CircularProgress />;
+  if (loading && !data) return <CircularProgress />;
   if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (

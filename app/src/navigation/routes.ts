@@ -85,6 +85,11 @@ export const ALL_NAVIGATION: Navigation = [
     title: 'Signatories',
     icon: React.createElement(DrawIcon),
   },
+  {
+    segment: 'department',
+    title: 'Department',
+    icon: React.createElement(CorporateFareIcon),
+  },
   // {
   //   segment: "reports",
   //   title: "Reports",
@@ -104,11 +109,6 @@ export const ALL_NAVIGATION: Navigation = [
         segment: 'roles',
         title: 'Roles',
         icon: React.createElement(EngineeringIcon),
-      },
-      {
-        segment: 'department',
-        title: 'Department',
-        icon: React.createElement(CorporateFareIcon),
       },
     ],
   },

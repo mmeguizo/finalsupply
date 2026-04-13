@@ -65,6 +65,7 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risReceivedBy
       risReceivedByPosition
       risDepartment
+      risDivision
       risAssignedDate
       purpose
       risDetails

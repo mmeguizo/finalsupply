@@ -275,7 +275,7 @@ export default function RequisitionReport({
                       <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}>
                         {' '}
                         &nbsp; &nbsp;
-                        {itemsArray[0]?.PurchaseOrder?.campus || ''}
+                        {itemsArray[0]?.risDivision || itemsArray[0]?.PurchaseOrder?.campus || ''}
                       </Box>
                     </Box>
                     <Box
@@ -288,7 +288,10 @@ export default function RequisitionReport({
                       <Typography>Office:</Typography>
                       <Box sx={{ borderBottom: '1px solid #000', width: '100%' }}>
                         {' '}
-                        &nbsp; &nbsp; {itemsArray[0]?.PurchaseOrder?.placeOfDelivery || ''}
+                        &nbsp; &nbsp;{' '}
+                        {itemsArray[0]?.risDepartment ||
+                          itemsArray[0]?.PurchaseOrder?.placeOfDelivery ||
+                          ''}
                       </Box>
                     </Box>
                   </Box>

@@ -80,6 +80,7 @@ export const CREATE_SINGLE_RIS_ASSIGNMENT = gql`
         risReceivedBy
         risReceivedByPosition
         risDepartment
+        risDivision
         risAssignedDate
         PurchaseOrder {
           id
@@ -114,6 +115,7 @@ export const UPDATE_RIS_ASSIGNMENT = gql`
       risReceivedBy
       risReceivedByPosition
       risDepartment
+      risDivision
       risAssignedDate
     }
   }
@@ -138,6 +140,7 @@ export const CREATE_MULTI_ITEM_RIS_ASSIGNMENT = gql`
         risReceivedBy
         risReceivedByPosition
         risDepartment
+        risDivision
         risAssignedDate
         PurchaseOrder {
           id
@@ -175,6 +178,7 @@ export const ADD_ITEM_TO_EXISTING_RIS = gql`
         risReceivedBy
         risReceivedByPosition
         risDepartment
+        risDivision
         risAssignedDate
         PurchaseOrder {
           id
@@ -218,6 +222,7 @@ export const SPLIT_AND_ASSIGN_RIS = gql`
       risReceivedBy
       risReceivedByPosition
       risDepartment
+      risDivision
       risAssignedDate
       splitGroupId
       splitFromItemId

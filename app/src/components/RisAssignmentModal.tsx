@@ -34,6 +34,7 @@ import {
   UPDATE_RIS_ASSIGNMENT,
 } from '../graphql/mutations/requisitionIS.mutation';
 import { GET_ALL_USERS } from '../graphql/queries/user.query';
+import { GET_ALL_DEPARTMENTS } from '../graphql/queries/department.query';
 import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 
@@ -50,9 +51,12 @@ interface UserOption {
   label: string;
 }
 
+const DIVISION_OPTIONS = ['Talisay Main', 'Alijis', 'Binalbagan', 'Fortune Town'];
+
 interface AssignmentForm {
   quantity: number | '';
   department: string;
+  division: string;
   receivedFrom: UserOption | null;
   receivedBy: UserOption | null;
 }
@@ -62,6 +66,7 @@ interface SavedAssignment {
   risId: string;
   quantity: number;
   department: string;
+  division: string;
   receivedFrom: string;
   receivedFromPosition: string;
   receivedBy: string;
@@ -78,6 +83,7 @@ interface RisAssignmentModalProps {
 const emptyForm: AssignmentForm = {
   quantity: '',
   department: '',
+  division: '',
   receivedFrom: null,
   receivedBy: null,
 };
@@ -106,6 +112,8 @@ export default function RisAssignmentModal({
   const [updateRISAssignment, { loading: updateLoading }] = useMutation(UPDATE_RIS_ASSIGNMENT, {
     refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
   });
+
+  const { data: departmentsData } = useQuery(GET_ALL_DEPARTMENTS);
 
   /* ---------- Signatories from Zustand store ---------- */
 
@@ -156,6 +164,7 @@ export default function RisAssignmentModal({
             risId: item.risId,
             quantity: item.actualQuantityReceived || 0,
             department: item.risDepartment || '',
+            division: item.risDivision || '',
             receivedFrom: item.risReceivedFrom || '',
             receivedFromPosition: item.risReceivedFromPosition || '',
             receivedBy: item.risReceivedBy || '',
@@ -196,6 +205,10 @@ export default function RisAssignmentModal({
       label: `${sig.name} (${sig.role})`,
     }));
   }, [allSignatories]);
+
+  const departmentOptions: string[] = useMemo(() => {
+    return (departmentsData?.departments || []).map((d: any) => d.name);
+  }, [departmentsData]);
 
   /* ---------- Form helpers ---------- */
 
@@ -248,6 +261,7 @@ export default function RisAssignmentModal({
             sourceItemId: String(item.id),
             quantity: qty,
             department: form.department.trim(),
+            division: form.division,
             receivedFrom: form.receivedFrom.name,
             receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
             receivedBy: form.receivedBy.name,
@@ -265,6 +279,7 @@ export default function RisAssignmentModal({
           risId: generatedRisId,
           quantity: qty,
           department: form.department.trim(),
+          division: form.division,
           receivedFrom: form.receivedFrom.name,
           receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
           receivedBy: form.receivedBy.name,
@@ -298,6 +313,7 @@ export default function RisAssignmentModal({
     setEditForm({
       quantity: assignment.quantity,
       department: assignment.department,
+      division: assignment.division,
       receivedFrom: fromOption,
       receivedBy: byOption,
     });
@@ -325,6 +341,7 @@ export default function RisAssignmentModal({
             itemId: editingId,
             quantity: qty,
             department: editForm.department,
+            division: editForm.division,
             receivedFrom: editForm.receivedFrom?.name,
             receivedFromPosition:
               editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
@@ -341,6 +358,7 @@ export default function RisAssignmentModal({
                 ...a,
                 quantity: qty,
                 department: editForm.department,
+                division: editForm.division,
                 receivedFrom: editForm.receivedFrom?.name || a.receivedFrom,
                 receivedFromPosition:
                   editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
@@ -473,12 +491,28 @@ export default function RisAssignmentModal({
                           }}
                           sx={{ width: 120 }}
                         />
-                        <TextField
-                          label="Department"
+                        <Autocomplete
                           size="small"
+                          freeSolo
+                          options={departmentOptions}
                           value={editForm.department}
-                          onChange={(e) => updateEditForm('department', e.target.value)}
+                          onInputChange={(_, v) => updateEditForm('department', v)}
+                          renderInput={(params) => (
+                            <TextField {...params} label="Department / Office" />
+                          )}
                           sx={{ flexGrow: 1 }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Autocomplete
+                          size="small"
+                          options={DIVISION_OPTIONS}
+                          value={editForm.division || null}
+                          onChange={(_, v) => updateEditForm('division', v || '')}
+                          renderInput={(params) => (
+                            <TextField {...params} label="Division (Campus)" />
+                          )}
+                          sx={{ width: 200 }}
                         />
                       </Box>
                       <Box sx={{ display: 'flex', gap: 2 }}>
@@ -532,7 +566,10 @@ export default function RisAssignmentModal({
                         <strong>Qty:</strong> {assignment.quantity}
                       </Typography>
                       <Divider orientation="vertical" flexItem />
-                      <Typography variant="body2">{assignment.department || '-'}</Typography>
+                      <Typography variant="body2">
+                        {assignment.department || '-'}
+                        {assignment.division ? ` | ${assignment.division}` : ''}
+                      </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2" color="text.secondary">
                         {assignment.receivedFrom} → {assignment.receivedBy}
@@ -589,13 +626,24 @@ export default function RisAssignmentModal({
                       sx={{ width: 130 }}
                       required
                     />
-                    <TextField
-                      label="Department / Office"
+                    <Autocomplete
                       size="small"
+                      freeSolo
+                      options={departmentOptions}
                       value={form.department}
-                      onChange={(e) => updateForm('department', e.target.value)}
+                      onInputChange={(_, v) => updateForm('department', v)}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Department / Office" required />
+                      )}
                       sx={{ flexGrow: 1 }}
-                      required
+                    />
+                    <Autocomplete
+                      size="small"
+                      options={DIVISION_OPTIONS}
+                      value={form.division || null}
+                      onChange={(_, v) => updateForm('division', v || '')}
+                      renderInput={(params) => <TextField {...params} label="Division (Campus)" />}
+                      sx={{ width: 200 }}
                     />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>

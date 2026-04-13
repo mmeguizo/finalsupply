@@ -247,7 +247,7 @@ export default function IssuanceIcsPage() {
     setSelections('ics', selectedSignatories);
   };
 
-  if (loading) return <CircularProgress />;
+  if (loading && !data) return <CircularProgress />;
   if (error) return <Alert severity="error">Error loading data: {error.message}</Alert>;
 
   return (

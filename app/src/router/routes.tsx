@@ -141,11 +141,12 @@ export const router = createBrowserRouter([
                 path: 'roles',
                 Component: RolePage,
               },
-              {
-                path: 'department',
-                Component: DepartmentPage,
-              },
             ],
+          },
+          {
+            path: '/department',
+            element: <ProtectedRoute routePath="department" />,
+            children: [{ path: '', Component: DepartmentPage }],
           },
           // Legacy path redirect: keep old deep-link working after moving Histories
           {

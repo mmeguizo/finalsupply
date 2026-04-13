@@ -393,8 +393,8 @@ tfoot {
                 <tr class="header-2nd-row">
                     <th colspan="7">
                         <div>
-                            <span>Division: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.campus || '')}</span>
-                            <span>Office: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.placeOfDelivery || '')}</span>
+                            <span>Division: ${escapeHtml(itemsArray[0]?.risDivision || itemsArray[0]?.PurchaseOrder?.campus || '')}</span>
+                            <span>Office: ${escapeHtml(itemsArray[0]?.risDepartment || itemsArray[0]?.PurchaseOrder?.placeOfDelivery || '')}</span>
                         </div>
                     </th>
                     <th></th>

@@ -166,6 +166,7 @@ const requisitionIssueSlipResolver = {
                 risReceivedBy: firstSplit.receivedBy,
                 risReceivedByPosition: firstSplit.receivedByPosition || '',
                 risDepartment: firstSplit.department || '',
+                risDivision: firstSplit.division || null,
                 risAssignedDate: new Date(),
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
@@ -214,6 +215,7 @@ const requisitionIssueSlipResolver = {
                   risReceivedBy: split.receivedBy,
                   risReceivedByPosition: split.receivedByPosition || '',
                   risDepartment: split.department || '',
+                  risDivision: split.division || null,
                   risAssignedDate: new Date(),
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
@@ -320,6 +322,7 @@ const requisitionIssueSlipResolver = {
               risReceivedBy: receivedBy,
               risReceivedByPosition: receivedByPosition || '',
               risDepartment: department || '',
+              risDivision: input.division || null,
               risAssignedDate: new Date(),
             },
             { transaction }
@@ -438,6 +441,7 @@ const requisitionIssueSlipResolver = {
                 risReceivedBy: receivedBy,
                 risReceivedByPosition: receivedByPosition || '',
                 risDepartment: department || '',
+                risDivision: input.division || null,
                 risAssignedDate: new Date(),
               },
               { transaction }
@@ -588,6 +592,7 @@ const requisitionIssueSlipResolver = {
                 risReceivedBy: existingRISItem.risReceivedBy,
                 risReceivedByPosition: existingRISItem.risReceivedByPosition,
                 risDepartment: existingRISItem.risDepartment,
+                risDivision: existingRISItem.risDivision || null,
                 risAssignedDate: new Date(),
               },
               { transaction }
@@ -651,6 +656,7 @@ const requisitionIssueSlipResolver = {
           updateData.amount = quantity * parseFloat(item.unitCost || 0);
         }
         if (department !== undefined) updateData.risDepartment = department;
+        if (input.division !== undefined) updateData.risDivision = input.division;
         if (receivedFrom !== undefined) updateData.risReceivedFrom = receivedFrom;
         if (receivedFromPosition !== undefined)
           updateData.risReceivedFromPosition = receivedFromPosition;

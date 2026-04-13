@@ -1535,6 +1535,25 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || 'Failed to update RIS details');
       }
     },
+
+    updateIARItemDisplay: async (_, { id, iarQuantityDisplay, amount }) => {
+      const item = await inspectionAcceptanceReport.findByPk(id);
+      if (!item) throw new Error(`IAR item with id ${id} not found`);
+
+      const updateData = {};
+      if (iarQuantityDisplay !== undefined) updateData.iarQuantityDisplay = iarQuantityDisplay;
+      if (amount !== undefined) updateData.amount = amount;
+
+      await item.update(updateData);
+
+      return {
+        success: true,
+        message: 'IAR item display updated successfully',
+        id: item.id,
+        iarQuantityDisplay: item.iarQuantityDisplay,
+        amount: item.amount,
+      };
+    },
   },
 };
 

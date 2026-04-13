@@ -200,6 +200,10 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: 'Department assigned for this RIS item',
     },
+    risDivision: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     risAssignedDate: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -265,6 +269,12 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'Remarks field for PAR print reports (manually entered)',
+    },
+    // IAR quantity display override (for percentage display on IAR form)
+    iarQuantityDisplay: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Display text for IAR quantity column (e.g. percentage like 11.79%)',
     },
     // Split tracking fields
     splitGroupId: {

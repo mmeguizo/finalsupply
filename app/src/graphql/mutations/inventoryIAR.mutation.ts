@@ -189,6 +189,18 @@ export const CREATE_SINGLE_ICS_ASSIGNMENT = gql`
   }
 `;
 
+export const UPDATE_IAR_ITEM_DISPLAY = gql`
+  mutation UpdateIARItemDisplay($id: Int!, $iarQuantityDisplay: String, $amount: Float) {
+    updateIARItemDisplay(id: $id, iarQuantityDisplay: $iarQuantityDisplay, amount: $amount) {
+      success
+      message
+      id
+      iarQuantityDisplay
+      amount
+    }
+  }
+`;
+
 export const UPDATE_ICS_ASSIGNMENT = gql`
   mutation UpdateICSAssignment($input: UpdateICSAssignmentInput!) {
     updateICSAssignment(input: $input) {

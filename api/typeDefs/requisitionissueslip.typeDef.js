@@ -88,6 +88,7 @@ input RISUpdateInput {
 input RISSplitEntry {
   quantity: Int!
   department: String
+  division: String
   receivedFrom: String!
   receivedFromPosition: String
   receivedBy: String!
@@ -108,6 +109,7 @@ input CreateSingleRISInput {
   sourceItemId: ID!
   quantity: Int!
   department: String
+  division: String
   receivedFrom: String!
   receivedFromPosition: String
   receivedBy: String!
@@ -119,6 +121,7 @@ input UpdateRISAssignmentInput {
   itemId: ID!
   quantity: Int
   department: String
+  division: String
   receivedFrom: String
   receivedFromPosition: String
   receivedBy: String
@@ -141,6 +144,7 @@ input MultiRISItemEntry {
 input CreateMultiItemRISInput {
   items: [MultiRISItemEntry!]!
   department: String
+  division: String
   receivedFrom: String!
   receivedFromPosition: String
   receivedBy: String!

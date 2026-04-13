@@ -41,6 +41,7 @@ import {
   SPLIT_AND_ASSIGN_RIS,
 } from '../graphql/mutations/requisitionIS.mutation';
 import { GET_ALL_USERS } from '../graphql/queries/user.query';
+import { GET_ALL_DEPARTMENTS } from '../graphql/queries/department.query';
 import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
@@ -79,8 +80,11 @@ interface MultiRisAssignmentModalProps {
   onAssignmentComplete: () => void;
 }
 
+const DIVISION_OPTIONS = ['Talisay Main', 'Alijis', 'Binalbagan', 'Fortune Town'];
+
 const emptySignatoryForm = {
   department: '',
+  division: '',
   receivedFrom: null as UserOption | null,
   receivedBy: null as UserOption | null,
 };
@@ -102,6 +106,7 @@ export default function MultiRisAssignmentModal({
   /* ---------- GraphQL ---------- */
 
   const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
+  const { data: departmentsData } = useQuery(GET_ALL_DEPARTMENTS);
 
   const [createMultiRIS, { loading: createLoading }] = useMutation(
     CREATE_MULTI_ITEM_RIS_ASSIGNMENT,
@@ -143,6 +148,7 @@ export default function MultiRisAssignmentModal({
     Array<{
       quantity: number;
       department: string;
+      division: string;
       receivedFrom: UserOption | null;
       receivedBy: UserOption | null;
     }>
@@ -211,6 +217,10 @@ export default function MultiRisAssignmentModal({
       label: `${sig.name} (${sig.role})`,
     }));
   }, [allSignatories]);
+
+  const departmentOptions: string[] = useMemo(() => {
+    return (departmentsData?.departments || []).map((d: any) => d.name);
+  }, [departmentsData]);
 
   // Unique existing RIS IDs with their end user info
   const existingRISGroups = useMemo(() => {
@@ -315,6 +325,7 @@ export default function MultiRisAssignmentModal({
               quantity: e.quantity,
             })),
             department: signatoryForm.department.trim(),
+            division: signatoryForm.division,
             receivedFrom: signatoryForm.receivedFrom.name,
             receivedFromPosition:
               signatoryForm.receivedFrom.position || signatoryForm.receivedFrom.role || '',
@@ -408,7 +419,7 @@ export default function MultiRisAssignmentModal({
   const addSplitRow = () => {
     setSplitRows((prev) => [
       ...prev,
-      { quantity: 1, department: '', receivedFrom: null, receivedBy: null },
+      { quantity: 1, department: '', division: '', receivedFrom: null, receivedBy: null },
     ]);
   };
 
@@ -475,6 +486,7 @@ export default function MultiRisAssignmentModal({
                 splits: splitRows.map((row) => ({
                   quantity: row.quantity,
                   department: row.department.trim(),
+                  division: row.division || '',
                   receivedFrom: row.receivedFrom!.name,
                   receivedFromPosition: row.receivedFrom!.position || row.receivedFrom!.role || '',
                   receivedBy: row.receivedBy!.name,
@@ -690,18 +702,34 @@ export default function MultiRisAssignmentModal({
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <TextField
-                      label="Department / Office"
+                    <Autocomplete
                       size="small"
+                      freeSolo
+                      options={departmentOptions}
                       value={signatoryForm.department}
-                      onChange={(e) =>
+                      onInputChange={(_, v) =>
                         setSignatoryForm((prev) => ({
                           ...prev,
-                          department: e.target.value,
+                          department: v,
                         }))
                       }
+                      renderInput={(params) => (
+                        <TextField {...params} label="Department / Office" required />
+                      )}
                       sx={{ flexGrow: 1 }}
-                      required
+                    />
+                    <Autocomplete
+                      size="small"
+                      options={DIVISION_OPTIONS}
+                      value={signatoryForm.division || null}
+                      onChange={(_, v) =>
+                        setSignatoryForm((prev) => ({
+                          ...prev,
+                          division: v || '',
+                        }))
+                      }
+                      renderInput={(params) => <TextField {...params} label="Division (Campus)" />}
+                      sx={{ width: 220 }}
                     />
                   </Box>
 
@@ -975,12 +1003,24 @@ export default function MultiRisAssignmentModal({
                           inputProps={{ min: 1, max: splitOriginalQty }}
                           sx={{ width: 120 }}
                         />
-                        <TextField
-                          label="Department / Office"
+                        <Autocomplete
                           size="small"
+                          freeSolo
+                          options={departmentOptions}
                           value={row.department}
-                          onChange={(e) => updateSplitRow(index, 'department', e.target.value)}
+                          onInputChange={(_, v) => updateSplitRow(index, 'department', v)}
+                          renderInput={(params) => (
+                            <TextField {...params} label="Department / Office" />
+                          )}
                           sx={{ flexGrow: 1 }}
+                        />
+                        <Autocomplete
+                          size="small"
+                          options={DIVISION_OPTIONS}
+                          value={row.division || null}
+                          onChange={(_, v) => updateSplitRow(index, 'division', v || '')}
+                          renderInput={(params) => <TextField {...params} label="Division" />}
+                          sx={{ width: 180 }}
                         />
                       </Box>
 

@@ -19,6 +19,7 @@ type Item {
     tag : String
     iarId : String
     iarStatus : String
+    iarQuantityDisplay: String
 }
 
 type PurchaseOrderType {
@@ -117,7 +118,9 @@ type ItemWithPurchaseOrder {
     risReceivedBy: String
     risReceivedByPosition: String
     risDepartment: String
+    risDivision: String
     risAssignedDate: String
+    iarQuantityDisplay: String
     splitGroupId: String
     splitFromItemId: Int
     splitIndex: Int
@@ -192,6 +195,7 @@ type Mutation {
   updateIcsDetails(id: ID!, icsDetails: String!): UpdatePurposeRemarksPayload!
   updateParDetails(id: ID!, parDetails: String!): UpdatePurposeRemarksPayload!
   updateRisDetails(id: ID!, risDetails: String!): UpdatePurposeRemarksPayload!
+  updateIARItemDisplay(id: Int!, iarQuantityDisplay: String, amount: Float): UpdateIARItemDisplayPayload!
 }
 
 type UpdatePurposeRemarksPayload {
@@ -346,6 +350,14 @@ type AddItemToExistingICSResponse {
     icsId: String!
 }
 
+
+type UpdateIARItemDisplayPayload {
+    success: Boolean!
+    message: String!
+    id: Int!
+    iarQuantityDisplay: String
+    amount: Float
+}
 
 `;
 
