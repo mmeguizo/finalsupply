@@ -497,6 +497,7 @@ export default function RisAssignmentModal({
                           options={departmentOptions}
                           value={editForm.department}
                           onInputChange={(_, v) => updateEditForm('department', v)}
+                          ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
                           renderInput={(params) => (
                             <TextField {...params} label="Department / Office" />
                           )}
@@ -632,6 +633,7 @@ export default function RisAssignmentModal({
                       options={departmentOptions}
                       value={form.department}
                       onInputChange={(_, v) => updateForm('department', v)}
+                      ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
                       renderInput={(params) => (
                         <TextField {...params} label="Department / Office" required />
                       )}

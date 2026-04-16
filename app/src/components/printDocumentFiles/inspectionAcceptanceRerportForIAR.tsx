@@ -32,14 +32,12 @@ export const getInspectionReportTemplateForIAR = (
         );
         const unit = escapeHtml(it.unit ?? '');
         const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ''));
-        const amount = it.iarQuantityDisplay
-          ? escapeHtml(String(it.amount ?? ''))
-          : escapeHtml(
-              String(
-                (it.actualQuantityReceived ?? it.quantity ?? '') *
-                  (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? '')
-              )
-            );
+        const amount = escapeHtml(
+          String(
+            (it.actualQuantityReceived ?? it.quantity ?? '') *
+              (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? '')
+          )
+        );
         // const amount = escapeHtml(
         //   String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
         // );
@@ -95,12 +93,10 @@ export const getInspectionReportTemplateForIAR = (
     `
       : '');
 
-  const totalAmount = items.reduce((sum, it) => {
-    if (it.iarQuantityDisplay) {
-      return sum + Number(it.amount ?? 0);
-    }
-    return sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0);
-  }, 0);
+  const totalAmount = items.reduce(
+    (sum, it) => sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
+    0
+  );
 
   console.log;
 

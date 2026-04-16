@@ -220,6 +220,7 @@ const requisitionIssueSlipResolver = {
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
                   splitIndex: i + 1,
+                  recordType: 'issuance_clone',
                 },
                 { transaction }
               );
@@ -324,6 +325,7 @@ const requisitionIssueSlipResolver = {
               risDepartment: department || '',
               risDivision: input.division || null,
               risAssignedDate: new Date(),
+              recordType: 'issuance_clone',
             },
             { transaction }
           );
@@ -443,6 +445,7 @@ const requisitionIssueSlipResolver = {
                 risDepartment: department || '',
                 risDivision: input.division || null,
                 risAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );
@@ -594,6 +597,7 @@ const requisitionIssueSlipResolver = {
                 risDepartment: existingRISItem.risDepartment,
                 risDivision: existingRISItem.risDivision || null,
                 risAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );

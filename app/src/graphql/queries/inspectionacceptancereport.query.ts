@@ -32,6 +32,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       splitFromItemId
       splitIndex
       iarQuantityDisplay
+      recordType
       PurchaseOrder {
         id
         poNumber

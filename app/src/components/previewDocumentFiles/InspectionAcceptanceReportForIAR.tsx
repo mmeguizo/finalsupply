@@ -12,11 +12,14 @@ import {
   styled,
   Button,
   TextField,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { InspectionAcceptanceReportPropsForIAR } from '../../types/previewPrintDocument/types';
 import { Divider } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import { UPDATE_IAR_ITEM_DISPLAY } from '../../graphql/mutations/inventoryIAR.mutation';
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from '../../graphql/queries/inspectionacceptancereport.query';
 import { capitalizeFirstLetter, formatCurrencyPHP } from '../../utils/generalUtils';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -90,8 +93,12 @@ export default function InspectionAcceptanceReportForIAR({
   const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
 
   // Editable quantity display state (per item)
-  const [editValues, setEditValues] = useState<Record<number, { qty: string; amt: string }>>({});
-  const [updateIARItemDisplay] = useMutation(UPDATE_IAR_ITEM_DISPLAY);
+  const [editValues, setEditValues] = useState<Record<number, string>>({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [updateIARItemDisplay] = useMutation(UPDATE_IAR_ITEM_DISPLAY, {
+    refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
+    awaitRefetchQueries: true,
+  });
 
   // purchase order info (use first item if array)
   const purchaseOrder = items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
@@ -110,54 +117,21 @@ export default function InspectionAcceptanceReportForIAR({
     )
   );
 
-  // Compute total using edited amounts when available
-  const computedTotalAmount = formatCurrencyPHP(
-    items.reduce((sum, it) => {
-      const editedAmt = editValues[it.id]?.amt;
-      if (editedAmt !== undefined && editedAmt !== '') {
-        return sum + Number(editedAmt);
-      }
-      if (it.iarQuantityDisplay) {
-        return sum + Number(it.amount ?? 0);
-      }
-      return sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0);
-    }, 0)
-  );
-
   const getQtyValue = (item: any) => {
-    if (editValues[item.id]?.qty !== undefined) return editValues[item.id].qty;
+    if (editValues[item.id] !== undefined) return editValues[item.id];
     return item.iarQuantityDisplay ?? String(item.actualQuantityReceived ?? '');
   };
 
-  const getAmtValue = (item: any) => {
-    if (editValues[item.id]?.amt !== undefined) return editValues[item.id].amt;
-    if (item.iarQuantityDisplay) return String(item.amount ?? '');
-    return String((item.actualQuantityReceived ?? 0) * (item.unitCost ?? 0));
-  };
-
   const handleQtyChange = (itemId: number, value: string) => {
-    setEditValues((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], qty: value, amt: prev[itemId]?.amt ?? '' },
-    }));
-  };
-
-  const handleAmtChange = (itemId: number, value: string) => {
-    setEditValues((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], amt: value, qty: prev[itemId]?.qty ?? '' },
-    }));
+    setEditValues((prev) => ({ ...prev, [itemId]: value }));
   };
 
   const handleSaveItem = async (item: any) => {
-    const qty = editValues[item.id]?.qty;
-    const amt = editValues[item.id]?.amt;
-    const variables: any = { id: Number(item.id) };
-    if (qty !== undefined && qty !== '') variables.iarQuantityDisplay = qty;
-    if (amt !== undefined && amt !== '') variables.amount = parseFloat(amt);
-    if (Object.keys(variables).length > 1) {
+    const qty = editValues[item.id];
+    if (qty !== undefined && qty !== '') {
       try {
-        await updateIARItemDisplay({ variables });
+        await updateIARItemDisplay({ variables: { id: Number(item.id), iarQuantityDisplay: qty } });
+        setSnackbarOpen(true);
       } catch (err) {
         console.error('Failed to save IAR item display:', err);
       }
@@ -427,6 +401,12 @@ export default function InspectionAcceptanceReportForIAR({
                           value={getQtyValue(rd)}
                           onChange={(e) => handleQtyChange(rd.id, e.target.value)}
                           onBlur={() => handleSaveItem(rd)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
                           InputProps={{
                             disableUnderline: true,
                             sx: { fontSize: '12px', textAlign: 'center' },
@@ -436,20 +416,9 @@ export default function InspectionAcceptanceReportForIAR({
                         />
                       </BodyTableCell>
                       <BodyTableCell>{formatCurrencyPHP(rd.unitCost) ?? ''}</BodyTableCell>
-                      <BodyTableCell sx={{ padding: '0 2px' }}>
-                        <TextField
-                          variant="standard"
-                          size="small"
-                          value={getAmtValue(rd)}
-                          onChange={(e) => handleAmtChange(rd.id, e.target.value)}
-                          onBlur={() => handleSaveItem(rd)}
-                          InputProps={{
-                            disableUnderline: true,
-                            sx: { fontSize: '12px', textAlign: 'right' },
-                          }}
-                          inputProps={{ style: { textAlign: 'right', padding: '2px' } }}
-                          sx={{ '& .MuiInputBase-root': { fontSize: '12px' } }}
-                        />
+                      <BodyTableCell>
+                        {formatCurrencyPHP((rd.actualQuantityReceived ?? 0) * (rd.unitCost ?? 0)) ??
+                          0}
                       </BodyTableCell>
                     </StyledTableRow>
                   ))}
@@ -507,7 +476,7 @@ export default function InspectionAcceptanceReportForIAR({
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell colSpan={4}></StyledTableCell>
                 <StyledTableCell>Total</StyledTableCell>
-                <StyledTableCell>{computedTotalAmount || ''}</StyledTableCell>
+                <StyledTableCell>{totalAmount || ''}</StyledTableCell>
               </StyledTableRow>
 
               <StyledTableRow>
@@ -667,6 +636,17 @@ export default function InspectionAcceptanceReportForIAR({
           </Table>
         </TableContainer>
       </Box>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
+          Saved
+        </Alert>
+      </Snackbar>
     </>
   );
 }

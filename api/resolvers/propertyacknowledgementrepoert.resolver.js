@@ -371,6 +371,7 @@ const propertyAcknowledgmentReportResolver = {
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
                   splitIndex: i + 1,
+                  recordType: 'issuance_clone',
                 },
                 { transaction }
               );
@@ -475,6 +476,7 @@ const propertyAcknowledgmentReportResolver = {
               parReceivedByPosition: receivedByPosition || '',
               parDepartment: department || '',
               parAssignedDate: new Date(),
+              recordType: 'issuance_clone',
             },
             { transaction }
           );
@@ -599,6 +601,7 @@ const propertyAcknowledgmentReportResolver = {
                 parReceivedByPosition: receivedByPosition || '',
                 parDepartment: department || '',
                 parAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );
@@ -757,6 +760,7 @@ const propertyAcknowledgmentReportResolver = {
                 parReceivedByPosition: existingPARItem.parReceivedByPosition,
                 parDepartment: existingPARItem.parDepartment,
                 parAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );

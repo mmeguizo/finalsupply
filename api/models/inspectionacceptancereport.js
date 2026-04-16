@@ -270,6 +270,15 @@ const inspectionAcceptanceReport = sequelize.define(
       allowNull: true,
       comment: 'Remarks field for PAR print reports (manually entered)',
     },
+    // Record type to distinguish originals from issuance clones
+    recordType: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'iar_original',
+      field: 'record_type',
+      comment:
+        'Distinguishes original IAR records from issuance clones (iar_original | issuance_clone)',
+    },
     // IAR quantity display override (for percentage display on IAR form)
     iarQuantityDisplay: {
       type: DataTypes.STRING(50),

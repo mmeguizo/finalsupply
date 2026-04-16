@@ -713,6 +713,7 @@ export default function MultiRisAssignmentModal({
                           department: v,
                         }))
                       }
+                      ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
                       renderInput={(params) => (
                         <TextField {...params} label="Department / Office" required />
                       )}
@@ -1009,6 +1010,7 @@ export default function MultiRisAssignmentModal({
                           options={departmentOptions}
                           value={row.department}
                           onInputChange={(_, v) => updateSplitRow(index, 'department', v)}
+                          ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
                           renderInput={(params) => (
                             <TextField {...params} label="Department / Office" />
                           )}

@@ -124,6 +124,7 @@ type ItemWithPurchaseOrder {
     splitGroupId: String
     splitFromItemId: Int
     splitIndex: Int
+    recordType: String
 }
 type IARonly{
     id: ID

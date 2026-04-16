@@ -24,7 +24,7 @@ const inspectionAcceptanceReportResolver = {
         //     include: [PurchaseOrder],
         //   });
         const rows = await inspectionAcceptanceReport.findAll({
-          where: { isDeleted: false },
+          where: { isDeleted: false, recordType: 'iar_original' },
           order: [['id', 'DESC']],
           include: [
             { model: PurchaseOrder, required: true },
@@ -977,6 +977,7 @@ const inspectionAcceptanceReportResolver = {
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
                   splitIndex: i + 1,
+                  recordType: 'issuance_clone',
                 },
                 { transaction }
               );
@@ -1088,6 +1089,7 @@ const inspectionAcceptanceReportResolver = {
               icsReceivedByPosition: receivedByPosition || '',
               icsDepartment: department || '',
               icsAssignedDate: new Date(),
+              recordType: 'issuance_clone',
             },
             { transaction }
           );
@@ -1219,6 +1221,7 @@ const inspectionAcceptanceReportResolver = {
                 icsReceivedByPosition: receivedByPosition || '',
                 icsDepartment: department || '',
                 icsAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );
@@ -1369,6 +1372,7 @@ const inspectionAcceptanceReportResolver = {
                 icsReceivedByPosition: existingICSItem.icsReceivedByPosition,
                 icsDepartment: existingICSItem.icsDepartment,
                 icsAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
               { transaction }
             );
