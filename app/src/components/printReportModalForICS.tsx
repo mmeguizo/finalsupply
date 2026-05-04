@@ -22,7 +22,11 @@ import { getRequisitionAndIssueSlip } from './printDocumentFiles/requisitionAndI
 import { getInventoryTemplateForICS } from './printDocumentFiles/inventoryCustodianslipPrinting';
 import { InspectionReportDialogPropsForIAR } from '../types/printReportModal/types';
 import { useMutation } from '@apollo/client';
-import { UPDATE_ICSID, UPDATE_ITEM_PURPOSE, UPDATE_ICS_DETAILS } from '../graphql/mutations/inventoryIAR.mutation';
+import {
+  UPDATE_ICSID,
+  UPDATE_ITEM_PURPOSE,
+  UPDATE_ICS_DETAILS,
+} from '../graphql/mutations/inventoryIAR.mutation';
 import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS } from '../graphql/queries/inspectionacceptancereport.query';
 export default function PrintReportDialogForICS({
   open,
@@ -48,12 +52,16 @@ export default function PrintReportDialogForICS({
   const isSingleItem = items.length === 1;
   const hasNoDetails = isSingleItem && !items[0]?.icsDetails;
 
-  // Pre-fill purpose and icsDetails from saved data
+  // Pre-fill purpose and icsDetails from saved data (include poRemarks if available)
   useEffect(() => {
     if (open) {
-      setPurpose(items[0]?.purpose || '');
+      const savedPurpose = items[0]?.purpose || '';
+      const poRemarks = items[0]?.poRemarks || '';
+      // Combine saved purpose with PO remarks on separate lines
+      const combined = [savedPurpose, poRemarks].filter(Boolean).join('\n');
+      setPurpose(combined);
       // For single item, use saved icsDetails; for multi-select, start empty
-      setIcsDetails(isSingleItem ? (items[0]?.icsDetails || '') : '');
+      setIcsDetails(isSingleItem ? items[0]?.icsDetails || '' : '');
     }
   }, [open, reportData]);
 
@@ -100,17 +108,27 @@ export default function PrintReportDialogForICS({
       <DialogTitle>
         {title}
         {isSingleItem ? (
-          <Chip label="Single Item - Details saved to database" color="success" size="small" sx={{ ml: 2 }} />
+          <Chip
+            label="Single Item - Details saved to database"
+            color="success"
+            size="small"
+            sx={{ ml: 2 }}
+          />
         ) : (
-          <Chip label="Multi-Select - Details for this print only" color="info" size="small" sx={{ ml: 2 }} />
+          <Chip
+            label="Multi-Select - Details for this print only"
+            color="info"
+            size="small"
+            sx={{ ml: 2 }}
+          />
         )}
       </DialogTitle>
       <DialogContent>
         {/* Warning for single item without details */}
         {hasNoDetails && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            This item has no ICS details saved. Please add details below before printing. 
-            For individual prints, details will be saved to the database.
+            This item has no ICS details saved. Please add details below before printing. For
+            individual prints, details will be saved to the database.
           </Alert>
         )}
 
@@ -118,7 +136,8 @@ export default function PrintReportDialogForICS({
         {!isSingleItem && items.length > 0 && (
           <Alert severity="info" sx={{ mb: 2 }}>
             You are printing {items.length} items. Enter details below for this print session only.
-            Details will NOT be saved to the database. For permanent details, print items individually.
+            Details will NOT be saved to the database. For permanent details, print items
+            individually.
           </Alert>
         )}
 
@@ -142,17 +161,23 @@ export default function PrintReportDialogForICS({
           <Box sx={{ mt: 2 }}>
             <TextField
               fullWidth
-              label={isSingleItem ? "ICS Details (will be saved to database)" : "ICS Details (for this print only - NOT saved)"}
+              label={
+                isSingleItem
+                  ? 'ICS Details (will be saved to database)'
+                  : 'ICS Details (for this print only - NOT saved)'
+              }
               value={icsDetails}
               onChange={(e) => setIcsDetails(e.target.value)}
               multiline
               rows={3}
               size="small"
               placeholder="Enter ICS-specific details..."
-              color={isSingleItem ? "primary" : "info"}
-              helperText={isSingleItem 
-                ? "These details will be saved and used for future prints of this item." 
-                : "These details are temporary and won't be saved. Print individually to save details."}
+              color={isSingleItem ? 'primary' : 'info'}
+              helperText={
+                isSingleItem
+                  ? 'These details will be saved and used for future prints of this item.'
+                  : "These details are temporary and won't be saved. Print individually to save details."
+              }
             />
           </Box>
         </Paper>

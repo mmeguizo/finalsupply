@@ -528,8 +528,11 @@ export default function RequisitionReport({
               <StyledTableRow>
                 <StyledTableCell colSpan={2}>Purpose:</StyledTableCell>
                 <StyledTableCell colSpan={9}>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography sx={{ fontSize: 12 }}>{itemsArray[0]?.purpose || ''}</Typography>
+                    {itemsArray[0]?.poRemarks && (
+                      <Typography sx={{ fontSize: 12 }}>{itemsArray[0].poRemarks}</Typography>
+                    )}
                   </Box>
                 </StyledTableCell>
               </StyledTableRow>

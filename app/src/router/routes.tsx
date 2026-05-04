@@ -21,6 +21,7 @@ import IssuancePage from '../pages/issuance';
 import IssuanceRisPage from '../pages/issuanceRisPage';
 import IssuanceParPage from '../pages/issueanceParPage';
 import IssuanceIcsPage from '../pages/issuanceIcsPage';
+import IssuanceNoCategoryPage from '../pages/issuanceNoCategoryPage';
 import RolePage from '../pages/role';
 import HistoriesPage from '../pages/histories';
 
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
               {
                 path: 'issuance-ics',
                 Component: IssuanceIcsPage,
+              },
+              {
+                path: 'issuance-nocat',
+                Component: IssuanceNoCategoryPage,
               },
             ],
             element: <ProtectedRoute routePath="issuance" />,

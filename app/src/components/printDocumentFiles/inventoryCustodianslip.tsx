@@ -734,7 +734,7 @@ tfoot {
                     <td></td>
                 </tr>
                 <tr>
-                    <td colspan="8">Remarks:</td>
+                    <td colspan="8">Remarks:${reportData?.poRemarks ? ` <span style="font-style: italic;">${reportData.poRemarks}</span>` : ''}</td>
                 </tr>
                 <tr>
                     <td colspan="4">

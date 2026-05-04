@@ -419,6 +419,11 @@ export default function PropertyAcknowledgementReceipt({
                       {itemsArray[0].remarks}
                     </Typography>
                   )}
+                  {itemsArray[0]?.poRemarks && (
+                    <Typography component="div" sx={{ fontStyle: 'italic', mt: 0.5 }}>
+                      {itemsArray[0].poRemarks}
+                    </Typography>
+                  )}
                 </StyledTableCell>
                 <StyledTableCell colSpan={2} sx={{ verticalAlign: 'top' }}>
                   <Box sx={{ display: 'flex', gap: 2 }}>

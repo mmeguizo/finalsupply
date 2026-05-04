@@ -432,7 +432,7 @@ table {
           <td>${formatTotalAmount}</td>
         </tr>
         <tr>
-          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${remarks || firstItem?.remarks ? `<span style="font-style: italic;">${escapeHtml(remarks || firstItem?.remarks || '')}</span>` : ''}</td>
+          <td colspan="4" style="padding: 4px; vertical-align: top;">Remarks: ${remarks || firstItem?.remarks ? `<span style="font-style: italic;">${escapeHtml(remarks || firstItem?.remarks || '')}</span>` : ''}${firstItem?.poRemarks ? `<br/><span style="font-style: italic;">${escapeHtml(firstItem.poRemarks)}</span>` : ''}</td>
           <td colspan="2" style="padding: 4px; vertical-align: top;">
             <span style="display: inline-flex; align-items: center; margin-right: 15px;">
               <span style="display: inline-block; width: 14px; height: 14px; border: 1px solid #000; margin-right: 4px; text-align: center; line-height: 12px;">${firstItem?.income || firstItem.PurchaseOrder?.income ? '✓' : ''}</span> INCOME ${escapeHtml(firstItem?.income || firstItem.PurchaseOrder?.income || '')}

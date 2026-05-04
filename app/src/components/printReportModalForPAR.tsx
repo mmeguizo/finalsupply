@@ -31,11 +31,15 @@ export default function PrintReportDialogForPAR({
   const [updateRemarks] = useMutation(UPDATE_ITEM_REMARKS);
   const [remarks, setRemarks] = useState('');
 
-  // Pre-fill remarks from saved data
+  // Pre-fill remarks from saved data (include poRemarks if available)
   useEffect(() => {
     if (open) {
       const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
-      setRemarks(items[0]?.remarks || '');
+      const savedRemarks = items[0]?.remarks || '';
+      const poRemarks = items[0]?.poRemarks || '';
+      // Combine saved remarks with PO remarks on separate lines
+      const combined = [savedRemarks, poRemarks].filter(Boolean).join('\n');
+      setRemarks(combined);
     }
   }, [open, reportData]);
 

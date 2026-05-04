@@ -167,13 +167,8 @@ export default function GenerateIarModal({
     }
 
     // Validate category for selected items
+    // No-category items are allowed — they will pass through with category: null
     for (const item of selectedItems) {
-      if (!item.category) {
-        setError(
-          `Item "${item.description || 'N/A'}" must have a category (PAR/ICS/RIS) selected.`
-        );
-        return;
-      }
       if (item.category === 'inventory custodian slip' && !item.tag) {
         setError(
           `Item "${item.description || 'N/A'}" is ICS and must have a tag (Low/High) selected.`
@@ -185,7 +180,7 @@ export default function GenerateIarModal({
     // Build mutation input
     const mutationItems = selectedItems.map((item) => ({
       purchaseOrderItemId: Number(item.purchaseOrderItemId),
-      category: item.category,
+      category: item.category || null,
       tag: item.tag || null,
       received: item.received,
     }));
@@ -243,8 +238,9 @@ export default function GenerateIarModal({
         )}
 
         <Alert severity="info" sx={{ mb: 2 }}>
-          Select items to receive, set the category (PAR/ICS/RIS), tag for ICS items, and the
-          quantity to receive. Items with 0 remaining are already fully received.
+          Select items to receive, set the category (PAR/ICS/RIS) if applicable, tag for ICS items,
+          and the quantity to receive. Items without a category will be generated as-is. Items with
+          0 remaining are already fully received.
         </Alert>
 
         {/* Invoice field — pre-filled from PO if available, required before generating */}
@@ -357,8 +353,8 @@ export default function GenerateIarModal({
                         sx={{ minWidth: 100 }}
                         displayEmpty
                       >
-                        <MenuItem value="" disabled>
-                          <em>Select</em>
+                        <MenuItem value="">
+                          <em>(No Category)</em>
                         </MenuItem>
                         <MenuItem value="property acknowledgement reciept">PAR</MenuItem>
                         <MenuItem value="inventory custodian slip">ICS</MenuItem>

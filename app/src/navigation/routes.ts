@@ -63,6 +63,11 @@ export const ALL_NAVIGATION: Navigation = [
         title: 'Issuance ICS',
         icon: React.createElement(ArticleIcon),
       },
+      {
+        segment: 'issuance-nocat',
+        title: 'No Category',
+        icon: React.createElement(DocumentScannerIcon),
+      },
     ],
   },
   // {

@@ -336,7 +336,11 @@ export default function PurchaseOrderModal({
     <Dialog
       key={isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add'}
       open={open}
-      onClose={handleClose}
+      onClose={(_event, reason) => {
+        if (reason === 'backdropClick') return;
+        handleClose();
+      }}
+      disableEscapeKeyDown
       maxWidth="md"
       fullWidth
     >
@@ -412,19 +416,6 @@ export default function PurchaseOrderModal({
               // disabled={purchaseOrder ? true : false}
             />
           </Grid>
-          {purchaseOrder ? null : (
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Invoice"
-                name="invoice"
-                value={formData.invoice}
-                onChange={handleChange}
-                // disabled={purchaseOrder?.invoice ? true : false}
-                // disabled={isIndexFieldDisabled(formData.invoice)}
-              />
-            </Grid>
-          )}
 
           {purchaseOrder ? null : (
             <Grid item xs={12} md={6}>
@@ -721,6 +712,9 @@ export default function PurchaseOrderModal({
                           <TextField
                             fullWidth
                             size="small"
+                            multiline
+                            minRows={2}
+                            maxRows={4}
                             value={item.description ?? ''}
                             onChange={(e) => updateItem(index, 'description', e.target.value)}
                             disabled={

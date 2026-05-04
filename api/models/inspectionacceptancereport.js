@@ -84,7 +84,7 @@ const inspectionAcceptanceReport = sequelize.define(
         'requisition issue slip'
       ),
       allowNull: true,
-      defaultValue: 'requisition issue slip', // Default value
+      defaultValue: null, // Allow no-category items through IAR generation
     },
     tag: {
       type: DataTypes.STRING(255),
@@ -142,6 +142,14 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'Details specific to this IAR',
+    },
+    // PO Remarks field for propagation to PAR/ICS/RIS print templates
+    poRemarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: 'po_remarks',
+      comment: 'PO Remarks text that propagates to PAR remarks and ICS/RIS purpose sections',
     },
     // PAR-specific signatory fields for per-ID assignment
     parReceivedFrom: {
@@ -300,6 +308,14 @@ const inspectionAcceptanceReport = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: '1-based index within the split group (1 = first split, etc.)',
+    },
+    // No-category issuance ticket ID (NC-YYYY-MM-NNNN format)
+    ncId: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      defaultValue: null,
+      field: 'nc_id',
+      comment: 'No-category issuance ticket ID (e.g., NC-2026-04-0001)',
     },
   },
   {

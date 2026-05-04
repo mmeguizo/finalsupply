@@ -169,6 +169,36 @@ const inspectionAcceptanceReportResolver = {
         throw new Error('Failed to retrieve unique inspection acceptance reports.');
       }
     },
+    // Fetch IAR items where category IS NULL (no category assigned)
+    inspectionAcceptanceReportNoCategory: async (_, __, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error('Unauthorized');
+        }
+
+        const rows = await inspectionAcceptanceReport.findAll({
+          where: {
+            isDeleted: false,
+            category: null,
+          },
+          order: [['id', 'DESC']],
+          include: [
+            { model: PurchaseOrder },
+            {
+              model: PurchaseOrderItems,
+              as: 'PurchaseOrderItem',
+              required: false,
+            },
+          ],
+        });
+
+        return rows;
+      } catch (error) {
+        console.error('Error fetching no-category IAR items:', error);
+        throw new Error(error.message || 'Internal server error');
+      }
+    },
+
     getIARItemsByIarId: async (_, { iarId }, context) => {
       try {
         if (!context.isAuthenticated()) {
@@ -547,7 +577,7 @@ const inspectionAcceptanceReportResolver = {
           // Update PO item: category, tag, received qty, delivery status
           await PurchaseOrderItems.update(
             {
-              category: category || poi.category || 'requisition issue slip',
+              category: category || poi.category || null,
               tag: tag || poi.tag || '',
               actualQuantityReceived: afterAqr,
               deliveryStatus,
@@ -567,7 +597,7 @@ const inspectionAcceptanceReportResolver = {
               quantity: poi.quantity,
               unitCost: poi.unitCost,
               amount: poi.amount,
-              category: category || poi.category || 'requisition issue slip',
+              category: category || poi.category || null,
               tag: tag || poi.tag || '',
               inventoryNumber: poi.inventoryNumber || '',
               iarId: autoIarId,
@@ -798,7 +828,11 @@ const inspectionAcceptanceReportResolver = {
     },
 
     // Update IAR-specific invoice, invoiceDate, income, mds, details
-    updateIARInvoice: async (_, { iarId, invoice, invoiceDate, income, mds, details }, context) => {
+    updateIARInvoice: async (
+      _,
+      { iarId, invoice, invoiceDate, income, mds, details, poRemarks },
+      context
+    ) => {
       const t = await sequelize.transaction();
       try {
         if (!context.isAuthenticated()) {
@@ -816,6 +850,7 @@ const inspectionAcceptanceReportResolver = {
         if (income !== undefined) updateData.income = income;
         if (mds !== undefined) updateData.mds = mds;
         if (details !== undefined) updateData.details = details;
+        if (poRemarks !== undefined) updateData.poRemarks = poRemarks;
 
         // Update all records that match the iar_id
         const [updatedCount] = await inspectionAcceptanceReport.update(updateData, {
@@ -834,6 +869,7 @@ const inspectionAcceptanceReportResolver = {
           income: income ?? null,
           mds: mds ?? null,
           details: details ?? null,
+          poRemarks: poRemarks ?? null,
           updatedCount,
         };
       } catch (error) {
@@ -1557,6 +1593,148 @@ const inspectionAcceptanceReportResolver = {
         iarQuantityDisplay: item.iarQuantityDisplay,
         amount: item.amount,
       };
+    },
+
+    // Assign a no-category IAR item: clones the record with an NC ticket ID
+    assignNoCategoryItem: async (_, { id, assignedQuantity, purpose }, context) => {
+      try {
+        if (!context.isAuthenticated()) {
+          throw new Error('Unauthorized');
+        }
+
+        // 1. Fetch the source IAR item
+        const sourceItem = await inspectionAcceptanceReport.findByPk(id, {
+          include: [PurchaseOrder],
+        });
+
+        if (!sourceItem) {
+          throw new Error(`IAR item with ID ${id} not found`);
+        }
+        if (sourceItem.isDeleted) {
+          throw new Error('Cannot assign a deleted item');
+        }
+        if (sourceItem.category !== null) {
+          throw new Error(
+            'This item already has a category (PAR/ICS/RIS). Use the appropriate issuance page.'
+          );
+        }
+
+        const currentReceived = Number(sourceItem.actualQuantityReceived || 0);
+        if (assignedQuantity <= 0) {
+          throw new Error('Assigned quantity must be greater than 0');
+        }
+        if (assignedQuantity > currentReceived) {
+          throw new Error(
+            `Assigned quantity (${assignedQuantity}) exceeds available quantity (${currentReceived})`
+          );
+        }
+
+        // 2. Generate NC ticket ID: NC-YYYY-MM-NNNN (auto-increment per year)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const yearPrefix = `NC-${year}-${month}-`;
+
+        // Find the highest existing NC ID for this year-month
+        const latestNc = await inspectionAcceptanceReport.findOne({
+          where: {
+            ncId: {
+              [Op.like]: `NC-${year}-${month}-%`,
+            },
+          },
+          order: [
+            [
+              Sequelize.literal(`CAST(SUBSTRING(ncId, ${yearPrefix.length + 1}) AS UNSIGNED)`),
+              'DESC',
+            ],
+          ],
+          attributes: ['ncId'],
+        });
+
+        let nextSequence = 1;
+        if (latestNc && latestNc.ncId) {
+          const parts = latestNc.ncId.split('-');
+          // NC-YYYY-MM-NNNN → parts[3] = NNNN
+          if (parts.length === 4) {
+            const lastSeq = parseInt(parts[3], 10);
+            if (!isNaN(lastSeq)) {
+              nextSequence = lastSeq + 1;
+            }
+          }
+        }
+
+        const ncId = `${yearPrefix}${String(nextSequence).padStart(4, '0')}`;
+        const sourceData = sourceItem.toJSON();
+
+        // 3. Use transaction for atomicity
+        const transaction = await sequelize.transaction();
+
+        try {
+          // Clone the source record with the assigned quantity and NC ID
+          const clonedItem = await inspectionAcceptanceReport.create(
+            {
+              iarId: sourceData.iarId,
+              icsId: sourceData.icsId,
+              risId: sourceData.risId,
+              purchaseOrderId: sourceData.purchaseOrderId,
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              iarStatus: sourceData.iarStatus,
+              description: sourceData.description,
+              generalDescription: sourceData.generalDescription,
+              specification: sourceData.specification,
+              unit: sourceData.unit,
+              quantity: sourceData.quantity,
+              unitCost: sourceData.unitCost,
+              category: null, // stays null — no category
+              tag: sourceData.tag,
+              isDeleted: 0,
+              createdBy: sourceData.createdBy,
+              updatedBy: sourceData.updatedBy,
+              inventoryNumber: sourceData.inventoryNumber,
+              itemName: sourceData.itemName,
+              invoice: sourceData.invoice,
+              invoiceDate: sourceData.invoiceDate,
+              income: sourceData.income,
+              mds: sourceData.mds,
+              details: sourceData.details,
+              poRemarks: sourceData.poRemarks,
+              // Assignment-specific fields
+              actualQuantityReceived: assignedQuantity,
+              amount: assignedQuantity * parseFloat(sourceData.unitCost || 0),
+              ncId: ncId,
+              purpose: purpose || '',
+              recordType: 'issuance_clone',
+            },
+            { transaction }
+          );
+
+          // Reduce source item's available quantity
+          const newSourceQty = currentReceived - assignedQuantity;
+          await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+          await transaction.commit();
+
+          // Fetch updated items with associations
+          const updatedClone = await inspectionAcceptanceReport.findByPk(clonedItem.id, {
+            include: [PurchaseOrder],
+          });
+          const updatedSource = await inspectionAcceptanceReport.findByPk(id, {
+            include: [PurchaseOrder],
+          });
+
+          return {
+            newItem: updatedClone,
+            sourceItem: updatedSource,
+            generatedNcId: ncId,
+          };
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error('Error in assignNoCategoryItem:', error);
+        throw new Error(error.message || 'Failed to assign no-category item');
+      }
     },
   },
 };

@@ -435,6 +435,19 @@ export default function InventoryCustodianSlip({
                       <StyledTableCell></StyledTableCell>
                     </StyledTableRow>
                   )}
+                  {itemsArray[0]?.poRemarks && (
+                    <StyledTableRow>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell sx={{ textAlign: 'left', padding: 0.5 }}>
+                        <Typography fontSize={12}>{itemsArray[0].poRemarks}</Typography>
+                      </StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                      <StyledTableCell></StyledTableCell>
+                    </StyledTableRow>
+                  )}
 
                   {/* Total Row at Bottom */}
                   <StyledTableRow>

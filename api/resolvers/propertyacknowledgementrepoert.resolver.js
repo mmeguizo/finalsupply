@@ -358,6 +358,7 @@ const propertyAcknowledgmentReportResolver = {
                   income: originalData.income,
                   mds: originalData.mds,
                   details: originalData.details,
+                  poRemarks: originalData.poRemarks,
                   // Split-specific fields
                   actualQuantityReceived: split.quantity,
                   amount: split.quantity * parseFloat(originalData.unitCost || 0),
@@ -466,6 +467,7 @@ const propertyAcknowledgmentReportResolver = {
               income: sourceData.income,
               mds: sourceData.mds,
               details: sourceData.details,
+              poRemarks: sourceData.poRemarks,
               // Assignment-specific fields
               actualQuantityReceived: quantity,
               amount: quantity * parseFloat(sourceData.unitCost || 0),
@@ -591,6 +593,7 @@ const propertyAcknowledgmentReportResolver = {
                 income: sourceData.income,
                 mds: sourceData.mds,
                 details: sourceData.details,
+                poRemarks: sourceData.poRemarks,
                 // Assignment-specific fields — shared PAR ID
                 actualQuantityReceived: quantity,
                 amount: quantity * parseFloat(sourceData.unitCost || 0),
@@ -750,6 +753,7 @@ const propertyAcknowledgmentReportResolver = {
                 income: sourceData.income,
                 mds: sourceData.mds,
                 details: sourceData.details,
+                poRemarks: sourceData.poRemarks,
                 // Use existing PAR ID and copy signatory info
                 actualQuantityReceived: quantity,
                 amount: quantity * parseFloat(sourceData.unitCost || 0),

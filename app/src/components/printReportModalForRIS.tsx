@@ -31,11 +31,15 @@ export default function PrintReportDialogForRIS({
   const [updatePurpose] = useMutation(UPDATE_ITEM_PURPOSE);
   const [purpose, setPurpose] = useState('');
 
-  // Pre-fill purpose from saved data
+  // Pre-fill purpose from saved data (include poRemarks if available)
   useEffect(() => {
     if (open) {
       const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
-      setPurpose(items[0]?.purpose || '');
+      const savedPurpose = items[0]?.purpose || '';
+      const poRemarks = items[0]?.poRemarks || '';
+      // Combine saved purpose with PO remarks on separate lines
+      const combined = [savedPurpose, poRemarks].filter(Boolean).join('\n');
+      setPurpose(combined);
     }
   }, [open, reportData]);
 

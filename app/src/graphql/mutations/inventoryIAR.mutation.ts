@@ -127,6 +127,7 @@ export const UPDATE_IAR_INVOICE = gql`
     $income: String
     $mds: String
     $details: String
+    $poRemarks: String
   ) {
     updateIARInvoice(
       iarId: $iarId
@@ -135,6 +136,7 @@ export const UPDATE_IAR_INVOICE = gql`
       income: $income
       mds: $mds
       details: $details
+      poRemarks: $poRemarks
     ) {
       success
       message
@@ -144,6 +146,7 @@ export const UPDATE_IAR_INVOICE = gql`
       income
       mds
       details
+      poRemarks
       updatedCount
     }
   }
@@ -391,6 +394,40 @@ export const UPDATE_RIS_DETAILS = gql`
       success
       message
       updatedCount
+    }
+  }
+`;
+
+export const ASSIGN_NO_CATEGORY_ITEM = gql`
+  mutation AssignNoCategoryItem($id: Int!, $assignedQuantity: Int!, $purpose: String) {
+    assignNoCategoryItem(id: $id, assignedQuantity: $assignedQuantity, purpose: $purpose) {
+      newItem {
+        id
+        ncId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        category
+        tag
+        iarId
+        purpose
+        recordType
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        ncId
+      }
+      generatedNcId
     }
   }
 `;
