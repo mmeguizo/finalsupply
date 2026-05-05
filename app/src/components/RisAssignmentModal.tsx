@@ -389,7 +389,14 @@ export default function RisAssignmentModal({
   if (!item) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason !== 'backdropClick') onClose();
+      }}
+      maxWidth="md"
+      fullWidth
+    >
       <DialogTitle sx={{ pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">RIS Assignment</Typography>

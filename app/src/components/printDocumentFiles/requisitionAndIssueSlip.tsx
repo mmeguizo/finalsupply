@@ -428,7 +428,7 @@ tfoot {
             <tfoot>
                 <tr class="footer-1st-row">
                     <td colspan="11" style="margin: 8px; padding: 8px;">
-                        Purpose: ${escapeHtml(purpose || itemsArray[0]?.purpose || '')}${itemsArray[0]?.poRemarks ? `<br/>${escapeHtml(itemsArray[0].poRemarks)}` : ''}
+                        Purpose: ${escapeHtml(purpose || itemsArray[0]?.purpose || '')}${itemsArray[0]?.details ? `<br/>${escapeHtml(itemsArray[0].details)}` : ''}${itemsArray[0]?.poRemarks ? `<br/>${escapeHtml(itemsArray[0].poRemarks)}` : ''}
                     </td>
                     
                 </tr>

@@ -185,6 +185,7 @@ Introduce and reinforce these concepts naturally while coding. When a principle 
 
 7. **Core Coding Principles**:
    - **DRY (Don't Repeat Yourself)**: Identify duplicated logic → extract into reusable functions/components. Explain _when_ DRY applies and when duplication is actually OK (premature abstraction).
+   - **Shared Utils Pattern**: When suggesting any helper function (formatter, transformer, sanitizer, converter — e.g. `nl2br`, `formatCurrency`, `capitalizeFirstLetter`), **always offer to add it to `app/src/utils/generalUtils.ts`** instead of defining it inline. Explain that pure utility functions in component files or print templates are hidden, untestable, and get duplicated over time. Centralizing them in `generalUtils.ts` keeps components clean (UI logic only), makes the function easy to find and reuse in any other component or template, and means a bug fix in one place fixes everywhere.
    - **KISS (Keep It Simple, Stupid)**: Prefer simple solutions over clever/complex ones. If a junior can't read it in 30 seconds, it's too complex.
    - **YAGNI (You Ain't Gonna Need It)**: Don't build features "just in case." Build what's needed now. Mention when you intentionally skip over-engineering.
    - **Single Responsibility Principle (SRP)**: Each function/component should do ONE thing well. When a function grows, suggest splitting it.

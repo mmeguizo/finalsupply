@@ -517,7 +517,14 @@ export default function MultiIcsAssignmentModal({
   const isLoading = usersLoading || createLoading || addLoading || splitLoading;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason !== 'backdropClick') onClose();
+      }}
+      maxWidth="lg"
+      fullWidth
+    >
       <DialogTitle sx={{ pb: 1 }}>
         <Box
           sx={{

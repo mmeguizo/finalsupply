@@ -15,6 +15,7 @@ import { useQuery, useMutation, useApolloClient } from '@apollo/client';
 import { UPDATE_PARID } from '../graphql/mutations/propertyAR.mutation';
 import { UPDATE_ITEM_REMARKS } from '../graphql/mutations/inventoryIAR.mutation';
 import { GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY } from '../graphql/queries/propertyacknowledgementreport';
+import { GET_ALL_INSPECTION_ACCEPTANCE_REPORT } from '../graphql/queries/inspectionacceptancereport.query';
 
 export default function PrintReportDialogForPAR({
   open,
@@ -28,18 +29,18 @@ export default function PrintReportDialogForPAR({
   //   refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
   // });
 
-  const [updateRemarks] = useMutation(UPDATE_ITEM_REMARKS);
+  const [updateRemarks] = useMutation(UPDATE_ITEM_REMARKS, {
+    refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT }],
+    awaitRefetchQueries: true,
+  });
   const [remarks, setRemarks] = useState('');
 
-  // Pre-fill remarks from saved data (include poRemarks if available)
+  // Pre-fill remarks from saved remarks only.
+  // details and poRemarks are appended in the print template automatically.
   useEffect(() => {
     if (open) {
       const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
-      const savedRemarks = items[0]?.remarks || '';
-      const poRemarks = items[0]?.poRemarks || '';
-      // Combine saved remarks with PO remarks on separate lines
-      const combined = [savedRemarks, poRemarks].filter(Boolean).join('\n');
-      setRemarks(combined);
+      setRemarks(items[0]?.remarks || '');
     }
   }, [open, reportData]);
 

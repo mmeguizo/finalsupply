@@ -69,6 +69,8 @@ const GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY = gql`
       risAssignedDate
       purpose
       risDetails
+      details
+      poRemarks
       splitGroupId
       splitFromItemId
       splitIndex

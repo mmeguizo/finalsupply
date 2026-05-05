@@ -29,6 +29,7 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       mds
       details
       poRemarks
+      remarks
       splitGroupId
       splitFromItemId
       splitIndex

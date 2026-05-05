@@ -15,7 +15,6 @@ import { genericPreviewProps } from '../../types/previewPrintDocument/types';
 import { Divider } from '@mui/material';
 import useSignatoryStore from '../../stores/signatoryStore';
 import { capitalizeFirstLetter } from '../../utils/generalUtils';
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: '1px solid black',
   padding: '4px',
@@ -415,12 +414,18 @@ export default function PropertyAcknowledgementReceipt({
                     Remarks:{' '}
                   </Typography>
                   {itemsArray[0]?.remarks && (
-                    <Typography component="span" sx={{ fontStyle: 'italic' }}>
+                    <Typography
+                      component="div"
+                      sx={{ fontStyle: 'italic', whiteSpace: 'pre-line' }}
+                    >
                       {itemsArray[0].remarks}
                     </Typography>
                   )}
                   {itemsArray[0]?.poRemarks && (
-                    <Typography component="div" sx={{ fontStyle: 'italic', mt: 0.5 }}>
+                    <Typography
+                      component="div"
+                      sx={{ fontStyle: 'italic', mt: 0.5, whiteSpace: 'pre-line' }}
+                    >
                       {itemsArray[0].poRemarks}
                     </Typography>
                   )}
