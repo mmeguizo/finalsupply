@@ -183,3 +183,11 @@ export const formatCurrencyPHP = (value: any): string => {
     minimumFractionDigits: 2,
   }).format(Number(value) || 0);
 };
+
+
+/**
+ * Converts newline characters (\n) to HTML <br/> tags.
+ * Use this when rendering multi-line text inside HTML print templates.
+ * Example: nl2br("line1\nline2") → "line1<br/>line2"
+ */
+export const nl2br = (str: string): string => str.replace(/\n/g, '<br/>');
