@@ -131,7 +131,18 @@ table {
 
   & tbody {
     & td {
-      padding: 1px;
+      padding: 3px 4px;
+      vertical-align: top;
+      &:nth-child(1), &:nth-child(2), &:nth-child(4) {
+        text-align: center;
+      }
+      &:nth-child(3) {
+        padding: 4px 8px;
+      }
+      &:nth-child(5), &:nth-child(6) {
+        text-align: right;
+        padding: 3px 6px;
+      }
     }
   }
 

@@ -90,7 +90,12 @@ export default function InspectionAcceptanceReportForIAR({
 
   console.log({ reportData });
 
-  const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  // Only show items that were actually received in this batch (qty > 0)
+  // Items with iarQuantityDisplay set (e.g. percentage) are always shown
+  const items = allItems.filter(
+    (it: any) => Number(it?.actualQuantityReceived ?? 0) > 0 || it?.iarQuantityDisplay != null
+  );
 
   // Editable quantity display state (per item)
   const [editValues, setEditValues] = useState<Record<number, string>>({});
@@ -100,11 +105,12 @@ export default function InspectionAcceptanceReportForIAR({
     awaitRefetchQueries: true,
   });
 
-  // purchase order info (use first item if array)
-  const purchaseOrder = items[0]?.PurchaseOrder || reportData?.PurchaseOrder || null;
+  // purchase order info — use allItems[0] for header data so PO info shows even if items are filtered
+  const headerItem = allItems[0] ?? {};
+  const purchaseOrder = headerItem?.PurchaseOrder || null;
   // Use IAR-specific invoice fields (from the IAR record itself, not from PO)
-  const invoiceText = (items[0]?.invoice ?? '') as string;
-  const invoiceDateText = (items[0]?.invoiceDate ?? '') as string;
+  const invoiceText = (headerItem?.invoice ?? '') as string;
+  const invoiceDateText = (headerItem?.invoiceDate ?? '') as string;
   const dateOfPaymentText = (poOverrides?.dateOfPayment ??
     invoiceDateText ??
     purchaseOrder?.dateOfPayment ??
@@ -280,7 +286,7 @@ export default function InspectionAcceptanceReportForIAR({
                           alignItems: 'end',
                         }}
                       >
-                        No. {items[0]?.iarId ?? ''}
+                        No. {headerItem?.iarId ?? ''}
                       </Box>
                       <Box
                         sx={{
@@ -439,19 +445,19 @@ export default function InspectionAcceptanceReportForIAR({
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell></StyledTableCell>
                     <StyledTableCell colSpan={3} sx={{ textAlign: 'left', padding: 0.5 }}>
-                      {items[0]?.income && (
+                      {headerItem?.income && (
                         <Typography fontSize={12}>
-                          Income: <span>{capitalizeFirstLetter(items[0].income)}</span>
+                          Income: <span>{capitalizeFirstLetter(headerItem.income)}</span>
                         </Typography>
                       )}
-                      {items[0]?.mds && (
+                      {headerItem?.mds && (
                         <Typography fontSize={12}>
-                          MDS: <span>{capitalizeFirstLetter(items[0].mds)}</span>
+                          MDS: <span>{capitalizeFirstLetter(headerItem.mds)}</span>
                         </Typography>
                       )}
-                      {items[0]?.details && (
+                      {headerItem?.details && (
                         <Typography fontSize={12}>
-                          Details: <span>{capitalizeFirstLetter(items[0].details)}</span>
+                          Details: <span>{capitalizeFirstLetter(headerItem.details)}</span>
                         </Typography>
                       )}
                     </StyledTableCell>

@@ -32,11 +32,16 @@ const requisitionIssueSlipResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = context.req.user;
+        const createdByFilter = [{ createdBy: null }];
+        if (user?.email) createdByFilter.push({ createdBy: user.email });
+        if (user?.name) createdByFilter.push({ createdBy: user.name });
         // Fetch a single purchase order by ID
         const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
           where: {
             isDeleted: false,
             category: 'requisition issue slip',
+            [Op.or]: createdByFilter,
           },
           order: [['createdAt', 'DESC']],
           include: [
@@ -171,6 +176,7 @@ const requisitionIssueSlipResolver = {
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
+                updatedBy: context.req.user?.email || context.req.user?.name || null,
               },
               { transaction }
             );

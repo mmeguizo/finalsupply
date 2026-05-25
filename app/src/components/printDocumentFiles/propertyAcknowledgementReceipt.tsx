@@ -300,6 +300,18 @@ table {
       align-content: start;
       border-top: none;
       border-bottom: none;
+      &:nth-child(1), &:nth-child(2) {
+        text-align: center;
+      }
+      &:nth-child(3) {
+        text-align: left;
+        vertical-align: top;
+        padding: 4px 8px;
+      }
+      &:nth-child(4), &:nth-child(5) {
+        text-align: right;
+        padding: 3px 6px;
+      }
     }
   }
 

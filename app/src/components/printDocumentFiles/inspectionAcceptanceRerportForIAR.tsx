@@ -7,10 +7,17 @@ export const getInspectionReportTemplateForIAR = (
   poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
 ) => {
   // normalize input to array
-  const items: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  // Only show items that were actually received in this batch (qty > 0)
+  // Items with iarQuantityDisplay set (e.g. percentage) are always shown
+  const items = allItems.filter(
+    (it: any) => Number(it?.actualQuantityReceived ?? 0) > 0 || it?.iarQuantityDisplay != null
+  );
 
-  const purchaseOrder = items[0]?.PurchaseOrder || {};
-  const invoiceText = escapeHtml(String(items[0]?.invoice ?? ''));
+  // Use allItems[0] for header metadata so PO info shows even if all items are filtered
+  const headerItem = allItems[0] ?? {};
+  const purchaseOrder = headerItem?.PurchaseOrder || {};
+  const invoiceText = escapeHtml(String(headerItem?.invoice ?? ''));
   const dateOfPaymentText = escapeHtml(
     String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? '')
   );
@@ -44,16 +51,16 @@ export const getInspectionReportTemplateForIAR = (
 
         return `
         <tr>
-          <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${idx + 1}</td>
-          <td style="padding:4px ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${unit}</td>
-          <td colspan="3" style="padding:6px; text-align:left; vertical-align:top; ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${idx + 1}</td>
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${unit}</td>
+          <td colspan="3" style="text-align:left; vertical-align:top; padding:4px 8px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
             ${desc}
-            ${specHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${specHtml}</div>` : ''}
-            ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ''}
+            ${specHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${specHtml}</div>` : ''}
+            ${genDescHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${genDescHtml}</div>` : ''}
           </td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${qty}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(unitCost)}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(amount)}</td>
+          <td style="text-align:center; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${qty}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
       })
@@ -61,31 +68,31 @@ export const getInspectionReportTemplateForIAR = (
     (items.length
       ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td colspan="3" style="padding:4px; text-align:center; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:center; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">*****Nothing Follows*****</span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       ${
-        items[0]?.income || items[0]?.mds || items[0]?.details
+        headerItem?.income || headerItem?.mds || headerItem?.details
           ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td colspan="3" style="padding:4px; text-align:left; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:left; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">
-            ${items[0]?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].income)}</span></p>` : ''}
-            ${items[0]?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].mds)}</span></p>` : ''}
-            ${items[0]?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0].details)}</span></p>` : ''}
+            ${headerItem?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(headerItem.income)}</span></p>` : ''}
+            ${headerItem?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(headerItem.mds)}</span></p>` : ''}
+            ${headerItem?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(headerItem.details)}</span></p>` : ''}
           </span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       `
           : ''
@@ -100,10 +107,11 @@ export const getInspectionReportTemplateForIAR = (
 
   console.log;
 
-  const formattedTotal = items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? '';
+  const formattedTotal = headerItem?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? '';
 
-  const overallComplete = items.length && items.every((i) => i.iarStatus === 'complete');
-  const overallPartial = items.some((i) => i.iarStatus === 'partial');
+  // Use allItems for status checks — the IAR status reflects the whole batch, not just received items
+  const overallComplete = allItems.length && allItems.every((i) => i.iarStatus === 'complete');
+  const overallPartial = allItems.some((i) => i.iarStatus === 'partial');
 
   console.log('Overall Complete:', reportData, overallComplete);
 

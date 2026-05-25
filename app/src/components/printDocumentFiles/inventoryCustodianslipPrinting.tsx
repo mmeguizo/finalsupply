@@ -1,7 +1,12 @@
 import { capitalizeFirstLetter } from '../../utils/generalUtils';
 import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
-export const getInventoryTemplateForICS = (signatories: any, reportData: any, purpose?: string, icsDetails?: string) => {
+export const getInventoryTemplateForICS = (
+  signatories: any,
+  reportData: any,
+  purpose?: string,
+  icsDetails?: string
+) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   // Calculate total amount from all items
@@ -47,13 +52,13 @@ export const getInventoryTemplateForICS = (signatories: any, reportData: any, pu
 
       let row = `
         <tr>
-          <td>${escapeHtml(item?.actualQuantityReceived || '')}</td>
-          <td colspan="2">${escapeHtml(item?.unit || '')}</td>
-          <td>${unitCostDisplay}</td>
-          <td>${totalCostDisplay}</td>
-          <td>${desc}${specHtml}${genHtml}</td>
-          <td style="font-size:10px; text-align:center;">${escapeHtml(inventoryItemNo)}</td>
-          <td style="font-size:10px; text-align:center;">${escapeHtml(estimatedUsefulLife)}</td>
+          <td style="text-align:center; padding:3px 4px;">${escapeHtml(item?.actualQuantityReceived || '')}</td>
+          <td colspan="2" style="text-align:center; padding:3px 4px;">${escapeHtml(item?.unit || '')}</td>
+          <td style="text-align:right; padding:3px 6px;">${unitCostDisplay}</td>
+          <td style="text-align:right; padding:3px 6px;">${totalCostDisplay}</td>
+          <td style="text-align:left; vertical-align:top; padding:4px 8px;">${desc}${specHtml}${genHtml}</td>
+          <td style="font-size:10px; text-align:center; padding:3px 4px;">${escapeHtml(inventoryItemNo)}</td>
+          <td style="font-size:10px; text-align:center; padding:3px 4px;">${escapeHtml(estimatedUsefulLife)}</td>
         </tr>
     `;
 
@@ -160,7 +165,7 @@ table {
   & th,
   & td {
     border: 1px solid color-mix(in srgb, black 50%, white);
-    padding: 0px 2px;
+    padding: 3px 4px;
   }
   & th {
     white-space: nowrap;

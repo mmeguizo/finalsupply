@@ -32,15 +32,15 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any, pu
 
       let row = `
                 <tr>
-                    <td>${escapeHtml(' ')}</td>
-                    <td>${index + 1}</td>
-                    <td>${escapeHtml(item?.unit ?? '')}</td>
-                    <td colspan="2">
+                    <td style="padding:3px 4px;">${escapeHtml(' ')}</td>
+                    <td style="text-align:center; padding:3px 4px;">${index + 1}</td>
+                    <td style="text-align:center; padding:3px 4px;">${escapeHtml(item?.unit ?? '')}</td>
+                    <td colspan="2" style="text-align:left; vertical-align:top; padding:4px 8px;">
                       ${desc}
                       ${specHtml}
                       ${genHtml}
                     </td>
-                    <td>${escapeHtml(String(item?.actualQuantityReceived ?? ''))}</td>
+                    <td style="text-align:center; padding:3px 6px;">${escapeHtml(String(item?.actualQuantityReceived ?? ''))}</td>
                     <td colspan="2"></td>
                     <td></td>
                     <td>${escapeHtml(String(' '))}</td>

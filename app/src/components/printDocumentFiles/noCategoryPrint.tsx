@@ -58,16 +58,16 @@ export const getNoCategoryPrintTemplate = (
 
         return `
         <tr>
-          <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">${idx + 1}</td>
-          <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">${unit}</td>
-          <td colspan="3" style="padding:6px; text-align:left; vertical-align:top; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${idx + 1}</td>
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${unit}</td>
+          <td colspan="3" style="text-align:left; vertical-align:top; padding:4px 8px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
             ${desc}
-            ${specHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${specHtml}</div>` : ''}
-            ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ''}
+            ${specHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${specHtml}</div>` : ''}
+            ${genDescHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${genDescHtml}</div>` : ''}
           </td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">${qty}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">${formatCurrencyPHP(unitCost)}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">${formatCurrencyPHP(amount)}</td>
+          <td style="text-align:center; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${qty}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
       })
@@ -75,22 +75,22 @@ export const getNoCategoryPrintTemplate = (
     (items.length
       ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;"></td>
-        <td colspan="3" style="padding:4px; text-align:center; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:center; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">*****Nothing Follows*****</span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; padding: 0px;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       ${
         items[0]?.income || items[0]?.mds || items[0]?.details || purpose || details
           ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td colspan="3" style="padding:4px; text-align:left; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:left; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">
             ${items[0]?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].income)}</span></p>` : ''}
             ${items[0]?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].mds)}</span></p>` : ''}
@@ -99,9 +99,9 @@ export const getNoCategoryPrintTemplate = (
             ${details ? `<p style="font-size:12px;">Additional Details: <span>${escapeHtml(details)}</span></p>` : ''}
           </span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       `
           : ''

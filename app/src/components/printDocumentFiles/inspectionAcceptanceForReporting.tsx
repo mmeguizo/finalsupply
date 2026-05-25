@@ -146,10 +146,14 @@ export const getInspectionReportTemplateForPrinting = (signatories: any, reportD
         }
 
         /* Table Body */
-        table tbody td { padding: 1px; text-align: left; }
-        table tbody td:nth-child(1), table tbody td:nth-child(2),
-        table tbody td:nth-child(6), table tbody td:nth-child(7), table tbody td:nth-child(8) {
+        table tbody td { padding: 3px 4px; text-align: left; vertical-align: top; }
+        table tbody td:nth-child(1), table tbody td:nth-child(2), table tbody td:nth-child(4) {
             text-align: center;
+        }
+        table tbody td:nth-child(3) { padding: 4px 8px; }
+        table tbody td:nth-child(5), table tbody td:nth-child(6) {
+            text-align: right;
+            padding: 3px 6px;
         }
 
         /* Table Foot (Total row) */

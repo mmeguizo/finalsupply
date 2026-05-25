@@ -16,6 +16,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = context.req.user;
+        const createdByFilter = [{ createdBy: null }];
+        if (user?.email) createdByFilter.push({ createdBy: user.email });
+        if (user?.name) createdByFilter.push({ createdBy: user.name });
         // Fetch a single purchase order by ID
         // const inspectionAcceptanceReportdata =
         //   await inspectionAcceptanceReport.findAll({
@@ -24,7 +28,7 @@ const inspectionAcceptanceReportResolver = {
         //     include: [PurchaseOrder],
         //   });
         const rows = await inspectionAcceptanceReport.findAll({
-          where: { isDeleted: false, recordType: 'iar_original' },
+          where: { isDeleted: false, recordType: 'iar_original', [Op.or]: createdByFilter },
           order: [['id', 'DESC']],
           include: [
             { model: PurchaseOrder, required: true },
@@ -72,6 +76,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = context.req.user;
+        const createdByFilter = [{ createdBy: null }];
+        if (user?.email) createdByFilter.push({ createdBy: user.email });
+        if (user?.name) createdByFilter.push({ createdBy: user.name });
         // Fetch a single purchase order by ID
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           where: {
@@ -79,6 +87,7 @@ const inspectionAcceptanceReportResolver = {
             tag: {
               [Op.or]: ['high', 'low'],
             },
+            [Op.or]: createdByFilter,
           },
           order: [['createdAt', 'DESC']],
           include: [
@@ -106,6 +115,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = context.req.user;
+        const createdByFilter = [{ createdBy: null }];
+        if (user?.email) createdByFilter.push({ createdBy: user.email });
+        if (user?.name) createdByFilter.push({ createdBy: user.name });
 
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           // Explicitly select only the attributes required by the IARonly GraphQL type
@@ -113,6 +126,7 @@ const inspectionAcceptanceReportResolver = {
           attributes: ['id', 'created_at', 'iar_id', 'category', 'purchase_order_id'],
           where: {
             isDeleted: false,
+            [Op.or]: createdByFilter,
           },
           order: [
             ['created_at', 'DESC'], // Order by created_at (snake_case)
@@ -175,11 +189,16 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = context.req.user;
+        const createdByFilter = [{ createdBy: null }];
+        if (user?.email) createdByFilter.push({ createdBy: user.email });
+        if (user?.name) createdByFilter.push({ createdBy: user.name });
 
         const rows = await inspectionAcceptanceReport.findAll({
           where: {
             isDeleted: false,
             category: null,
+            [Op.or]: createdByFilter,
           },
           order: [['id', 'DESC']],
           include: [
@@ -426,8 +445,8 @@ const inspectionAcceptanceReportResolver = {
               purchaseOrderId: poi.purchaseOrderId,
               purchaseOrderItemId: poi.id,
               actualQuantityReceived: delta,
-              createdBy: user.name || user.id,
-              updatedBy: user.name || user.id,
+              createdBy: user.email || user.name || user.id,
+              updatedBy: user.email || user.name || user.id,
               // inherit document IDs if present on existing IAR rows
               parId: existingIar?.parId || null,
               icsId: existingIar?.icsId || null,
@@ -606,8 +625,8 @@ const inspectionAcceptanceReportResolver = {
               actualQuantityReceived: delta,
               // Use invoice from the modal (which may come from the PO or be user-entered)
               invoice: invoice || po.invoice || '',
-              createdBy: user.name || user.id,
-              updatedBy: user.name || user.id,
+              createdBy: user.email || user.name || user.id,
+              updatedBy: user.email || user.name || user.id,
               parId: '',
               icsId: '',
               risId: '',
@@ -746,8 +765,8 @@ const inspectionAcceptanceReportResolver = {
             actualQuantityReceived: received,
             itemGroupId: groupId, // Link to the same group
             isReceiptLine: true, // Mark as a receipt line
-            createdBy: user.name || user.id,
-            updatedBy: user.name || user.id,
+            createdBy: user.email || user.name || user.id,
+            updatedBy: user.email || user.name || user.id,
           },
           { transaction: t }
         );
@@ -777,8 +796,8 @@ const inspectionAcceptanceReportResolver = {
             purchaseOrderId: newPoi.purchaseOrderId,
             purchaseOrderItemId: newPoi.id,
             actualQuantityReceived: received,
-            createdBy: user.name || user.id,
-            updatedBy: user.name || user.id,
+            createdBy: user.email || user.name || user.id,
+            updatedBy: user.email || user.name || user.id,
             // inherit document IDs if present
             parId: existingIar?.parId || null,
             icsId: existingIar?.icsId || null,
@@ -965,6 +984,7 @@ const inspectionAcceptanceReportResolver = {
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
+                updatedBy: context.req.user?.email || context.req.user?.name || null,
               },
               { transaction }
             );
