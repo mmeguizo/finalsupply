@@ -35,16 +35,16 @@ const propertyAcknowledgmentReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
         // Fetch a single purchase order by ID
         const propertyAcknowledgmentReportdata = await inspectionAcceptanceReportResolver.findAll({
           where: {
             isDeleted: false,
             category: 'property acknowledgement reciept',
-            [Op.or]: createdByFilter,
+            ...createdByScope,
           },
           order: [['createdAt', 'DESC']],
           include: [
@@ -198,6 +198,7 @@ const propertyAcknowledgmentReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = await context.getUser();
 
         const {
           itemIds,
@@ -229,7 +230,7 @@ const propertyAcknowledgmentReportResolver = {
             parReceivedByPosition: receivedByPosition || '',
             parDepartment: department || '',
             parAssignedDate: new Date(),
-            updatedBy: context.req.user?.email || context.req.user?.name || null,
+            updatedBy: user?.email || null,
           },
           {
             where: {

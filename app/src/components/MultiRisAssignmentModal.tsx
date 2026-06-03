@@ -40,9 +40,7 @@ import {
   ADD_ITEM_TO_EXISTING_RIS,
   SPLIT_AND_ASSIGN_RIS,
 } from '../graphql/mutations/requisitionIS.mutation';
-import { GET_ALL_USERS } from '../graphql/queries/user.query';
 import { GET_ALL_DEPARTMENTS } from '../graphql/queries/department.query';
-import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -50,15 +48,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
-interface UserOption {
-  id: string;
-  name: string;
-  last_name?: string;
-  position?: string;
-  role?: string;
-  label: string;
-}
 
 interface ItemEntry {
   sourceItemId: string;
@@ -85,8 +74,6 @@ const DIVISION_OPTIONS = ['Talisay Main', 'Alijis', 'Binalbagan', 'Fortune Town'
 const emptySignatoryForm = {
   department: '',
   division: '',
-  receivedFrom: null as UserOption | null,
-  receivedBy: null as UserOption | null,
 };
 
 /* ================================================================== */
@@ -105,7 +92,6 @@ export default function MultiRisAssignmentModal({
 }: MultiRisAssignmentModalProps) {
   /* ---------- GraphQL ---------- */
 
-  const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
   const { data: departmentsData } = useQuery(GET_ALL_DEPARTMENTS);
 
   const [createMultiRIS, { loading: createLoading }] = useMutation(
@@ -122,11 +108,6 @@ export default function MultiRisAssignmentModal({
   const [splitAndAssignRIS, { loading: splitLoading }] = useMutation(SPLIT_AND_ASSIGN_RIS, {
     refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
   });
-
-  /* ---------- Signatories from Zustand store ---------- */
-
-  const allSignatories = useSignatoryStore((s) => s.signatories);
-  const fetchSignatories = useSignatoryStore((s) => s.fetchSignatories);
 
   /* ---------- Local state ---------- */
 
@@ -149,17 +130,11 @@ export default function MultiRisAssignmentModal({
       quantity: number;
       department: string;
       division: string;
-      receivedFrom: UserOption | null;
-      receivedBy: UserOption | null;
     }>
   >([]);
   const [splitConfirmOpen, setSplitConfirmOpen] = useState(false);
 
   /* ---------- Effects ---------- */
-
-  useEffect(() => {
-    if (allSignatories.length === 0) fetchSignatories();
-  }, [allSignatories.length, fetchSignatories]);
 
   useEffect(() => {
     if (open) {
@@ -197,26 +172,6 @@ export default function MultiRisAssignmentModal({
   }, [open, preSelectedItems]);
 
   /* ---------- Options ---------- */
-
-  const userOptions: UserOption[] = useMemo(() => {
-    const users = usersData?.users?.filter((u: any) => u.is_active) || [];
-    return users.map((u: any) => ({
-      id: u.id,
-      name: `${u.name} ${u.last_name || ''}`.trim(),
-      position: u.position || '',
-      label: `${u.name} ${u.last_name || ''} ${u.position ? `(${u.position})` : ''}`.trim(),
-    }));
-  }, [usersData]);
-
-  const signatoryOptions: UserOption[] = useMemo(() => {
-    return (allSignatories || []).map((sig: any) => ({
-      id: sig.id,
-      name: sig.name,
-      role: sig.role,
-      position: sig.role,
-      label: `${sig.name} (${sig.role})`,
-    }));
-  }, [allSignatories]);
 
   const departmentOptions: string[] = useMemo(() => {
     return (departmentsData?.departments || []).map((d: any) => d.name);
@@ -307,15 +262,6 @@ export default function MultiRisAssignmentModal({
       setError('Please enter a department.');
       return;
     }
-    if (!signatoryForm.receivedFrom) {
-      setError('Please select "Received From".');
-      return;
-    }
-    if (!signatoryForm.receivedBy) {
-      setError('Please select "Received By".');
-      return;
-    }
-
     try {
       const result = await createMultiRIS({
         variables: {
@@ -326,11 +272,10 @@ export default function MultiRisAssignmentModal({
             })),
             department: signatoryForm.department.trim(),
             division: signatoryForm.division,
-            receivedFrom: signatoryForm.receivedFrom.name,
-            receivedFromPosition:
-              signatoryForm.receivedFrom.position || signatoryForm.receivedFrom.role || '',
-            receivedBy: signatoryForm.receivedBy.name,
-            receivedByPosition: signatoryForm.receivedBy.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -417,10 +362,7 @@ export default function MultiRisAssignmentModal({
   const splitOriginalQty = splitSourceItem?.actualQuantityReceived || 0;
 
   const addSplitRow = () => {
-    setSplitRows((prev) => [
-      ...prev,
-      { quantity: 1, department: '', division: '', receivedFrom: null, receivedBy: null },
-    ]);
+    setSplitRows((prev) => [...prev, { quantity: 1, department: '', division: '' }]);
   };
 
   const removeSplitRow = (index: number) => {
@@ -462,14 +404,6 @@ export default function MultiRisAssignmentModal({
         setError(`Split row ${i + 1}: Quantity must be greater than 0.`);
         return;
       }
-      if (!row.receivedFrom) {
-        setError(`Split row ${i + 1}: Please select "Received From".`);
-        return;
-      }
-      if (!row.receivedBy) {
-        setError(`Split row ${i + 1}: Please select "Received By".`);
-        return;
-      }
     }
 
     setSplitConfirmOpen(true);
@@ -487,10 +421,10 @@ export default function MultiRisAssignmentModal({
                   quantity: row.quantity,
                   department: row.department.trim(),
                   division: row.division || '',
-                  receivedFrom: row.receivedFrom!.name,
-                  receivedFromPosition: row.receivedFrom!.position || row.receivedFrom!.role || '',
-                  receivedBy: row.receivedBy!.name,
-                  receivedByPosition: row.receivedBy!.position || '',
+                  receivedFrom: '',
+                  receivedFromPosition: '',
+                  receivedBy: '',
+                  receivedByPosition: '',
                 })),
               },
             ],
@@ -517,7 +451,7 @@ export default function MultiRisAssignmentModal({
 
   /* ---------- Render ---------- */
 
-  const isLoading = usersLoading || createLoading || addLoading || splitLoading;
+  const isLoading = createLoading || addLoading || splitLoading;
 
   return (
     <Dialog
@@ -738,43 +672,6 @@ export default function MultiRisAssignmentModal({
                       }
                       renderInput={(params) => <TextField {...params} label="Division (Campus)" />}
                       sx={{ width: 220 }}
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Autocomplete
-                      size="small"
-                      options={signatoryOptions}
-                      value={signatoryForm.receivedFrom}
-                      onChange={(_, v) =>
-                        setSignatoryForm((prev) => ({
-                          ...prev,
-                          receivedFrom: v,
-                        }))
-                      }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received From (Supply Officer)" required />
-                      )}
-                      sx={{ flex: 1 }}
-                    />
-                    <Autocomplete
-                      size="small"
-                      options={userOptions}
-                      value={signatoryForm.receivedBy}
-                      onChange={(_, v) =>
-                        setSignatoryForm((prev) => ({
-                          ...prev,
-                          receivedBy: v,
-                        }))
-                      }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received By (End User)" required />
-                      )}
-                      sx={{ flex: 1 }}
                     />
                   </Box>
                 </CardContent>
@@ -1030,37 +927,6 @@ export default function MultiRisAssignmentModal({
                           onChange={(_, v) => updateSplitRow(index, 'division', v || '')}
                           renderInput={(params) => <TextField {...params} label="Division" />}
                           sx={{ width: 180 }}
-                        />
-                      </Box>
-
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Autocomplete
-                          size="small"
-                          options={signatoryOptions}
-                          value={row.receivedFrom}
-                          onChange={(_, v) => updateSplitRow(index, 'receivedFrom', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Received From (Supply Officer)"
-                              required
-                            />
-                          )}
-                          sx={{ flex: 1 }}
-                        />
-                        <Autocomplete
-                          size="small"
-                          options={userOptions}
-                          value={row.receivedBy}
-                          onChange={(_, v) => updateSplitRow(index, 'receivedBy', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField {...params} label="Received By (End User)" required />
-                          )}
-                          sx={{ flex: 1 }}
                         />
                       </Box>
                     </CardContent>

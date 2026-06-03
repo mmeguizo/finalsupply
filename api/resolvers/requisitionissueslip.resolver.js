@@ -32,16 +32,16 @@ const requisitionIssueSlipResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
         // Fetch a single purchase order by ID
         const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
           where: {
             isDeleted: false,
             category: 'requisition issue slip',
-            [Op.or]: createdByFilter,
+            ...createdByScope,
           },
           order: [['createdAt', 'DESC']],
           include: [
@@ -112,6 +112,7 @@ const requisitionIssueSlipResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
@@ -176,7 +177,7 @@ const requisitionIssueSlipResolver = {
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
-                updatedBy: context.req.user?.email || context.req.user?.name || null,
+                updatedBy: user?.email || null,
               },
               { transaction }
             );

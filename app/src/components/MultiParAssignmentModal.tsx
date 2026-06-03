@@ -41,8 +41,6 @@ import {
   ADD_ITEM_TO_EXISTING_PAR,
   SPLIT_AND_ASSIGN_PAR,
 } from '../graphql/mutations/propertyAR.mutation';
-import { GET_ALL_USERS } from '../graphql/queries/user.query';
-import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -50,15 +48,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
-interface UserOption {
-  id: string;
-  name: string;
-  last_name?: string;
-  position?: string;
-  role?: string;
-  label: string;
-}
 
 /** Per-item quantity entry */
 interface ItemEntry {
@@ -87,8 +76,6 @@ interface MultiParAssignmentModalProps {
 
 const emptySignatoryForm = {
   department: '',
-  receivedFrom: null as UserOption | null,
-  receivedBy: null as UserOption | null,
 };
 
 /* ================================================================== */
@@ -107,8 +94,6 @@ export default function MultiParAssignmentModal({
 }: MultiParAssignmentModalProps) {
   /* ---------- GraphQL ---------- */
 
-  const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
-
   const [createMultiPAR, { loading: createLoading }] = useMutation(
     CREATE_MULTI_ITEM_PAR_ASSIGNMENT,
     {
@@ -123,11 +108,6 @@ export default function MultiParAssignmentModal({
   const [splitAndAssignPAR, { loading: splitLoading }] = useMutation(SPLIT_AND_ASSIGN_PAR, {
     refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
   });
-
-  /* ---------- Signatories from Zustand store ---------- */
-
-  const allSignatories = useSignatoryStore((s) => s.signatories);
-  const fetchSignatories = useSignatoryStore((s) => s.fetchSignatories);
 
   /* ---------- Local state ---------- */
 
@@ -149,17 +129,11 @@ export default function MultiParAssignmentModal({
     Array<{
       quantity: number;
       department: string;
-      receivedFrom: UserOption | null;
-      receivedBy: UserOption | null;
     }>
   >([]);
   const [splitConfirmOpen, setSplitConfirmOpen] = useState(false);
 
   /* ---------- Effects ---------- */
-
-  useEffect(() => {
-    if (allSignatories.length === 0) fetchSignatories();
-  }, [allSignatories.length, fetchSignatories]);
 
   // Initialize when modal opens
   useEffect(() => {
@@ -200,27 +174,6 @@ export default function MultiParAssignmentModal({
 
   /* ---------- Options ---------- */
 
-  const userOptions: UserOption[] = useMemo(() => {
-    const users = usersData?.users?.filter((u: any) => u.is_active) || [];
-    return users.map((u: any) => ({
-      id: u.id,
-      name: `${u.name} ${u.last_name || ''}`.trim(),
-      position: u.position || '',
-      label: `${u.name} ${u.last_name || ''} ${u.position ? `(${u.position})` : ''}`.trim(),
-    }));
-  }, [usersData]);
-
-  const signatoryOptions: UserOption[] = useMemo(() => {
-    return (allSignatories || []).map((sig: any) => ({
-      id: sig.id,
-      name: sig.name,
-      role: sig.role,
-      position: sig.role,
-      label: `${sig.name} (${sig.role})`,
-    }));
-  }, [allSignatories]);
-
-  // Unique existing PAR IDs with their end user info
   const existingPARGroups = useMemo(() => {
     const groups: Record<
       string,
@@ -306,15 +259,6 @@ export default function MultiParAssignmentModal({
       setError('Please enter a department.');
       return;
     }
-    if (!signatoryForm.receivedFrom) {
-      setError('Please select "Received From".');
-      return;
-    }
-    if (!signatoryForm.receivedBy) {
-      setError('Please select "Received By".');
-      return;
-    }
-
     try {
       const result = await createMultiPAR({
         variables: {
@@ -324,11 +268,10 @@ export default function MultiParAssignmentModal({
               quantity: e.quantity,
             })),
             department: signatoryForm.department.trim(),
-            receivedFrom: signatoryForm.receivedFrom.name,
-            receivedFromPosition:
-              signatoryForm.receivedFrom.position || signatoryForm.receivedFrom.role || '',
-            receivedBy: signatoryForm.receivedBy.name,
-            receivedByPosition: signatoryForm.receivedBy.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -415,10 +358,7 @@ export default function MultiParAssignmentModal({
   const splitOriginalQty = splitSourceItem?.actualQuantityReceived || 0;
 
   const addSplitRow = () => {
-    setSplitRows((prev) => [
-      ...prev,
-      { quantity: 1, department: '', receivedFrom: null, receivedBy: null },
-    ]);
+    setSplitRows((prev) => [...prev, { quantity: 1, department: '' }]);
   };
 
   const removeSplitRow = (index: number) => {
@@ -460,14 +400,6 @@ export default function MultiParAssignmentModal({
         setError(`Split row ${i + 1}: Quantity must be greater than 0.`);
         return;
       }
-      if (!row.receivedFrom) {
-        setError(`Split row ${i + 1}: Please select "Received From".`);
-        return;
-      }
-      if (!row.receivedBy) {
-        setError(`Split row ${i + 1}: Please select "Received By".`);
-        return;
-      }
     }
 
     setSplitConfirmOpen(true);
@@ -484,10 +416,10 @@ export default function MultiParAssignmentModal({
                 splits: splitRows.map((row) => ({
                   quantity: row.quantity,
                   department: row.department.trim(),
-                  receivedFrom: row.receivedFrom!.name,
-                  receivedFromPosition: row.receivedFrom!.position || row.receivedFrom!.role || '',
-                  receivedBy: row.receivedBy!.name,
-                  receivedByPosition: row.receivedBy!.position || '',
+                  receivedFrom: '',
+                  receivedFromPosition: '',
+                  receivedBy: '',
+                  receivedByPosition: '',
                 })),
               },
             ],
@@ -514,7 +446,7 @@ export default function MultiParAssignmentModal({
 
   /* ---------- Render ---------- */
 
-  const isLoading = usersLoading || createLoading || addLoading || splitLoading;
+  const isLoading = createLoading || addLoading || splitLoading;
 
   return (
     <Dialog
@@ -723,43 +655,6 @@ export default function MultiParAssignmentModal({
                       }
                       sx={{ flexGrow: 1 }}
                       required
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Autocomplete
-                      size="small"
-                      options={signatoryOptions}
-                      value={signatoryForm.receivedFrom}
-                      onChange={(_, v) =>
-                        setSignatoryForm((prev) => ({
-                          ...prev,
-                          receivedFrom: v,
-                        }))
-                      }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received From (Supply Officer)" required />
-                      )}
-                      sx={{ flex: 1 }}
-                    />
-                    <Autocomplete
-                      size="small"
-                      options={userOptions}
-                      value={signatoryForm.receivedBy}
-                      onChange={(_, v) =>
-                        setSignatoryForm((prev) => ({
-                          ...prev,
-                          receivedBy: v,
-                        }))
-                      }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received By (End User)" required />
-                      )}
-                      sx={{ flex: 1 }}
                     />
                   </Box>
                 </CardContent>
@@ -1005,37 +900,6 @@ export default function MultiParAssignmentModal({
                           value={row.department}
                           onChange={(e) => updateSplitRow(index, 'department', e.target.value)}
                           sx={{ flexGrow: 1 }}
-                        />
-                      </Box>
-
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Autocomplete
-                          size="small"
-                          options={signatoryOptions}
-                          value={row.receivedFrom}
-                          onChange={(_, v) => updateSplitRow(index, 'receivedFrom', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Received From (Supply Officer)"
-                              required
-                            />
-                          )}
-                          sx={{ flex: 1 }}
-                        />
-                        <Autocomplete
-                          size="small"
-                          options={userOptions}
-                          value={row.receivedBy}
-                          onChange={(_, v) => updateSplitRow(index, 'receivedBy', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField {...params} label="Received By (End User)" required />
-                          )}
-                          sx={{ flex: 1 }}
                         />
                       </Box>
                     </CardContent>

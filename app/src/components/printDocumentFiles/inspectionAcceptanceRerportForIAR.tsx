@@ -4,7 +4,8 @@ import { escapeHtml, nl2br } from '../../utils/textHelpers';
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
   reportData: any,
-  poOverrides?: { invoice?: string; dateOfPayment?: string } // NEW
+  poOverrides?: { invoice?: string; dateOfPayment?: string }, // NEW
+  iarDetails?: string
 ) => {
   // normalize input to array
   const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
@@ -78,7 +79,7 @@ export const getInspectionReportTemplateForIAR = (
         <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       ${
-        headerItem?.income || headerItem?.mds || headerItem?.details
+        headerItem?.income || headerItem?.mds
           ? `
       <tr>
         <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
@@ -87,8 +88,23 @@ export const getInspectionReportTemplateForIAR = (
           <span style="font-size:12px; color:#333;">
             ${headerItem?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(headerItem.income)}</span></p>` : ''}
             ${headerItem?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(headerItem.mds)}</span></p>` : ''}
-            ${headerItem?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(headerItem.details)}</span></p>` : ''}
           </span>
+        </td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+      </tr>
+      `
+          : ''
+      }
+      ${
+        iarDetails
+          ? `
+      <tr>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:left; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
+          <p style="font-size:12px;">PO Details: <span>${capitalizeFirstLetter(iarDetails)}</span></p>
         </td>
         <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
         <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>

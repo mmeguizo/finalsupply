@@ -71,7 +71,6 @@ function Row(props: {
   incomeOverride?: string;
   mdsOverride?: string;
   detailsOverride?: string;
-  poRemarksOverride?: string;
   onOverrideChange: (
     iarId: string,
     patch: {
@@ -80,7 +79,6 @@ function Row(props: {
       income?: string;
       mds?: string;
       details?: string;
-      poRemarks?: string;
     }
   ) => void;
 }) {
@@ -95,7 +93,6 @@ function Row(props: {
     incomeOverride,
     mdsOverride,
     detailsOverride,
-    poRemarksOverride,
     onOverrideChange,
   } = props;
   const [open, setOpen] = React.useState(false);
@@ -104,7 +101,6 @@ function Row(props: {
   const [savingIncome, setSavingIncome] = React.useState(false);
   const [savingMds, setSavingMds] = React.useState(false);
   const [savingDetails, setSavingDetails] = React.useState(false);
-  const [savingPoRemarks, setSavingPoRemarks] = React.useState(false);
   const canRevert = React.useMemo(() => {
     if (!row?.items?.length) return false;
     return row.items.some((it: any) => Number(it.actualQuantityReceived || 0) > 0);
@@ -241,7 +237,6 @@ function Row(props: {
     income: row.items?.[0]?.income || '',
     mds: row.items?.[0]?.mds || '',
     details: row.items?.[0]?.details || '',
-    poRemarks: row.items?.[0]?.poRemarks || '',
   };
 
   const invoiceValue = invoiceOverride ?? iarDefaults.invoice;
@@ -249,7 +244,6 @@ function Row(props: {
   const incomeValue = incomeOverride ?? iarDefaults.income;
   const mdsValue = mdsOverride ?? iarDefaults.mds;
   const detailsValue = detailsOverride ?? iarDefaults.details;
-  const poRemarksValue = poRemarksOverride ?? iarDefaults.poRemarks;
 
   return (
     <React.Fragment>
@@ -466,46 +460,7 @@ function Row(props: {
             disabled={savingDetails}
           />
         </TableCell>
-        {/* PO Remarks multiline shift+enter-to-save */}
-        <TableCell>
-          <TextField
-            size="small"
-            multiline
-            maxRows={4}
-            placeholder={iarDefaults.poRemarks || 'Supplier & PO# info...'}
-            value={poRemarksOverride !== undefined ? poRemarksOverride : iarDefaults.poRemarks}
-            onChange={(e) => onOverrideChange(row.iarId, { poRemarks: e.target.value })}
-            onKeyDown={async (e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
-                e.preventDefault();
-                const target = e.target as HTMLInputElement;
-                const valueToSave = (target.value || '').trim();
-                try {
-                  setSavingPoRemarks(true);
-                  await updateIARInvoice({
-                    variables: { iarId: row.iarId, poRemarks: valueToSave },
-                  });
-                  onNotify('PO Remarks saved');
-                } catch (err) {
-                  console.error('Failed to save PO Remarks', err);
-                  onNotify('Failed to save PO Remarks', 'error');
-                } finally {
-                  setSavingPoRemarks(false);
-                }
-              }
-            }}
-            sx={{ minWidth: 220 }}
-            InputProps={{
-              endAdornment: savingPoRemarks ? (
-                <InputAdornment position="end">
-                  <CircularProgress size={16} />
-                </InputAdornment>
-              ) : undefined,
-              readOnly: false,
-            }}
-            disabled={savingPoRemarks}
-          />
-        </TableCell>
+
         <TableCell>
           <Button
             size="small"
@@ -1273,7 +1228,6 @@ export default function InventoryPage() {
                   <TableCell>Income</TableCell>
                   <TableCell>MDS</TableCell>
                   <TableCell>Details</TableCell>
-                  <TableCell>PO Details</TableCell>
                   <TableCell>Print</TableCell>
                   <TableCell>Revert</TableCell>
                 </TableRow>
@@ -1298,7 +1252,6 @@ export default function InventoryPage() {
                     incomeOverride={iarOverrides[row.iarId]?.income}
                     mdsOverride={iarOverrides[row.iarId]?.mds}
                     detailsOverride={iarOverrides[row.iarId]?.details}
-                    poRemarksOverride={iarOverrides[row.iarId]?.poRemarks}
                     onOverrideChange={(iarId, patch) =>
                       setIarOverrides((prev) => ({
                         ...prev,

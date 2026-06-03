@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,6 @@ import {
   Typography,
   Paper,
   TextField,
-  Autocomplete,
   Chip,
   Alert,
   CircularProgress,
@@ -33,29 +32,16 @@ import {
   CREATE_SINGLE_PAR_ASSIGNMENT,
   UPDATE_PAR_ASSIGNMENT,
 } from '../graphql/mutations/propertyAR.mutation';
-import { GET_ALL_USERS } from '../graphql/queries/user.query';
-import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-interface UserOption {
-  id: string;
-  name: string;
-  last_name?: string;
-  position?: string;
-  role?: string;
-  label: string;
-}
-
 /** Form state for new/edit assignment */
 interface AssignmentForm {
   quantity: number | '';
   department: string;
-  receivedFrom: UserOption | null;
-  receivedBy: UserOption | null;
 }
 
 /** Saved assignment (shown in list) */
@@ -80,8 +66,6 @@ interface ParAssignmentModalProps {
 const emptyForm: AssignmentForm = {
   quantity: '',
   department: '',
-  receivedFrom: null,
-  receivedBy: null,
 };
 
 /* ================================================================== */
@@ -96,8 +80,6 @@ export default function ParAssignmentModal({
 }: ParAssignmentModalProps) {
   /* ---------- GraphQL ---------- */
 
-  const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
-
   const [createPARAssignment, { loading: createLoading }] = useMutation(
     CREATE_SINGLE_PAR_ASSIGNMENT,
     {
@@ -108,11 +90,6 @@ export default function ParAssignmentModal({
   const [updatePARAssignment, { loading: updateLoading }] = useMutation(UPDATE_PAR_ASSIGNMENT, {
     refetchQueries: [{ query: GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY }],
   });
-
-  /* ---------- Signatories from Zustand store ---------- */
-
-  const allSignatories = useSignatoryStore((s) => s.signatories);
-  const fetchSignatories = useSignatoryStore((s) => s.fetchSignatories);
 
   /* ---------- Local state ---------- */
 
@@ -137,10 +114,6 @@ export default function ParAssignmentModal({
   const existingParId = item?.parId || null;
 
   /* ---------- Effects ---------- */
-
-  useEffect(() => {
-    if (allSignatories.length === 0) fetchSignatories();
-  }, [allSignatories.length, fetchSignatories]);
 
   // Initialize when modal opens
   useEffect(() => {
@@ -181,28 +154,6 @@ export default function ParAssignmentModal({
     }
   }, [open, item]);
 
-  /* ---------- Options ---------- */
-
-  const userOptions: UserOption[] = useMemo(() => {
-    const users = usersData?.users?.filter((u: any) => u.is_active) || [];
-    return users.map((u: any) => ({
-      id: u.id,
-      name: `${u.name} ${u.last_name || ''}`.trim(),
-      position: u.position || '',
-      label: `${u.name} ${u.last_name || ''} ${u.position ? `(${u.position})` : ''}`.trim(),
-    }));
-  }, [usersData]);
-
-  const signatoryOptions: UserOption[] = useMemo(() => {
-    return (allSignatories || []).map((sig: any) => ({
-      id: sig.id,
-      name: sig.name,
-      role: sig.role,
-      position: sig.role,
-      label: `${sig.name} (${sig.role})`,
-    }));
-  }, [allSignatories]);
-
   /* ---------- Form helpers ---------- */
 
   const updateForm = (field: keyof AssignmentForm, value: any) => {
@@ -239,15 +190,6 @@ export default function ParAssignmentModal({
       setError('Please enter a department.');
       return;
     }
-    if (!form.receivedFrom) {
-      setError('Please select "Received From".');
-      return;
-    }
-    if (!form.receivedBy) {
-      setError('Please select "Received By".');
-      return;
-    }
-
     try {
       const result = await createPARAssignment({
         variables: {
@@ -255,10 +197,10 @@ export default function ParAssignmentModal({
             sourceItemId: String(item.id),
             quantity: qty,
             department: form.department.trim(),
-            receivedFrom: form.receivedFrom.name,
-            receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
-            receivedBy: form.receivedBy.name,
-            receivedByPosition: form.receivedBy.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -275,10 +217,10 @@ export default function ParAssignmentModal({
           parId: generatedParId,
           quantity: qty,
           department: form.department.trim(),
-          receivedFrom: form.receivedFrom.name,
-          receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
-          receivedBy: form.receivedBy.name,
-          receivedByPosition: form.receivedBy.position || '',
+          receivedFrom: '',
+          receivedFromPosition: '',
+          receivedBy: '',
+          receivedByPosition: '',
         },
       ]);
 
@@ -308,16 +250,9 @@ export default function ParAssignmentModal({
 
   const startEditing = (assignment: SavedAssignment) => {
     setEditingId(assignment.id);
-
-    // Find matching options for autocomplete
-    const fromOption = signatoryOptions.find((o) => o.name === assignment.receivedFrom) || null;
-    const byOption = userOptions.find((o) => o.name === assignment.receivedBy) || null;
-
     setEditForm({
       quantity: assignment.quantity,
       department: assignment.department,
-      receivedFrom: fromOption,
-      receivedBy: byOption,
     });
   };
 
@@ -343,11 +278,10 @@ export default function ParAssignmentModal({
             itemId: editingId,
             quantity: qty,
             department: editForm.department,
-            receivedFrom: editForm.receivedFrom?.name,
-            receivedFromPosition:
-              editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
-            receivedBy: editForm.receivedBy?.name,
-            receivedByPosition: editForm.receivedBy?.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -360,11 +294,6 @@ export default function ParAssignmentModal({
                 ...a,
                 quantity: qty,
                 department: editForm.department,
-                receivedFrom: editForm.receivedFrom?.name || a.receivedFrom,
-                receivedFromPosition:
-                  editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
-                receivedBy: editForm.receivedBy?.name || a.receivedBy,
-                receivedByPosition: editForm.receivedBy?.position || '',
               }
             : a
         )
@@ -385,7 +314,7 @@ export default function ParAssignmentModal({
   const totalAssigned = savedAssignments.reduce((sum, a) => sum + a.quantity, 0);
   const totalOriginal = existingParId ? savedAssignments[0]?.quantity || originalQty : originalQty;
   const progress = totalOriginal > 0 ? (totalAssigned / totalOriginal) * 100 : 0;
-  const isLoading = usersLoading || createLoading || updateLoading;
+  const isLoading = createLoading || updateLoading;
 
   if (!item) return null;
 
@@ -511,28 +440,6 @@ export default function ParAssignmentModal({
                           sx={{ flexGrow: 1 }}
                         />
                       </Box>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Autocomplete
-                          size="small"
-                          options={signatoryOptions}
-                          value={editForm.receivedFrom}
-                          onChange={(_, v) => updateEditForm('receivedFrom', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => <TextField {...params} label="Received From" />}
-                          sx={{ flex: 1 }}
-                        />
-                        <Autocomplete
-                          size="small"
-                          options={userOptions}
-                          value={editForm.receivedBy}
-                          onChange={(_, v) => updateEditForm('receivedBy', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => <TextField {...params} label="Received By" />}
-                          sx={{ flex: 1 }}
-                        />
-                      </Box>
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                         <Button size="small" onClick={cancelEditing}>
                           Cancel
@@ -564,10 +471,6 @@ export default function ParAssignmentModal({
                       </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2">{assignment.department || '-'}</Typography>
-                      <Divider orientation="vertical" flexItem />
-                      <Typography variant="body2" color="text.secondary">
-                        {assignment.receivedFrom} → {assignment.receivedBy}
-                      </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2">
                         {currencyFormat(assignment.quantity * unitCost)}
@@ -629,33 +532,6 @@ export default function ParAssignmentModal({
                       onChange={(e) => updateForm('department', e.target.value)}
                       sx={{ flexGrow: 1 }}
                       required
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Autocomplete
-                      size="small"
-                      options={signatoryOptions}
-                      value={form.receivedFrom}
-                      onChange={(_, v) => updateForm('receivedFrom', v)}
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received From (Supply Officer)" required />
-                      )}
-                      sx={{ flex: 1 }}
-                    />
-                    <Autocomplete
-                      size="small"
-                      options={userOptions}
-                      value={form.receivedBy}
-                      onChange={(_, v) => updateForm('receivedBy', v)}
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received By (End User)" required />
-                      )}
-                      sx={{ flex: 1 }}
                     />
                   </Box>
 

@@ -280,7 +280,6 @@ export default function GenerateIarModal({
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Specification</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Gen. Desc</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Qty</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>
                   Already Received
@@ -321,11 +320,6 @@ export default function GenerateIarModal({
                           {item.specification}
                         </Typography>
                       </Tooltip>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" noWrap sx={{ maxWidth: 180 }}>
-                        {item.generalDescription}
-                      </Typography>
                     </TableCell>
                     <TableCell align="center">{item.quantity}</TableCell>
                     <TableCell align="center">

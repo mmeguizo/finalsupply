@@ -30,18 +30,32 @@ export default function PrintReportDialogForRIS({
 
   const [updatePurpose] = useMutation(UPDATE_ITEM_PURPOSE);
   const [purpose, setPurpose] = useState('');
+  const [risDetails, setRisDetails] = useState('');
 
-  // Pre-fill purpose from saved purpose only.
-  // details and poRemarks are appended in the print template automatically.
+  // Compute a stable localStorage key from the set of item IDs
+  const risItems = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const risStorageKey =
+    risItems.length > 0
+      ? `supply_podetails_ris_${risItems
+          .map((i: any) => i.id)
+          .filter(Boolean)
+          .sort()
+          .join('_')}`
+      : null;
+
+  // Pre-fill purpose from DB; load risDetails from localStorage
   useEffect(() => {
     if (open) {
       const items = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
       setPurpose(items[0]?.purpose || '');
+      setRisDetails(risStorageKey ? localStorage.getItem(risStorageKey) || '' : '');
+    } else {
+      setRisDetails('');
     }
   }, [open, reportData]);
 
   const getReportTemplate = (data: any) => {
-    return getRequisitionAndIssueSlip(signatories, data, purpose);
+    return getRequisitionAndIssueSlip(signatories, data, purpose, risDetails);
   };
 
   const handlePrintReport = async () => {
@@ -88,6 +102,25 @@ export default function PrintReportDialogForRIS({
             rows={2}
             size="small"
             placeholder="Enter purpose for this RIS..."
+          />
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="PO Details"
+            value={risDetails}
+            onChange={(e) => {
+              const val = e.target.value;
+              setRisDetails(val);
+              if (risStorageKey) {
+                if (val) localStorage.setItem(risStorageKey, val);
+                else localStorage.removeItem(risStorageKey);
+              }
+            }}
+            multiline
+            rows={2}
+            size="small"
+            placeholder="Enter PO details for this RIS..."
           />
         </Box>
       </DialogContent>

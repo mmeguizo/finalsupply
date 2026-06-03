@@ -1,7 +1,8 @@
 export const getPropertyAcknowledgementReciept = (
   signatories: any,
   reportData: any,
-  remarks?: string
+  remarks?: string,
+  parDetails?: string
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   console.log('getPropertyAcknowledgementReciept', signatories, reportData);
@@ -90,11 +91,10 @@ export const getPropertyAcknowledgementReciept = (
         </tr>
         `;
 
-        // Income/MDS/Details below nothing follows
+        // Income/MDS below nothing follows
         const incomeText = itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income || '';
         const mdsText = itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds || '';
-        const detailsText = itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details || '';
-        if (incomeText || mdsText || detailsText) {
+        if (incomeText || mdsText) {
           row += `
           <tr>
             <td></td>
@@ -102,7 +102,19 @@ export const getPropertyAcknowledgementReciept = (
             <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">
               ${incomeText ? `<div>Income: ${escapeHtml(incomeText)}</div>` : ''}
               ${mdsText ? `<div>MDS: ${escapeHtml(mdsText)}</div>` : ''}
-              ${detailsText ? `<div>Details: ${escapeHtml(detailsText)}</div>` : ''}
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+          `;
+        }
+        if (parDetails) {
+          row += `
+          <tr>
+            <td></td>
+            <td></td>
+            <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">
+              <div>PO Details: ${escapeHtml(parDetails)}</div>
             </td>
             <td></td>
             <td></td>

@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+} from '@mui/material';
 import InspectionAcceptanceReportForIAR from './previewDocumentFiles/InspectionAcceptanceReportForIAR';
 import PropertyAcknowledgementReceipt from './previewDocumentFiles/propertyAcknowledgementReceipt';
 import RequisitionAndIssueSlip from './previewDocumentFiles/requisitionAndIssueSlip';
@@ -30,6 +38,29 @@ export default function PrintReportDialogForIAR({
   poOverrides,
 }: Props) {
   const [showPrintView, setShowPrintView] = useState(false);
+  const [iarDetails, setIarDetails] = useState('');
+
+  // Compute a stable localStorage key from the set of item IDs
+  const iarItems = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  const iarStorageKey =
+    iarItems.length > 0
+      ? `supply_podetails_iar_${iarItems
+          .map((i: any) => i.id)
+          .filter(Boolean)
+          .sort()
+          .join('_')}`
+      : null;
+
+  // Load persisted PO Details when the modal opens
+  useEffect(() => {
+    if (open && iarStorageKey) {
+      setIarDetails(localStorage.getItem(iarStorageKey) || '');
+    } else if (!open) {
+      // reset when closed so stale value never flashes on next open before effect runs
+      setIarDetails('');
+    }
+  }, [open, iarStorageKey]);
+
   console.log('reportData:', reportData);
 
   React.useEffect(() => {
@@ -37,7 +68,7 @@ export default function PrintReportDialogForIAR({
   }, [signatories]);
 
   const getReportTemplate = (data: any) => {
-    return getInspectionReportTemplateForIAR(signatories, data, poOverrides);
+    return getInspectionReportTemplateForIAR(signatories, data, poOverrides, iarDetails);
   };
 
   const handleClosePrintView = () => {
@@ -78,6 +109,25 @@ export default function PrintReportDialogForIAR({
           reportData={reportData}
           poOverrides={poOverrides}
         />
+        <Box sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="PO Details"
+            value={iarDetails}
+            onChange={(e) => {
+              const val = e.target.value;
+              setIarDetails(val);
+              if (iarStorageKey) {
+                if (val) localStorage.setItem(iarStorageKey, val);
+                else localStorage.removeItem(iarStorageKey);
+              }
+            }}
+            multiline
+            rows={2}
+            size="small"
+            placeholder="Enter PO details for this IAR..."
+          />
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>

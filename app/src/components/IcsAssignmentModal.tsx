@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,6 @@ import {
   Typography,
   Paper,
   TextField,
-  Autocomplete,
   Chip,
   Alert,
   CircularProgress,
@@ -33,28 +32,15 @@ import {
   CREATE_SINGLE_ICS_ASSIGNMENT,
   UPDATE_ICS_ASSIGNMENT,
 } from '../graphql/mutations/inventoryIAR.mutation';
-import { GET_ALL_USERS } from '../graphql/queries/user.query';
-import useSignatoryStore from '../stores/signatoryStore';
 import { currencyFormat } from '../utils/generalUtils';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-interface UserOption {
-  id: string;
-  name: string;
-  last_name?: string;
-  position?: string;
-  role?: string;
-  label: string;
-}
-
 interface AssignmentForm {
   quantity: number | '';
   department: string;
-  receivedFrom: UserOption | null;
-  receivedBy: UserOption | null;
 }
 
 interface SavedAssignment {
@@ -78,8 +64,6 @@ interface IcsAssignmentModalProps {
 const emptyForm: AssignmentForm = {
   quantity: '',
   department: '',
-  receivedFrom: null,
-  receivedBy: null,
 };
 
 /* ================================================================== */
@@ -94,8 +78,6 @@ export default function IcsAssignmentModal({
 }: IcsAssignmentModalProps) {
   /* ---------- GraphQL ---------- */
 
-  const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
-
   const [createICSAssignment, { loading: createLoading }] = useMutation(
     CREATE_SINGLE_ICS_ASSIGNMENT,
     {
@@ -106,11 +88,6 @@ export default function IcsAssignmentModal({
   const [updateICSAssignment, { loading: updateLoading }] = useMutation(UPDATE_ICS_ASSIGNMENT, {
     refetchQueries: [{ query: GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS }],
   });
-
-  /* ---------- Signatories from Zustand store ---------- */
-
-  const allSignatories = useSignatoryStore((s) => s.signatories);
-  const fetchSignatories = useSignatoryStore((s) => s.fetchSignatories);
 
   /* ---------- Local state ---------- */
 
@@ -134,10 +111,6 @@ export default function IcsAssignmentModal({
   const tag = item?.tag || '';
 
   /* ---------- Effects ---------- */
-
-  useEffect(() => {
-    if (allSignatories.length === 0) fetchSignatories();
-  }, [allSignatories.length, fetchSignatories]);
 
   useEffect(() => {
     if (open && item) {
@@ -176,28 +149,6 @@ export default function IcsAssignmentModal({
     }
   }, [open, item]);
 
-  /* ---------- Options ---------- */
-
-  const userOptions: UserOption[] = useMemo(() => {
-    const users = usersData?.users?.filter((u: any) => u.is_active) || [];
-    return users.map((u: any) => ({
-      id: u.id,
-      name: `${u.name} ${u.last_name || ''}`.trim(),
-      position: u.position || '',
-      label: `${u.name} ${u.last_name || ''} ${u.position ? `(${u.position})` : ''}`.trim(),
-    }));
-  }, [usersData]);
-
-  const signatoryOptions: UserOption[] = useMemo(() => {
-    return (allSignatories || []).map((sig: any) => ({
-      id: sig.id,
-      name: sig.name,
-      role: sig.role,
-      position: sig.role,
-      label: `${sig.name} (${sig.role})`,
-    }));
-  }, [allSignatories]);
-
   /* ---------- Form helpers ---------- */
 
   const updateForm = (field: keyof AssignmentForm, value: any) => {
@@ -233,15 +184,6 @@ export default function IcsAssignmentModal({
       setError('Please enter a department.');
       return;
     }
-    if (!form.receivedFrom) {
-      setError('Please select "Received From".');
-      return;
-    }
-    if (!form.receivedBy) {
-      setError('Please select "Received By".');
-      return;
-    }
-
     try {
       const result = await createICSAssignment({
         variables: {
@@ -249,10 +191,10 @@ export default function IcsAssignmentModal({
             sourceItemId: parseInt(item.id, 10),
             quantity: qty,
             department: form.department.trim(),
-            receivedFrom: form.receivedFrom.name,
-            receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
-            receivedBy: form.receivedBy.name,
-            receivedByPosition: form.receivedBy.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -266,10 +208,10 @@ export default function IcsAssignmentModal({
           icsId: generatedIcsId,
           quantity: qty,
           department: form.department.trim(),
-          receivedFrom: form.receivedFrom.name,
-          receivedFromPosition: form.receivedFrom.position || form.receivedFrom.role || '',
-          receivedBy: form.receivedBy.name,
-          receivedByPosition: form.receivedBy.position || '',
+          receivedFrom: '',
+          receivedFromPosition: '',
+          receivedBy: '',
+          receivedByPosition: '',
         },
       ]);
 
@@ -294,13 +236,9 @@ export default function IcsAssignmentModal({
 
   const startEditing = (assignment: SavedAssignment) => {
     setEditingId(assignment.id);
-    const fromOption = signatoryOptions.find((o) => o.name === assignment.receivedFrom) || null;
-    const byOption = userOptions.find((o) => o.name === assignment.receivedBy) || null;
     setEditForm({
       quantity: assignment.quantity,
       department: assignment.department,
-      receivedFrom: fromOption,
-      receivedBy: byOption,
     });
   };
 
@@ -326,11 +264,10 @@ export default function IcsAssignmentModal({
             itemId: parseInt(editingId, 10),
             quantity: qty,
             department: editForm.department,
-            receivedFrom: editForm.receivedFrom?.name,
-            receivedFromPosition:
-              editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
-            receivedBy: editForm.receivedBy?.name,
-            receivedByPosition: editForm.receivedBy?.position || '',
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
@@ -342,11 +279,6 @@ export default function IcsAssignmentModal({
                 ...a,
                 quantity: qty,
                 department: editForm.department,
-                receivedFrom: editForm.receivedFrom?.name || a.receivedFrom,
-                receivedFromPosition:
-                  editForm.receivedFrom?.position || editForm.receivedFrom?.role || '',
-                receivedBy: editForm.receivedBy?.name || a.receivedBy,
-                receivedByPosition: editForm.receivedBy?.position || '',
               }
             : a
         )
@@ -367,7 +299,7 @@ export default function IcsAssignmentModal({
   const totalAssigned = savedAssignments.reduce((sum, a) => sum + a.quantity, 0);
   const totalOriginal = existingIcsId ? savedAssignments[0]?.quantity || originalQty : originalQty;
   const progress = totalOriginal > 0 ? (totalAssigned / totalOriginal) * 100 : 0;
-  const isLoading = usersLoading || createLoading || updateLoading;
+  const isLoading = createLoading || updateLoading;
 
   if (!item) return null;
 
@@ -500,28 +432,6 @@ export default function IcsAssignmentModal({
                           sx={{ flexGrow: 1 }}
                         />
                       </Box>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Autocomplete
-                          size="small"
-                          options={signatoryOptions}
-                          value={editForm.receivedFrom}
-                          onChange={(_, v) => updateEditForm('receivedFrom', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => <TextField {...params} label="Received From" />}
-                          sx={{ flex: 1 }}
-                        />
-                        <Autocomplete
-                          size="small"
-                          options={userOptions}
-                          value={editForm.receivedBy}
-                          onChange={(_, v) => updateEditForm('receivedBy', v)}
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => <TextField {...params} label="Received By" />}
-                          sx={{ flex: 1 }}
-                        />
-                      </Box>
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                         <Button size="small" onClick={cancelEditing}>
                           Cancel
@@ -552,10 +462,6 @@ export default function IcsAssignmentModal({
                       </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2">{assignment.department || '-'}</Typography>
-                      <Divider orientation="vertical" flexItem />
-                      <Typography variant="body2" color="text.secondary">
-                        {assignment.receivedFrom} → {assignment.receivedBy}
-                      </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2">
                         {currencyFormat(assignment.quantity * unitCost)}
@@ -615,32 +521,6 @@ export default function IcsAssignmentModal({
                       onChange={(e) => updateForm('department', e.target.value)}
                       sx={{ flexGrow: 1 }}
                       required
-                    />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Autocomplete
-                      size="small"
-                      options={signatoryOptions}
-                      value={form.receivedFrom}
-                      onChange={(_, v) => updateForm('receivedFrom', v)}
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received From (Supply Officer)" required />
-                      )}
-                      sx={{ flex: 1 }}
-                    />
-                    <Autocomplete
-                      size="small"
-                      options={userOptions}
-                      value={form.receivedBy}
-                      onChange={(_, v) => updateForm('receivedBy', v)}
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Received By (End User)" required />
-                      )}
-                      sx={{ flex: 1 }}
                     />
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

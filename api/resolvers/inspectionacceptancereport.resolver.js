@@ -16,10 +16,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
         // Fetch a single purchase order by ID
         // const inspectionAcceptanceReportdata =
         //   await inspectionAcceptanceReport.findAll({
@@ -28,7 +28,7 @@ const inspectionAcceptanceReportResolver = {
         //     include: [PurchaseOrder],
         //   });
         const rows = await inspectionAcceptanceReport.findAll({
-          where: { isDeleted: false, recordType: 'iar_original', [Op.or]: createdByFilter },
+          where: { isDeleted: false, recordType: 'iar_original', ...createdByScope },
           order: [['id', 'DESC']],
           include: [
             { model: PurchaseOrder, required: true },
@@ -76,10 +76,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
         // Fetch a single purchase order by ID
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           where: {
@@ -87,7 +87,7 @@ const inspectionAcceptanceReportResolver = {
             tag: {
               [Op.or]: ['high', 'low'],
             },
-            [Op.or]: createdByFilter,
+            ...createdByScope,
           },
           order: [['createdAt', 'DESC']],
           include: [
@@ -115,10 +115,10 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
 
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           // Explicitly select only the attributes required by the IARonly GraphQL type
@@ -126,7 +126,7 @@ const inspectionAcceptanceReportResolver = {
           attributes: ['id', 'created_at', 'iar_id', 'category', 'purchase_order_id'],
           where: {
             isDeleted: false,
-            [Op.or]: createdByFilter,
+            ...createdByScope,
           },
           order: [
             ['created_at', 'DESC'], // Order by created_at (snake_case)
@@ -189,16 +189,16 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
-        const createdByFilter = [{ createdBy: null }];
-        if (user?.email) createdByFilter.push({ createdBy: user.email });
-        if (user?.name) createdByFilter.push({ createdBy: user.name });
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
 
         const rows = await inspectionAcceptanceReport.findAll({
           where: {
             isDeleted: false,
             category: null,
-            [Op.or]: createdByFilter,
+            ...createdByScope,
           },
           order: [['id', 'DESC']],
           include: [
@@ -445,8 +445,8 @@ const inspectionAcceptanceReportResolver = {
               purchaseOrderId: poi.purchaseOrderId,
               purchaseOrderItemId: poi.id,
               actualQuantityReceived: delta,
-              createdBy: user.email || user.name || user.id,
-              updatedBy: user.email || user.name || user.id,
+              createdBy: user?.email || null,
+              updatedBy: user?.email || null,
               // inherit document IDs if present on existing IAR rows
               parId: existingIar?.parId || null,
               icsId: existingIar?.icsId || null,
@@ -538,7 +538,7 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
-        const user = context.req.user;
+        const user = await context.getUser();
 
         if (!purchaseOrderId) {
           throw new Error('Purchase Order ID is required');
@@ -625,8 +625,8 @@ const inspectionAcceptanceReportResolver = {
               actualQuantityReceived: delta,
               // Use invoice from the modal (which may come from the PO or be user-entered)
               invoice: invoice || po.invoice || '',
-              createdBy: user.email || user.name || user.id,
-              updatedBy: user.email || user.name || user.id,
+              createdBy: user?.email || null,
+              updatedBy: user?.email || null,
               parId: '',
               icsId: '',
               risId: '',
@@ -765,8 +765,8 @@ const inspectionAcceptanceReportResolver = {
             actualQuantityReceived: received,
             itemGroupId: groupId, // Link to the same group
             isReceiptLine: true, // Mark as a receipt line
-            createdBy: user.email || user.name || user.id,
-            updatedBy: user.email || user.name || user.id,
+            createdBy: user?.email || null,
+            updatedBy: user?.email || null,
           },
           { transaction: t }
         );
@@ -796,8 +796,8 @@ const inspectionAcceptanceReportResolver = {
             purchaseOrderId: newPoi.purchaseOrderId,
             purchaseOrderItemId: newPoi.id,
             actualQuantityReceived: received,
-            createdBy: user.email || user.name || user.id,
-            updatedBy: user.email || user.name || user.id,
+            createdBy: user?.email || null,
+            updatedBy: user?.email || null,
             // inherit document IDs if present
             parId: existingIar?.parId || null,
             icsId: existingIar?.icsId || null,
@@ -904,6 +904,7 @@ const inspectionAcceptanceReportResolver = {
         if (!context.isAuthenticated()) {
           throw new Error('Unauthorized');
         }
+        const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
@@ -984,7 +985,7 @@ const inspectionAcceptanceReportResolver = {
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
-                updatedBy: context.req.user?.email || context.req.user?.name || null,
+                updatedBy: user?.email || null,
               },
               { transaction }
             );

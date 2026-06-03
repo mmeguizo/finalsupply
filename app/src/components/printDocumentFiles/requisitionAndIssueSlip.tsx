@@ -1,7 +1,12 @@
 import { capitalizeFirstLetter } from '../../utils/generalUtils';
 import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
-export const getRequisitionAndIssueSlip = (signatories: any, reportData: any, purpose?: string) => {
+export const getRequisitionAndIssueSlip = (
+  signatories: any,
+  reportData: any,
+  purpose?: string,
+  risDetails?: string
+) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
   const totalAmount = itemsArray.reduce((sum, item) => {
@@ -74,6 +79,21 @@ export const getRequisitionAndIssueSlip = (signatories: any, reportData: any, pu
           <td></td>
         </tr>
         `;
+        if (risDetails) {
+          row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">PO Details: ${escapeHtml(risDetails)}</td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+        }
       }
 
       return row;
