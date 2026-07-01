@@ -1,6 +1,14 @@
 import { capitalizeFirstLetter, formatCurrencyPHP } from '../../utils/generalUtils';
 import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
+// Helper: get the received quantity for an item (prefers IAR row if > 0, falls back to PO item)
+const getReceivedQty = (item: any): number => {
+  if (item?.iarQuantityDisplay != null) return Number(item.iarQuantityDisplay);
+  const iarQty = Number(item?.actualQuantityReceived ?? 0);
+  if (iarQty > 0) return iarQty;
+  return Number(item?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+};
+
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
   reportData: any,
@@ -9,10 +17,9 @@ export const getInspectionReportTemplateForIAR = (
 ) => {
   // normalize input to array
   const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
-  // Only show items that were actually received in this batch (qty > 0)
-  // Items with iarQuantityDisplay set (e.g. percentage) are always shown
+  // Show items that have a received quantity > 0 OR an explicit display override
   const items = allItems.filter(
-    (it: any) => Number(it?.actualQuantityReceived ?? 0) > 0 || it?.iarQuantityDisplay != null
+    (it: any) => getReceivedQty(it) > 0 || it?.iarQuantityDisplay != null
   );
 
   // Use allItems[0] for header metadata so PO info shows even if all items are filtered
@@ -36,15 +43,12 @@ export const getInspectionReportTemplateForIAR = (
           : '';
 
         const qty = escapeHtml(
-          String(it.iarQuantityDisplay ?? it.actualQuantityReceived ?? it.quantity ?? '')
+          String(it.iarQuantityDisplay ?? getReceivedQty(it) ?? it.quantity ?? '')
         );
         const unit = escapeHtml(it.unit ?? '');
         const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ''));
         const amount = escapeHtml(
-          String(
-            (it.actualQuantityReceived ?? it.quantity ?? '') *
-              (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? '')
-          )
+          String(getReceivedQty(it) * (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ''))
         );
         // const amount = escapeHtml(
         //   String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")

@@ -79,12 +79,19 @@ export default function PrintReportDialogForIAR({
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(getReportTemplate(reportData));
-      setTimeout(() => {
-        printWindow.print();
+      printWindow.document.close();
+      printWindow.focus();
+      // Close the print window AFTER the user finishes printing (or cancels)
+      printWindow.onafterprint = () => {
         printWindow.close();
-      }, 500);
+        handleClose();
+      };
+      // Trigger the print dialog
+      printWindow.print();
+    } else {
+      // Popup was blocked
+      alert('Please allow popups to print the report.');
     }
-    handleClose();
   };
 
   // If print view is active, render the print-friendly report

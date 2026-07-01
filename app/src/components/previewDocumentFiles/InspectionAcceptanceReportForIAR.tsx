@@ -91,10 +91,17 @@ export default function InspectionAcceptanceReportForIAR({
   console.log({ reportData });
 
   const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
-  // Only show items that were actually received in this batch (qty > 0)
-  // Items with iarQuantityDisplay set (e.g. percentage) are always shown
+
+  // Derive effective received quantity: prefer IAR row if > 0, otherwise fall back to PO item
+  const getReceivedQty = (it: any) => {
+    const iarQty = Number(it?.actualQuantityReceived ?? 0);
+    if (iarQty > 0) return iarQty;
+    return Number(it?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+  };
+
+  // Show items that have a received quantity > 0 OR an explicit display override
   const items = allItems.filter(
-    (it: any) => Number(it?.actualQuantityReceived ?? 0) > 0 || it?.iarQuantityDisplay != null
+    (it: any) => getReceivedQty(it) > 0 || it?.iarQuantityDisplay != null
   );
 
   // Editable quantity display state (per item)
@@ -117,10 +124,7 @@ export default function InspectionAcceptanceReportForIAR({
     '') as string;
 
   const totalAmount = formatCurrencyPHP(
-    items.reduce(
-      (sum, it) => sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
-      0
-    )
+    items.reduce((sum, it) => sum + getReceivedQty(it) * Number(it?.unitCost ?? 0), 0)
   );
 
   const getQtyValue = (item: any) => {
@@ -423,8 +427,7 @@ export default function InspectionAcceptanceReportForIAR({
                       </BodyTableCell>
                       <BodyTableCell>{formatCurrencyPHP(rd.unitCost) ?? ''}</BodyTableCell>
                       <BodyTableCell>
-                        {formatCurrencyPHP((rd.actualQuantityReceived ?? 0) * (rd.unitCost ?? 0)) ??
-                          0}
+                        {formatCurrencyPHP(getReceivedQty(rd) * (rd.unitCost ?? 0)) ?? 0}
                       </BodyTableCell>
                     </StyledTableRow>
                   ))}
