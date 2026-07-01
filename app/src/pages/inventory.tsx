@@ -498,7 +498,6 @@ function Row(props: {
                 <TableHead>
                   <TableRow>
                     <TableCell>Description</TableCell>
-                    <TableCell>General Desc.</TableCell>
                     <TableCell>Specification</TableCell>
                     <TableCell>Unit</TableCell>
                     <TableCell align="right">Actual Received</TableCell>
@@ -518,7 +517,6 @@ function Row(props: {
                     const isCompleted = item.PurchaseOrder?.status === 'completed';
 
                     const currentDescription = poi?.description ?? item.description ?? '';
-                    const currentGenDesc = poi?.generalDescription ?? item.generalDescription ?? '';
                     const currentSpec = poi?.specification ?? item.specification ?? '';
                     const currentUnit = poi?.unit ?? item.unit ?? '';
 
@@ -670,11 +668,6 @@ function Row(props: {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                              {currentGenDesc || '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                               {currentSpec || '-'}
                             </Typography>
                           </TableCell>
@@ -727,23 +720,6 @@ function Row(props: {
                                 maxRows={3}
                                 value={draft.description ?? ''}
                                 onChange={(e) => updateDraft({ description: e.target.value })}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </TableCell>
-                            {/* General Desc. */}
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                multiline
-                                maxRows={3}
-                                fullWidth
-                                placeholder="New General Desc."
-                                value={draft.generalDescription ?? ''}
-                                onChange={(e) =>
-                                  updateDraft({
-                                    generalDescription: e.target.value,
-                                  })
-                                }
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </TableCell>
