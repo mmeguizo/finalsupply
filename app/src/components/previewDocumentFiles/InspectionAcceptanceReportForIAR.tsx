@@ -92,11 +92,31 @@ export default function InspectionAcceptanceReportForIAR({
 
   const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
 
+  // Diagnostic logging: show actual vs PO actual for each item in preview
+  React.useEffect(() => {
+    try {
+      allItems.forEach((it: any, idx: number) => {
+        // eslint-disable-next-line no-console
+        console.debug('previewComponent: item', idx, {
+          id: it?.id,
+          iarActual: it?.actualQuantityReceived,
+          poiActual: it?.PurchaseOrderItem?.actualQuantityReceived,
+          iarQuantityDisplay: it?.iarQuantityDisplay,
+        });
+      });
+    } catch (e) {
+      /* ignore */
+    }
+  }, [reportData]);
+
   // Derive effective received quantity: prefer IAR row if > 0, otherwise fall back to PO item
+  // Derive effective received quantity: prefer PO item value if present (>0),
+  // otherwise fall back to the IAR row value. If `iarQuantityDisplay` is set use it.
   const getReceivedQty = (it: any) => {
-    const iarQty = Number(it?.actualQuantityReceived ?? 0);
-    if (iarQty > 0) return iarQty;
-    return Number(it?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+    if (it?.iarQuantityDisplay != null) return Number(it.iarQuantityDisplay);
+    const poiQty = Number(it?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+    if (poiQty > 0) return poiQty;
+    return Number(it?.actualQuantityReceived ?? 0);
   };
 
   // Show items that have a received quantity > 0 OR an explicit display override
@@ -129,7 +149,9 @@ export default function InspectionAcceptanceReportForIAR({
 
   const getQtyValue = (item: any) => {
     if (editValues[item.id] !== undefined) return editValues[item.id];
-    return item.iarQuantityDisplay ?? String(item.actualQuantityReceived ?? '');
+    const v =
+      item?.iarQuantityDisplay != null ? Number(item.iarQuantityDisplay) : getReceivedQty(item);
+    return v != null && v !== '' ? String(v) : '';
   };
 
   const handleQtyChange = (itemId: number, value: string) => {
@@ -192,19 +214,23 @@ export default function InspectionAcceptanceReportForIAR({
     };
   }, []);
 
-  //   const handlePrint = () => {
-  //     if (onPrint) {
-  //       onPrint();
-  //     } else {
-  //       window.print();
-  //     }
-  //   };
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint();
+    } else {
+      window.print();
+    }
+  };
 
   return (
     <>
       <PrintControls sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
-        {/* <Button onClick={onClose} variant="outlined">Back</Button> */}
-        {/* <Button onClick={handlePrint} variant="contained">Print Report</Button>  */}
+        {/* <Button onClick={onClose} variant="outlined">
+          Close
+        </Button>
+        <Button onClick={handlePrint} variant="contained">
+          Print Report
+        </Button>{' '} */}
       </PrintControls>
 
       <Box id="printable-report" ref={componentRef}>

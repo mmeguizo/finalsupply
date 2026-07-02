@@ -1,12 +1,13 @@
 import { capitalizeFirstLetter, formatCurrencyPHP } from '../../utils/generalUtils';
 import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
-// Helper: get the received quantity for an item (prefers IAR row if > 0, falls back to PO item)
+// Helper: get the received quantity for an item.
+// Priority: `iarQuantityDisplay` (explicit override) -> `PurchaseOrderItem.actualQuantityReceived` -> `item.actualQuantityReceived` (IAR row)
 const getReceivedQty = (item: any): number => {
   if (item?.iarQuantityDisplay != null) return Number(item.iarQuantityDisplay);
-  const iarQty = Number(item?.actualQuantityReceived ?? 0);
-  if (iarQty > 0) return iarQty;
-  return Number(item?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+  const poiQty = Number(item?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+  if (poiQty > 0) return poiQty;
+  return Number(item?.actualQuantityReceived ?? 0);
 };
 
 export const getInspectionReportTemplateForIAR = (
@@ -17,6 +18,20 @@ export const getInspectionReportTemplateForIAR = (
 ) => {
   // normalize input to array
   const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  // Diagnostic logging: show actual vs PO actual for each item
+  try {
+    allItems.forEach((it, idx) => {
+      // eslint-disable-next-line no-console
+      console.debug('printTemplate: item', idx, {
+        id: it?.id,
+        iarActual: it?.actualQuantityReceived,
+        poiActual: it?.PurchaseOrderItem?.actualQuantityReceived,
+        iarQuantityDisplay: it?.iarQuantityDisplay,
+      });
+    });
+  } catch (e) {
+    /* ignore logging errors */
+  }
   // Show items that have a received quantity > 0 OR an explicit display override
   const items = allItems.filter(
     (it: any) => getReceivedQty(it) > 0 || it?.iarQuantityDisplay != null

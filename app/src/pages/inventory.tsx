@@ -560,11 +560,14 @@ function Row(props: {
                     }
 
                     // Sum actualQuantityReceived across ALL items in this logical group
+                    // Priority: `iarQuantityDisplay` override -> PO item's `actualQuantityReceived` -> IAR row `actualQuantityReceived`
                     const totalReceivedInGroup = groupedItems.reduce((sum: number, i: any) => {
                       const iPoi = i.PurchaseOrderItem;
-                      const recv = Number(
-                        iPoi?.actualQuantityReceived || i.actualQuantityReceived || 0
-                      );
+                      const display =
+                        i?.iarQuantityDisplay != null ? Number(i.iarQuantityDisplay) : null;
+                      const poiRecv = Number(iPoi?.actualQuantityReceived ?? 0);
+                      const iarRecv = Number(i.actualQuantityReceived ?? 0);
+                      const recv = display ?? (poiRecv > 0 ? poiRecv : iarRecv);
                       return sum + recv;
                     }, 0);
 
@@ -579,9 +582,12 @@ function Row(props: {
                     });
 
                     // Show this row's own received (for clarity)
-                    const totalReceived = Number(
-                      poi?.actualQuantityReceived || item.actualQuantityReceived || 0
-                    );
+                    // Priority: `iarQuantityDisplay` -> PO item's `actualQuantityReceived` -> IAR row `actualQuantityReceived`
+                    const displayVal =
+                      item?.iarQuantityDisplay != null ? Number(item.iarQuantityDisplay) : null;
+                    const poiRowRecv = Number(poi?.actualQuantityReceived ?? 0);
+                    const iarRowRecv = Number(item.actualQuantityReceived ?? 0);
+                    const totalReceived = displayVal ?? (poiRowRecv > 0 ? poiRowRecv : iarRowRecv);
 
                     // Original PO fields are view-only in this table.
 
@@ -918,7 +924,7 @@ export default function InventoryPage() {
 
   // Pagination state
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(6);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   // Notifications state
   const [showNotification, setShowNotification] = React.useState(false);
