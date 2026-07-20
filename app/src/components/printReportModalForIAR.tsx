@@ -39,6 +39,7 @@ export default function PrintReportDialogForIAR({
 }: Props) {
   const [showPrintView, setShowPrintView] = useState(false);
   const [iarDetails, setIarDetails] = useState('');
+  const [endUserName, setEndUserName] = useState('');
 
   // Compute a stable localStorage key from the set of item IDs
   const iarItems = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
@@ -68,7 +69,9 @@ export default function PrintReportDialogForIAR({
   }, [signatories]);
 
   const getReportTemplate = (data: any) => {
-    return getInspectionReportTemplateForIAR(signatories, data, poOverrides, iarDetails);
+    // include endUserName into signatories for printing
+    const signatoriesForPrint = { ...signatories, end_user: endUserName };
+    return getInspectionReportTemplateForIAR(signatoriesForPrint, data, poOverrides, iarDetails);
   };
 
   const handleClosePrintView = () => {
@@ -76,29 +79,50 @@ export default function PrintReportDialogForIAR({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(getReportTemplate(reportData));
-      printWindow.document.close();
-      printWindow.focus();
-      // Close the print window AFTER the user finishes printing (or cancels)
-      printWindow.onafterprint = () => {
-        printWindow.close();
-        handleClose();
-      };
-      // Trigger the print dialog
-      printWindow.print();
-    } else {
-      // Popup was blocked
-      alert('Please allow popups to print the report.');
+    const htmlContent = getReportTemplate(reportData);
+
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    // Get the iframe document
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) {
+      alert('Failed to create print frame.');
+      return;
     }
+
+    // Write the HTML to the iframe
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    // Give it a moment to load any images or styles, then trigger print
+    setTimeout(() => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+
+      // Cleanup: remove the iframe and close the modal after the print dialog closes
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        handleClose();
+      }, 1000);
+    }, 500);
   };
 
   // If print view is active, render the print-friendly report
   if (showPrintView) {
     return (
       <InspectionAcceptanceReportForIAR
-        signatories={signatories}
+        signatories={{ ...signatories, end_user: endUserName }}
         reportData={reportData}
         onClose={handleClosePrintView}
         poOverrides={poOverrides}
@@ -112,10 +136,20 @@ export default function PrintReportDialogForIAR({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <InspectionAcceptanceReportForIAR
-          signatories={signatories}
+          signatories={{ ...signatories, end_user: endUserName }}
           reportData={reportData}
           poOverrides={poOverrides}
         />
+        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+          <TextField
+            label="End User (Printed name & Signature)"
+            value={endUserName}
+            onChange={(e) => setEndUserName(e.target.value)}
+            size="small"
+            fullWidth
+            placeholder="Enter end-user name to include on print"
+          />
+        </Box>
         <Box sx={{ mt: 2 }}>
           <TextField
             fullWidth

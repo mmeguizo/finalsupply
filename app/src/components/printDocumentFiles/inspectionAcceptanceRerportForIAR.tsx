@@ -37,6 +37,9 @@ export const getInspectionReportTemplateForIAR = (
     (it: any) => getReceivedQty(it) > 0 || it?.iarQuantityDisplay != null
   );
 
+  // Add console log to debug content generation
+  console.log('DEBUG: Generating print template with', items.length, 'items:', items);
+
   // Use allItems[0] for header metadata so PO info shows even if all items are filtered
   const headerItem = allItems[0] ?? {};
   const purchaseOrder = headerItem?.PurchaseOrder || {};
@@ -144,6 +147,38 @@ export const getInspectionReportTemplateForIAR = (
 
   const formattedTotal = headerItem?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? '';
 
+  const containerStyles = `
+    <style>
+      @media print {
+        @page {
+          size: A4;
+          margin: 20mm;
+        }
+        body {
+          visibility: visible !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .page {
+          visibility: visible !important;
+          position: static !important;
+          width: auto;
+          height: auto;
+          margin: 0;
+          padding: 0;
+        }
+        button,
+        .MuiBackdrop-root,
+        .MuiDialog-container,
+        div[role="presentation"],
+        div[role="dialog"],
+        .PrintControls {
+          display: none !important;
+        }
+      }
+    </style>
+  `;
+
   // Use allItems for status checks — the IAR status reflects the whole batch, not just received items
   const overallComplete = allItems.length && allItems.every((i) => i.iarStatus === 'complete');
   const overallPartial = allItems.some((i) => i.iarStatus === 'partial');
@@ -155,9 +190,8 @@ export const getInspectionReportTemplateForIAR = (
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Inspection & Acceptance Report</title>
-      <link rel="stylesheet" href="./assets/styles/main.css" />
-    </head>
+    <title>Inspection & Acceptance Report</title>
+  </head>
     <style>
     * {
     margin: 0;
@@ -460,10 +494,27 @@ export const getInspectionReportTemplateForIAR = (
                       </div>
                   </div>
                   <div>
-                    ${capitalizeFirstLetter(signatories?.recieved_from) || ''}
-                    <hr />
-                     Property and Supply Management Officer
+                  ${capitalizeFirstLetter(signatories?.recieved_from) || ''}
+                  <hr />
+                  <div style="margin-bottom: 20px;">
+                    Property and Supply Management Officer
                   </div>
+                                  ${
+                                    signatories?.end_user
+                                      ? `
+                  <div style="display: block; width: 100%; text-align: center; margin-top: 10px;">
+                    <div style="font-size: 12px; margin-bottom: 2px;">
+                      ${escapeHtml(String(capitalizeFirstLetter(signatories.end_user)))}
+                    </div>
+                    <div style="border-top: 1px solid #000; width: 75%; margin: 0 auto;"></div>
+                    <div style="font-size: 11px; margin-top: 4px;">
+                      Printed name & Signature of End-User
+                    </div>
+                  </div>
+                  `
+                                      : ''
+                                  }
+                </div>
                 </div>
               </td>
             </tr>

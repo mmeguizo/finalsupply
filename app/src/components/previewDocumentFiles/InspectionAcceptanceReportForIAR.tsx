@@ -233,7 +233,7 @@ export default function InspectionAcceptanceReportForIAR({
         </Button>{' '} */}
       </PrintControls>
 
-      <Box id="printable-report" ref={componentRef}>
+      <PrintContainer id="printable-report" ref={componentRef}>
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid black' }}>
           <Table sx={{ width: '100%', borderCollapse: 'collapse' }}>
             <TableHead>
@@ -568,10 +568,9 @@ export default function InspectionAcceptanceReportForIAR({
                         gap: '3px',
                       }}
                     >
-                      {capitalizeFirstLetter(signatories?.recieved_by || '')}
-                      {/* {capitalizeFirstLetter(signatories?.recieved_from || "")} */}
+                      {capitalizeFirstLetter(signatories?.recieved_from || '')}
                       <Divider sx={{ width: '100%', margin: '5px 0' }} />
-                      Inspection Officer
+                      Property and Supply Management Officer
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -660,9 +659,19 @@ export default function InspectionAcceptanceReportForIAR({
                       }}
                     >
                       {capitalizeFirstLetter(signatories?.recieved_from || '')}
-                      {/* {capitalizeFirstLetter(signatories?.recieved_by || "")} */}
                       <Divider sx={{ width: '100%', margin: '5px 0' }} />
                       Property and Supply Management Officer
+                      {signatories?.end_user ? (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                          <Typography sx={{ fontSize: 12, mt: 1 }}>
+                            {capitalizeFirstLetter(signatories.end_user)}
+                          </Typography>
+                          <Divider sx={{ width: '60%', margin: '6px auto 4px auto' }} />
+                          <Typography sx={{ fontSize: 11 }}>
+                            Printed name & Signature of End-User1
+                          </Typography>
+                        </Box>
+                      ) : null}
                     </Box>
                   </Box>
                 </StyledTableCell>
@@ -670,7 +679,7 @@ export default function InspectionAcceptanceReportForIAR({
             </TableBody>
           </Table>
         </TableContainer>
-      </Box>
+      </PrintContainer>
 
       <Snackbar
         open={snackbarOpen}
