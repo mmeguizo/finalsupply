@@ -59,15 +59,36 @@ export default function PrintReportDialog({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(getReportTemplate(reportData));
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+    const htmlContent = getReportTemplate(reportData);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) {
+      alert('Failed to create print frame.');
+      return;
     }
-    handleClose();
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        handleClose();
+      }, 1000);
+    }, 500);
   };
 
   // If print view is active, render the print-friendly report
