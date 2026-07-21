@@ -61,6 +61,35 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 
 ---
 
+## Execution status
+
+| Task | Status | Started | Completed | Blockers / Notes |
+|------|--------|---------|-----------|------------------|
+| P0-01 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `cors@^2.8.5` as declared dependency. Upgraded API: `@apollo/server@4.13.0`, `express@4.22.2`, `mongoose@8.24.1`, `sequelize@6.37.8`, `path-to-regexp@0.1.13`. Frontend: `npm audit fix` applied (react-router, vite, rollup, minimatch, postcss, babel, etc. upgraded). Remaining: API - 3 moderate (uuid/@apollo/server 4.x EOL, needs 5.x breaking upgrade); Frontend - 9 moderate (esbuild/vite, uuid/x-data-grid-generator, yaml/@toolpad/core — all need --force breaking changes). Fixed TS build error in `InspectionAcceptanceReportForIAR.tsx:154`. |
+| P0-02 | ✅ Completed | 2026-07-20 | 2026-07-20 | Created `api/config.js` with validated env-config (required keys, production secret length check, CORS origin parsing, proxy trust). Updated `api/index.js` to use config (removed hard-coded CORS origins, port, cookie settings, secure flag). Created `api/.env.example` and `app/.env.example`. Updated `app/src/apollo/client.ts` to use `VITE_GRAPHQL_URL`. Added CI-enforced `VITE_GRAPHQL_URL` check in `app/vite.config.ts`. |
+| P0-03 | ✅ Completed | 2026-07-20 | 2026-07-20 | Created `api/auth/authorization.js` with `requireAuthenticated`, `requireRole`, `getCurrentUser` helpers (GraphQLError with UNAUTHENTICATED/FORBIDDEN codes). Role resolver: admin-only for all mutations. User resolver: admin-only signUp/createUser/deleteUser; editUser restricted (self safe fields, admin for role/dept/position); passwords require current_password confirmation for self. Department resolver: admin-only mutations. Signatory resolver: admin-only mutations. Added `current_password` to EditUserInput typeDef. Created email-unique migration file `20260720-add-email-unique-to-users.js`. |
+| P0-04 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `ownershipScope`, `authorizeOwnership`, `authorizeOwnershipBatch` to `api/auth/authorization.js` with admin bypass for createdBy-based ownership. Applied to all 4 resolvers: IAR (18 mutations + getIARItemsByIarId), PAR (7 mutations), RIS (6 mutations), PO (16 queries/mutations + revertIARBatch). All `isAuthenticated` calls replaced with centralized helpers. Missing queries (propertyAcknowledgmentReport, requisitionIssueSlip) now have ownership scope. |
+| P0-05 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `helmet`, `express-rate-limit`, `graphql-depth-limit` packages. Updated `api/config.js` with rate-limit and depth settings. Updated `api/index.js`: helmet security headers, general + login rate limiting, GraphQL depth limit (10), introspection disabled in production, production-safe `formatError` with correlation ID logging. Body limit reduced from 50mb to 1mb (configurable). CORS already handled in P0-02. |
+| P0-06 | ✅ Completed | 2026-07-20 | 2026-07-20 | Removed `syncTables()` from `connectDB.js` (was unused in runtime). Created `api/scripts/migrate.js` with `_migrations` ledger table, deterministic filename ordering, `up`/`down` support, `--check` verification, `--down` rollback. Replaced missing `add_income.js → 20260128000001-add-income-mds-details-to-iar.js`. Made 3 non-idempotent + 1 buggy-index-check migration idempotent. Removed broken `run_all_migrations.js`. Fixed `module.exports` → ESM exports. Cleaned 62 duplicate email indexes created by `sync({ alter: true })`. All 17 migrations applied; second run is no-op. |
+| P0-07 | ✅ Completed | 2026-07-21 | 2026-07-21 | Created `id_counters` table (type/year/scope/counter) for atomic `SELECT ... FOR UPDATE` allocation. Created `api/utils/atomicIdGenerator.js` with `nextIarId`, `nextParId`, `nextRisId`, `nextIcsId`. Updated all 4 resolver files to use atomic generator. Removed old process-global generators and `resetXxxBatch` calls. Deleted 4 old generator files (`iarIdGenerator.js`, `parIdGenerator.js`, `risIdGenerator.js`, `icsIdGenerator.js`). Verified ID formats match originals. Note: document IDs repeat across line items (one document = multiple rows), so unique indexes on ID columns are not applicable. |
+| P0-08 | ✅ Completed | 2026-07-21 | 2026-07-21 | Wrapped `updatePurchaseOrder` in explicit `sequelize.transaction()` with `FOR UPDATE` row lock on PO items and strict over-receipt guard (throws instead of silent clamp). Added `FOR UPDATE` locking to source item queries in PAR/RIS/IAR split/assign/create functions. Transactions passed to all `nextXxxId()` calls in mutation functions. Idempotency key table deferred — requires product decision on retry semantics. |
+| P0-07 | 🔲 Not started | — | — | Depends on P0-06 |
+| P0-08 | 🔲 Not started | — | — | Depends on P0-03, P0-04, P0-06, P0-07 |
+| P1-09 | 🔲 Not started | — | — | Depends on P0-04, P0-06 |
+| P1-10 | 🔲 Not started | — | — | Depends on P0-05, P0-08 |
+| P1-11 | 🔲 Not started | — | — | Depends on P0-02, P0-03, P0-05 |
+| P1-12 | 🔲 Not started | — | — | Depends on P1-09, P1-11 |
+| P1-13 | 🔲 Not started | — | — | Depends on P0-02, P0-05 |
+| P1-14 | 🔲 Not started | — | — | Depends on P0-04, P0-05, P0-06, P0-08, P1-12, P1-13 |
+| P1-15 | 🔲 Not started | — | — | Depends on P0-02, P0-05, P0-07, P0-13 |
+| P2-16 | 🔲 Not started | — | — | Depends on P0-06, P1-13 |
+| P2-17 | 🔲 Not started | — | — | Depends on P0-01..P0-08, P1-11 |
+| P2-18 | 🔲 Not started | — | — | Depends on P1-10, P1-11, P1-13 |
+
+**Legend:** 🔲 Not started | 🔄 In progress | ✅ Completed | ❌ Blocked
+
+---
+
 ## Prioritized, independently executable chunks
 
 ### P0-01 — Restore reproducible package installation

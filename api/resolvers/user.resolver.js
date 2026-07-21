@@ -1,16 +1,17 @@
 import bcrypt from 'bcryptjs';
-import User from '../models/user.model.js'; // Import your Sequelize model
+import User from '../models/user.model.js';
+import { getCurrentUser, requireAuthenticated, requireRole } from '../auth/authorization.js';
 
 const userResolver = {
   Mutation: {
     signUp: async (_, { input }, context) => {
+      requireRole(context, 'admin');
       try {
         const { email, name, password, gender } = input;
         if (!email || !name || !password || !gender) {
           throw new Error('All fields are required');
         }
 
-        // Check if the user already exists
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
           throw new Error('User already exists');
@@ -19,16 +20,13 @@ const userResolver = {
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(password, salt);
 
-        const boyprofile_pic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
-        const girlprofile_pic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
-
-        // Create new user using Sequelize
         const newUser = await User.create({
           email,
           name,
           password: hashedPassword,
           gender,
-          profile_pic: gender === 'male' ? boyprofile_pic : girlprofile_pic,
+          profile_pic: `https://api.dicebear.com/9.x/avataaars/svg?seed=${email}`,
+          role: 'user',
         });
 
         return newUser;
@@ -81,16 +79,12 @@ const userResolver = {
     },
 
     editUser: async (_, { input }, context) => {
+      requireAuthenticated(context);
       try {
-        console.log('input editUser', input);
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
+        const currentUser = context.getUser();
         const { id, ...updateFields } = input;
 
         if (!id) {
-          // Should be caught by GraphQL schema if id is ID!
           throw new Error('User ID is required for an update.');
         }
 
@@ -99,9 +93,15 @@ const userResolver = {
           throw new Error('User not found to update.');
         }
 
+        const isSelf = Number(currentUser.id) === Number(id);
+        const isAdmin = currentUser.role === 'admin';
+
+        if (!isSelf && !isAdmin) {
+          throw new Error('Forbidden: you can only edit your own profile.');
+        }
+
         const dataToUpdate = {};
 
-        // Handle email update and uniqueness
         if (updateFields.email !== undefined) {
           if (updateFields.email.trim() === '') {
             throw new Error('Email cannot be empty.');
@@ -117,7 +117,6 @@ const userResolver = {
           }
         }
 
-        // Handle password update
         if (updateFields.password) {
           if (!updateFields.confirm_password) {
             throw new Error('Confirm password is required when changing password.');
@@ -125,71 +124,62 @@ const userResolver = {
           if (updateFields.password !== updateFields.confirm_password) {
             throw new Error('Passwords do not match.');
           }
-          // Optional: Add password complexity validation here
+          if (isSelf && !updateFields.current_password) {
+            throw new Error('Current password is required to change your own password.');
+          }
+          if (isSelf) {
+            const isMatch = await bcrypt.compare(updateFields.current_password, userToUpdate.password);
+            if (!isMatch) {
+              throw new Error('Current password is incorrect.');
+            }
+          }
           const salt = bcrypt.genSaltSync(10);
           dataToUpdate.password = bcrypt.hashSync(updateFields.password, salt);
         } else if (updateFields.confirm_password && !updateFields.password) {
           throw new Error('Password is required when confirm password is provided.');
         }
 
-        // Prepare other updatable fields
-        [
-          'name',
-          'last_name',
-          'employee_id',
-          'department',
-          'position',
-          'gender',
-          'role',
-          'location',
-        ].forEach((field) => {
+        const selfFields = ['name', 'last_name', 'employee_id', 'gender'];
+        const adminFields = ['department', 'position', 'role', 'location'];
+
+        for (const field of selfFields) {
           if (updateFields[field] !== undefined) {
-            if (
-              (field === 'name' || field === 'gender') &&
-              String(updateFields[field]).trim() === ''
-            ) {
+            if (String(updateFields[field]).trim() === '') {
               throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} cannot be empty.`);
             }
             dataToUpdate[field] = updateFields[field];
           }
-        });
+        }
 
-        // Update profile picture if gender or email (used in URL) is changing
-        const finalEmailForAvatar = dataToUpdate.email || userToUpdate.email;
-        const finalGenderForAvatar = dataToUpdate.gender || userToUpdate.gender;
+        for (const field of adminFields) {
+          if (updateFields[field] !== undefined) {
+            if (!isAdmin) {
+              throw new Error(`Forbidden: only admins can change ${field}.`);
+            }
+            dataToUpdate[field] = updateFields[field];
+          }
+        }
+
         if (
-          dataToUpdate.gender !== undefined ||
-          (dataToUpdate.email !== undefined && dataToUpdate.email !== userToUpdate.email)
+          dataToUpdate.email !== undefined && dataToUpdate.email !== userToUpdate.email
         ) {
-          const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${finalEmailForAvatar}`;
-          const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${finalEmailForAvatar}`;
-          const othersProfilePic = `https://avatar.iran.liara.run/public/boy?username=${finalEmailForAvatar}`;
-          dataToUpdate.profile_pic =
-            finalGenderForAvatar === 'male'
-              ? boyProfilePic
-              : finalGenderForAvatar === 'female'
-                ? girlProfilePic
-                : othersProfilePic;
+          dataToUpdate.profile_pic = `https://api.dicebear.com/9.x/avataaars/svg?seed=${dataToUpdate.email}`;
         }
 
         if (Object.keys(dataToUpdate).length === 0) {
-          // No actual changes submitted
           return userToUpdate;
         }
 
         await User.update(dataToUpdate, { where: { id } });
-        return await User.findByPk(id); // Fetch and return the updated user
+        return await User.findByPk(id);
       } catch (error) {
         console.error('Error updating user, error: ', error);
         throw new Error(error.message || 'Internal server error');
       }
     },
     createUser: async (_, { input }, context) => {
+      requireRole(context, 'admin');
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
         const {
           email,
           name,
@@ -204,7 +194,6 @@ const userResolver = {
           location,
         } = input;
 
-        // Basic validation
         if (
           !email ||
           !name ||
@@ -215,7 +204,6 @@ const userResolver = {
           !employee_id ||
           !department ||
           !position ||
-          !role ||
           !location
         ) {
           throw new Error('All fields are required.');
@@ -225,12 +213,6 @@ const userResolver = {
           throw new Error('Passwords do not match.');
         }
 
-        // Optional: Add server-side password complexity validation here
-        // const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
-        // if (!passwordRegex.test(password)) {
-        //   throw new Error("Password does not meet complexity requirements.");
-        // }
-
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
           throw new Error('User with this email already exists.');
@@ -238,10 +220,6 @@ const userResolver = {
 
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(password, salt);
-
-        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
-        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
-        const othersProfilePic = `https://avatar.iran.liara.run/public/boy?username=${email}`; // Or use a generic one
 
         const newUser = await User.create({
           email,
@@ -252,14 +230,8 @@ const userResolver = {
           employee_id,
           department,
           position,
-          role,
-          profile_pic:
-            gender === 'male'
-              ? boyProfilePic
-              : gender === 'female'
-                ? girlProfilePic
-                : othersProfilePic,
-          // is_active defaults to true in the model
+          role: role || 'user',
+          profile_pic: `https://api.dicebear.com/9.x/avataaars/svg?seed=${email}`,
           location,
         });
 
@@ -271,25 +243,17 @@ const userResolver = {
     },
 
     deleteUser: async (_, { userId }, context) => {
-      console.log('userId', userId);
-
+      requireRole(context, 'admin');
       try {
-        // Check if the user is authenticated
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
-        // Find the user by ID
         const user = await User.findByPk(userId);
         if (!user) {
           throw new Error('User not found');
         }
 
-        // Soft delete the user by setting is_active to false
         user.is_active = false;
         await user.save();
 
-        return user; // Return the updated user object
+        return user;
       } catch (error) {
         console.error('Error deleting user, error: ', error);
         throw new Error(error.message || 'Internal server error');
@@ -299,27 +263,16 @@ const userResolver = {
 
   Query: {
     users: async (_, __, context) => {
-      // Check if the user is authenticated
-      if (!context.isAuthenticated()) {
-        throw new Error('Unauthorized');
-      }
-
-      // Fetch all users
+      requireRole(context, 'admin', 'user');
       return await User.findAll({
-        where: {
-          is_active: true, // Assuming you have an isActive field to filter active users
-        },
+        where: { is_active: true },
       });
     },
 
     countAllUsers: async (_, __, context) => {
+      requireRole(context, 'admin', 'user');
       try {
-        // Check if the user is authenticated
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-        // Count all users
-        return await User.count();
+        return await User.count({ where: { is_active: true } });
       } catch (error) {
         console.error('Error fetching all users, error: ', error);
         throw new Error(error.message || 'Internal server error');
@@ -328,8 +281,7 @@ const userResolver = {
 
     authUser: async (_, __, context) => {
       try {
-        const user = await context.getUser();
-        return user;
+        return await context.getUser();
       } catch (error) {
         console.error('Error fetching authenticated user, error: ', error);
         throw new Error(error.message || 'Internal server error');
@@ -337,13 +289,8 @@ const userResolver = {
     },
 
     user: async (_, { userId }, context) => {
+      requireAuthenticated(context);
       try {
-        // Check if the user is authenticated
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
-        // Fetch user by ID
         return await User.findByPk(userId);
       } catch (error) {
         console.error('Error fetching user, error: ', error);
@@ -374,8 +321,8 @@ export default userResolver;
 //         const salt = bcrypt.genSaltSync(10);
 //         const hashedPassword = bcrypt.hashSync(password, salt);
 
-//         const boyprofile_pic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
-//         const girlprofile_pic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
+//         const boyprofile_pic = `https://api.dicebear.com/9.x/avataaars/svg?seed=${email}`;
+//         const girlprofile_pic = `https://api.dicebear.com/9.x/avataaars/svg?seed=${email}`;
 
 //         const newUser = new User({
 //           email,

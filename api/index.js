@@ -1,4 +1,3 @@
-import { startStandaloneServer } from '@apollo/server/standalone';
 import mergedResolvers from './resolvers/index.js';
 import mergedTypeDefs from './typeDefs/index.js';
 import { ApolloServer } from '@apollo/server';
@@ -7,119 +6,130 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import dotenv from 'dotenv';
-// import { connectDB, disconnectDB } from "./db/connectDB.js";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import depthLimit from 'graphql-depth-limit';
 import { GraphQLLocalStrategy, buildContext } from 'graphql-passport';
 import passport from 'passport';
 import session from 'express-session';
-import connectMongo from 'connect-mongodb-session';
 import { configurePassport } from './passport/passport.config.js';
-import { connectDB, disconnectDB, syncTables } from './db/connectDB.js';
+import { connectDB, disconnectDB } from './db/connectDB.js';
 import MySQLSession from 'express-mysql-session';
 const MySQLStore = MySQLSession(session);
+import crypto from 'crypto';
 import { Sequelize } from 'sequelize';
 import './models/purchaseorder.js';
 import './models/purchaseorderitems.js';
 import './models/inspectionacceptancereport.js';
 import { initAssociations } from './models/associations.js';
-dotenv.config();
+import { config } from './config.js';
 
-// call passport config
 configurePassport();
 
 const app = express();
 const httpServer = http.createServer(app);
 
-const options = {
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-};
+if (config.isBehindProxy) {
+  app.set('trust proxy', 1);
+}
 
-const store = new MySQLStore(options);
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
-// Catch errors
+const generalLimiter = rateLimit({
+  windowMs: config.rateLimitWindow,
+  max: config.rateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: config.rateLimitWindow,
+  max: config.rateLimitLoginMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+});
+
+app.use('/graphql', generalLimiter);
+
+const loginPath = '/graphql';
+app.use(loginPath, (req, res, next) => {
+  if (req.body && req.body.query && req.body.query.includes('login')) {
+    return loginLimiter(req, res, next);
+  }
+  next();
+});
+
+const store = new MySQLStore({
+  host: config.host,
+  user: config.user,
+  password: config.password,
+  database: config.database,
+});
+
 store.on('error', function (error) {
   console.error(error);
 });
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: config.sessionSecret,
     resave: false,
     store: store,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      maxAge: 1000 * 60 * 60 * 24 * 7,
       httpOnly: true,
-      secure: false, // Set to false for development (HTTP)
-      sameSite: 'lax', // Add this for better cross-origin support
+      secure: config.cookieSecure,
+      sameSite: config.cookieSameSite,
     },
-    name: 'connect.sid', // Explicitly set session name
+    name: config.cookieName,
   })
 );
 
-//initialize passport
 app.use(passport.initialize());
 app.use(passport.session());
 
 const server = new ApolloServer({
   typeDefs: mergedTypeDefs,
   resolvers: mergedResolvers,
+  introspection: !config.isProduction,
+  validationRules: [depthLimit(config.graphqlMaxDepth)],
+  formatError: (formattedError, error) => {
+    const correlationId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36);
+    console.error(`[graphql-error ${correlationId}]`, error?.extensions?.code, error?.message);
+    return {
+      message: formattedError.message,
+      extensions: {
+        code: formattedError.extensions?.code || 'INTERNAL_SERVER_ERROR',
+        ...(config.isProduction ? {} : { stack: formattedError.extensions?.stack }),
+      },
+    };
+  },
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
-// connect db mysql
 await connectDB();
-await syncTables(); // Ensure tables exist in MySQL
 
-// Initialize model relations after all models are imported
-// initAssociations();
-
-// Optional: verify
-// import inspectionAcceptanceReport from "./models/inspectionacceptancereport.js";
-// console.log("IAR associations at boot:", Object.keys(inspectionAcceptanceReport.associations));
-// Expect: ['PurchaseOrder', 'PurchaseOrderItem']
-
-// Ensure we wait for our server to start
 await server.start();
-
-// Set up our Express middleware to handle CORS, body parsing,
-// and our expressMiddleware function.
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://192.168.156.105:3000',
-  'http://localhost:4173',
-  'https://unduly-enjoyed-parrot.ngrok-free.app',
-  'http://10.100.168.9:3000',
-  'http://10.100.168.9:4000/graphql',
-];
 
 app.use(
   '/graphql',
   cors({
-    // origin: "http://localhost:3000",
-    origin: allowedOrigins,
+    origin: config.corsOrigins,
     credentials: true,
   }),
-  express.json({ limit: '50mb' }),
-  // expressMiddleware accepts the same arguments:
-  // an Apollo Server instance and optional configuration options
+  express.json({ limit: config.bodyLimit }),
   expressMiddleware(server, {
     context: ({ req, res }) => {
-      // Add debugging for session
-      // console.log("🔍 Session ID:", req.sessionID);
-      // console.log("🔍 Session Data:", req.session);
-      // console.log("🔍 User in session:", req.user);
-      // console.log("🔍 Is Authenticated:", req.isAuthenticated ? req.isAuthenticated() : 'No isAuthenticated method');
-
       return buildContext({ req, res });
     },
   })
 );
 
-// Add this after your other middleware but before starting the server
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('Bad JSON', err);
@@ -142,15 +152,12 @@ const gracefulShutdown = async () => {
   }
 };
 
-// Handle shutdown signals
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Move your existing server start code here
-await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+await new Promise((resolve) => httpServer.listen({ port: config.port }, resolve));
+console.log(`🚀 Server ready on port ${config.port}`);
 
-// Signal PM2 that the app is ready (for cluster mode)
 if (process.send) {
   process.send('ready');
 }

@@ -76,14 +76,4 @@ export const disconnectDB = async () => {
   }
 };
 
-export const syncTables = async () => {
-  try {
-    // Alter tables to match models (preserves data and adds missing columns)
-    await sequelize.sync({ alter: true });
-    // Force sync to rebuild tables (BE CAREFUL - this drops existing data)
-    // await sequelize.sync({ force: true });
-    console.log('✅ MySQL Tables Synced');
-  } catch (error) {
-    console.error('❌ Error while syncing tables:', error);
-  }
-};
+

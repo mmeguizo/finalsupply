@@ -2,18 +2,19 @@ import PurchaseOrder from '../models/purchaseorder.js'; // Import the Sequelize 
 import requisitionIssueSlip from '../models/inspectionacceptancereport.js';
 import { Op } from 'sequelize';
 import { sequelize } from '../db/connectDB.js';
-import { generateNewRisId, resetRisIdBatch } from '../utils/risIdGenerator.js';
+import { nextRisId } from '../utils/atomicIdGenerator.js';
 import PurchaseOrderItems from '../models/purchaseorderitems.js';
+import { requireAuthenticated, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
 const requisitionIssueSlipResolver = {
   Query: {
     requisitionIssueSlip: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = ownershipScope(user);
         // Fetch a single purchase order by ID
         const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
-          where: { isDeleted: false },
+          where: { isDeleted: false, ...createdByScope },
           order: [['createdAt', 'DESC']],
           include: [PurchaseOrder],
         });
@@ -29,9 +30,7 @@ const requisitionIssueSlipResolver = {
     },
     requisitionIssueSlipForView: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -69,11 +68,10 @@ const requisitionIssueSlipResolver = {
   Mutation: {
     updateRISInventoryIDs: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(requisitionIssueSlip, input.ids, context);
         // Generate a single batch RIS ID for all items
-        const batchRisId = await generateNewRisId();
+        const batchRisId = await nextRisId();
         console.log('Updating items with IDs:', input.ids);
         console.log('Generated batch RIS ID:', batchRisId);
 
@@ -109,16 +107,11 @@ const requisitionIssueSlipResolver = {
     // Split items by quantity and assign separate RIS IDs with per-split signatories
     splitAndAssignRIS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
-
-        // Reset RIS ID batch counter so sequential IDs are generated properly
-        resetRisIdBatch();
 
         const transaction = await sequelize.transaction();
 
@@ -128,12 +121,14 @@ const requisitionIssueSlipResolver = {
 
             const original = await requisitionIssueSlip.findByPk(itemId, {
               transaction,
+              lock: transaction.LOCK.UPDATE,
               include: [PurchaseOrder],
             });
 
             if (!original) {
               throw new Error(`Item with ID ${itemId} not found`);
             }
+            authorizeOwnership(original, context);
 
             if (splits.length === 0) {
               throw new Error('At least one split is required per item');
@@ -160,7 +155,7 @@ const requisitionIssueSlipResolver = {
 
             // First split: update the original record
             const firstSplit = splits[0];
-            const firstRisId = await generateNewRisId();
+            const firstRisId = await nextRisId(transaction);
 
             await original.update(
               {
@@ -187,7 +182,7 @@ const requisitionIssueSlipResolver = {
             // Additional splits: clone the original record
             for (let i = 1; i < splits.length; i++) {
               const split = splits[i];
-              const newRisId = await generateNewRisId();
+              const newRisId = await nextRisId(transaction);
               const originalData = original.toJSON();
 
               const clonedRecord = await requisitionIssueSlip.create(
@@ -258,9 +253,7 @@ const requisitionIssueSlipResolver = {
     // Create a single RIS assignment (saves immediately, clones from source)
     createSingleRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           sourceItemId,
@@ -272,31 +265,34 @@ const requisitionIssueSlipResolver = {
           receivedByPosition,
         } = input;
 
-        // Fetch the source item
-        const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        // Generate new RIS ID
-        const newRisId = await generateNewRisId();
-        const sourceData = sourceItem.toJSON();
-
         // Use transaction for atomicity
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item with lock
+          const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          // Generate new RIS ID
+          const newRisId = await nextRisId(transaction);
+          const sourceData = sourceItem.toJSON();
+
           // Create new record with the assigned quantity and RIS ID
           const newItem = await requisitionIssueSlip.create(
             {
@@ -371,9 +367,7 @@ const requisitionIssueSlipResolver = {
     // Create a multi-item RIS assignment (multiple items share one RIS ID per end user)
     createMultiItemRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           items,
@@ -388,25 +382,27 @@ const requisitionIssueSlipResolver = {
           throw new Error('At least one item is required');
         }
 
-        // Generate a single RIS ID for all items in this assignment
-        const sharedRisId = await generateNewRisId();
-
         const transaction = await sequelize.transaction();
         const newItemIds = [];
         const sourceItemIds = [];
 
         try {
+          // Generate a single RIS ID for all items in this assignment
+          const sharedRisId = await nextRisId(transaction);
+
           for (const entry of items) {
             const { sourceItemId, quantity } = entry;
 
             const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
               include: [PurchaseOrder],
               transaction,
+              lock: transaction.LOCK.UPDATE,
             });
 
             if (!sourceItem) {
               throw new Error(`Source item with ID ${sourceItemId} not found`);
             }
+            authorizeOwnership(sourceItem, context);
 
             const currentReceived = sourceItem.actualQuantityReceived || 0;
             if (quantity > currentReceived) {
@@ -497,9 +493,7 @@ const requisitionIssueSlipResolver = {
     // Add an item to an existing RIS ID - COMBINES if same source item already exists in the RIS
     addItemToExistingRIS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const { sourceItemId, quantity, existingRisId } = input;
 
@@ -515,26 +509,29 @@ const requisitionIssueSlipResolver = {
           throw new Error(`No existing item found with RIS ID "${existingRisId}"`);
         }
 
-        const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        const sourceData = sourceItem.toJSON();
         const transaction = await sequelize.transaction();
 
         try {
+          const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
           // Check if there's already an item with the same risId AND same purchaseOrderItemId
           // If so, COMBINE the quantities instead of creating a duplicate
           const existingItemWithSameSource = await requisitionIssueSlip.findOne({
@@ -645,9 +642,7 @@ const requisitionIssueSlipResolver = {
     // Update an existing RIS assignment
     updateRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           itemId,
@@ -663,6 +658,7 @@ const requisitionIssueSlipResolver = {
         if (!item) {
           throw new Error(`Item with ID ${itemId} not found`);
         }
+        authorizeOwnership(item, context);
 
         // Build update object with only provided fields
         const updateData = {};

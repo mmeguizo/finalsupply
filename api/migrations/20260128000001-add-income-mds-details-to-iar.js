@@ -3,7 +3,6 @@ import { Sequelize } from 'sequelize';
 export async function up(queryInterface) {
   const transaction = await queryInterface.sequelize.transaction();
   try {
-    // Check if columns already exist before adding them
     const tableDescription = await queryInterface.describeTable('inspection_acceptance_report');
 
     if (!tableDescription.income) {
@@ -17,9 +16,7 @@ export async function up(queryInterface) {
         },
         { transaction }
       );
-      console.log('✅ Added income column');
-    } else {
-      console.log('ℹ️ income column already exists');
+      console.log('Added income column');
     }
 
     if (!tableDescription.mds) {
@@ -33,9 +30,7 @@ export async function up(queryInterface) {
         },
         { transaction }
       );
-      console.log('✅ Added mds column');
-    } else {
-      console.log('ℹ️ mds column already exists');
+      console.log('Added mds column');
     }
 
     if (!tableDescription.details) {
@@ -49,18 +44,14 @@ export async function up(queryInterface) {
         },
         { transaction }
       );
-      console.log('✅ Added details column');
-    } else {
-      console.log('ℹ️ details column already exists');
+      console.log('Added details column');
     }
 
     await transaction.commit();
-    console.log(
-      '✅ Migration completed: Added income, mds, details columns to inspection_acceptance_report'
-    );
+    console.log('Added income, mds, details columns to inspection_acceptance_report');
   } catch (error) {
     await transaction.rollback();
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed:', error);
     throw error;
   }
 }
@@ -72,12 +63,10 @@ export async function down(queryInterface) {
     await queryInterface.removeColumn('inspection_acceptance_report', 'mds', { transaction });
     await queryInterface.removeColumn('inspection_acceptance_report', 'details', { transaction });
     await transaction.commit();
-    console.log(
-      '✅ Rollback completed: Removed income, mds, details columns from inspection_acceptance_report'
-    );
+    console.log('Removed income, mds, details columns from inspection_acceptance_report');
   } catch (error) {
     await transaction.rollback();
-    console.error('❌ Rollback failed:', error);
+    console.error('Rollback failed:', error);
     throw error;
   }
 }

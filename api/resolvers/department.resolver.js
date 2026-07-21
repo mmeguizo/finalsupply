@@ -1,33 +1,25 @@
 import Department from '../models/department.js';
+import { requireAuthenticated, requireRole } from '../auth/authorization.js';
 
 const departmentResolver = {
   Query: {
     departments: async (_, __, context) => {
-      if (!context.isAuthenticated()) {
-        throw new Error('Unauthorized');
-      }
+      requireAuthenticated(context);
       return await Department.findAll({
-        where: {
-          is_active: true,
-        },
+        where: { is_active: true },
       });
     },
 
     department: async (_, { id }, context) => {
-      if (!context.isAuthenticated()) {
-        throw new Error('Unauthorized');
-      }
+      requireAuthenticated(context);
       return await Department.findByPk(id);
     },
   },
 
   Mutation: {
     createDepartment: async (_, { input }, context) => {
+      requireRole(context, 'admin');
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
         const { name, description } = input;
 
         if (!name) {
@@ -39,13 +31,7 @@ const departmentResolver = {
           throw new Error('Department with this name already exists');
         }
 
-        const newDepartment = await Department.create({
-          name,
-          description,
-          is_active: true,
-        });
-
-        return newDepartment;
+        return await Department.create({ name, description, is_active: true });
       } catch (error) {
         console.error('Error creating department:', error);
         throw new Error(error.message || 'Internal server error');
@@ -53,11 +39,8 @@ const departmentResolver = {
     },
 
     updateDepartment: async (_, { input }, context) => {
+      requireRole(context, 'admin');
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
         const { id, name, description } = input;
 
         const departmentToUpdate = await Department.findByPk(id);
@@ -73,7 +56,6 @@ const departmentResolver = {
         }
 
         await Department.update({ name, description }, { where: { id } });
-
         return await Department.findByPk(id);
       } catch (error) {
         console.error('Error updating department:', error);
@@ -82,17 +64,13 @@ const departmentResolver = {
     },
 
     deleteDepartment: async (_, { id }, context) => {
+      requireRole(context, 'admin');
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-
         const department = await Department.findByPk(id);
         if (!department) {
           throw new Error('Department not found');
         }
 
-        // Soft delete by setting is_active to false
         department.is_active = false;
         await department.save();
 

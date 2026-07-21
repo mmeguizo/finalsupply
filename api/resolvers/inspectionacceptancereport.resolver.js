@@ -6,16 +6,14 @@ import { sequelize } from '../db/connectDB.js';
 import { customAlphabet } from 'nanoid';
 import { omitId } from '../utils/helper.js';
 import { Op, Sequelize } from 'sequelize';
-import { generateNewIcsId, resetIcsIdBatch } from '../utils/icsIdGenerator.js'; // Import the ICS ID generator function
-import { generateNewIarId } from '../utils/iarIdGenerator.js'; // Import the IAR ID generator function
+import { nextIcsId, nextIarId } from '../utils/atomicIdGenerator.js';
+import { requireAuthenticated, requireRole, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
 const nanoid = customAlphabet('1234567890meguizomarkoliver', 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
     inspectionAcceptanceReport: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -73,9 +71,7 @@ const inspectionAcceptanceReportResolver = {
     },
     inspectionAcceptanceReportForICS: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -112,9 +108,7 @@ const inspectionAcceptanceReportResolver = {
     },
     iarForReports: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -186,9 +180,7 @@ const inspectionAcceptanceReportResolver = {
     // Fetch IAR items where category IS NULL (no category assigned)
     inspectionAcceptanceReportNoCategory: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -220,18 +212,20 @@ const inspectionAcceptanceReportResolver = {
 
     getIARItemsByIarId: async (_, { iarId }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         if (!iarId) {
-          throw new Error('IAR ID is required.'); // Ensure an iarId is provided
+          throw new Error('IAR ID is required.');
         }
+
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         const iarItems = await inspectionAcceptanceReport.findAll({
           where: {
-            iar_id: iarId, // Filter by the specific iar_id passed as an argument
-            isDeleted: false, // Ensure you only get active records
+            iar_id: iarId,
+            isDeleted: false,
+            ...scope,
           },
           order: [
             ['created_at', 'ASC'], // Order by creation date, maybe ascending for consistency
@@ -272,9 +266,8 @@ const inspectionAcceptanceReportResolver = {
     updateICSInventoryIDs: async (_, { input }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, input.ids, context);
 
         // 1. Fetch items to determine their tags
         const itemsToUpdate = await inspectionAcceptanceReport.findAll({
@@ -299,7 +292,7 @@ const inspectionAcceptanceReportResolver = {
             const idsInGroup = groupedByTag[tag];
             console.log(`Processing tag: ${tag} with items: [${idsInGroup.join(', ')}]`);
 
-            const newIcsId = await generateNewIcsId(tag);
+            const newIcsId = await nextIcsId(tag);
             console.log(
               `Generated ICS ID: ${newIcsId} for tag "${tag}" and items: [${idsInGroup.join(', ')}]`
             );
@@ -336,9 +329,9 @@ const inspectionAcceptanceReportResolver = {
 
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         if (!airId) {
           throw new Error('IAR ID is required.');
@@ -348,14 +341,14 @@ const inspectionAcceptanceReportResolver = {
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { iarStatus },
           {
-            where: { iar_id: airId },
+            where: { iar_id: airId, ...scope },
             transaction: t,
           }
         );
 
         // Fetch updated rows to return
         const updatedRows = await inspectionAcceptanceReport.findAll({
-          where: { iar_id: airId },
+          where: { iar_id: airId, ...scope },
           transaction: t,
         });
 
@@ -377,10 +370,9 @@ const inspectionAcceptanceReportResolver = {
     appendToExistingIAR: async (_, { iarId, items }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = context.req.user;
+        const scope = ownershipScope(user);
 
         if (!iarId) {
           throw new Error('IAR ID is required');
@@ -391,7 +383,7 @@ const inspectionAcceptanceReportResolver = {
 
         // Load an existing IAR row to inherit document IDs (par/ics/ris)
         const existingIar = await inspectionAcceptanceReport.findOne({
-          where: { iarId, isDeleted: false },
+          where: { iarId, isDeleted: false, ...scope },
           order: [['createdAt', 'DESC']],
           transaction: t,
         });
@@ -503,7 +495,7 @@ const inspectionAcceptanceReportResolver = {
           await inspectionAcceptanceReport.update(
             { iarStatus: finalIarStatus },
             {
-              where: { iarId },
+              where: { iarId, ...scope },
               transaction: t,
             }
           );
@@ -535,9 +527,7 @@ const inspectionAcceptanceReportResolver = {
     generateIARFromPO: async (_, { purchaseOrderId, items, invoice }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
 
         if (!purchaseOrderId) {
@@ -557,7 +547,7 @@ const inspectionAcceptanceReportResolver = {
 
         // Generate a single IAR ID for the entire batch
         const campus = po.campus || 'Talisay';
-        const autoIarId = await generateNewIarId(campus);
+        const autoIarId = await nextIarId(campus, transaction);
 
         let processedCount = 0;
 
@@ -708,10 +698,9 @@ const inspectionAcceptanceReportResolver = {
     createLineItemFromExisting: async (_, { sourceItemId, newItem }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = context.req.user;
+        const scope = ownershipScope(user);
 
         const { iarId, quantity, received, description, generalDescription, specification } =
           newItem;
@@ -773,7 +762,7 @@ const inspectionAcceptanceReportResolver = {
 
         // Load existing IAR to inherit doc IDs
         const existingIar = await inspectionAcceptanceReport.findOne({
-          where: { iarId, isDeleted: false },
+          where: { iarId, isDeleted: false, ...scope },
           order: [['createdAt', 'DESC']],
           transaction: t,
         });
@@ -854,9 +843,9 @@ const inspectionAcceptanceReportResolver = {
     ) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         if (!iarId) {
           throw new Error('IAR ID is required.');
@@ -873,7 +862,7 @@ const inspectionAcceptanceReportResolver = {
 
         // Update all records that match the iar_id
         const [updatedCount] = await inspectionAcceptanceReport.update(updateData, {
-          where: { iarId },
+          where: { iarId, ...scope },
           transaction: t,
         });
 
@@ -901,16 +890,11 @@ const inspectionAcceptanceReportResolver = {
     // Split items by quantity and assign separate ICS IDs with per-split signatories
     splitAndAssignICS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
-
-        // Reset ICS ID batch counter so sequential IDs are generated properly
-        resetIcsIdBatch();
 
         const transaction = await sequelize.transaction();
 
@@ -920,12 +904,15 @@ const inspectionAcceptanceReportResolver = {
 
             const original = await inspectionAcceptanceReport.findByPk(itemId, {
               transaction,
+              lock: transaction.LOCK.UPDATE,
               include: [PurchaseOrder],
             });
 
             if (!original) {
               throw new Error(`Item with ID ${itemId} not found`);
             }
+
+            authorizeOwnership(original, context);
 
             if (splits.length === 0) {
               throw new Error('At least one split is required per item');
@@ -969,7 +956,7 @@ const inspectionAcceptanceReportResolver = {
 
             // First split: update the original record
             const firstSplit = splits[0];
-            const firstIcsId = await generateNewIcsId(tag);
+            const firstIcsId = await nextIcsId(tag, transaction);
 
             await original.update(
               {
@@ -995,7 +982,7 @@ const inspectionAcceptanceReportResolver = {
             // Additional splits: clone the original record
             for (let i = 1; i < splits.length; i++) {
               const split = splits[i];
-              const newIcsId = await generateNewIcsId(tag);
+              const newIcsId = await nextIcsId(tag, transaction);
               const originalData = original.toJSON();
 
               const clonedRecord = await inspectionAcceptanceReport.create(
@@ -1064,9 +1051,7 @@ const inspectionAcceptanceReportResolver = {
     // Create a single ICS assignment (saves immediately, clones from source)
     createSingleICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           sourceItemId,
@@ -1078,39 +1063,43 @@ const inspectionAcceptanceReportResolver = {
           receivedByPosition,
         } = input;
 
-        // Fetch the source item
-        const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        const sourceData = sourceItem.toJSON();
-
-        // Validate tag for ICS ID generation
-        if (!sourceData.tag || (sourceData.tag !== 'high' && sourceData.tag !== 'low')) {
-          throw new Error(
-            `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sourceData.tag}'`
-          );
-        }
-
-        // Generate new ICS ID using the item's tag
-        const newIcsId = await generateNewIcsId(sourceData.tag);
-
         // Use transaction for atomicity
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item with lock
+          const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+
+          // Validate tag for ICS ID generation
+          if (!sourceData.tag || (sourceData.tag !== 'high' && sourceData.tag !== 'low')) {
+            throw new Error(
+              `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sourceData.tag}'`
+            );
+          }
+
+          // Generate new ICS ID using the item's tag
+          const newIcsId = await nextIcsId(sourceData.tag, transaction);
+
           // Create new record with the assigned quantity and ICS ID
           const newItem = await inspectionAcceptanceReport.create(
             {
@@ -1183,9 +1172,7 @@ const inspectionAcceptanceReportResolver = {
     // Create a multi-item ICS assignment (multiple items share one ICS ID per end user)
     createMultiItemICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           items,
@@ -1200,33 +1187,37 @@ const inspectionAcceptanceReportResolver = {
           throw new Error('At least one item is required');
         }
 
-        // All items in a multi-ICS batch must share the same tag for ICS ID generation
-        // Use the first item's tag to generate the shared ID
-        const firstSource = await inspectionAcceptanceReport.findByPk(items[0].sourceItemId);
-        if (!firstSource) {
-          throw new Error(`Source item with ID ${items[0].sourceItemId} not found`);
-        }
-        const sharedTag = firstSource.tag;
-        if (!sharedTag || (sharedTag !== 'high' && sharedTag !== 'low')) {
-          throw new Error(
-            `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sharedTag}'`
-          );
-        }
-
-        // Generate a single ICS ID for all items
-        const sharedIcsId = await generateNewIcsId(sharedTag);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, items.map(i => i.sourceItemId), context);
 
         const transaction = await sequelize.transaction();
         const newItemIds = [];
         const sourceItemIds = [];
 
         try {
+          // Validate first item's tag and generate shared ICS ID
+          const firstSource = await inspectionAcceptanceReport.findByPk(items[0].sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+          if (!firstSource) {
+            throw new Error(`Source item with ID ${items[0].sourceItemId} not found`);
+          }
+          const sharedTag = firstSource.tag;
+          if (!sharedTag || (sharedTag !== 'high' && sharedTag !== 'low')) {
+            throw new Error(
+              `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sharedTag}'`
+            );
+          }
+
+          const sharedIcsId = await nextIcsId(sharedTag, transaction);
+
           for (const entry of items) {
             const { sourceItemId, quantity } = entry;
 
             const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
               include: [PurchaseOrder],
               transaction,
+              lock: transaction.LOCK.UPDATE,
             });
 
             if (!sourceItem) {
@@ -1320,9 +1311,7 @@ const inspectionAcceptanceReportResolver = {
     // Add an item to an existing ICS ID - COMBINES if same source item already exists in the ICS
     addItemToExistingICS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const { sourceItemId, quantity, existingIcsId } = input;
 
@@ -1330,34 +1319,42 @@ const inspectionAcceptanceReportResolver = {
           throw new Error('Existing ICS ID is required');
         }
 
-        const existingICSItem = await inspectionAcceptanceReport.findOne({
-          where: { icsId: existingIcsId, isDeleted: false },
-        });
-
-        if (!existingICSItem) {
-          throw new Error(`No existing item found with ICS ID "${existingIcsId}"`);
-        }
-
-        const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        const sourceData = sourceItem.toJSON();
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch existing ICS item for metadata (inside transaction for consistency)
+          const existingICSItem = await inspectionAcceptanceReport.findOne({
+            where: { icsId: existingIcsId, isDeleted: false },
+            transaction,
+          });
+
+          if (!existingICSItem) {
+            throw new Error(`No existing item found with ICS ID "${existingIcsId}"`);
+          }
+
+          // Lock and load the source item being reduced
+          const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+
           // Check if there's already an item with the same icsId AND same purchaseOrderItemId
           // If so, COMBINE the quantities instead of creating a duplicate
           const existingItemWithSameSource = await inspectionAcceptanceReport.findOne({
@@ -1466,9 +1463,7 @@ const inspectionAcceptanceReportResolver = {
     // Update an existing ICS assignment
     updateICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           itemId,
@@ -1484,6 +1479,8 @@ const inspectionAcceptanceReportResolver = {
         if (!item) {
           throw new Error(`Item with ID ${itemId} not found`);
         }
+
+        authorizeOwnership(item, context);
 
         // Build update object with only provided fields
         const updateData = {};
@@ -1514,6 +1511,8 @@ const inspectionAcceptanceReportResolver = {
 
     updateItemPurpose: async (_, { ids, purpose }, context) => {
       try {
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, ids, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { purpose },
           { where: { id: ids } }
@@ -1531,6 +1530,8 @@ const inspectionAcceptanceReportResolver = {
 
     updateItemRemarks: async (_, { ids, remarks }, context) => {
       try {
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, ids, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { remarks },
           { where: { id: ids } }
@@ -1548,6 +1549,9 @@ const inspectionAcceptanceReportResolver = {
 
     updateIcsDetails: async (_, { id, icsDetails }, context) => {
       try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { icsDetails },
           { where: { id } }
@@ -1565,6 +1569,9 @@ const inspectionAcceptanceReportResolver = {
 
     updateParDetails: async (_, { id, parDetails }, context) => {
       try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { parDetails },
           { where: { id } }
@@ -1582,6 +1589,9 @@ const inspectionAcceptanceReportResolver = {
 
     updateRisDetails: async (_, { id, risDetails }, context) => {
       try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { risDetails },
           { where: { id } }
@@ -1597,9 +1607,11 @@ const inspectionAcceptanceReportResolver = {
       }
     },
 
-    updateIARItemDisplay: async (_, { id, iarQuantityDisplay, amount }) => {
+    updateIARItemDisplay: async (_, { id, iarQuantityDisplay, amount }, context) => {
+      requireAuthenticated(context);
       const item = await inspectionAcceptanceReport.findByPk(id);
       if (!item) throw new Error(`IAR item with id ${id} not found`);
+      authorizeOwnership(item, context);
 
       const updateData = {};
       if (iarQuantityDisplay !== undefined) updateData.iarQuantityDisplay = iarQuantityDisplay;
@@ -1619,9 +1631,7 @@ const inspectionAcceptanceReportResolver = {
     // Assign a no-category IAR item: clones the record with an NC ticket ID
     assignNoCategoryItem: async (_, { id, assignedQuantity, purpose }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         // 1. Fetch the source IAR item
         const sourceItem = await inspectionAcceptanceReport.findByPk(id, {
@@ -1631,6 +1641,8 @@ const inspectionAcceptanceReportResolver = {
         if (!sourceItem) {
           throw new Error(`IAR item with ID ${id} not found`);
         }
+
+        authorizeOwnership(sourceItem, context);
         if (sourceItem.isDeleted) {
           throw new Error('Cannot assign a deleted item');
         }

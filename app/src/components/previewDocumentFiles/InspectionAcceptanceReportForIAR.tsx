@@ -151,7 +151,7 @@ export default function InspectionAcceptanceReportForIAR({
     if (editValues[item.id] !== undefined) return editValues[item.id];
     const v =
       item?.iarQuantityDisplay != null ? Number(item.iarQuantityDisplay) : getReceivedQty(item);
-    return v != null && v !== '' ? String(v) : '';
+    return v != null ? String(v) : '';
   };
 
   const handleQtyChange = (itemId: number, value: string) => {

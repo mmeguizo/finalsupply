@@ -5,19 +5,15 @@ import inspectionAcceptanceReport from '../models/inspectionacceptancereport.js'
 import { customAlphabet } from 'nanoid';
 import { omitId } from '../utils/helper.js';
 import { sequelize } from '../db/connectDB.js';
-import { Op } from 'sequelize'; // add if not present
+import { Op } from 'sequelize';
+import { requireAuthenticated, ownershipScope } from '../auth/authorization.js';
 const nanoid = customAlphabet('1234567890meguizomarkoliver', 10);
-import { generateNewIarId } from '../utils/iarIdGenerator.js';
-import { generateNewRisId, resetRisIdBatch } from '../utils/risIdGenerator.js';
-import { generateNewParId, resetParIdBatch } from '../utils/parIdGenerator.js';
-import { generateNewIcsId, resetIcsIdBatch } from '../utils/icsIdGenerator.js';
+import { nextIarId } from '../utils/atomicIdGenerator.js';
 const purchaseorderResolver = {
   Query: {
     purchaseOrders: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Fetch all purchase orders using Sequelize
         const purchaseorders = await PurchaseOrder.findAll({
           where: { isDeleted: false }, // Only get active purchase orders
@@ -32,9 +28,7 @@ const purchaseorderResolver = {
     },
     purchaseOrderItems: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Fetch all purchase order items using Sequelize
         const purchaseordersItems = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
@@ -49,9 +43,7 @@ const purchaseorderResolver = {
     },
     allPurchaseOrderItems: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Fetch all purchase order items using Sequelize
         const purchaseordersItems = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
@@ -66,9 +58,7 @@ const purchaseorderResolver = {
     },
     allICSPurchaseOrderItems: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Fetch all purchase order items using Sequelize
         const purchaseordersItems = await PurchaseOrderItems.findAll({
           where: { isDeleted: false, category: 'inventory custodian slip' },
@@ -84,9 +74,7 @@ const purchaseorderResolver = {
 
     getAllTotalPurchaseOrderAmount: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         let totalItemAmount = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
@@ -103,9 +91,7 @@ const purchaseorderResolver = {
     },
     getTotalPurchaseOrderItems: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         let totalItemAmount = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
           order: [['createdAt', 'DESC']],
@@ -119,9 +105,7 @@ const purchaseorderResolver = {
     },
     getTotalPurchaseOrders: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         let totalItemAmount = await PurchaseOrder.findAll({
           where: { isDeleted: false },
           order: [['createdAt', 'DESC']],
@@ -135,9 +119,7 @@ const purchaseorderResolver = {
     },
     getPurchaseOrderForBarCharts: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         let totalItemAmount = await PurchaseOrder.findAll({
           where: { isDeleted: false },
           order: [['createdAt', 'DESC']],
@@ -152,9 +134,7 @@ const purchaseorderResolver = {
     },
     getAllCategory: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         let allCategory = await PurchaseOrderItems.findAll({
           where: { isDeleted: false },
@@ -168,9 +148,7 @@ const purchaseorderResolver = {
 
     purchaseOrderHistory: async (_, { purchaseOrderId }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const purchaseOrder = await PurchaseOrder.findByPk(purchaseOrderId, {
           include: [PurchaseOrderItems],
@@ -190,9 +168,7 @@ const purchaseorderResolver = {
     },
     purchaseOrderItemsHistoryAll: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const history = await PurchaseOrderItemsHistory.findAll({
           order: [['createdAt', 'DESC']],
         });
@@ -204,9 +180,7 @@ const purchaseorderResolver = {
     },
     inspectionAcceptanceReport: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Fetch a single purchase order by ID
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           where: { isDeleted: false },
@@ -243,9 +217,7 @@ const purchaseorderResolver = {
         const user = context.req.user;
         const { items, campus, ...poRestData } = input;
 
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         // IAR ID generation is now deferred to the "Generate IAR" step
         // No longer needed during PO creation
@@ -281,10 +253,6 @@ const purchaseorderResolver = {
           // COMMENTED OUT FOR DEMO: Use a single ICS ID for the entire batch, regardless of tag (high/low)
           // let batchIcsId = "";
 
-          // Reset batch tracking for individual ID generation
-          // resetIcsIdBatch();
-          // resetParIdBatch();
-          // resetRisIdBatch();
           // Validate that if items are provided, at least one item has meaningful data
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid = item.itemName && item.itemName.trim() !== '';
@@ -344,7 +312,6 @@ const purchaseorderResolver = {
 
     updatePurchaseOrder: async (_, { input }, context) => {
       const user = context.req.user;
-      // Define valid categories, similar to addPurchaseOrder
       const validCategories = [
         'property acknowledgement reciept',
         'inventory custodian slip',
@@ -354,59 +321,49 @@ const purchaseorderResolver = {
         if (field !== 'category' && field !== 'tag') {
           return value;
         }
-
         if (value === undefined || value === null) {
           return undefined;
         }
-
         if (typeof value === 'string') {
           const trimmedValue = value.trim();
-
           if (trimmedValue === '') {
             return undefined;
           }
-
           if (field === 'category' && !validCategories.includes(trimmedValue)) {
             return undefined;
           }
-
           return trimmedValue;
         }
-
         return field === 'category' ? undefined : value;
       };
 
+      const t = await sequelize.transaction();
+
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
-        const { id: poId, items, markingComplete, campus, ...poUpdates } = input; // Use poId for clarity
+        requireAuthenticated(context);
+        const { id: poId, items, markingComplete, campus, ...poUpdates } = input;
 
         const findIfExists = await PurchaseOrder.findOne({
           where: { id: poId },
+          transaction: t,
         });
         if (!findIfExists) {
           throw new Error('Purchase order not found');
         }
 
-        // Detect if a completed PO is being reverted to pending (initiated by user confirmation)
         const wasCompleted = String(findIfExists.status || '').toLowerCase() === 'completed';
         const revertingToPending =
           wasCompleted && String(poUpdates.status || '').toLowerCase() === 'pending';
 
-        // Update the purchase order details
-        // Update the purchase order
-        const [_, affectedRows] = await PurchaseOrder.update(
+        await PurchaseOrder.update(
           { ...poUpdates, campus: campus ?? poUpdates.campus },
-          {
-            where: { id: poId },
-          }
+          { where: { id: poId }, transaction: t }
         );
 
-        // If status was reverted from completed → pending, log a history entry
         if (revertingToPending) {
           const poForHistory = await PurchaseOrder.findByPk(poId, {
             include: [PurchaseOrderItems],
+            transaction: t,
           });
           if (
             poForHistory &&
@@ -429,23 +386,21 @@ const purchaseorderResolver = {
               changedBy: user.name || user.id,
               changeReason:
                 'Purchase Order reopened for editing — status reverted from Completed to Pending',
-            });
+            }, { transaction: t });
           }
         }
 
         if (markingComplete) {
-          // If marking complete, we might update the PO status and log history.
-          // The original logic tied history to the first item.
           await PurchaseOrder.update(
-            { status: 'Completed', completed_status_date: new Date() }, // Assuming 'status' and 'completed_status_date' are fields
-            { where: { id: poId } }
+            { status: 'Completed', completed_status_date: new Date() },
+            { where: { id: poId }, transaction: t }
           );
 
           const poForHistory = await PurchaseOrder.findByPk(poId, {
             include: [PurchaseOrderItems],
+            transaction: t,
           });
 
-          // Log history for marking complete, if items exist to associate with
           if (
             poForHistory &&
             poForHistory.PurchaseOrderItems &&
@@ -454,36 +409,31 @@ const purchaseorderResolver = {
             const firstItemForHistory = poForHistory.PurchaseOrderItems[0];
             await PurchaseOrderItemsHistory.create({
               purchaseOrderItemId: firstItemForHistory.id,
-              previousQuantity: firstItemForHistory.quantity, // Snapshot
-              newQuantity: firstItemForHistory.quantity, // Snapshot
-              previousActualQuantityReceived: firstItemForHistory.actualQuantityReceived, // Snapshot
-              newActualQuantityReceived: firstItemForHistory.actualQuantityReceived, // Snapshot
-              previousAmount: firstItemForHistory.amount, // Snapshot
-              newAmount: firstItemForHistory.amount, // Snapshot
-              changeType: 'po_completed', // More specific type
+              previousQuantity: firstItemForHistory.quantity,
+              newQuantity: firstItemForHistory.quantity,
+              previousActualQuantityReceived: firstItemForHistory.actualQuantityReceived,
+              newActualQuantityReceived: firstItemForHistory.actualQuantityReceived,
+              previousAmount: firstItemForHistory.amount,
+              newAmount: firstItemForHistory.amount,
+              changeType: 'po_completed',
               changedBy: user.name || user.id,
               changeReason: 'Purchase Order Marked Complete',
-            });
+            }, { transaction: t });
           }
-          // If markingComplete is an exclusive action, an early return might be appropriate here.
-          // Current logic allows item processing even if markingComplete is true.
         }
 
-        // Handle items if provided
         if (items && Array.isArray(items) && items.length > 0) {
-          // Generate IAR ID for this update batch
           const campusForId = campus || findIfExists.campus || 'Talisay';
-          const autoIiarIds = await generateNewIarId(campusForId);
+          const autoIiarIds = await nextIarId(campusForId, t);
 
           const hasAtLeastOneValidItem = items.some((item) => {
             const itemNameIsValid = item.itemName && item.itemName.trim() !== '';
             const quantityIsValid = typeof item.quantity === 'number' && item.quantity > 0;
-            // You could add more checks here if needed, e.g., for unitCost
             return itemNameIsValid || quantityIsValid;
           });
           if (!hasAtLeastOneValidItem) {
             throw new Error(
-              'Cannot process purchase order: provided items are empty or invalid. Please ensure at least one item has a name or quantity.'
+              'Cannot process purchase order: provided items are empty or invalid.'
             );
           }
 
@@ -491,6 +441,8 @@ const purchaseorderResolver = {
             if (item.id !== 'temp') {
               const currentItem = await PurchaseOrderItems.findOne({
                 where: { id: item.id, purchaseOrderId: poId },
+                transaction: t,
+                lock: t.LOCK.UPDATE,
               });
               if (!currentItem) {
                 console.warn(`Item with id ${item.id} not found for PO ${poId}. Skipping.`);
@@ -500,17 +452,10 @@ const purchaseorderResolver = {
               const itemUpdates = {};
               let detailsChanged = false;
               [
-                'itemName',
-                'description',
-                'generalDescription',
-                'specification',
-                'unit',
-                'category',
-                'tag',
-                'inventoryNumber',
+                'itemName', 'description', 'generalDescription', 'specification',
+                'unit', 'category', 'tag', 'inventoryNumber',
               ].forEach((field) => {
                 const nextValue = normalizeExistingItemClassification(field, item[field]);
-
                 if (nextValue !== undefined && nextValue !== currentItem[field]) {
                   itemUpdates[field] = nextValue;
                   detailsChanged = true;
@@ -543,58 +488,33 @@ const purchaseorderResolver = {
                 const maxAllowable = Number(
                   itemUpdates.quantity !== undefined ? itemUpdates.quantity : currentItem.quantity
                 );
-                const newAqr = Math.min(prevAqr + receivedQty, maxAllowable);
-
-                // // Doc IDs generation
-                // let parIdGen = "";
-                // let risIdGen = "";
-                // let icsIdGen = "";
-                // const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
-                // const poRecord = findIfExists;
-                // const campusValue = campus ?? poRecord?.campus ?? "";
-                // const campusSuffix = campusSuffixMap[campusValue] || "";
+                if (prevAqr + receivedQty > maxAllowable) {
+                  throw new Error(
+                    `Cannot receive ${receivedQty} units for item "${currentItem.itemName}": only ${maxAllowable - prevAqr} remaining`
+                  );
+                }
+                const newAqr = prevAqr + receivedQty;
 
                 const effectiveCategory =
                   itemUpdates.category !== undefined ? itemUpdates.category : currentItem.category;
                 const effectiveTag =
                   itemUpdates.tag !== undefined ? itemUpdates.tag : currentItem.tag;
 
-                // if (effectiveCategory === "property acknowledgement reciept") {
-                //   const gen = await generateNewParId();
-                //   parIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                // }
-                // if (effectiveCategory === "requisition issue slip") {
-                //   const gen = await generateNewRisId();
-                //   risIdGen = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                // }
-                // if (effectiveTag === "high" || effectiveTag === "low") {
-                //   // if (!batchIcsId) {
-                //   //   batchIcsId = await generateNewIcsId(effectiveTag);
-                //   // }
-                //   // icsIdGen = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-                //   // Generate individual ICS ID for each item
-                //   const individualIcsId = await generateNewIcsId(effectiveTag);
-                //   icsIdGen = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
-                // }
-
-                // Apply updates + increment actualQuantityReceived
                 await PurchaseOrderItems.update(
                   { ...itemUpdates, actualQuantityReceived: newAqr },
-                  { where: { id: currentItem.id, purchaseOrderId: poId } }
+                  { where: { id: currentItem.id, purchaseOrderId: poId }, transaction: t }
                 );
 
-                // IAR row (represents this receipt only)
                 const iarRow = await inspectionAcceptanceReport.create({
                   itemName: itemUpdates.itemName ?? currentItem.itemName,
                   description: itemUpdates.description ?? currentItem.description,
-                  generalDescription:
-                    itemUpdates.generalDescription ?? currentItem.generalDescription,
+                  generalDescription: itemUpdates.generalDescription ?? currentItem.generalDescription,
                   specification: itemUpdates.specification ?? currentItem.specification,
                   unit: itemUpdates.unit ?? currentItem.unit,
                   category: effectiveCategory,
                   tag: effectiveTag,
                   inventoryNumber: itemUpdates.inventoryNumber ?? currentItem.inventoryNumber,
-                  quantity: receivedQty, // this receipt batch
+                  quantity: receivedQty,
                   unitCost: itemUpdates.unitCost ?? currentItem.unitCost,
                   amount: receivedQty * (itemUpdates.unitCost ?? currentItem.unitCost),
                   actualQuantityReceived: receivedQty,
@@ -606,12 +526,8 @@ const purchaseorderResolver = {
                   parId: '',
                   icsId: '',
                   risId: '',
-                  // parId: parIdGen || null,
-                  // icsId: icsIdGen || null,
-                  // risId: risIdGen || null,
-                });
+                }, { transaction: t });
 
-                // History (received_update, aggregated line)
                 await PurchaseOrderItemsHistory.create({
                   purchaseOrderItemId: currentItem.id,
                   purchaseOrderId: poId,
@@ -622,18 +538,16 @@ const purchaseorderResolver = {
                   previousActualQuantityReceived: prevAqr,
                   newActualQuantityReceived: newAqr,
                   previousAmount: currentItem.amount,
-                  newAmount:
-                    itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
+                  newAmount: itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
                   iarId: iarRow.iarId || autoIiarIds,
                   parId: iarRow.parId || '',
                   risId: iarRow.risId || '',
                   icsId: iarRow.icsId || '',
                   changeType: 'received_update',
                   changedBy: user.name || user.id,
-                  changeReason:
-                    item.changeReason ||
+                  changeReason: item.changeReason ||
                     (detailsChanged ? 'Received qty + details update' : 'Received quantity'),
-                });
+                }, { transaction: t });
 
                 continue;
               }
@@ -641,6 +555,7 @@ const purchaseorderResolver = {
               if (detailsChanged) {
                 await PurchaseOrderItems.update(itemUpdates, {
                   where: { id: item.id, purchaseOrderId: poId },
+                  transaction: t,
                 });
                 await PurchaseOrderItemsHistory.create({
                   purchaseOrderItemId: currentItem.id,
@@ -652,17 +567,14 @@ const purchaseorderResolver = {
                   previousActualQuantityReceived: currentItem.actualQuantityReceived,
                   newActualQuantityReceived: currentItem.actualQuantityReceived,
                   previousAmount: currentItem.amount,
-                  newAmount:
-                    itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
+                  newAmount: itemUpdates.amount !== undefined ? itemUpdates.amount : currentItem.amount,
                   changeType: 'item_details_update',
                   changedBy: user.name || user.id,
                   changeReason: item.changeReason || 'Updated item details',
-                });
+                }, { transaction: t });
               }
             } else {
-              // New item path unchanged
               const { id, ...cleanedItems } = item;
-              // Category is not set during item creation — it's assigned when IAR is generated
               if (cleanedItems.category && !validCategories.includes(cleanedItems.category)) {
                 cleanedItems.category = null;
               } else if (!cleanedItems.category) {
@@ -683,35 +595,9 @@ const purchaseorderResolver = {
                 actualQuantityReceived: item?.currentInput ? item.currentInput : 0,
                 purchaseOrderId: poId || id,
                 itemGroupId: nanoid(),
-              });
+              }, { transaction: t });
 
               if (item.currentInput && Number(item.currentInput) > 0) {
-                // let icsId = "";
-                // let parId = "";
-                // let risId = "";
-                // const campusSuffixMap = { Talisay: "T", Alijis: "A", Binalbagan: "B", "Fortune Town": "F" };
-                // const poRecord = await PurchaseOrder.findByPk(poId);
-                // const campusValue = campus ?? poRecord?.campus ?? "";
-                // const campusSuffix = campusSuffixMap[campusValue] || "";
-
-                // if (cleanedItems.tag === "high" || cleanedItems.tag === "low") {
-                //   // if (!batchIcsId) {
-                //   //   batchIcsId = await generateNewIcsId(cleanedItems.tag);
-                //   // }
-                //   // icsId = campusSuffix ? `${batchIcsId}${campusSuffix}` : batchIcsId;
-                //   // Generate individual ICS ID for each item
-                //   const individualIcsId = await generateNewIcsId(cleanedItems.tag);
-                //   icsId = campusSuffix ? `${individualIcsId}${campusSuffix}` : individualIcsId;
-                // }
-                // if (item.category === "property acknowledgement reciept") {
-                //   const gen = await generateNewParId();
-                //   parId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                // }
-                // if (item.category === "requisition issue slip") {
-                //   const gen = await generateNewRisId();
-                //   risId = campusSuffix ? `${gen}${campusSuffix}` : gen;
-                // }
-
                 const iarRow = await inspectionAcceptanceReport.create({
                   ...cleanedItems,
                   iarId: autoIiarIds,
@@ -723,10 +609,7 @@ const purchaseorderResolver = {
                   parId: '',
                   icsId: '',
                   risId: '',
-                  // parId: parId || "",
-                  // icsId: icsId || "",
-                  // risId: risId || "",
-                });
+                }, { transaction: t });
 
                 await PurchaseOrderItemsHistory.create({
                   purchaseOrderItemId: newPOI.id,
@@ -746,28 +629,29 @@ const purchaseorderResolver = {
                   changeType: 'item_creation',
                   changedBy: user.name || user.id,
                   changeReason: 'Initial item creation',
-                });
+                }, { transaction: t });
               }
             }
           }
         }
-        // Fetch the newly created purchase order with its items
+
         const purchaseOrderWithItems = await PurchaseOrder.findOne({
           where: { id: poId },
           include: [PurchaseOrderItems],
+          transaction: t,
         });
 
+        await t.commit();
         return purchaseOrderWithItems;
       } catch (error) {
+        await t.rollback();
         console.error('Error updating purchase order: ', error);
         throw new Error(error.message || 'Internal server error');
       }
     },
     addPurchaseOrderItem: async (_, { purchaseOrderId, item }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         // Check if the purchase order exists
         const purchaseorder = await PurchaseOrder.findOne({
           where: { id: purchaseOrderId, isDeleted: false },
@@ -798,14 +682,13 @@ const purchaseorderResolver = {
     async revertIARBatch(_, { iarId, reason }, context) {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = context.req.user;
 
-        // Load all IAR rows for this batch
+        const scope = ownershipScope(user);
+
         const iars = await inspectionAcceptanceReport.findAll({
-          where: { iarId, isDeleted: false },
+          where: { iarId, isDeleted: false, ...scope },
           transaction: t,
           lock: t.LOCK.UPDATE,
         });

@@ -5,18 +5,19 @@ import { Op, Sequelize } from 'sequelize';
 import { sequelize } from '../db/connectDB.js';
 
 // const nanoid = customAlphabet('1234567890meguizomarkoliver', 10)
-import { generateNewParId, resetParIdBatch } from '../utils/parIdGenerator.js';
+import { nextParId } from '../utils/atomicIdGenerator.js';
 import PurchaseOrderItems from '../models/purchaseorderitems.js';
+import { requireAuthenticated, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
 const propertyAcknowledgmentReportResolver = {
   Query: {
     propertyAcknowledgmentReport: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = ownershipScope(user);
         // Fetch a single purchase order by ID
         const propertyAcknowledgmentReportdata = await inspectionAcceptanceReportResolver.findAll({
-          where: { isDeleted: false },
+          where: { isDeleted: false, ...createdByScope },
           order: [['createdAt', 'DESC']],
           include: [PurchaseOrder],
         });
@@ -32,9 +33,7 @@ const propertyAcknowledgmentReportResolver = {
     },
     propertyAcknowledgmentReportForView: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
@@ -71,9 +70,7 @@ const propertyAcknowledgmentReportResolver = {
     // Get the next available PAR ID without assigning it
     getNextParId: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const year = new Date().getFullYear();
         const yearPrefix = year.toString().slice(-2) + '-';
@@ -122,9 +119,7 @@ const propertyAcknowledgmentReportResolver = {
     // Get all existing PAR IDs for the current year
     getExistingParIds: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const year = new Date().getFullYear();
         const yearPrefix = year.toString().slice(-2) + '-';
@@ -152,13 +147,12 @@ const propertyAcknowledgmentReportResolver = {
   Mutation: {
     updatePARInventoryIDs: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReportResolver, input.ids, context);
 
         // Generate a single batch ICS ID for all items
         // const batchParId = nanoid();
-        const batchParId = await generateNewParId();
+        const batchParId = await nextParId();
         // console.log("Updating items with IDs:", input.ids);
         console.log('Generated batch ICS ID:', batchParId);
 
@@ -195,9 +189,7 @@ const propertyAcknowledgmentReportResolver = {
     // New mutation for manual PAR assignment with per-item signatories
     assignPARWithSignatories: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
         const user = await context.getUser();
 
         const {
@@ -210,11 +202,13 @@ const propertyAcknowledgmentReportResolver = {
           department,
         } = input;
 
+        await authorizeOwnershipBatch(inspectionAcceptanceReportResolver, itemIds, context);
+
         // Determine the PAR ID to use
         let assignedParId = parId;
         if (!assignedParId) {
           // Generate a new PAR ID if not provided
-          assignedParId = await generateNewParId();
+          assignedParId = await nextParId();
         }
 
         console.log('Assigning PAR ID:', assignedParId, 'to items:', itemIds);
@@ -258,15 +252,10 @@ const propertyAcknowledgmentReportResolver = {
     // Split items by received quantity and assign separate PAR IDs with per-group signatories
     splitAndAssignPAR: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const { itemSplits } = input;
         const allResultIds = [];
-
-        // Reset PAR ID batch counter so sequential IDs are generated properly
-        resetParIdBatch();
 
         // Use a transaction to ensure atomicity
         const transaction = await sequelize.transaction();
@@ -278,12 +267,14 @@ const propertyAcknowledgmentReportResolver = {
             // Fetch the original item
             const original = await inspectionAcceptanceReportResolver.findByPk(itemId, {
               transaction,
+              lock: transaction.LOCK.UPDATE,
               include: [PurchaseOrder],
             });
 
             if (!original) {
               throw new Error(`Item with ID ${itemId} not found`);
             }
+            authorizeOwnership(original, context);
 
             if (splits.length === 0) {
               throw new Error('At least one split is required per item');
@@ -310,7 +301,7 @@ const propertyAcknowledgmentReportResolver = {
 
             // First split: update the original record
             const firstSplit = splits[0];
-            const firstParId = await generateNewParId();
+            const firstParId = await nextParId(transaction);
 
             await original.update(
               {
@@ -335,7 +326,7 @@ const propertyAcknowledgmentReportResolver = {
             // Additional splits: clone the original record with new quantities
             for (let i = 1; i < splits.length; i++) {
               const split = splits[i];
-              const newParId = await generateNewParId();
+              const newParId = await nextParId(transaction);
 
               // Get the original's raw data for cloning
               const originalData = original.toJSON();
@@ -410,9 +401,7 @@ const propertyAcknowledgmentReportResolver = {
     // Create a single PAR assignment - saves immediately, clones from source item
     createSinglePARAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           sourceItemId,
@@ -424,31 +413,33 @@ const propertyAcknowledgmentReportResolver = {
           receivedByPosition,
         } = input;
 
-        // Fetch the source item
-        const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        // Generate new PAR ID
-        const newParId = await generateNewParId();
-        const sourceData = sourceItem.toJSON();
-
         // Use transaction for atomicity
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item
+          const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          // Generate new PAR ID
+          const newParId = await nextParId(transaction);
+          const sourceData = sourceItem.toJSON();
           // Create new record with the assigned quantity and PAR ID
           const newItem = await inspectionAcceptanceReportResolver.create(
             {
@@ -525,9 +516,7 @@ const propertyAcknowledgmentReportResolver = {
     // Create a multi-item PAR assignment (multiple items share one PAR ID per end user)
     createMultiItemPARAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           items,
@@ -542,26 +531,27 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error('At least one item is required');
         }
 
-        // Generate a single PAR ID for all items in this assignment
-        const sharedParId = await generateNewParId();
-
         const transaction = await sequelize.transaction();
         const newItemIds = [];
         const sourceItemIds = [];
 
         try {
+          // Generate a single PAR ID for all items in this assignment
+          const sharedParId = await nextParId(transaction);
           for (const entry of items) {
             const { sourceItemId, quantity } = entry;
 
             // Fetch the source item
             const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
-              include: [PurchaseOrder],
               transaction,
+              lock: transaction.LOCK.UPDATE,
+              include: [PurchaseOrder],
             });
 
             if (!sourceItem) {
               throw new Error(`Source item with ID ${sourceItemId} not found`);
             }
+            authorizeOwnership(sourceItem, context);
 
             const currentReceived = sourceItem.actualQuantityReceived || 0;
             if (quantity > currentReceived) {
@@ -655,9 +645,7 @@ const propertyAcknowledgmentReportResolver = {
     // Add an item to an existing PAR ID - COMBINES if same source item already exists in the PAR
     addItemToExistingPAR: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const { sourceItemId, quantity, existingParId } = input;
 
@@ -674,27 +662,31 @@ const propertyAcknowledgmentReportResolver = {
           throw new Error(`No existing item found with PAR ID "${existingParId}"`);
         }
 
-        // Fetch the source item
-        const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
-        }
-        if (quantity <= 0) {
-          throw new Error('Quantity must be greater than 0');
-        }
-
-        const sourceData = sourceItem.toJSON();
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item
+          const sourceItem = await inspectionAcceptanceReportResolver.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+
           // Check if there's already an item with the same parId AND same purchaseOrderItemId
           // If so, COMBINE the quantities instead of creating a duplicate
           const existingItemWithSameSource = await inspectionAcceptanceReportResolver.findOne({
@@ -812,9 +804,7 @@ const propertyAcknowledgmentReportResolver = {
     // Update an existing PAR assignment
     updatePARAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error('Unauthorized');
-        }
+        requireAuthenticated(context);
 
         const {
           itemId,
@@ -830,6 +820,7 @@ const propertyAcknowledgmentReportResolver = {
         if (!item) {
           throw new Error(`Item with ID ${itemId} not found`);
         }
+        authorizeOwnership(item, context);
 
         // Build update object with only provided fields
         const updateData = {};
