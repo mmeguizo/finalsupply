@@ -11,32 +11,43 @@ The user context is a production deployment with **heavy computations/data proce
 1. MySQL is the system of record; data corruption and unauthorized issuance are more serious than short downtime.
 2. The intended roles are only `admin` and `user`; browser route checks are convenience only, not authorization.
 3. Existing null `createdBy` IAR records deliberately remain visible during the documented transition, but every new record must have a verified owner.
-4. Production is behind a TLS-terminating reverse proxy. If it is not, do **not** enable secure cookies until TLS is in place.
-5. “Heavy computation” currently means large GraphQL result sets, dashboard aggregation, document/CSV generation, and batch assignment. Do not add Redis/BullMQ merely because it is fashionable; profile first.
-6. Existing local changes are user work and must not be overwritten: three IAR print files are modified, and `app/dist.7z` is untracked (observed with `git status --short` on 2026-07-20).
+4. Deployment target is cPanel/shared hosting. The frontend is static hosting and the API needs a hosting-supported persistent Node application (normally cPanel Setup Node.js App/Passenger or an administrator-managed equivalent). A shell command alone is not a durable production process manager.
+5. The frontend and API real HTTPS domains, Node runtime version, assigned API port/socket, public document root, MySQL access method, and any reverse-proxy capability are hosting-administrator inputs. Do not substitute localhost, a LAN IP, ngrok, or a guessed proxy setting for them.
+6. The application has low expected user count but can perform expensive data/document work. Start with one hosting-managed API process and no queue worker. Add a persistent worker, Redis, clustering, or an external queue only after measurements and only if the host can supervise it reliably.
+7. Existing local changes are user work and must not be overwritten: three IAR print files are modified, and `app/dist.7z` is untracked (observed with `git status --short` on 2026-07-20).
+
+### cPanel deployment model to verify before release
+
+**Static frontend.** Build `app/` once with the final `VITE_GRAPHQL_URL` and publish only the contents of `app/dist` to the frontend domain’s document root. The Vite environment value is build-time public configuration, not a runtime secret. The cPanel terminal may build it if the required Node version/tools are available; otherwise build the reviewed artifact in a controlled build environment and upload that artifact. Do not publish source, `node_modules`, `.env`, or an archive as the web root.
+
+**API.** Confirm that the host provides a persistent Node service, such as Setup Node.js App backed by Passenger, and supports the required Node version and ESM entry point. Configure `api/index.js` as the startup file, the API directory as the application root outside the public document root, `NODE_ENV=production`, and the port/socket assigned by that facility. Do not use PM2, `npm run dev`, `vite`, a `screen`/`nohup` process, or an interactive terminal session as the assumed production service. If the host does not provide a supported Node application service, the administrator must provide and own an equivalent supervised reverse-proxy/runtime solution or the API must be hosted elsewhere; static cPanel hosting alone cannot run this API.
+
+**Domain topology.** Prefer one HTTPS site with an administrator-provided server-level `/graphql` reverse proxy to the API; then build with `VITE_GRAPHQL_URL=/graphql`. `.htaccess` must not implement that proxy. If the administrator instead maps a distinct API HTTPS domain, build with the exact URL, for example `https://api.example.org/graphql`, and configure exact API CORS origins. Never deploy a localhost, private IP, or plaintext production API URL.
+
+**Restart model.** A Passenger/Node-app restart can terminate requests and clears in-memory rate-limit state. MySQL-backed sessions survive an ordinary API restart; in-process jobs do not. The release procedure must run migrations once, restart through the cPanel Node-app control or the administrator’s documented command, then verify logs and health. Do not expect a terminal process to survive logout, resource enforcement, or a server restart.
 
 ### Verified findings (not recommendations)
 
-| Severity | Verified finding and evidence |
-|---|---|
-| **Blocker** | The API imports `cors` at `api/index.js:9`, but `api/package.json:17-37` does not declare it and `npm ls cors --depth=0` reported empty. A clean `npm ci` deployment can fail at startup. |
-| **Blocker** | `npm audit --omit=dev` reports 17 backend production vulnerabilities, including 2 critical and 8 high; direct vulnerable packages include `@apollo/server`, `express`, `mongoose`, and `sequelize`. The frontend reports 20 production vulnerabilities, including 7 high; direct vulnerable packages include `react-router`, `react-router-dom`, `vite`, `@toolpad/core`, and `@mui/x-data-grid-generator`. |
-| **Blocker** | API startup calls `syncTables()` unconditionally (`api/index.js:73-75`), and that function runs `sequelize.sync({ alter: true })` (`api/db/connectDB.js:79-88`). Schema mutation at every production boot is unsafe and conflicts with migrations. |
-| **Blocker** | The declared migration runner imports a file that is absent from the repository: `api/scripts/run_all_migrations.js:5` imports `20260128000001-add_income_mds_details_to_iar.js`; it is not in `api/migrations/`. `npm run db:migrate` is therefore not a reliable release step. |
-| **Blocker** | `roleResolver` has no authentication checks for `roles`, `role`, `addRole`, `updateRole`, or `deleteRole` (`api/resolvers/role.resolver.js:4-105`). It is directly callable through GraphQL. |
-| **Blocker** | User administration only checks that a caller is authenticated, not that the caller is an admin. `editUser` accepts `role`, password, and arbitrary `id` (`api/resolvers/user.resolver.js:83-181`); `createUser` and `deleteUser` have the same missing role check (`187-296`). An ordinary authenticated user can attempt privilege escalation or modify another account. |
-| **Blocker** | Session cookies are permanently configured as `secure: false` (`api/index.js:47-60`), CORS has a hard-coded development/ngrok allowlist (`90-105`), the request body limit is 50 MB (`106`), and the listening port is hard-coded to 4000 (`150`). |
-| **High** | Resolvers use only authentication, with no centralized role/ownership policy. Examples include ID-based bulk assignment in `propertyacknowledgementrepoert.resolver.js:224-249`, `requisitionissueslip.resolver.js:81-98`, and `inspectionacceptancereport.resolver.js:280-325`. Some scoped list queries exist, but `getIARItemsByIarId` omits the `createdBy` filter (`inspectionacceptancereport.resolver.js:221-267`). |
-| **High** | GraphQL has no pagination arguments on unbounded list fields (`api/typeDefs/purchaseorder.typeDef.js:234-249`, `inspectionacceptancereport.typeDef.js:175-181`). Corresponding resolvers use unbounded `findAll`; dashboard code loads full item and PO lists then aggregates in JavaScript (`purchaseorder.resolver.js:85-161`, `app/src/pages/index.tsx:46-76`). |
-| **High** | IAR/PAR/ICS/RIS IDs are calculated with “read latest + one” logic, then stored only in process-local variables (`api/utils/iarIdGenerator.js:40-73`, `parIdGenerator.js:4-65`, `risIdGenerator.js:4-75`, `icsIdGenerator.js:4-105`). Concurrent requests or PM2 cluster workers can create duplicates. There are no verified database unique constraints for these identifiers. |
-| **High** | API error handlers repeatedly expose `error.message` to GraphQL clients, for example `user.resolver.js:35-38`, `purchaseorder.resolver.js:761-764`, and `inspectionacceptancereport.resolver.js:701-705`. Apollo has no production `formatError`, query-depth, complexity, or introspection policy (`api/index.js:67-71`). |
-| **High** | Server-side sanitization exists but no resolver imports it (`api/utils/sanitize.js:1-167`; repository search found no use outside that file). Dynamic print HTML is written with `document.write`, for example `app/src/components/printingForReports.tsx:42-50`; all templates must be audited at their interpolation points. Two previews use `dangerouslySetInnerHTML` (`inventoryCustodianSlip.tsx` and `requisitionAndIssueSlip.tsx`), although their current `nl2br` helper escapes first (`app/src/utils/textHelpers.ts:1-9`). |
-| **High** | The frontend endpoint is a hard-coded private-network HTTP address (`app/src/apollo/client.ts:5-10`), and production sourcemaps are enabled (`app/vite.config.ts:5-13`). Apollo error logging prints operation variables (`app/src/apollo/errorHandling.ts:23-44`), which can include login passwords. |
-| **Medium** | `User.email` is not declared unique; its own model comment says this must be created manually (`api/models/user.model.js:8-14`). Application-level “find then create” checks race. |
-| **Medium** | Session data remains in localStorage and `getStoredSession()` directly parses JSON (`app/src/auth/SessionContext.tsx:16-24`, `app/src/auth/authUtils.ts:12-25`), so a stale/corrupt browser value can misrepresent UI state. The server still correctly owns the cookie session. |
-| **Medium** | Current production PM2 config starts Vite’s development server for the frontend (`ecosystem.config.cjs:83-112`) and runs one API worker per CPU (`36-80`), increasing the identifier-race and aggregate database connection risk. API PM2 config also contains an obsolete absolute path (`api/ecosystem.config.cjs:18-21`). |
-| **Medium** | Models indicate indexes with `index: true` (`purchaseorderitems.js:17-27`, `inspectionacceptancereport.js:28-49`), but the tracked migrations explicitly add only the item-group and receipt-line indexes (`20251202001000-add_item_group_to_purchase_order_items.js:24-45`). Actual production indexes must be inspected, not assumed. |
-| **Medium** | There is no upload route or multipart handler in `api/` (verified by repository search). The 50 MB JSON limit is still an unnecessary memory/DoS exposure, not evidence of an upload bug. |
+| ID | Severity | Classification | Verified finding and evidence |
+|---|---|---|---|
+| F01 | **Blocker** | **MUST BEFORE DEPLOY** | The API imports `cors` at `api/index.js:9`, but `api/package.json:17-37` does not declare it and `npm ls cors --depth=0` reported empty. A clean `npm ci` deployment can fail at startup. |
+| F02 | **Blocker** | **MUST BEFORE DEPLOY** | `npm audit --omit=dev` reports 17 backend production vulnerabilities, including 2 critical and 8 high; direct vulnerable packages include `@apollo/server`, `express`, `mongoose`, and `sequelize`. The frontend reports 20 production vulnerabilities, including 7 high; direct vulnerable packages include `react-router`, `react-router-dom`, `vite`, `@toolpad/core`, and `@mui/x-data-grid-generator`. |
+| F03 | **Blocker** | **MUST BEFORE DEPLOY** | API startup calls `syncTables()` unconditionally (`api/index.js:73-75`), and that function runs `sequelize.sync({ alter: true })` (`api/db/connectDB.js:79-88`). Schema mutation at every production boot is unsafe and conflicts with migrations. |
+| F04 | **Blocker** | **MUST BEFORE DEPLOY** | The declared migration runner imports a file that is absent from the repository: `api/scripts/run_all_migrations.js:5` imports `20260128000001-add_income_mds_details_to_iar.js`; it is not in `api/migrations/`. `npm run db:migrate` is therefore not a reliable release step. |
+| F05 | **Blocker** | **MUST BEFORE DEPLOY** | `roleResolver` has no authentication checks for `roles`, `role`, `addRole`, `updateRole`, or `deleteRole` (`api/resolvers/role.resolver.js:4-105`). It is directly callable through GraphQL. |
+| F06 | **Blocker** | **MUST BEFORE DEPLOY** | User administration only checks that a caller is authenticated, not that the caller is an admin. `editUser` accepts `role`, password, and arbitrary `id` (`api/resolvers/user.resolver.js:83-181`); `createUser` and `deleteUser` have the same missing role check (`187-296`). An ordinary authenticated user can attempt privilege escalation or modify another account. |
+| F07 | **Blocker** | **MUST BEFORE DEPLOY** | Session cookies are permanently configured as `secure: false` (`api/index.js:47-60`), CORS has a hard-coded development/ngrok allowlist (`90-105`), the request body limit is 50 MB (`106`), and the listening port is hard-coded to 4000 (`150`). |
+| F08 | **High** | **MUST BEFORE DEPLOY** | Resolvers use only authentication, with no centralized role/ownership policy. Examples include ID-based bulk assignment in `propertyacknowledgementrepoert.resolver.js:224-249`, `requisitionissueslip.resolver.js:81-98`, and `inspectionacceptancereport.resolver.js:280-325`. Some scoped list queries exist, but `getIARItemsByIarId` omits the `createdBy` filter (`inspectionacceptancereport.resolver.js:221-267`). |
+| F09 | **High** | **RECOMMENDED POST-LAUNCH** | GraphQL has no pagination arguments on unbounded list fields (`api/typeDefs/purchaseorder.typeDef.js:234-249`, `inspectionacceptancereport.typeDef.js:175-181`). Corresponding resolvers use unbounded `findAll`; dashboard code loads full item and PO lists then aggregates in JavaScript (`purchaseorder.resolver.js:85-161`, `app/src/pages/index.tsx:46-76`). |
+| F10 | **High** | **MUST BEFORE DEPLOY** | IAR/PAR/ICS/RIS IDs are calculated with “read latest + one” logic, then stored only in process-local variables (`api/utils/iarIdGenerator.js:40-73`, `parIdGenerator.js:4-65`, `risIdGenerator.js:4-75`, `icsIdGenerator.js:4-105`). Concurrent requests or PM2 cluster workers can create duplicates. There are no verified database unique constraints for these identifiers. |
+| F11 | **High** | **MUST BEFORE DEPLOY** | API error handlers repeatedly expose `error.message` to GraphQL clients, for example `user.resolver.js:35-38`, `purchaseorder.resolver.js:761-764`, and `inspectionacceptancereport.resolver.js:701-705`. Apollo has no production `formatError`, query-depth, complexity, or introspection policy (`api/index.js:67-71`). |
+| F12 | **High** | **MUST BEFORE DEPLOY** | Server-side sanitization exists but no resolver imports it (`api/utils/sanitize.js:1-167`; repository search found no use outside that file). Dynamic print HTML is written with `document.write`, for example `app/src/components/printingForReports.tsx:42-50`; all templates must be audited at their interpolation points. Two previews use `dangerouslySetInnerHTML` (`inventoryCustodianSlip.tsx` and `requisitionAndIssueSlip.tsx`), although their current `nl2br` helper escapes first (`app/src/utils/textHelpers.ts:1-9`). |
+| F13 | **High** | **MUST BEFORE DEPLOY** | The frontend endpoint is a hard-coded private-network HTTP address (`app/src/apollo/client.ts:5-10`), and production sourcemaps are enabled (`app/vite.config.ts:5-13`). Apollo error logging prints operation variables (`app/src/apollo/errorHandling.ts:23-44`), which can include login passwords. |
+| F14 | **Medium** | **MUST BEFORE DEPLOY** | `User.email` is not declared unique; its own model comment says this must be created manually (`api/models/user.model.js:8-14`). Application-level “find then create” checks race. |
+| F15 | **Medium** | **MUST BEFORE DEPLOY** | Session data remains in localStorage and `getStoredSession()` directly parses JSON (`app/src/auth/SessionContext.tsx:16-24`, `app/src/auth/authUtils.ts:12-25`), so a stale/corrupt browser value can misrepresent UI state. The server still correctly owns the cookie session. |
+| F16 | **Medium** | **REQUIRED FOR CPANEL DEPLOYMENT** | Current production PM2 config starts Vite’s development server for the frontend (`ecosystem.config.cjs:83-112`) and runs one API worker per CPU (`36-80`), increasing the identifier-race and aggregate database connection risk. API PM2 config also contains an obsolete absolute path (`api/ecosystem.config.cjs:18-21`). |
+| F17 | **Medium** | **RECOMMENDED POST-LAUNCH** | Models indicate indexes with `index: true` (`purchaseorderitems.js:17-27`, `inspectionacceptancereport.js:28-49`), but the tracked migrations explicitly add only the item-group and receipt-line indexes (`20251202001000-add_item_group_to_purchase_order_items.js:24-45`). Actual production indexes must be inspected, not assumed. |
+| F18 | **Medium** | **DEFER/NOT APPLICABLE** | There is no upload route or multipart handler in `api/` (verified by repository search). The 50 MB JSON limit is still an unnecessary memory/DoS exposure, not evidence of an upload bug. |
 
 ### Recommendations requiring measurement or a product decision
 
@@ -47,7 +58,20 @@ The user context is a production deployment with **heavy computations/data proce
 
 ## Critical deployment blockers
 
-Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, no automatic schema alteration, a working migration ledger, secure config/session settings, server-side RBAC and ownership authorization, GraphQL/HTTP abuse controls, atomic identifier allocation, and a clean production build. P0-09 is also a blocker when concurrent receipt/issuance operations are permitted.
+Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, no automatic schema alteration, a working migration ledger, secure config/session settings, server-side RBAC and ownership authorization, GraphQL/HTTP abuse controls, atomic identifier allocation, transactional writes, and a clean production build.
+
+## cPanel hosting prerequisite gate
+
+Do not schedule production deployment until the administrator confirms in writing:
+
+1. Whether a supported persistent Node application service exists, its supported Node version, startup-file convention, application root, assigned port/socket behavior, and the documented restart/log locations.
+2. Whether the frontend and API will use one origin with an administrator-managed `/graphql` proxy, or two named HTTPS domains. If a proxy is requested, confirm that it is server-level configuration, not a `.htaccess` workaround.
+3. The frontend document root, the API location outside that web root, and which account owns the files/process. Verify writable locations before introducing any generated-file feature.
+4. TLS certificate coverage and forced HTTPS for every public frontend/API hostname.
+5. MySQL hostname, database name, account/privileges, connection policy, backup facility/retention, and whether database TLS/CA configuration is required. Use the actual cPanel database names (which may be account-prefixed), not guessed `localhost` values.
+6. Whether SSH/cPanel Terminal is available for `npm ci`, migration, and restart steps. If not, identify the administrator-owned deployment procedure before release.
+
+A “yes” to cPanel access is not proof of any one of these capabilities. If an item is unavailable, use the stated alternative or stop the rollout; do not silently change the application’s security or process model.
 
 ## Executor rules
 
@@ -66,27 +90,54 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 | Task | Status | Started | Completed | Blockers / Notes |
 |------|--------|---------|-----------|------------------|
 | P0-01 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `cors@^2.8.5` as declared dependency. Upgraded API: `@apollo/server@4.13.0`, `express@4.22.2`, `mongoose@8.24.1`, `sequelize@6.37.8`, `path-to-regexp@0.1.13`. Frontend: `npm audit fix` applied (react-router, vite, rollup, minimatch, postcss, babel, etc. upgraded). Remaining: API - 3 moderate (uuid/@apollo/server 4.x EOL, needs 5.x breaking upgrade); Frontend - 9 moderate (esbuild/vite, uuid/x-data-grid-generator, yaml/@toolpad/core — all need --force breaking changes). Fixed TS build error in `InspectionAcceptanceReportForIAR.tsx:154`. |
-| P0-02 | ✅ Completed | 2026-07-20 | 2026-07-20 | Created `api/config.js` with validated env-config (required keys, production secret length check, CORS origin parsing, proxy trust). Updated `api/index.js` to use config (removed hard-coded CORS origins, port, cookie settings, secure flag). Created `api/.env.example` and `app/.env.example`. Updated `app/src/apollo/client.ts` to use `VITE_GRAPHQL_URL`. Added CI-enforced `VITE_GRAPHQL_URL` check in `app/vite.config.ts`. |
+| P0-02 | 🔄 In progress | 2026-07-20 | — | The initial config work is complete, but production CORS validation currently rejects valid `https://` origins because it treats `//` as a path. Correct the parser and complete cPanel topology, provider-port, HTTPS-cookie, and staging-like evidence before marking complete. |
 | P0-03 | ✅ Completed | 2026-07-20 | 2026-07-20 | Created `api/auth/authorization.js` with `requireAuthenticated`, `requireRole`, `getCurrentUser` helpers (GraphQLError with UNAUTHENTICATED/FORBIDDEN codes). Role resolver: admin-only for all mutations. User resolver: admin-only signUp/createUser/deleteUser; editUser restricted (self safe fields, admin for role/dept/position); passwords require current_password confirmation for self. Department resolver: admin-only mutations. Signatory resolver: admin-only mutations. Added `current_password` to EditUserInput typeDef. Created email-unique migration file `20260720-add-email-unique-to-users.js`. |
 | P0-04 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `ownershipScope`, `authorizeOwnership`, `authorizeOwnershipBatch` to `api/auth/authorization.js` with admin bypass for createdBy-based ownership. Applied to all 4 resolvers: IAR (18 mutations + getIARItemsByIarId), PAR (7 mutations), RIS (6 mutations), PO (16 queries/mutations + revertIARBatch). All `isAuthenticated` calls replaced with centralized helpers. Missing queries (propertyAcknowledgmentReport, requisitionIssueSlip) now have ownership scope. |
 | P0-05 | ✅ Completed | 2026-07-20 | 2026-07-20 | Added `helmet`, `express-rate-limit`, `graphql-depth-limit` packages. Updated `api/config.js` with rate-limit and depth settings. Updated `api/index.js`: helmet security headers, general + login rate limiting, GraphQL depth limit (10), introspection disabled in production, production-safe `formatError` with correlation ID logging. Body limit reduced from 50mb to 1mb (configurable). CORS already handled in P0-02. |
 | P0-06 | ✅ Completed | 2026-07-20 | 2026-07-20 | Removed `syncTables()` from `connectDB.js` (was unused in runtime). Created `api/scripts/migrate.js` with `_migrations` ledger table, deterministic filename ordering, `up`/`down` support, `--check` verification, `--down` rollback. Replaced missing `add_income.js → 20260128000001-add-income-mds-details-to-iar.js`. Made 3 non-idempotent + 1 buggy-index-check migration idempotent. Removed broken `run_all_migrations.js`. Fixed `module.exports` → ESM exports. Cleaned 62 duplicate email indexes created by `sync({ alter: true })`. All 17 migrations applied; second run is no-op. |
 | P0-07 | ✅ Completed | 2026-07-21 | 2026-07-21 | Created `id_counters` table (type/year/scope/counter) for atomic `SELECT ... FOR UPDATE` allocation. Created `api/utils/atomicIdGenerator.js` with `nextIarId`, `nextParId`, `nextRisId`, `nextIcsId`. Updated all 4 resolver files to use atomic generator. Removed old process-global generators and `resetXxxBatch` calls. Deleted 4 old generator files (`iarIdGenerator.js`, `parIdGenerator.js`, `risIdGenerator.js`, `icsIdGenerator.js`). Verified ID formats match originals. Note: document IDs repeat across line items (one document = multiple rows), so unique indexes on ID columns are not applicable. |
 | P0-08 | ✅ Completed | 2026-07-21 | 2026-07-21 | Wrapped `updatePurchaseOrder` in explicit `sequelize.transaction()` with `FOR UPDATE` row lock on PO items and strict over-receipt guard (throws instead of silent clamp). Added `FOR UPDATE` locking to source item queries in PAR/RIS/IAR split/assign/create functions. Transactions passed to all `nextXxxId()` calls in mutation functions. Idempotency key table deferred — requires product decision on retry semantics. |
-| P0-07 | 🔲 Not started | — | — | Depends on P0-06 |
-| P0-08 | 🔲 Not started | — | — | Depends on P0-03, P0-04, P0-06, P0-07 |
 | P1-09 | 🔲 Not started | — | — | Depends on P0-04, P0-06 |
 | P1-10 | 🔲 Not started | — | — | Depends on P0-05, P0-08 |
 | P1-11 | 🔲 Not started | — | — | Depends on P0-02, P0-03, P0-05 |
 | P1-12 | 🔲 Not started | — | — | Depends on P1-09, P1-11 |
 | P1-13 | 🔲 Not started | — | — | Depends on P0-02, P0-05 |
 | P1-14 | 🔲 Not started | — | — | Depends on P0-04, P0-05, P0-06, P0-08, P1-12, P1-13 |
-| P1-15 | 🔲 Not started | — | — | Depends on P0-02, P0-05, P0-07, P0-13 |
+| P1-15 | 🔲 Not started | — | — | Depends on P0-02, P0-05, P0-07, P1-13 |
 | P2-16 | 🔲 Not started | — | — | Depends on P0-06, P1-13 |
 | P2-17 | 🔲 Not started | — | — | Depends on P0-01..P0-08, P1-11 |
 | P2-18 | 🔲 Not started | — | — | Depends on P1-10, P1-11, P1-13 |
 
 **Legend:** 🔲 Not started | 🔄 In progress | ✅ Completed | ❌ Blocked
+
+### cPanel release resume ledger
+
+Use the execution-status table as the release resume ledger; do not create a separate untracked checklist. Before pausing or handing off a task, record its status, UTC/local timestamp, operator, exact artifact/release identifier or checksum, chosen topology, migration ledger result, backup/restore evidence, health/smoke result, rollback owner, and sanitized blocker. Record only variable names and log locations—not credentials, cookies, database dumps, or raw GraphQL variables. A new operator resumes from the first unfinished **MUST BEFORE DEPLOY** or **REQUIRED FOR CPANEL DEPLOYMENT** task, rechecks the prerequisite gate and `git status --short`, and repeats any stale release evidence after an artifact, environment, domain, database, or host-control change.
+
+## Deployment classification
+
+Priority labels describe implementation risk, not cPanel release order. **MUST BEFORE DEPLOY** means complete or re-verify for this release; a completed task still needs its listed production evidence.
+
+| Existing task | Classification | cPanel release direction |
+|---|---|---|
+| P0-01 reproducible installation/dependency integrity | **MUST BEFORE DEPLOY** | Re-run clean API/app installs and production audit policy on the actual supported Node version. Document remaining non-exploitable moderate findings and compensating controls. |
+| P0-02 fail-fast configuration | **MUST BEFORE DEPLOY** | Correct CORS parsing; verify provider `PORT`, domain, HTTPS, CORS, and cookie settings. |
+| P0-03 RBAC | **MUST BEFORE DEPLOY** | Re-run anonymous/user/admin smoke checks after public deployment. |
+| P0-04 ownership/anti-IDOR | **MUST BEFORE DEPLOY** | Re-run cross-user read/mutation checks in staging before public data is exposed. |
+| P0-05 perimeter controls | **MUST BEFORE DEPLOY** | Preserve headers, body/depth/rate/error safeguards; keep one API process and do not add Redis solely for cPanel. |
+| P0-06 tracked migrations | **MUST BEFORE DEPLOY** | Use one cPanel-terminal or administrator-managed migration execution with tested backup/restore. |
+| P0-07 atomic document IDs | **MUST BEFORE DEPLOY** | Re-verify database atomicity; one API process does not remove this requirement. |
+| P0-08 transactional writes | **MUST BEFORE DEPLOY** | Preserve transactional safeguards; the deferred idempotency product decision remains documented. |
+| P1-09 pagination/SQL aggregates/index verification | **RECOMMENDED POST-LAUNCH** | Measure representative data first; promote a measured cPanel memory/time risk to must-fix. |
+| P1-10 server contracts/safe document rendering | **MUST BEFORE DEPLOY** | Preserve XSS/output encoding and critical server validation; broader workflow coverage may follow. |
+| P1-11 client auth/errors/build output | **MUST BEFORE DEPLOY** | Remove sensitive variable logging, validate server session, apply source-map policy, and build static assets. |
+| P1-12 cancellable client workloads | **RECOMMENDED POST-LAUNCH** | Measure and cap the heaviest visible workflow before adding broad cancellation architecture. |
+| P1-13 structured observability | **REQUIRED FOR CPANEL DEPLOYMENT** | Require redacted stdout/stderr capture, log location/retention, correlation-friendly errors, and health/readiness endpoints; defer external dashboards and alerts. |
+| P1-14 dedicated heavy-job execution | **DEFER/NOT APPLICABLE** | No queue or worker for this release; revisit only after measurement and host confirmation. |
+| P1-15 production web tier/process model | **REQUIRED FOR CPANEL DEPLOYMENT** | Use the cPanel static-artifact and hosting-managed API runbook below. |
+| P2-16 backup/restore/migration/incident runbook | **MUST BEFORE DEPLOY** | Require host-supported backup and one restore drill; document accepted RPO/RTO if the product lacks PITR or automated off-host backup. |
+| P2-17 CI and focused tests | **RECOMMENDED POST-LAUNCH** | Retain local clean-build/migration/security smoke evidence now; add CI and comprehensive test infrastructure after launch. |
+| P2-18 accessibility/product-operability | **RECOMMENDED POST-LAUNCH** | Perform basic sign-in/critical workflow error-state and keyboard smoke checks now; schedule the complete audit after launch. |
 
 ---
 
@@ -100,7 +151,7 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 * **Implementation steps:**
   1. Inspect `api/index.js` imports against `api/package.json`; confirm `cors` is the only missing direct runtime package.
   2. Add the compatible `cors` version as a production dependency using npm, updating only API manifest/lockfile.
-  3. Create a short dependency remediation record in the release/CI documentation added by P1-16: list the audit package, advisory, compatible target version, and regression risk.
+  3. Create a short dependency remediation record in the release/CI documentation added by P2-17: list the audit package, advisory, compatible target version, and regression risk.
   4. Upgrade direct vulnerable dependencies one package family at a time; do not use `npm audit fix --force`. Start with API critical/high packages, then frontend direct high packages. Read changelogs and adjust code when a major upgrade requires it.
   5. Re-run audit after each package family and retain only intentional, documented transitive exceptions with a target removal date.
 * **Security/correctness considerations:** `cors` must be declared, not relied on as an accidental transitive package. A lockfile update can change transitive dependencies; review it before accepting. Do not claim zero vulnerabilities until the audit proves it.
@@ -124,10 +175,14 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
   2. Parse `CORS_ORIGINS` as exact origins. In production reject localhost, ngrok, and path-bearing values; keep local origins only in development example values.
   3. Read `PORT` from config; set `app.set('trust proxy', 1)` only when deployment is behind the documented proxy.
   4. Set cookie `secure` from production/TLS config, use `httpOnly`, `sameSite: 'lax'` for same-site deployments (or `none` plus `secure` only when cross-site is required), and use a deployment-specific cookie name.
-  5. Move the frontend GraphQL URI to `VITE_GRAPHQL_URL`; use same-origin `/graphql` in the production example if Nginx proxies it. Fail the production build if the value is absent or uses plaintext HTTP outside a local-development mode.
+  5. Move the frontend GraphQL URI to `VITE_GRAPHQL_URL`; use same-origin `/graphql` in the production example only when the administrator provides the server-level proxy. Fail the production build if the value is absent or uses plaintext HTTP outside a local-development mode.
   6. Keep `.env` ignored; rotate secrets only through the deployment secret store, never by committing real values.
+  7. Correct production CORS validation so it accepts only canonical, exact origins (scheme + host + optional port) and rejects localhost, ngrok, credentials, query/fragment, or a pathname other than `/`. Do not reject the `//` in a valid `https://` URL. Parse each value with `new URL`, require `url.origin === suppliedValue` (or an explicitly normalized no-trailing-slash equivalent), and require `https:` in production. Keep `credentials: true`; never use `*`.
+  8. Treat `MYSQL_PASSWORD` as required and nonempty in production unless the hosting administrator explicitly documents an account that has no password (which must not be used for a public deployment). Validate an integer provider-assigned `PORT` when TCP is used. Keep a long random `SESSION_SECRET` only in protected hosting configuration, never in `.env.example`.
+  9. Document this production variable inventory in the plan, using names only: `NODE_ENV=production`; provider-assigned `PORT` when applicable; `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`; `SESSION_SECRET`; `SESSION_COOKIE_NAME`; `SESSION_COOKIE_SECURE=true`; `SESSION_COOKIE_SAMESITE`; `CORS_ORIGINS`; `TRUST_PROXY`; `BODY_LIMIT`; `RATE_LIMIT_WINDOW_MS`; `RATE_LIMIT_MAX`; `RATE_LIMIT_LOGIN_MAX`; and `GRAPHQL_MAX_DEPTH`. `VITE_GRAPHQL_URL` belongs to the frontend build, is public, and must be one of the two approved topology values.
+  10. For a same-origin proxy, set `VITE_GRAPHQL_URL=/graphql`; the browser does not need cross-origin CORS. For a separate API hostname on the same registrable site (for example `app.example.org` and `api.example.org`), set `CORS_ORIGINS=https://app.example.org`, keep `credentials: 'include'`, keep the API cookie host-only, and use `SESSION_COOKIE_SECURE=true` with `SESSION_COOKIE_SAMESITE=lax`. Confirm this behavior in target browsers. For genuinely cross-site domains, avoid the topology where possible; if it is required, use `SameSite=None` and `Secure`, exact CORS, and test third-party-cookie behavior explicitly before launch.
 * **Security/correctness considerations:** Cookie `secure: true` requires HTTPS and correctly configured proxy trust. Do not allow `*` CORS with credentials. Browser CORS is not an authorization boundary.
-* **Acceptance criteria:** API refuses invalid production configuration before listening; no private IP or ngrok origin is hard-coded in production source; production cookie config is secure; client has no hard-coded LAN API endpoint.
+* **Acceptance criteria:** API refuses invalid production configuration before listening; no private IP or ngrok origin is hard-coded in production source; production cookie config is secure; client has no hard-coded LAN API endpoint. With `NODE_ENV=production`, a valid `https://frontend.example.org` CORS origin starts successfully, while a localhost/path/query/fragment/wildcard origin fails before listening; a browser completes the selected HTTPS cookie flow. A separate deployment proves that the bundled `VITE_GRAPHQL_URL` has no localhost, LAN IP, or `http://` production value.
 * **Exact targeted validation commands:**
   ```powershell
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; node --check index.js; npm start
@@ -212,21 +267,22 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 
 * **Priority/risk:** P0 blocker — boot-time DDL and an invalid migration runner risk data/schema drift.
 * **Exact goal:** Application startup performs connectivity checks only; a single migration tool maintains ordered, recorded, reversible schema changes.
-* **Files/symbols to inspect/change:** `api/index.js:73-75`, `api/db/connectDB.js:79-88`, `api/scripts/run_all_migrations.js`, all `api/migrations/*.js`, `api/package.json`, deployment docs.
+* **Files/symbols to inspect/change:** `api/index.js:73-75`, `api/db/connectDB.js:79-88`, `api/scripts/migrate.js`, all `api/migrations/*.js`, `api/package.json`, deployment docs.
 * **Implementation steps:**
   1. Remove `syncTables()` from runtime startup and prohibit `sequelize.sync({ alter: true })` in production code.
   2. Inventory migrations against model fields and the target database. Repair the missing `20260128000001` import by restoring the exact intended migration from source history or removing the invalid import only after proving its schema change is represented elsewhere.
   3. Adopt one migration runner with a persistent migration ledger table, deterministic filename ordering, locking/serialization, and `up`/`down` support. Do not manually curate a partial import list.
   4. Make every migration idempotent only where necessary and fail loudly on unexpected schema state. Never use broad catch-and-ignore around destructive changes.
   5. Add a read-only schema verification command that compares required tables, columns, foreign keys, indexes, and unique constraints against expected migrations.
-* **Security/correctness considerations:** Take a tested backup before any migration. Run migrations once per release, not once per PM2 worker. Migration reversibility is not a substitute for a restore plan after data transformations.
+* **cPanel migration/database release requirements:** Before the first release and every schema/data migration, identify the cPanel/managed-MySQL backup mechanism, account owner, retention, restore requester, and a non-production restore target. Confirm the API database account has only the application privileges it needs; a migration account may need controlled DDL privileges and must not be embedded in source. Confirm the real MySQL host and whether server/CA TLS is required; do not assume `127.0.0.1` or disable certificate validation. Run `npm run migrate:check`, back up, migrate once, verify the migration ledger, and smoke-test. Perform at least one documented restore drill before go-live. If the host cannot provide a recoverable backup/restore path, deployment is blocked.
+* **Security/correctness considerations:** Take a tested backup before any migration. Run migrations once per release through the cPanel terminal or administrator-managed procedure, never from application startup or concurrent Node workers. Migration reversibility is not a substitute for a restore plan after data transformations.
 * **Acceptance criteria:** API starts without DDL; clean disposable DB migrates from zero to latest exactly once; a second migrate is a no-op; migration ledger lists every applied migration; current production schema discrepancies are reported before deployment.
 * **Exact targeted validation commands:**
   ```powershell
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm run db:migrate
+  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm run migrate:check; npm run migrate
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm start
   ```
-  Run the first command twice against a disposable database specified only through local environment variables. Run `node --check scripts\run_all_migrations.js` before it.
+  Run `npm run migrate` twice against a disposable database specified only through local environment variables. Run `node --check scripts\migrate.js` before it.
 * **Estimated scope:** 6–20 files depending on migration history; 2–5 small commits.
 * **Dependencies:** P0-02.
 * **Rollback:** Use the runner’s verified down migration only for schema-only changes; restore the pre-migration backup for data-changing migrations.
@@ -234,19 +290,19 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 ### P0-07 — Make document identifier allocation atomic
 
 * **Priority/risk:** P0 blocker in clustered/concurrent deployment — duplicate IAR/PAR/ICS/RIS IDs.
-* **Exact goal:** Allocate every business document number atomically in MySQL and enforce uniqueness at the database level.
-* **Files/symbols to inspect/change:** `api/utils/iarIdGenerator.js`, `icsIdGenerator.js`, `parIdGenerator.js`, `risIdGenerator.js`; all resolver callers; new migration(s); relevant models.
+* **Exact goal:** Allocate every business document number atomically in MySQL and enforce uniqueness at the appropriate counter/document scope.
+* **Files/symbols to inspect/change:** `api/utils/atomicIdGenerator.js`, all resolver callers, `id_counters` migration/model, and relevant document models.
 * **Implementation steps:**
   1. Specify each identifier’s immutable format, scope, reset period, and whether one ID groups multiple rows. Preserve existing formats unless a business-approved migration changes them.
   2. Add a compact counter table keyed by document type, year, month when needed, campus/tag scope when needed. Use a single transaction and row lock/upsert to increment and return the next value.
-  3. Add the appropriate unique indexes. Where a document ID is intentionally repeated across line rows, use a separate document header/counter uniqueness rule or a unique composite that reflects the line model; do not incorrectly make every repeated IAR line unique.
-  4. Replace all read-latest generators and remove process-global `lastGenerated*` state/reset functions. Allocate inside the existing mutation transaction and pass that transaction into the allocator.
+  3. Add the appropriate unique counter/header/index constraint. Where a document ID is intentionally repeated across line rows, use the counter or a document header/composite rule; do not incorrectly make every repeated IAR line unique.
+  4. Replace all read-latest generators and remove process-global `lastGenerated*` state/reset functions. Allocate inside the existing mutation transaction and pass that transaction into `atomicIdGenerator`.
   5. Add a duplicate-report migration preflight and resolve existing duplicates deliberately before enabling a conflicting unique index.
 * **Security/correctness considerations:** `MAX(id)+1`, “latest row,” JavaScript locks, and PM2 worker memory cannot guarantee uniqueness. Treat unique-key collision as retryable only when the transaction is safe to retry and idempotent.
 * **Acceptance criteria:** parallel IAR, PAR, ICS (both tags), and RIS allocation produces unique monotonic identifiers in their specified scopes; IDs survive process restart and multiple API workers; normal multi-line document grouping remains intact.
 * **Exact targeted validation commands:**
   ```powershell
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; node --check utils\iarIdGenerator.js; node --check utils\icsIdGenerator.js; node --check utils\parIdGenerator.js; node --check utils\risIdGenerator.js
+  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; node --check utils\atomicIdGenerator.js
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\stress-test'; node db-stress-test.js
   ```
   Add a focused allocator integration script that invokes each allocation path concurrently against a disposable database and asserts no duplicate ID.
@@ -264,9 +320,9 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
   2. For each input ID, lock authorized source rows (`FOR UPDATE`) inside one transaction before calculating remaining quantity. Use conditional updates or version checks so `actualQuantityReceived` never exceeds quantity.
   3. Allocate document IDs in the same transaction, write all history in that transaction, and commit only after every row succeeds. Ensure every `catch` rolls back exactly once.
   4. Validate finite positive integer quantities, legal category/tag combinations, source ownership, and sum-of-splits before any write. Reject duplicate IDs in one request.
-  5. Add an idempotency key for externally retried/batch mutations: store caller, operation, key, request hash, final response, and expiry. Return the stored response for an identical retry; reject same key/different body.
+  5. Record the product decision for externally retried/batch mutations. If an idempotency key is approved later, store caller, operation, key, request hash, final response, and expiry; return the stored response for an identical retry and reject the same key with a different body. Do not claim this deferred feature is implemented for the cPanel release.
 * **Security/correctness considerations:** Never silently clamp an invalid request and call it success; report remaining quantity conflict. History `changedBy` must come only from the server user and not dereference a missing `context.req.user`.
-* **Acceptance criteria:** two concurrent attempts cannot over-receive or double-spend an item; a forced mid-operation failure leaves no partial rows/history/IDs; same idempotency key produces one logical result.
+* **Acceptance criteria:** two concurrent attempts cannot over-receive or double-spend an item; a forced mid-operation failure leaves no partial rows/history/IDs; and the idempotency/retry product decision is explicitly recorded without claiming an unimplemented key produces a result.
 * **Exact targeted validation commands:**
   ```powershell
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; node --check resolvers\purchaseorder.resolver.js; node --check resolvers\inspectionacceptancereport.resolver.js
@@ -373,16 +429,16 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 ### P1-13 — Add structured observability without PII leakage
 
 * **Priority/risk:** P1 high — current `console.log`/`console.error` is noisy and exposes inputs/operation details.
-* **Exact goal:** Produce structured, redacted logs, metrics, health checks, and actionable alerts for API/database/heavy-operation failures.
-* **Files/symbols to inspect/change:** `api/index.js`, `api/db/connectDB.js`, all resolver console calls, PM2 config/log docs, deployment config; optional client error boundary.
+* **Exact goal:** Produce structured, redacted logs, health checks, and correlation-friendly failure evidence for API/database/heavy-operation failures.
+* **Files/symbols to inspect/change:** `api/index.js`, `api/db/connectDB.js`, all resolver console calls, cPanel/Node-app/Apache log documentation, deployment configuration; optional client error boundary.
 * **Implementation steps:**
   1. Adopt one structured logger with request/correlation ID middleware. Log method/operation name, duration, status/error code, authenticated user ID hash (if necessary), and bounded row counts; never raw passwords, session IDs, GraphQL variables, SQL text, addresses, or document contents.
   2. Replace ad hoc resolver logs incrementally, beginning with auth, authorization denial, transaction rollback, identifier allocation, and migration events.
   3. Add unauthenticated liveness and dependency-aware readiness endpoints outside GraphQL with no internal details. Readiness must fail when the DB/session store is unavailable.
-  4. Add metrics for error rate, p95/p99 latency, rate-limit/body-limit rejections, database pool wait/timeout, transaction rollback, duplicate-ID conflict, queue/job state if P1-14 is adopted, and process memory/restarts.
-  5. Configure PM2/proxy log rotation, retention, access restriction, and alerts. Update `logs/README.md` with redaction and incident-use rules.
+  4. Capture safe error-rate, rate-limit/body-limit rejection, database pool wait/timeout, transaction rollback, duplicate-ID conflict, and restart evidence where the confirmed host exposes it. Defer external metrics platforms, dashboards, and alerts unless already operated by the host.
+  5. Identify the hosting-managed Node/Passenger/Apache stdout, stderr, access, and error logs; document their locations, access restriction, retention/rotation, and restart correlation. Confirm output is captured there and update the runbook with redaction and incident-use rules. Do not assume PM2 logs exist.
 * **Security/correctness considerations:** Logs are a sensitive data store. Correlation IDs must be opaque and should not encode email/document data. Health endpoints need their own rate/proxy policy.
-* **Acceptance criteria:** one failed request can be traced by correlation ID without exposing PII; readiness changes when dependencies fail; an alertable signal exists for transaction/ID failures and memory restarts.
+* **Acceptance criteria:** one failed request can be traced by correlation ID without exposing PII; readiness changes when dependencies fail; the approved operator can locate redacted current logs and correlate transaction/ID failures and restarts.
 * **Exact targeted validation commands:**
   ```powershell
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; node --check index.js; npm start
@@ -394,8 +450,9 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 
 ### P1-14 — Decide and implement heavy-job execution only when measurements require it
 
+* **Classification:** **DEFER/NOT APPLICABLE** for this cPanel release.
 * **Priority/risk:** P1 high conditional — protects runtime/memory if batch document/export work exceeds request/UI budgets.
-* **Exact goal:** For workloads proven too heavy for a request/browser, run cancellable, idempotent jobs with memory/runtime limits and observable progress.
+* **Exact goal:** Do not add a worker or queue for this release. Revisit only for workloads proven too heavy for a request/browser after the host confirms it can supervise a separate persistent worker.
 * **Files/symbols to inspect/change:** add `api/jobs/*` and migration(s) only after the decision; affected document/export/batch resolver(s); `app/src` progress UI; PM2 deployment config; P1-12 measurements.
 * **Implementation steps:**
   1. Define job candidates from measured evidence (for example >2 s request, >100 MB heap growth, or a document/export above the approved row cap). Record input/output, max runtime, max rows, retry policy, dedupe key, authorization owner, retention, and cancellation semantics.
@@ -415,47 +472,70 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 * **Dependencies:** P0-04, P0-05, P0-06, P0-08, P1-12, P1-13.
 * **Rollback:** Stop the dedicated worker and leave queued jobs visible but unprocessed; do not rerun unknown partial jobs automatically.
 
-### P1-15 — Deploy a production web tier and session-safe process model
+### P1-15 — Deploy safely on cPanel/shared hosting
 
-* **Priority/risk:** P1 high — current PM2 configuration serves Vite dev mode and clustering magnifies uncorrected state issues.
-* **Exact goal:** Deploy immutable built static assets through a TLS reverse proxy and run the API with a session/connection configuration matched to actual low-user/high-workload capacity.
-* **Files/symbols to inspect/change:** `ecosystem.config.cjs`, `api/ecosystem.config.cjs`, `app/ecosystem.config.cjs`, add production proxy config/runbook, `logs/README.md`; package scripts.
+* **Priority/risk:** required cPanel deployment work. The current PM2/Nginx guidance does not describe a shared-hosting service model; the frontend PM2 file starts Vite development mode.
+* **Exact goal:** Publish an immutable static SPA and run one hosting-managed Node API process behind HTTPS, with a documented domain, process, log, restart, migration, and rollback path.
+* **Files/symbols to inspect/change:** `app/package.json`, `app/vite.config.ts`, `app/src/apollo/client.ts`, `api/package.json`, `api/index.js`, `api/config.js`, `api/db/connectDB.js`, both `ecosystem.config.cjs` files, `.env.example` files, and the deployment documentation added by this task.
 * **Implementation steps:**
-  1. Build `app/` in CI/release and serve `app/dist` from Nginx (or equivalent) with SPA fallback, TLS, cache headers for hashed assets, and `/graphql` proxy. Do not run `vite --host` in production.
-  2. Set proxy timeouts/body limits to match P0-05 and P1-14 job design; proxy only the intended API path and health endpoints.
-  3. Replace obsolete absolute PM2 `cwd` paths with repository/deployment-relative paths. Choose an initial API instance count based on measured DB pool capacity and CPU-heavy work; one/few instances is safer than “one per CPU” until P0-07/P0-08 and shared rate limit are live.
-  4. Size Sequelize/MySQL session connection pools across **all** workers, not per core. Verify MySQL max connections and reserve capacity for migrations/backups.
-  5. Verify graceful shutdown stops accepting requests, drains HTTP/Apollo, closes DB connections, and has a realistic timeout. PM2 readiness must correspond to an actual listening/ready service.
-* **Security/correctness considerations:** TLS/private keys belong in host secret management, not this repository. Cache HTML differently from hashed assets. Do not cache authenticated GraphQL responses at the proxy.
-* **Acceptance criteria:** production mode serves only built SPA assets; direct API and proxied cookie session work over TLS; restart drains safely; configured total DB connections stay under MySQL capacity.
-* **Exact targeted validation commands:**
-  ```powershell
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\app'; npm run build
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm start
-  pm2 start ecosystem.config.cjs --env production
-  pm2 status
-  ```
-  In staging, use `curl.exe -I` for security/cache headers and manually test login, refresh, logout, proxy fallback, and a graceful PM2 reload.
-* **Estimated scope:** 4–8 files plus host config; 2 small commits.
-* **Dependencies:** P0-02, P0-05, P0-07, P0-13.
-* **Rollback:** Roll back to the prior immutable release artifact via proxy/PM2 release directory; do not serve Vite dev server as an emergency production fallback.
+  1. Obtain all answers in the cPanel hosting prerequisite gate. Record the chosen topology: **A** same-origin `/graphql` proxy supplied by the administrator, or **B** a distinct API HTTPS domain. Do not proceed with an unverified topology.
+  2. Produce `app/dist` using `npm ci` and `npm run build` with the final public `VITE_GRAPHQL_URL`. For topology A use `/graphql`; for topology B use the exact `https://api.<real-domain>/graphql` URL. Inspect the built JavaScript for localhost/private-IP placeholders before publishing. Upload/copy only the resulting static artifact into the frontend document root.
+  3. Place the following `.htaccess` in the **frontend static document root only**, adapting `RewriteBase` only if the SPA is intentionally served from a subdirectory. Confirm `mod_rewrite` is enabled. It is only SPA fallback; it must never start, proxy, restart, or supervise Node:
+
+      ```apache
+      Options -MultiViews
+      RewriteEngine On
+      RewriteBase /
+
+      RewriteCond %{REQUEST_FILENAME} -f [OR]
+      RewriteCond %{REQUEST_FILENAME} -d
+      RewriteRule ^ - [L]
+
+      RewriteRule ^ index.html [L]
+      ```
+
+      Do not add `ProxyPass`, `RewriteRule ... http://127.0.0.1`, Passenger directives, Node commands, broad cache rules, or guessed Apache modules to `.htaccess`. Ask the administrator to add any API proxy at the virtual-host/server layer. Keep the API source and `.env` outside the web root.
+  4. If the provider offers Setup Node.js App/Passenger, configure its application root to `api/`, startup file to `index.js`, environment to production, and application variables through the provider’s protected environment-variable interface. Respect the port/socket assigned by that service: do not hard-code `4000` or override a provider-assigned `PORT`. Only add an explicit bind host after following the provider’s Node-app documentation. If a different supervised runtime is offered, document the equivalent startup, environment, graceful-stop, restart, and log behavior before use.
+  5. Do **not** deploy either existing PM2 ecosystem configuration on cPanel. Preserve them only as historical/local artifacts until a separate cleanup decision. Use one API process initially. The existing Sequelize pool is sized from all CPU cores and can be excessive on a shared account; cap/minimize it only after the host’s MySQL connection limit and the selected process count are known. Never cluster merely to use all cores.
+  6. Add and validate a small unauthenticated liveness endpoint (for example `/healthz`, process alive only) and a dependency-aware readiness endpoint (for example `/readyz`, verifies API can use its DB/session dependency without returning secrets). Put neither under GraphQL, rate-limit them separately, and return no stack traces, credentials, SQL, or topology data. The administrator must expose only the intended API health URL; do not expose an internal port.
+  7. Identify the cPanel/Passenger/Apache error and access log locations, permissions, retention/rotation, and the documented restart control. Ensure application output is captured there. Do not rely on `api/logs` or PM2 log files unless the confirmed service explicitly writes them. Review logs after every restart without printing environment values, cookies, passwords, GraphQL variables, or database dumps.
+  8. Run `npm run migrate:check`, take/verify the pre-release database backup, and run `npm run migrate` **once** from the API application root using the production environment. Never let concurrent Passenger workers or a request path run migrations. Restart only after a successful migration. If the migration fails, stop rollout and use the backup/rollback decision tree.
+  9. Test HTTPS and forced redirects, static SPA deep links/refreshes, GraphQL queries, login/logout/session refresh, a privileged action, and a representative document workflow from the public frontend. Test after an API restart. Record the real release time, artifact checksum, migration result, health result, and rollback owner.
+* **File-persistence rule:** Repository inspection found no upload route or multipart handler, so no upload directory is required for this release. Do not create one speculatively. If uploads, generated exports, or persistent document files are later introduced, add a separate design before implementation: a non-public storage path or object storage, owner/account permissions, size/type limits, malware scanning policy where required, authenticated download authorization, backup/retention, and a test that files survive the host’s restart/release process. Never store them in `app/dist`, the public document root, or ephemeral process storage.
+* **Security/correctness considerations:** Do not enable `SESSION_COOKIE_SECURE=false` to work around an HTTPS/proxy mistake. No API, source map, `.env`, database dump, uploaded document, or log containing sensitive data may be placed in the static document root. cPanel resource limits and Passenger restarts make in-process background work unreliable.
+* **Acceptance criteria:** a fresh browser can load a deep link without a 404; the built SPA contains no localhost/LAN API URL; API restart is performed by the confirmed hosting facility and returns ready afterward; all public paths are HTTPS; sessions and authorized GraphQL calls work with the chosen domain topology; health and error logs are locatable by the approved operator; and the fallback `.htaccess` never attempts to run Node.
+* **Rollback:** retain the previous static artifact outside the document root and identify the previous Node application release/configuration. On a failed smoke test, put the previous static artifact and prior known-good API release back, restart through the approved host control, and restore the pre-release backup only when the migration/data decision tree requires it. Do not “roll back” by launching Vite or an SSH terminal process.
+
+#### cPanel release smoke test
+
+1. Confirm the approved frontend/API HTTPS URLs and certificate/redirect behavior.
+2. From the API application root, run `npm run migrate:check`; take/confirm the backup; run `npm run migrate` once; record the result.
+3. Build the SPA using the final `VITE_GRAPHQL_URL`; inspect the output for `localhost`, `127.0.0.1`, known LAN IPs, and `http://` API URLs. Publish the artifact only after it passes.
+4. Restart the API through the confirmed cPanel Node-app/administrator mechanism. Locate the current logs and confirm no startup/config/database error.
+5. Request public `GET /healthz` and `GET /readyz` over HTTPS. Confirm both return the documented success response and no secrets.
+6. Load a non-root SPA route directly and refresh it. Confirm `.htaccess` returns the SPA, while a real asset still returns the asset.
+7. Sign in through the public frontend, refresh the page, call a normal GraphQL read, perform one authorized critical workflow, and sign out. Verify that an unprivileged/cross-user action is denied.
+8. If frontend/API are separate origins, test an allowed-origin credentialed request and a rejected-origin request; inspect browser cookie behavior. If same-origin proxy is used, test `/graphql` only through the public frontend host.
+9. Restart the API once more and repeat readiness plus authenticated read. Record the result.
+10. If any smoke test fails, stop rollout, preserve sanitized logs, execute the documented artifact/API rollback, and decide restore only from the migration/backup evidence.
 
 ### P2-16 — Establish backup, restore, migration, and incident runbooks
 
 * **Priority/risk:** P2 required before final go-live — database recoverability is unverified.
-* **Exact goal:** Make backup, point-in-time recovery (if available), restore verification, and migration rollback operationally repeatable.
-* **Files/symbols to inspect/change:** add deployment runbook under `docs/`; `mysql script/` only as historical reference; migration tooling from P0-06; PM2/proxy docs.
+* **Exact goal:** Make the host-supported backup, restore verification, migration, and incident path operationally repeatable. Point-in-time recovery is used only when the hosting product provides it.
+* **Files/symbols to inspect/change:** the cPanel deployment runbook in this plan; `mysql script/` only as historical reference; migration tooling from P0-06; confirmed cPanel/Node-app/Apache documentation.
 * **Implementation steps:**
-  1. Document database topology, backup tool/account, encryption/key ownership, schedule, retention, off-host storage, restore RPO/RTO, and who may execute restoration.
-  2. Automate encrypted logical backup and, if the managed MySQL platform supports it, point-in-time recovery configuration. Use least-privileged backup credentials.
-  3. Add a recurring restore drill into an isolated database, execute migration/schema verification, compare record counts/checksums for non-sensitive fixtures, and destroy drill data.
+  1. Before the first release and every schema/data migration, identify the cPanel/managed-MySQL backup mechanism, account owner, retention, restore requester, and a non-production restore target. Confirm the API database account has only the application privileges it needs; a migration account may need controlled DDL privileges and must not be embedded in source.
+  2. Confirm the real MySQL host and whether server/CA TLS is required; do not assume `127.0.0.1` or disable certificate validation. Document the hosting product’s stated RPO/RTO, backup schedule, retention, and any available point-in-time recovery. If an automated encrypted off-host backup or PITR is unavailable, the owner must explicitly accept the resulting RPO/RTO before launch.
+  3. Add a recurring restore drill into an isolated database, execute migration/schema verification, compare record counts/checksums for non-sensitive fixtures, and destroy drill data. If the host cannot provide a recoverable backup/restore path, deployment is blocked.
   4. Write a release order: backup → maintenance/write policy → migrate once → deploy → readiness/smoke checks → observe → rollback/restore decision.
-  5. Document incident actions for unauthorized access, duplicate identifier, failed migration, data inconsistency, queue backlog, and secret rotation.
+  5. Document incident actions for unauthorized access, duplicate identifier, failed migration, data inconsistency, and secret rotation. Queue backlog is deferred with P1-14.
+* **File-persistence rule:** Repository inspection found no upload route or multipart handler, so no upload directory is required for this release. Do not create one speculatively. If uploads, generated exports, or persistent document files are later introduced, add a separate design before implementation: a non-public storage path or object storage, owner/account permissions, size/type limits, malware scanning policy where required, authenticated download authorization, backup/retention, and a test that files survive the host’s restart/release process. Never store them in `app/dist`, the public document root, or ephemeral process storage.
 * **Security/correctness considerations:** A backup not restored is not a backup. Do not store dumps/credentials in this repository or log restoration commands containing credentials.
 * **Acceptance criteria:** a dated restore drill proves the stated RPO/RTO; migration rollback and full restore decision trees are documented; restore access is audited and least-privileged.
 * **Exact targeted validation commands:**
   ```powershell
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm run db:migrate
+  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm run migrate:check; npm run migrate
   ```
   Run the documented backup/restore commands only in the approved staging drill environment; attach the drill timestamp and outcomes to release evidence.
 * **Estimated scope:** 2–4 documentation/automation files plus platform configuration; 1–2 commits.
@@ -477,7 +557,7 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 * **Acceptance criteria:** pull requests cannot merge with install/build/migration/auth invariant failures; CI has no secrets in logs; staging smoke is recorded for releases.
 * **Exact targeted validation commands:**
   ```powershell
-  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm ci; npm run db:migrate
+  Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\api'; npm ci; npm run migrate:check; npm run migrate
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\app'; npm ci; npm run build
   Set-Location 'C:\Users\markm\Desktop\FINAL SUPPLY\stress-test'; npm ci; npm run test:quick
   ```
@@ -508,4 +588,6 @@ Do **not** deploy until P0-01 through P0-08 are accepted: dependency integrity, 
 
 ## Release evidence checklist
 
-Before production approval, attach: clean install/audit results; migration ledger and schema verification; RBAC/ownership/concurrency integration results; representative query plans and performance recording; build artifact checksum; staging health/login/print smoke result; backup restore drill timestamp; final `git status --short`; and the change/rollback owner. Do not treat successful PM2 startup alone as production readiness.
+Before cPanel production approval, attach: confirmed hosting-prerequisite responses; selected topology and exact public domains; Node runtime/startup/restart/log evidence; protected environment-variable inventory (names only); static artifact checksum and proof of no localhost/LAN URL; `.htaccess` SPA deep-link result; HTTPS/certificate/redirect result; CORS and cookie-session result; migration check/ledger result; pre-release backup and restore-drill timestamp; `/healthz` and `/readyz` result; public login/RBAC/document smoke results; final log review; final `git status --short`; and the named change/rollback owner. Do not treat an SSH `npm start`, a Vite dev server, a successful Passenger start alone, or an Apache rewrite as production readiness.
+
+> **Deferred by hosting scope, not dismissed:** multi-process PM2 clustering, Nginx configuration owned by the repository, `.htaccess` Node proxying, Redis/BullMQ, a dedicated worker, Kubernetes/container deployment, external metrics/alerting platforms, and automatic cloud-scale failover are not prerequisites for this low-user-count cPanel launch. They remain future architectural options. The release must still satisfy the security, correctness, migration, backup, HTTPS, configuration, log, and smoke-test gates above.

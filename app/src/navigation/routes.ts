@@ -23,6 +23,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import InsertPageBreakIcon from '@mui/icons-material/InsertPageBreak';
 //@ts-ignore
 import ArticleIcon from '@mui/icons-material/Article';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 export const ALL_NAVIGATION: Navigation = [
   {
@@ -121,5 +122,14 @@ export const ALL_NAVIGATION: Navigation = [
     segment: 'histories',
     title: 'Histories',
     icon: React.createElement(SummarizeIcon),
+  },
+  {
+    kind: 'header',
+    title: 'Help',
+  },
+  {
+    segment: 'guide',
+    title: 'Help & User Guide',
+    icon: React.createElement(HelpOutlineIcon),
   },
 ];

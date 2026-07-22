@@ -24,6 +24,7 @@ import IssuanceIcsPage from '../pages/issuanceIcsPage';
 import IssuanceNoCategoryPage from '../pages/issuanceNoCategoryPage';
 import RolePage from '../pages/role';
 import HistoriesPage from '../pages/histories';
+import UserGuidePage from '../pages/userGuide';
 
 export const router = createBrowserRouter([
   {
@@ -165,6 +166,16 @@ export const router = createBrowserRouter([
               {
                 path: '',
                 Component: HistoriesPage,
+              },
+            ],
+          },
+          {
+            path: '/guide',
+            element: <ProtectedRoute routePath="guide" />,
+            children: [
+              {
+                path: '',
+                Component: UserGuidePage,
               },
             ],
           },

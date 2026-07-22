@@ -16,4 +16,5 @@ export const ROUTE_ROLES = {
   'issuance-ris': ['user', 'admin'],
   'issuance-par': ['user', 'admin'],
   'issuance-ics': ['user', 'admin'],
+  guide: ['admin', 'user'],
 };

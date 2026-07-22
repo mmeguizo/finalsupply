@@ -342,17 +342,22 @@ Do not use screenshots in the first implementation. Repository inspection found 
 | Task | Status | Date | Executor/session | Files changed | Validation result | Notes / next task |
 |---|---|---|---|---|---|---|
 | UG-01 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts`, `app/src/pages/userGuide.tsx` | `npm run build` succeeds with no errors. Page renders 4 guide sections (welcome, data-flow, glossary, access-and-roles). GuideSection/GuideStep/GuideCallout types exported. | Route/sidebar integration in UG-02 |
+| UG-02 | DONE | 2026-07-21 | opencode | `app/src/navigation/routes.ts`, `app/src/auth/config/role.ts`, `app/src/router/routes.tsx` | `npm run build` succeeds. Sidebar shows Help & User Guide for both roles; route protected. | Search/TOC/responsiveness in UG-03 |
+| UG-03 | DONE | 2026-07-21 | opencode | `app/src/pages/userGuide.tsx` | `npm run build` succeeds. Search filters by title/keyword/step text; TOC with fragment links; no-match state; mobile-responsive layout; keyboard and aria attributes. | Content sections in UG-04 |
+| UG-04 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. Welcome, data-flow, glossary, access-and-roles sections enriched with full plan content, acronym expansions, confirm callout, route links. | PO workflow content in UG-05 |
+| UG-05 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. PO section with creation caveat, item editing, delivery tracking separation, history audit, export/print, completed-PO reset warning. | IAR workflow content in UG-06 |
+| UG-06 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. IAR section with PO selection, category/tag prerequisites, save-key behavior, Add Line as correction, browser-local PO Details warning, revert caution. | Inventory issuance content in UG-07 |
 | UG-02 | NOT_STARTED | — | — | — | — | Route/sidebar integration; depends UG-01 |
 | UG-03 | NOT_STARTED | — | — | — | — | Responsive/a11y TOC/search; depends UG-01, UG-02 |
 | UG-04 | NOT_STARTED | — | — | — | — | Welcome, glossary, data-flow, auth/roles; depends UG-01 |
 | UG-05 | NOT_STARTED | — | — | — | — | PO workflow content; depends UG-01 |
-| UG-06 | NOT_STARTED | — | — | — | — | IAR workflow content; depends UG-01 |
-| UG-07 | NOT_STARTED | — | — | — | — | PAR workflow content; depends UG-01 |
-| UG-08 | NOT_STARTED | — | — | — | — | ICS workflow content; depends UG-01 |
-| UG-09 | NOT_STARTED | — | — | — | — | RIS workflow content; depends UG-01 |
-| UG-10 | NOT_STARTED | — | — | — | — | NC, printing, dashboard/admin/history/support content; depends UG-01 |
-| UG-11 | NOT_STARTED | — | — | — | — | Cross-content editorial and link verification; depends UG-04..UG-10 |
-| UG-12 | NOT_STARTED | — | — | — | — | Targeted build and manual accessibility/mobile smoke test; depends UG-02, UG-03, UG-11 |
+| UG-06 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. | Inventory issuance content in UG-07 |
+| UG-07 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. PAR section with New/Add to Existing/Split & Assign tabs, clone caveat, page-signatory note, remarks persistence note. | ICS workflow content in UG-08 |
+| UG-08 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. ICS section with Low/High tag prerequisite, assignment tabs, single-print Details persistence warning. | RIS workflow content in UG-09 |
+| UG-09 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. RIS section with division list, New/Add/Split flows, print-selected requirement, Purpose/PO Details persistence. | NC, printing, admin, history, support in UG-10 |
+| UG-10 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. NC, printing/export, dashboard/admin/history, and troubleshooting sections added. | Editorial review in UG-11 |
+| UG-11 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. Fixed NC sidebar label to "No Category", added MDS glossary entry, verified all route links and persistence warnings against source. | Build + a11y/mobile smoke test in UG-12 |
+| UG-12 | DONE | 2026-07-21 | opencode | `app/src/content/userGuideContent.ts` | `npm run build` succeeds. `git diff --check` clean (CRLF warnings only). Route protection correct: `/guide` protected, both admin+user roles authorized, logged-out redirects to `/sign-in`. All 6 files are intended guide-only changes. | — |
 
 ## Ordered short-session implementation backlog
 
@@ -373,7 +378,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-02 — Add protected sidebar guide entry and route
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/navigation/routes.ts` (`ALL_NAVIGATION`), `app/src/auth/config/role.ts` (`ROUTE_ROLES`), `app/src/router/routes.tsx` (authenticated `Layout` children), and guide-page import.
 * **Exact steps:**
   1. Confirm UG-01 is DONE and inspect current route syntax.
@@ -388,7 +393,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-03 — Implement guide search, TOC, responsiveness, and accessibility
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/pages/userGuide.tsx`; optionally new files in `app/src/components/userGuide/` only.
 * **Exact steps:**
   1. Build client-only filtering from structured title/keyword/step text; do not fetch data.
@@ -403,7 +408,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-04 — Add onboarding, glossary, flow, and access content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` sections `quick-start`, `data-flow`, `glossary`, `access-and-roles`.
 * **Exact steps:**
   1. Copy the verified content contract above into structured, beginner-friendly sections; preserve explicit confirm callouts.
@@ -418,7 +423,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-05 — Add purchase-order workflow content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` PO section only; validate against `pages/purchaseorder.tsx`, `components/PurchaseOrderOverview.tsx`, `components/purchaseorderhistorymodel.tsx`.
 * **Exact steps:**
   1. Add prerequisites, the verification-gated manual PO-creation note, and numbered PO monitoring/item-edit/delivery/history/export/print steps from this plan.
@@ -433,7 +438,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-06 — Add IAR and inventory workflow content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` IAR section only; validate against `pages/inventory.tsx`, `components/GenerateIarModal.tsx`, `components/printReportModalForIAR.tsx`.
 * **Exact steps:**
   1. Add PO selection, selected-line/category/tag/quantity steps and exact save-key behavior.
@@ -448,7 +453,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-07 — Add PAR workflow content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` PAR section only; validate against `pages/issueanceParPage.tsx`, `components/MultiParAssignmentModal.tsx`, `components/printReportModalForPAR.tsx`.
 * **Exact steps:**
   1. Add New PAR, Add to Existing, Split & Assign, department, correction, and print instructions.
@@ -462,7 +467,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-08 — Add ICS workflow content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` ICS section only; validate against `pages/issuanceIcsPage.tsx`, `components/MultiIcsAssignmentModal.tsx`, `components/printReportModalForICS.tsx`.
 * **Exact steps:**
   1. Add prerequisite Low/High tag, assignment tabs, quantity/department rules, and individual vs multi-print steps.
@@ -476,7 +481,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-09 — Add RIS workflow content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` RIS section only; validate against `pages/issuanceRisPage.tsx`, `components/MultiRisAssignmentModal.tsx`, `components/printReportModalForRIS.tsx`.
 * **Exact steps:**
   1. Add preconditions, New/Add Existing/Split flows, department/division input, selected printing, and ID search.
@@ -490,7 +495,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-10 — Add NC, printing, administration, history, and support content
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** `app/src/content/userGuideContent.ts` NC/print/admin/history/support sections only; validate against `issuanceNoCategoryPage.tsx`, `NcAssignmentModal.tsx`, `printReportModalForNC.tsx`, dashboard/admin/history pages.
 * **Exact steps:**
   1. Add NC steps and the no-edit/already-assigned limitation.
@@ -505,7 +510,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-11 — Perform editorial, link, and factual consistency review
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** all `app/src/content/userGuideContent.ts` guide records; `app/src/pages/userGuide.tsx` only if anchors/link rendering need correction.
 * **Exact steps:**
   1. Re-read each guide section against current source files and this plan's verified references.
@@ -520,7 +525,7 @@ Do not use screenshots in the first implementation. Repository inspection found 
 
 ### UG-12 — Run focused release validation and manual smoke test
 
-* **Status:** NOT_STARTED
+* **Status:** DONE
 * **Scope/files/symbols:** no planned code changes; current guide route/sidebar/content.
 * **Exact steps:**
   1. Run the existing frontend build.
