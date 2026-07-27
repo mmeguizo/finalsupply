@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const CREATE_DEPARTMENT = gql`
   mutation CreateDepartment($input: DepartmentInput!) {

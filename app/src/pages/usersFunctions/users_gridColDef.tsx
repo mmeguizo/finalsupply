@@ -1,60 +1,60 @@
-import { Stack, Tooltip } from "@mui/material";
-import { GridColDef } from "@mui/x-data-grid";
-import DrawIcon from "@mui/icons-material/Draw";
+import { Stack, Tooltip } from '@mui/material';
+import { GridColDef } from '@mui/x-data-grid';
+import DrawIcon from '@mui/icons-material/Draw';
 //@ts-ignore
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 // Define columns for inventory items
 export const createItemColumns = (
   handleOpenEditModal: (item: any) => void,
   handleDeleteModal: (item: any) => void
 ): GridColDef[] => [
   {
-    field: "id",
-    headerName: " ID",
+    field: 'id',
+    headerName: ' ID',
     width: 50,
   },
   {
-    field: "email",
-    headerName: "Email",
+    field: 'email',
+    headerName: 'Email',
     width: 150,
   },
   {
-    field: "name",
-    headerName: "Full Name",
+    field: 'name',
+    headerName: 'Full Name',
     width: 150,
   },
   {
-    field: "employee_id",
-    headerName: "Employee ID",
+    field: 'employee_id',
+    headerName: 'Employee ID',
     width: 150,
   },
   {
-    field: "department",
-    headerName: "Department",
+    field: 'department',
+    headerName: 'Department',
     width: 150,
   },
   {
-    field: "position",
-    headerName: "Position",
+    field: 'position',
+    headerName: 'Position',
     width: 150,
   },
   {
-    field: "role",
-    headerName: "Role",
+    field: 'role',
+    headerName: 'Role',
     width: 100,
   },
   {
-    field: "location",
-    headerName: "Location",
+    field: 'location',
+    headerName: 'Location',
     width: 150,
   },
   {
-    field: "actions",
-    headerName: "Actions",
+    field: 'actions',
+    headerName: 'Actions',
     flex: 0.5,
     sortable: false,
     renderCell: (params) => (
-      <Stack direction="row" sx={{ marginTop: "3%" }} spacing={1}>
+      <Stack direction="row" sx={{ marginTop: '3%' }} spacing={1}>
         <Tooltip title="Edit">
           {/* <Button
               size="small"
@@ -65,7 +65,7 @@ export const createItemColumns = (
             </Button> */}
           <DrawIcon
             color="warning"
-            sx={{ cursor: "pointer" }}
+            sx={{ cursor: 'pointer' }}
             onClick={() => handleOpenEditModal(params.row)}
           />
         </Tooltip>
@@ -80,7 +80,7 @@ export const createItemColumns = (
             </Button> */}
           <DeleteForeverIcon
             color="error"
-            sx={{ cursor: "pointer" }}
+            sx={{ cursor: 'pointer' }}
             onClick={() => handleDeleteModal(params.row)}
           />
         </Tooltip>

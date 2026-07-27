@@ -1,14 +1,7 @@
-import React from "react";
-import {
-  Grid,
-  Typography,
-  TextField,
-  Select,
-  MenuItem,
-  Button,
-} from "@mui/material";
-import { PurchaseOrderItem } from "../../types/purchaseOrder";
-import { PURCHASE_ORDER_CATEGORIES } from "../../utils/constants";
+import React from 'react';
+import { Grid, Typography, TextField, Select, MenuItem, Button } from '@mui/material';
+import { PurchaseOrderItem } from '../../types/purchaseOrder';
+import { PURCHASE_ORDER_CATEGORIES } from '../../utils/constants';
 
 interface PurchaseOrderItemsProps {
   items: PurchaseOrderItem[];
@@ -38,7 +31,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
             <Select
               fullWidth
               value={item.category}
-              onChange={(e) => onUpdateItem(index, "category", e.target.value)}
+              onChange={(e) => onUpdateItem(index, 'category', e.target.value)}
               disabled={isFieldDisabled(item.category)}
             >
               {Object.entries(PURCHASE_ORDER_CATEGORIES).map(([key, value]) => (
@@ -53,7 +46,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               fullWidth
               label="Item"
               value={item.item}
-              onChange={(e) => onUpdateItem(index, "item", e.target.value)}
+              onChange={(e) => onUpdateItem(index, 'item', e.target.value)}
               disabled={isFieldDisabled(item.item)}
             />
           </Grid>
@@ -62,9 +55,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               fullWidth
               label="Description"
               value={item.description}
-              onChange={(e) =>
-                onUpdateItem(index, "description", e.target.value)
-              }
+              onChange={(e) => onUpdateItem(index, 'description', e.target.value)}
               disabled={isFieldDisabled(item.description)}
             />
           </Grid>
@@ -73,7 +64,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               fullWidth
               label="Unit"
               value={item.unit}
-              onChange={(e) => onUpdateItem(index, "unit", e.target.value)}
+              onChange={(e) => onUpdateItem(index, 'unit', e.target.value)}
               disabled={isFieldDisabled(item.unit)}
             />
           </Grid>
@@ -83,9 +74,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               type="number"
               label="Quantity"
               value={item.quantity}
-              onChange={(e) =>
-                onUpdateItem(index, "quantity", Number(e.target.value))
-              }
+              onChange={(e) => onUpdateItem(index, 'quantity', Number(e.target.value))}
               disabled={isFieldDisabled(item.quantity)}
             />
           </Grid>
@@ -96,11 +85,7 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               label="Received"
               value={item.actualQuantityReceived}
               onChange={(e) =>
-                onUpdateItem(
-                  index,
-                  "actualQuantityReceived",
-                  Number(e.target.value)
-                )
+                onUpdateItem(index, 'actualQuantityReceived', Number(e.target.value))
               }
               disabled={isFieldDisabled(item.actualQuantityReceived)}
             />
@@ -111,20 +96,12 @@ export const PurchaseOrderItems: React.FC<PurchaseOrderItemsProps> = ({
               type="number"
               label="Unit Cost"
               value={item.unitCost}
-              onChange={(e) =>
-                onUpdateItem(index, "unitCost", Number(e.target.value))
-              }
+              onChange={(e) => onUpdateItem(index, 'unitCost', Number(e.target.value))}
               disabled={isFieldDisabled(item.unitCost)}
             />
           </Grid>
           <Grid item xs={1}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Amount"
-              value={item.amount}
-              disabled
-            />
+            <TextField fullWidth type="number" label="Amount" value={item.amount} disabled />
           </Grid>
         </Grid>
       ))}

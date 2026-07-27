@@ -1,14 +1,14 @@
-import * as React from "react";
+import * as React from 'react';
 //@ts-ignore
-import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
 //@ts-ignore
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
-import DrawIcon from "@mui/icons-material/Draw";
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import DrawIcon from '@mui/icons-material/Draw';
 //@ts-ignore
-import AddBusinessIcon from "@mui/icons-material/AddBusiness";
-import type { Navigation } from "@toolpad/core/AppProvider";
-import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
+import AddBusinessIcon from '@mui/icons-material/AddBusiness';
+import type { Navigation } from '@toolpad/core/AppProvider';
+import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 //@ts-ignore
 import CabinIcon from '@mui/icons-material/Cabin';
 import SummarizeIcon from '@mui/icons-material/Summarize';
@@ -23,29 +23,30 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import InsertPageBreakIcon from '@mui/icons-material/InsertPageBreak';
 //@ts-ignore
 import ArticleIcon from '@mui/icons-material/Article';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 export const ALL_NAVIGATION: Navigation = [
   {
-    kind: "header",
-    title: "Main items",
+    kind: 'header',
+    title: 'Main items',
   },
   {
-    title: "Dashboard",
+    title: 'Dashboard',
     icon: React.createElement(DashboardCustomizeIcon),
   },
   {
-    segment: "purchaseorder",
-    title: "PO Monitoring",
+    segment: 'purchaseorder',
+    title: 'PO Monitoring',
     icon: React.createElement(BusinessCenterIcon),
   },
   {
-    segment: "inventory",
-    title: "Generate IAR",
+    segment: 'inventory',
+    title: 'Generate IAR',
     icon: React.createElement(ShowChartIcon),
   },
   {
-    segment: "issuance",
-    title: "Issuance",
+    segment: 'issuance',
+    title: 'Issuance',
     icon: React.createElement(ApprovalIcon),
     children: [
       {
@@ -62,8 +63,13 @@ export const ALL_NAVIGATION: Navigation = [
         segment: 'issuance-ics',
         title: 'Issuance ICS',
         icon: React.createElement(ArticleIcon),
-      }
-    ]
+      },
+      {
+        segment: 'issuance-nocat',
+        title: 'No Category',
+        icon: React.createElement(DocumentScannerIcon),
+      },
+    ],
   },
   // {
   //   segment: "ics-lv-hv",
@@ -81,9 +87,14 @@ export const ALL_NAVIGATION: Navigation = [
   //   icon: React.createElement(CabinIcon),
   // },
   {
-    segment: "signatories",
-    title: "Signatories",
+    segment: 'signatories',
+    title: 'Signatories',
     icon: React.createElement(DrawIcon),
+  },
+  {
+    segment: 'department',
+    title: 'Department',
+    icon: React.createElement(CorporateFareIcon),
   },
   // {
   //   segment: "reports",
@@ -91,8 +102,8 @@ export const ALL_NAVIGATION: Navigation = [
   //   icon: React.createElement(SummarizeIcon),
   // },
   {
-    segment: "users",
-    title: "Users",
+    segment: 'users',
+    title: 'Users',
     icon: React.createElement(PeopleAltIcon),
     children: [
       {
@@ -103,12 +114,7 @@ export const ALL_NAVIGATION: Navigation = [
       {
         segment: 'roles',
         title: 'Roles',
-       icon: React.createElement(EngineeringIcon),
-      },
-      {
-        segment: 'department',
-        title: 'Department',
-       icon: React.createElement(CorporateFareIcon),
+        icon: React.createElement(EngineeringIcon),
       },
     ],
   },
@@ -116,5 +122,14 @@ export const ALL_NAVIGATION: Navigation = [
     segment: 'histories',
     title: 'Histories',
     icon: React.createElement(SummarizeIcon),
+  },
+  {
+    kind: 'header',
+    title: 'Help',
+  },
+  {
+    segment: 'guide',
+    title: 'Help & User Guide',
+    icon: React.createElement(HelpOutlineIcon),
   },
 ];

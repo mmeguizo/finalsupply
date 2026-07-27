@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   Typography,
   Table,
@@ -9,9 +9,9 @@ import {
   Box,
   Collapse,
   IconButton,
-} from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+} from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 interface PurchaseOrderRowProps {
   purchaseOrder: any; // Consider creating a proper type for this
@@ -22,13 +22,9 @@ export function PurchaseOrderRow({ purchaseOrder }: PurchaseOrderRowProps) {
 
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -38,18 +34,16 @@ export function PurchaseOrderRow({ purchaseOrder }: PurchaseOrderRowProps) {
         <TableCell>{purchaseOrder.supplier}</TableCell>
         <TableCell>
           {purchaseOrder.dateofdelivery
-            ? new Date(
-                Number(purchaseOrder.dateofdelivery)
-              ).toLocaleDateString()
-            : "Not specified"}
+            ? new Date(Number(purchaseOrder.dateofdelivery)).toLocaleDateString()
+            : 'Not specified'}
         </TableCell>
         <TableCell>
           {purchaseOrder.dateofpayment
             ? new Date(Number(purchaseOrder.dateofpayment)).toLocaleDateString()
-            : "Not specified"}
+            : 'Not specified'}
         </TableCell>
         <TableCell align="right">
-          ${purchaseOrder.amount ? purchaseOrder.amount.toFixed(2) : "0.00"}
+          ${purchaseOrder.amount ? purchaseOrder.amount.toFixed(2) : '0.00'}
         </TableCell>
       </TableRow>
       <TableRow>
@@ -81,10 +75,10 @@ export function PurchaseOrderRow({ purchaseOrder }: PurchaseOrderRowProps) {
                         <TableCell>{item.unit}</TableCell>
                         <TableCell align="right">{item.quantity}</TableCell>
                         <TableCell align="right">
-                          ${item.unitCost ? item.unitCost.toFixed(2) : "0.00"}
+                          ${item.unitCost ? item.unitCost.toFixed(2) : '0.00'}
                         </TableCell>
                         <TableCell align="right">
-                          ${item.amount ? item.amount.toFixed(2) : "0.00"}
+                          ${item.amount ? item.amount.toFixed(2) : '0.00'}
                         </TableCell>
                       </TableRow>
                     ))

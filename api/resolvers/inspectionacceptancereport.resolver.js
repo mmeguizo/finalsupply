@@ -1,208 +1,211 @@
-import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize models
-import PurchaseOrderItems from "../models/purchaseorderitems.js"; // Import the Sequelize models
-import PurchaseOrderItemsHistory from "../models/purchaseorderitemshistory.js"; // Import history model
-import inspectionAcceptanceReport from "../models/inspectionacceptancereport.js";
-import { sequelize } from "../db/connectDB.js";
-import { customAlphabet } from "nanoid";
-import { omitId } from "../utils/helper.js";
-import { Op, Sequelize } from "sequelize";
-import { generateNewIcsId, resetIcsIdBatch } from "../utils/icsIdGenerator.js"; // Import the ICS ID generator function
-import { generateNewIarId } from "../utils/iarIdGenerator.js"; // Import the IAR ID generator function
-const nanoid = customAlphabet("1234567890meguizomarkoliver", 10);
+import PurchaseOrder from '../models/purchaseorder.js'; // Import the Sequelize models
+import PurchaseOrderItems from '../models/purchaseorderitems.js'; // Import the Sequelize models
+import PurchaseOrderItemsHistory from '../models/purchaseorderitemshistory.js'; // Import history model
+import inspectionAcceptanceReport from '../models/inspectionacceptancereport.js';
+import { sequelize } from '../db/connectDB.js';
+import { customAlphabet } from 'nanoid';
+import { omitId } from '../utils/helper.js';
+import { Op, Sequelize } from 'sequelize';
+import { nextIcsId, nextIarId } from '../utils/atomicIdGenerator.js';
+import { requireAuthenticated, requireRole, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
+const nanoid = customAlphabet('1234567890meguizomarkoliver', 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
-    inspectionAcceptanceReport: async (_, __, context) => {
+    inspectionAcceptanceReport: async (_, args, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-        // Fetch a single purchase order by ID
-        // const inspectionAcceptanceReportdata =
-        //   await inspectionAcceptanceReport.findAll({
-        //     where: { isDeleted: false },
-        //     order: [["id", "DESC"]],
-        //     include: [PurchaseOrder],
-        //   });
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const rows = await inspectionAcceptanceReport.findAll({
-          where: { isDeleted: false },
-          order: [["id", "DESC"]],
+          where: { isDeleted: false, recordType: 'iar_original', ...createdByScope },
+          order: [['id', 'DESC']],
+          limit,
+          offset,
           include: [
             { model: PurchaseOrder, required: true },
             {
               model: PurchaseOrderItems,
-              as: "PurchaseOrderItem",
-              // Include all fields you need in the client shape
+              as: 'PurchaseOrderItem',
               attributes: [
-                "id",
-                "purchaseOrderId",
-                "itemName",
-                "description",
-                "generalDescription",
-                "specification",
-                "unit",
-                "quantity",
-                "unitCost",
-                "amount",
-                "category",
-                "isDeleted",
-                "actualQuantityReceived",
-                "tag",
-                "inventoryNumber",
-                "itemGroupId",
-                "isReceiptLine",
+                'id',
+                'purchaseOrderId',
+                'itemName',
+                'description',
+                'generalDescription',
+                'specification',
+                'unit',
+                'quantity',
+                'unitCost',
+                'amount',
+                'category',
+                'isDeleted',
+                'actualQuantityReceived',
+                'tag',
+                'inventoryNumber',
+                'itemGroupId',
+                'isReceiptLine',
               ],
-              required: false, // LEFT JOIN
+              required: false,
             },
           ],
         });
 
-        // Debug first few
-        rows.slice(0, 5).forEach((r) => {
-          const it = r.PurchaseOrderItem;
-        });
-
         return rows;
       } catch (error) {
-        console.error("Error fetching purchase order: ", error);
-        throw new Error(error.message || "Internal server error");
+        console.error('Error fetching purchase order: ', error);
+        throw new Error(error.message || 'Internal server error');
       }
     },
-    inspectionAcceptanceReportForICS: async (_, __, context) => {
+    inspectionAcceptanceReportForICS: async (_, args, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-        // Fetch a single purchase order by ID
-        const inspectionAcceptanceReportdata =
-          await inspectionAcceptanceReport.findAll({
-            where: {
-              isDeleted: false,
-              tag: {
-                [Op.or]: ["high", "low"],
-              },
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
+        const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
+          where: {
+            isDeleted: false,
+            tag: {
+              [Op.or]: ['high', 'low'],
             },
-            order: [["createdAt", "DESC"]],
-            include: [
-              { model: PurchaseOrder },
-              // include PurchaseOrderItems using the alias used in your models / code
-              {
-                model: PurchaseOrderItems,
-                as: "PurchaseOrderItem",
-                required: false,
-              },
-            ],
-          });
+            ...createdByScope,
+          },
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset,
+          include: [
+            { model: PurchaseOrder },
+            {
+              model: PurchaseOrderItems,
+              as: 'PurchaseOrderItem',
+              required: false,
+            },
+          ],
+        });
 
         if (!inspectionAcceptanceReportdata) {
-          throw new Error("Purchase order not found");
+          throw new Error('Purchase order not found');
         }
         return inspectionAcceptanceReportdata;
       } catch (error) {
-        console.error("Error fetching purchase order: ", error);
-        throw new Error(error.message || "Internal server error");
+        console.error('Error fetching purchase order: ', error);
+        throw new Error(error.message || 'Internal server error');
       }
     },
     iarForReports: async (_, __, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
+
+        // Use SQL aggregation (MAX(id) per iar_id) to avoid fetching the full table
+        // and deduplicating in application memory
+        const replacements = [];
+        const filters = ['iar.is_deleted = 0', 'iar.iar_id IS NOT NULL', 'iar.iar_id != \'\''];
+        if (createdByScope[Op.or]) {
+          filters.push('(iar.created_by = ? OR iar.created_by IS NULL)');
+          replacements.push(user.email);
         }
 
-        const inspectionAcceptanceReportdata =
-          await inspectionAcceptanceReport.findAll({
-            // Explicitly select only the attributes required by the IARonly GraphQL type
-            // Using snake_case for database columns
-            attributes: [
-              "id",
-              "created_at",
-              "iar_id",
-              "category",
-              "purchase_order_id",
-            ],
-            where: {
-              isDeleted: false,
-            },
-            order: [
-              ["created_at", "DESC"], // Order by created_at (snake_case)
-              ["id", "DESC"], // Secondary sort for consistency
-            ],
-            include: [
-              {
-                model: PurchaseOrder, // Include the associated PurchaseOrder details
-                attributes: ["po_number"], // Assuming 'po_number' is the correct
-                // required : true // Ensures that only IARs with associated POs are returned
-              },
-            ],
-          });
+        const sql = `
+          SELECT iar.id, iar.created_at, iar.iar_id, iar.category, po.po_number
+          FROM inspection_acceptance_report iar
+          INNER JOIN purchase_orders po ON po.id = iar.purchase_order_id
+          INNER JOIN (
+            SELECT MAX(id) AS max_id
+            FROM inspection_acceptance_report
+            WHERE ${filters.join(' AND ')}
+            GROUP BY iar_id
+          ) latest ON latest.max_id = iar.id
+          ORDER BY iar.created_at DESC, iar.id DESC
+        `;
 
-        if (
-          !inspectionAcceptanceReportdata ||
-          inspectionAcceptanceReportdata.length === 0
-        ) {
-          console.log("No data fetched from database, returning empty array.");
+        const [results] = await sequelize.query(sql, { replacements });
+
+        if (!results || results.length === 0) {
           return [];
         }
 
-        const uniqueIARs = new Map();
-
-        // Iterate through the fetched data to filter out unique iar_id values
-
-        inspectionAcceptanceReportdata.forEach((item) => {
-          // Access iar_id directly from dataValues
-          const iarIdValue = item.dataValues.iar_id;
-          console.log(item.dataValues.PurchaseOrder.dataValues.po_number);
-
-          if (iarIdValue) {
-            if (!uniqueIARs.has(iarIdValue)) {
-              uniqueIARs.set(iarIdValue, item);
-            }
-          } else {
-            // Log items being skipped if iar_id is falsy
-            // console.log(`Skipping item ID: ${item.id} because iar_id is falsy: '${iarIdValue}'`);
-          }
-        });
-        // console.log("--- UNIQUE IARS MAP CONTENT (before final map) ---");
-        // console.log(`Number of unique items found: ${uniqueIARs.size}`);
-        // console.log("--- END UNIQUE IARS MAP CONTENT ---");
-        // Convert the Map values to an array of plain objects, accessing
-        // created_at and iar_id from dataValues
-        return Array.from(uniqueIARs.values()).map((item) => ({
+        return results.map((item) => ({
           id: item.id,
-          // CRITICAL FIX: Access created_at directly from dataValues
-          createdAt: item.dataValues.created_at,
-          category: item.dataValues.category, // Assuming 'category' is the correct field
-          // CRITICAL FIX: Access iar_id directly from dataValues
-          iarId: item.dataValues.iar_id,
-          poNumber: item.dataValues.PurchaseOrder.dataValues.po_number, // Assuming 'po_number' is the correct field
+          createdAt: item.created_at,
+          category: item.category,
+          iarId: item.iar_id,
+          poNumber: item.po_number,
         }));
       } catch (error) {
-        console.error(
-          "Error fetching unique inspection acceptance report data: ",
-          error,
-        );
-        throw new Error(
-          "Failed to retrieve unique inspection acceptance reports.",
-        );
+        console.error('Error fetching unique inspection acceptance report data: ', error);
+        throw new Error('Failed to retrieve unique inspection acceptance reports.');
       }
     },
+    // Fetch IAR items where category IS NULL (no category assigned)
+    inspectionAcceptanceReportNoCategory: async (_, args, context) => {
+      try {
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
+        const rows = await inspectionAcceptanceReport.findAll({
+          where: {
+            isDeleted: false,
+            category: null,
+            ...createdByScope,
+          },
+          order: [['id', 'DESC']],
+          limit,
+          offset,
+          include: [
+            { model: PurchaseOrder },
+            {
+              model: PurchaseOrderItems,
+              as: 'PurchaseOrderItem',
+              required: false,
+            },
+          ],
+        });
+
+        return rows;
+      } catch (error) {
+        console.error('Error fetching no-category IAR items:', error);
+        throw new Error(error.message || 'Internal server error');
+      }
+    },
+
     getIARItemsByIarId: async (_, { iarId }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         if (!iarId) {
-          throw new Error("IAR ID is required."); // Ensure an iarId is provided
+          throw new Error('IAR ID is required.');
         }
+
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         const iarItems = await inspectionAcceptanceReport.findAll({
           where: {
-            iar_id: iarId, // Filter by the specific iar_id passed as an argument
-            isDeleted: false, // Ensure you only get active records
+            iar_id: iarId,
+            isDeleted: false,
+            ...scope,
           },
           order: [
-            ["created_at", "ASC"], // Order by creation date, maybe ascending for consistency
-            ["id", "ASC"], // Secondary sort
+            ['created_at', 'ASC'], // Order by creation date, maybe ascending for consistency
+            ['id', 'ASC'], // Secondary sort
           ],
           include: [
             {
@@ -239,20 +242,19 @@ const inspectionAcceptanceReportResolver = {
     updateICSInventoryIDs: async (_, { input }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, input.ids, context);
 
         // 1. Fetch items to determine their tags
         const itemsToUpdate = await inspectionAcceptanceReport.findAll({
           where: { id: { [Op.in]: input.ids } },
-          attributes: ["id", "tag"],
+          attributes: ['id', 'tag'],
           transaction: t,
         });
 
         // 2. Group items by their tag ('low', 'high', etc.)
         const groupedByTag = itemsToUpdate.reduce((acc, item) => {
-          const tag = item.tag || ""; // Handle items without a tag
+          const tag = item.tag || ''; // Handle items without a tag
           if (!acc[tag]) {
             acc[tag] = [];
           }
@@ -262,17 +264,13 @@ const inspectionAcceptanceReportResolver = {
 
         // 3. Generate a unique ICS ID for each tag group and update the items
         for (const tag of Object.keys(groupedByTag)) {
-          if (tag === "low" || tag === "high") {
+          if (tag === 'low' || tag === 'high') {
             const idsInGroup = groupedByTag[tag];
-            console.log(
-              `Processing tag: ${tag} with items: [${idsInGroup.join(", ")}]`,
-            );
+            console.log(`Processing tag: ${tag} with items: [${idsInGroup.join(', ')}]`);
 
-            const newIcsId = await generateNewIcsId(tag);
+            const newIcsId = await nextIcsId(tag);
             console.log(
-              `Generated ICS ID: ${newIcsId} for tag "${tag}" and items: [${idsInGroup.join(
-                ", ",
-              )}]`,
+              `Generated ICS ID: ${newIcsId} for tag "${tag}" and items: [${idsInGroup.join(', ')}]`
             );
 
             await inspectionAcceptanceReport.update(
@@ -280,7 +278,7 @@ const inspectionAcceptanceReportResolver = {
               {
                 where: { id: { [Op.in]: idsInGroup } },
                 transaction: t,
-              },
+              }
             );
           }
         }
@@ -298,35 +296,35 @@ const inspectionAcceptanceReportResolver = {
         return items;
       } catch (error) {
         await t.rollback();
-        console.error("Error updating ICS IDs:", error);
-        throw new Error(error.message || "Failed to update ICS IDs");
+        console.error('Error updating ICS IDs:', error);
+        throw new Error(error.message || 'Failed to update ICS IDs');
       }
     },
     updateIARStatus: async (_, { airId, iarStatus }, context) => {
-      console.log("Updating IAR status:", { airId, iarStatus });
+      console.log('Updating IAR status:', { airId, iarStatus });
 
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         if (!airId) {
-          throw new Error("IAR ID is required.");
+          throw new Error('IAR ID is required.');
         }
 
         // Update all records that match the iar_id (snake_case column)
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { iarStatus },
           {
-            where: { iar_id: airId },
+            where: { iar_id: airId, ...scope },
             transaction: t,
-          },
+          }
         );
 
         // Fetch updated rows to return
         const updatedRows = await inspectionAcceptanceReport.findAll({
-          where: { iar_id: airId },
+          where: { iar_id: airId, ...scope },
           transaction: t,
         });
 
@@ -336,48 +334,41 @@ const inspectionAcceptanceReportResolver = {
           ids: updatedRows.map((r) => r.id),
           iarStatus,
           updatedCount,
-          message: "Status updated successfully for matching IAR records",
+          message: 'Status updated successfully for matching IAR records',
           success: true,
         };
       } catch (error) {
         await t.rollback();
-        console.error("Error updating IAR status:", error);
-        throw new Error(error.message || "Failed to update IAR status");
+        console.error('Error updating IAR status:', error);
+        throw new Error(error.message || 'Failed to update IAR status');
       }
     },
     appendToExistingIAR: async (_, { iarId, items }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
         const user = context.req.user;
+        const scope = ownershipScope(user);
 
         if (!iarId) {
-          throw new Error("IAR ID is required");
+          throw new Error('IAR ID is required');
         }
         if (!Array.isArray(items) || items.length === 0) {
-          throw new Error("No items provided");
+          throw new Error('No items provided');
         }
 
         // Load an existing IAR row to inherit document IDs (par/ics/ris)
         const existingIar = await inspectionAcceptanceReport.findOne({
-          where: { iarId, isDeleted: false },
-          order: [["createdAt", "DESC"]],
+          where: { iarId, isDeleted: false, ...scope },
+          order: [['createdAt', 'DESC']],
           transaction: t,
         });
 
         let appended = 0;
         for (const line of items) {
-          const {
-            purchaseOrderItemId,
-            received,
-            description,
-            generalDescription,
-            specification,
-          } = line;
-          if (!purchaseOrderItemId || !received || Number(received) <= 0)
-            continue;
+          const { purchaseOrderItemId, received, description, generalDescription, specification } =
+            line;
+          if (!purchaseOrderItemId || !received || Number(received) <= 0) continue;
 
           // Lock the POI and validate remaining
           const poi = await PurchaseOrderItems.findByPk(purchaseOrderItemId, {
@@ -388,7 +379,7 @@ const inspectionAcceptanceReportResolver = {
 
           const remaining = Math.max(
             0,
-            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0),
+            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0)
           );
           const delta = Math.min(remaining, Number(received));
           if (delta <= 0) continue;
@@ -398,12 +389,11 @@ const inspectionAcceptanceReportResolver = {
           const afterAqr = beforeAqr + delta;
           await PurchaseOrderItems.update(
             { actualQuantityReceived: afterAqr },
-            { where: { id: poi.id }, transaction: t },
+            { where: { id: poi.id }, transaction: t }
           );
 
           // Determine iarStatus for this append line
-          const appendIarStatus =
-            afterAqr >= Number(poi.quantity || 0) ? "complete" : "partial";
+          const appendIarStatus = afterAqr >= Number(poi.quantity || 0) ? 'complete' : 'partial';
 
           // Create IAR row reusing iarId and inheriting doc IDs if any
           const iarRow = await inspectionAcceptanceReport.create(
@@ -423,8 +413,8 @@ const inspectionAcceptanceReportResolver = {
               purchaseOrderId: poi.purchaseOrderId,
               purchaseOrderItemId: poi.id,
               actualQuantityReceived: delta,
-              createdBy: user.name || user.id,
-              updatedBy: user.name || user.id,
+              createdBy: user?.email || null,
+              updatedBy: user?.email || null,
               // inherit document IDs if present on existing IAR rows
               parId: existingIar?.parId || null,
               icsId: existingIar?.icsId || null,
@@ -432,7 +422,7 @@ const inspectionAcceptanceReportResolver = {
               // "complete" if this item was fully received, "partial" otherwise
               iarStatus: appendIarStatus,
             },
-            { transaction: t },
+            { transaction: t }
           );
 
           // History entry
@@ -440,7 +430,7 @@ const inspectionAcceptanceReportResolver = {
             {
               purchaseOrderItemId: poi.id,
               purchaseOrderId: poi.purchaseOrderId,
-              itemName: poi.itemName || "",
+              itemName: poi.itemName || '',
               description: description ?? poi.description ?? null,
               previousQuantity: poi.quantity,
               newQuantity: poi.quantity,
@@ -452,14 +442,39 @@ const inspectionAcceptanceReportResolver = {
               parId: iarRow.parId || null,
               risId: iarRow.risId || null,
               icsId: iarRow.icsId || null,
-              changeType: "received_update",
+              changeType: 'received_update',
               changedBy: user.name || user.id,
-              changeReason: "Appended to existing IAR",
+              changeReason: 'Appended to existing IAR',
             },
-            { transaction: t },
+            { transaction: t }
           );
 
           appended += 1;
+        }
+
+        // After processing all items, determine PO-level iarStatus.
+        // iarStatus should be "complete" only if ALL items on the PO are fully received.
+        if (appended > 0 && existingIar) {
+          const allPoItems = await PurchaseOrderItems.findAll({
+            where: { purchaseOrderId: existingIar.purchaseOrderId, isDeleted: false },
+            attributes: ['id', 'quantity', 'actualQuantityReceived'],
+            transaction: t,
+          });
+
+          const allFullyReceived = allPoItems.every(
+            (item) => Number(item.actualQuantityReceived || 0) >= Number(item.quantity || 0)
+          );
+
+          const finalIarStatus = allFullyReceived ? 'complete' : 'partial';
+
+          // Bulk-update all IAR records in this batch to the correct PO-level status
+          await inspectionAcceptanceReport.update(
+            { iarStatus: finalIarStatus },
+            {
+              where: { iarId, ...scope },
+              transaction: t,
+            }
+          );
         }
 
         await t.commit();
@@ -470,12 +485,12 @@ const inspectionAcceptanceReportResolver = {
           message:
             appended > 0
               ? `Appended ${appended} line(s) to IAR ${iarId}`
-              : "No lines appended (nothing to receive or invalid input)",
+              : 'No lines appended (nothing to receive or invalid input)',
         };
       } catch (error) {
         await t.rollback();
-        console.error("appendToExistingIAR error:", error);
-        throw new Error(error.message || "Failed to append to IAR");
+        console.error('appendToExistingIAR error:', error);
+        throw new Error(error.message || 'Failed to append to IAR');
       }
     },
 
@@ -485,23 +500,17 @@ const inspectionAcceptanceReportResolver = {
      * tagged (low/high for ICS), and received quantities are set.
      * Creates IAR records and updates PO item received qty + delivery status.
      */
-    generateIARFromPO: async (
-      _,
-      { purchaseOrderId, items, invoice },
-      context,
-    ) => {
+    generateIARFromPO: async (_, { purchaseOrderId, items, invoice }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-        const user = context.req.user;
+        requireAuthenticated(context);
+        const user = await context.getUser();
 
         if (!purchaseOrderId) {
-          throw new Error("Purchase Order ID is required");
+          throw new Error('Purchase Order ID is required');
         }
         if (!Array.isArray(items) || items.length === 0) {
-          throw new Error("No items provided");
+          throw new Error('No items provided');
         }
 
         // Validate PO exists
@@ -509,20 +518,19 @@ const inspectionAcceptanceReportResolver = {
           transaction: t,
         });
         if (!po || po.isDeleted) {
-          throw new Error("Purchase Order not found");
+          throw new Error('Purchase Order not found');
         }
 
         // Generate a single IAR ID for the entire batch
-        const campus = po.campus || "Talisay";
-        const autoIarId = await generateNewIarId(campus);
+        const campus = po.campus || 'Talisay';
+        const autoIarId = await nextIarId(campus, transaction);
 
         let processedCount = 0;
 
         for (const line of items) {
           const { purchaseOrderItemId, category, tag, received } = line;
 
-          if (!purchaseOrderItemId || !received || Number(received) <= 0)
-            continue;
+          if (!purchaseOrderItemId || !received || Number(received) <= 0) continue;
 
           // Lock the POI and validate
           const poi = await PurchaseOrderItems.findByPk(purchaseOrderItemId, {
@@ -531,15 +539,13 @@ const inspectionAcceptanceReportResolver = {
           });
           if (!poi || poi.isDeleted) continue;
           if (poi.purchaseOrderId !== parseInt(purchaseOrderId)) {
-            throw new Error(
-              `Item ${purchaseOrderItemId} does not belong to PO ${purchaseOrderId}`,
-            );
+            throw new Error(`Item ${purchaseOrderItemId} does not belong to PO ${purchaseOrderId}`);
           }
 
           // Calculate remaining and clamp
           const remaining = Math.max(
             0,
-            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0),
+            Number(poi.quantity || 0) - Number(poi.actualQuantityReceived || 0)
           );
           const delta = Math.min(remaining, Number(received));
           if (delta <= 0) continue;
@@ -548,54 +554,52 @@ const inspectionAcceptanceReportResolver = {
           const afterAqr = beforeAqr + delta;
 
           // Determine delivery status
-          let deliveryStatus = "partial";
+          let deliveryStatus = 'partial';
           if (afterAqr >= Number(poi.quantity || 0)) {
-            deliveryStatus = "delivered";
+            deliveryStatus = 'delivered';
           }
 
           // Update PO item: category, tag, received qty, delivery status
           await PurchaseOrderItems.update(
             {
-              category: category || poi.category || "requisition issue slip",
-              tag: tag || poi.tag || "",
+              category: category || poi.category || null,
+              tag: tag || poi.tag || '',
               actualQuantityReceived: afterAqr,
               deliveryStatus,
-              deliveredDate:
-                deliveryStatus === "delivered" ? new Date() : poi.deliveredDate,
+              deliveredDate: deliveryStatus === 'delivered' ? new Date() : poi.deliveredDate,
             },
-            { where: { id: poi.id }, transaction: t },
+            { where: { id: poi.id }, transaction: t }
           );
 
           // Create IAR record
           const iarRow = await inspectionAcceptanceReport.create(
             {
-              itemName: poi.itemName || "",
-              description: poi.description || "",
-              generalDescription: poi.generalDescription || "",
-              specification: poi.specification || "",
-              unit: poi.unit || "",
+              itemName: poi.itemName || '',
+              description: poi.description || '',
+              generalDescription: poi.generalDescription || '',
+              specification: poi.specification || '',
+              unit: poi.unit || '',
               quantity: poi.quantity,
               unitCost: poi.unitCost,
               amount: poi.amount,
-              category: category || poi.category || "requisition issue slip",
-              tag: tag || poi.tag || "",
-              inventoryNumber: poi.inventoryNumber || "",
+              category: category || poi.category || null,
+              tag: tag || poi.tag || '',
+              inventoryNumber: poi.inventoryNumber || '',
               iarId: autoIarId,
               purchaseOrderId: parseInt(purchaseOrderId),
               purchaseOrderItemId: poi.id,
               actualQuantityReceived: delta,
               // Use invoice from the modal (which may come from the PO or be user-entered)
-              invoice: invoice || po.invoice || "",
-              createdBy: user.name || user.id,
-              updatedBy: user.name || user.id,
-              parId: "",
-              icsId: "",
-              risId: "",
+              invoice: invoice || po.invoice || '',
+              createdBy: user?.email || null,
+              updatedBy: user?.email || null,
+              parId: '',
+              icsId: '',
+              risId: '',
               // "complete" if this item was fully received, "partial" otherwise
-              iarStatus:
-                deliveryStatus === "delivered" ? "complete" : "partial",
+              iarStatus: deliveryStatus === 'delivered' ? 'complete' : 'partial',
             },
-            { transaction: t },
+            { transaction: t }
           );
 
           // History entry
@@ -603,8 +607,8 @@ const inspectionAcceptanceReportResolver = {
             {
               purchaseOrderItemId: poi.id,
               purchaseOrderId: parseInt(purchaseOrderId),
-              itemName: poi.itemName || "",
-              description: poi.description || "",
+              itemName: poi.itemName || '',
+              description: poi.description || '',
               previousQuantity: poi.quantity,
               newQuantity: poi.quantity,
               previousActualQuantityReceived: beforeAqr,
@@ -612,17 +616,42 @@ const inspectionAcceptanceReportResolver = {
               previousAmount: poi.amount,
               newAmount: poi.amount,
               iarId: iarRow.iarId || autoIarId,
-              parId: "",
-              risId: "",
-              icsId: "",
-              changeType: "received_update",
+              parId: '',
+              risId: '',
+              icsId: '',
+              changeType: 'received_update',
               changedBy: user.name || user.id,
-              changeReason: "IAR generated from Purchase Order",
+              changeReason: 'IAR generated from Purchase Order',
             },
-            { transaction: t },
+            { transaction: t }
           );
 
           processedCount += 1;
+        }
+
+        // After processing all items, determine PO-level iarStatus.
+        // iarStatus should be "complete" only if ALL items on the PO are fully received.
+        if (processedCount > 0) {
+          const allPoItems = await PurchaseOrderItems.findAll({
+            where: { purchaseOrderId: parseInt(purchaseOrderId), isDeleted: false },
+            attributes: ['id', 'quantity', 'actualQuantityReceived'],
+            transaction: t,
+          });
+
+          const allFullyReceived = allPoItems.every(
+            (item) => Number(item.actualQuantityReceived || 0) >= Number(item.quantity || 0)
+          );
+
+          const finalIarStatus = allFullyReceived ? 'complete' : 'partial';
+
+          // Bulk-update all IAR records in this batch to the correct PO-level status
+          await inspectionAcceptanceReport.update(
+            { iarStatus: finalIarStatus },
+            {
+              where: { iarId: autoIarId },
+              transaction: t,
+            }
+          );
         }
 
         await t.commit();
@@ -633,44 +662,33 @@ const inspectionAcceptanceReportResolver = {
           message:
             processedCount > 0
               ? `Generated IAR ${autoIarId} with ${processedCount} item(s)`
-              : "No items processed (nothing to receive or invalid input)",
+              : 'No items processed (nothing to receive or invalid input)',
         };
       } catch (error) {
         await t.rollback();
-        console.error("generateIARFromPO error:", error);
-        throw new Error(error.message || "Failed to generate IAR");
+        console.error('generateIARFromPO error:', error);
+        throw new Error(error.message || 'Failed to generate IAR');
       }
     },
 
-    createLineItemFromExisting: async (
-      _,
-      { sourceItemId, newItem },
-      context,
-    ) => {
+    createLineItemFromExisting: async (_, { sourceItemId, newItem }, context) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
         const user = context.req.user;
+        const scope = ownershipScope(user);
 
-        const {
-          iarId,
-          quantity,
-          received,
-          description,
-          generalDescription,
-          specification,
-        } = newItem;
+        const { iarId, quantity, received, description, generalDescription, specification } =
+          newItem;
 
         if (!iarId) {
-          throw new Error("IAR ID is required");
+          throw new Error('IAR ID is required');
         }
         if (!quantity || quantity <= 0) {
-          throw new Error("Quantity must be greater than 0");
+          throw new Error('Quantity must be greater than 0');
         }
         if (!received || received <= 0 || received > quantity) {
-          throw new Error("Received must be between 1 and quantity");
+          throw new Error('Received must be between 1 and quantity');
         }
 
         // Lock and load the source PO item
@@ -679,7 +697,7 @@ const inspectionAcceptanceReportResolver = {
           lock: t.LOCK.UPDATE,
         });
         if (!sourcePoi || sourcePoi.isDeleted) {
-          throw new Error("Source item not found");
+          throw new Error('Source item not found');
         }
 
         // Ensure we have or generate an itemGroupId for linking
@@ -689,7 +707,7 @@ const inspectionAcceptanceReportResolver = {
           groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           await PurchaseOrderItems.update(
             { itemGroupId: groupId },
-            { where: { id: sourcePoi.id }, transaction: t },
+            { where: { id: sourcePoi.id }, transaction: t }
           );
         }
 
@@ -700,30 +718,28 @@ const inspectionAcceptanceReportResolver = {
             purchaseOrderId: sourcePoi.purchaseOrderId,
             itemName: sourcePoi.itemName,
             description: description || sourcePoi.description,
-            generalDescription:
-              generalDescription || sourcePoi.generalDescription,
+            generalDescription: generalDescription || sourcePoi.generalDescription,
             specification: specification || sourcePoi.specification,
             unit: sourcePoi.unit,
             quantity: sourcePoi.quantity, // Copy original quantity
             unitCost: sourcePoi.unitCost,
-            amount:
-              Number(sourcePoi.quantity || 0) * Number(sourcePoi.unitCost || 0),
+            amount: Number(sourcePoi.quantity || 0) * Number(sourcePoi.unitCost || 0),
             category: sourcePoi.category,
             tag: sourcePoi.tag,
             inventoryNumber: sourcePoi.inventoryNumber,
             actualQuantityReceived: received,
             itemGroupId: groupId, // Link to the same group
             isReceiptLine: true, // Mark as a receipt line
-            createdBy: user.name || user.id,
-            updatedBy: user.name || user.id,
+            createdBy: user?.email || null,
+            updatedBy: user?.email || null,
           },
-          { transaction: t },
+          { transaction: t }
         );
 
         // Load existing IAR to inherit doc IDs
         const existingIar = await inspectionAcceptanceReport.findOne({
-          where: { iarId, isDeleted: false },
-          order: [["createdAt", "DESC"]],
+          where: { iarId, isDeleted: false, ...scope },
+          order: [['createdAt', 'DESC']],
           transaction: t,
         });
 
@@ -745,17 +761,16 @@ const inspectionAcceptanceReportResolver = {
             purchaseOrderId: newPoi.purchaseOrderId,
             purchaseOrderItemId: newPoi.id,
             actualQuantityReceived: received,
-            createdBy: user.name || user.id,
-            updatedBy: user.name || user.id,
+            createdBy: user?.email || null,
+            updatedBy: user?.email || null,
             // inherit document IDs if present
             parId: existingIar?.parId || null,
             icsId: existingIar?.icsId || null,
             risId: existingIar?.risId || null,
             // "complete" if fully received, "partial" otherwise
-            iarStatus:
-              received >= Number(newPoi.quantity || 0) ? "complete" : "partial",
+            iarStatus: received >= Number(newPoi.quantity || 0) ? 'complete' : 'partial',
           },
-          { transaction: t },
+          { transaction: t }
         );
 
         // Create history entry
@@ -763,7 +778,7 @@ const inspectionAcceptanceReportResolver = {
           {
             purchaseOrderItemId: newPoi.id,
             purchaseOrderId: newPoi.purchaseOrderId,
-            itemName: newPoi.itemName || "",
+            itemName: newPoi.itemName || '',
             description: newPoi.description,
             previousQuantity: 0,
             newQuantity: newPoi.quantity,
@@ -775,11 +790,11 @@ const inspectionAcceptanceReportResolver = {
             parId: iarRow.parId || null,
             risId: iarRow.risId || null,
             icsId: iarRow.icsId || null,
-            changeType: "item_creation",
+            changeType: 'item_creation',
             changedBy: user.name || user.id,
             changeReason: `New line item created from source item ${sourceItemId} with itemGroupId ${groupId}`,
           },
-          { transaction: t },
+          { transaction: t }
         );
 
         await t.commit();
@@ -791,25 +806,25 @@ const inspectionAcceptanceReportResolver = {
         };
       } catch (error) {
         await t.rollback();
-        console.error("createLineItemFromExisting error:", error);
-        throw new Error(error.message || "Failed to create line item");
+        console.error('createLineItemFromExisting error:', error);
+        throw new Error(error.message || 'Failed to create line item');
       }
     },
 
     // Update IAR-specific invoice, invoiceDate, income, mds, details
     updateIARInvoice: async (
       _,
-      { iarId, invoice, invoiceDate, income, mds, details },
-      context,
+      { iarId, invoice, invoiceDate, income, mds, details, poRemarks },
+      context
     ) => {
       const t = await sequelize.transaction();
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const scope = ownershipScope(user);
 
         if (!iarId) {
-          throw new Error("IAR ID is required.");
+          throw new Error('IAR ID is required.');
         }
 
         // Build the update object with only provided fields
@@ -819,15 +834,13 @@ const inspectionAcceptanceReportResolver = {
         if (income !== undefined) updateData.income = income;
         if (mds !== undefined) updateData.mds = mds;
         if (details !== undefined) updateData.details = details;
+        if (poRemarks !== undefined) updateData.poRemarks = poRemarks;
 
         // Update all records that match the iar_id
-        const [updatedCount] = await inspectionAcceptanceReport.update(
-          updateData,
-          {
-            where: { iarId },
-            transaction: t,
-          },
-        );
+        const [updatedCount] = await inspectionAcceptanceReport.update(updateData, {
+          where: { iarId, ...scope },
+          transaction: t,
+        });
 
         await t.commit();
 
@@ -840,27 +853,24 @@ const inspectionAcceptanceReportResolver = {
           income: income ?? null,
           mds: mds ?? null,
           details: details ?? null,
+          poRemarks: poRemarks ?? null,
           updatedCount,
         };
       } catch (error) {
         await t.rollback();
-        console.error("updateIARInvoice error:", error);
-        throw new Error(error.message || "Failed to update IAR");
+        console.error('updateIARInvoice error:', error);
+        throw new Error(error.message || 'Failed to update IAR');
       }
     },
 
     // Split items by quantity and assign separate ICS IDs with per-split signatories
     splitAndAssignICS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
-
-        // Reset ICS ID batch counter so sequential IDs are generated properly
-        resetIcsIdBatch();
 
         const transaction = await sequelize.transaction();
 
@@ -870,6 +880,7 @@ const inspectionAcceptanceReportResolver = {
 
             const original = await inspectionAcceptanceReport.findByPk(itemId, {
               transaction,
+              lock: transaction.LOCK.UPDATE,
               include: [PurchaseOrder],
             });
 
@@ -877,16 +888,33 @@ const inspectionAcceptanceReportResolver = {
               throw new Error(`Item with ID ${itemId} not found`);
             }
 
+            authorizeOwnership(original, context);
+
             if (splits.length === 0) {
-              throw new Error("At least one split is required per item");
+              throw new Error('At least one split is required per item');
             }
 
             // Validate tag for ICS ID generation
             const tag = original.tag;
-            if (!tag || (tag !== "high" && tag !== "low")) {
+            if (!tag || (tag !== 'high' && tag !== 'low')) {
               throw new Error(
-                `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${tag}'`,
+                `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${tag}'`
               );
+            }
+
+            // Validate total split quantity equals original
+            const totalSplitQty = splits.reduce((sum, s) => sum + Number(s.quantity), 0);
+            const originalQty = Number(original.actualQuantityReceived || 0);
+            if (totalSplitQty !== originalQty) {
+              throw new Error(
+                `Total split quantity (${totalSplitQty}) must equal original quantity (${originalQty}).`
+              );
+            }
+            // Validate each split quantity is positive
+            for (const split of splits) {
+              if (!split.quantity || Number(split.quantity) <= 0) {
+                throw new Error('Each split must have a quantity greater than 0.');
+              }
             }
 
             // Generate a split group ID to track all pieces back to this original
@@ -896,20 +924,15 @@ const inspectionAcceptanceReportResolver = {
 
             // Calculate equal amount per split (divide original amount equally)
             const originalAmount = parseFloat(original.amount || 0);
-            const equalAmountPerSplit = parseFloat(
-              (originalAmount / totalSplits).toFixed(2),
-            );
+            const equalAmountPerSplit = parseFloat((originalAmount / totalSplits).toFixed(2));
             // Handle rounding remainder: give any leftover cents to the first split
             const firstSplitAmount = parseFloat(
-              (
-                originalAmount -
-                equalAmountPerSplit * (totalSplits - 1)
-              ).toFixed(2),
+              (originalAmount - equalAmountPerSplit * (totalSplits - 1)).toFixed(2)
             );
 
             // First split: update the original record
             const firstSplit = splits[0];
-            const firstIcsId = await generateNewIcsId(tag);
+            const firstIcsId = await nextIcsId(tag, transaction);
 
             await original.update(
               {
@@ -917,16 +940,17 @@ const inspectionAcceptanceReportResolver = {
                 amount: firstSplitAmount,
                 icsId: firstIcsId,
                 icsReceivedFrom: firstSplit.receivedFrom,
-                icsReceivedFromPosition: firstSplit.receivedFromPosition || "",
+                icsReceivedFromPosition: firstSplit.receivedFromPosition || '',
                 icsReceivedBy: firstSplit.receivedBy,
-                icsReceivedByPosition: firstSplit.receivedByPosition || "",
-                icsDepartment: firstSplit.department || "",
+                icsReceivedByPosition: firstSplit.receivedByPosition || '',
+                icsDepartment: firstSplit.department || '',
                 icsAssignedDate: new Date(),
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
+                updatedBy: user?.email || null,
               },
-              { transaction },
+              { transaction }
             );
 
             allResultIds.push(original.id);
@@ -934,7 +958,7 @@ const inspectionAcceptanceReportResolver = {
             // Additional splits: clone the original record
             for (let i = 1; i < splits.length; i++) {
               const split = splits[i];
-              const newIcsId = await generateNewIcsId(tag);
+              const newIcsId = await nextIcsId(tag, transaction);
               const originalData = original.toJSON();
 
               const clonedRecord = await inspectionAcceptanceReport.create(
@@ -965,16 +989,17 @@ const inspectionAcceptanceReportResolver = {
                   amount: equalAmountPerSplit,
                   icsId: newIcsId,
                   icsReceivedFrom: split.receivedFrom,
-                  icsReceivedFromPosition: split.receivedFromPosition || "",
+                  icsReceivedFromPosition: split.receivedFromPosition || '',
                   icsReceivedBy: split.receivedBy,
-                  icsReceivedByPosition: split.receivedByPosition || "",
-                  icsDepartment: split.department || "",
+                  icsReceivedByPosition: split.receivedByPosition || '',
+                  icsDepartment: split.department || '',
                   icsAssignedDate: new Date(),
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
                   splitIndex: i + 1,
+                  recordType: 'issuance_clone',
                 },
-                { transaction },
+                { transaction }
               );
 
               allResultIds.push(clonedRecord.id);
@@ -994,17 +1019,15 @@ const inspectionAcceptanceReportResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in splitAndAssignICS:", error);
-        throw new Error(error.message || "Failed to split and assign ICS");
+        console.error('Error in splitAndAssignICS:', error);
+        throw new Error(error.message || 'Failed to split and assign ICS');
       }
     },
 
     // Create a single ICS assignment (saves immediately, clones from source)
     createSingleICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           sourceItemId,
@@ -1016,47 +1039,43 @@ const inspectionAcceptanceReportResolver = {
           receivedByPosition,
         } = input;
 
-        // Fetch the source item
-        const sourceItem = await inspectionAcceptanceReport.findByPk(
-          sourceItemId,
-          {
-            include: [PurchaseOrder],
-          },
-        );
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(
-            `Quantity (${quantity}) exceeds available (${currentReceived})`,
-          );
-        }
-        if (quantity <= 0) {
-          throw new Error("Quantity must be greater than 0");
-        }
-
-        const sourceData = sourceItem.toJSON();
-
-        // Validate tag for ICS ID generation
-        if (
-          !sourceData.tag ||
-          (sourceData.tag !== "high" && sourceData.tag !== "low")
-        ) {
-          throw new Error(
-            `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sourceData.tag}'`,
-          );
-        }
-
-        // Generate new ICS ID using the item's tag
-        const newIcsId = await generateNewIcsId(sourceData.tag);
-
         // Use transaction for atomicity
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item with lock
+          const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+
+          // Validate tag for ICS ID generation
+          if (!sourceData.tag || (sourceData.tag !== 'high' && sourceData.tag !== 'low')) {
+            throw new Error(
+              `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sourceData.tag}'`
+            );
+          }
+
+          // Generate new ICS ID using the item's tag
+          const newIcsId = await nextIcsId(sourceData.tag, transaction);
+
           // Create new record with the assigned quantity and ICS ID
           const newItem = await inspectionAcceptanceReport.create(
             {
@@ -1087,37 +1106,29 @@ const inspectionAcceptanceReportResolver = {
               amount: quantity * parseFloat(sourceData.unitCost || 0),
               icsId: newIcsId,
               icsReceivedFrom: receivedFrom,
-              icsReceivedFromPosition: receivedFromPosition || "",
+              icsReceivedFromPosition: receivedFromPosition || '',
               icsReceivedBy: receivedBy,
-              icsReceivedByPosition: receivedByPosition || "",
-              icsDepartment: department || "",
+              icsReceivedByPosition: receivedByPosition || '',
+              icsDepartment: department || '',
               icsAssignedDate: new Date(),
+              recordType: 'issuance_clone',
             },
-            { transaction },
+            { transaction }
           );
 
           // Update source item: reduce actualQuantityReceived
           const newSourceQty = currentReceived - quantity;
-          await sourceItem.update(
-            { actualQuantityReceived: newSourceQty },
-            { transaction },
-          );
+          await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
 
           await transaction.commit();
 
           // Fetch updated items with associations
-          const updatedNewItem = await inspectionAcceptanceReport.findByPk(
-            newItem.id,
-            {
-              include: [PurchaseOrder],
-            },
-          );
-          const updatedSourceItem = await inspectionAcceptanceReport.findByPk(
-            sourceItemId,
-            {
-              include: [PurchaseOrder],
-            },
-          );
+          const updatedNewItem = await inspectionAcceptanceReport.findByPk(newItem.id, {
+            include: [PurchaseOrder],
+          });
+          const updatedSourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+          });
 
           return {
             newItem: updatedNewItem,
@@ -1129,17 +1140,15 @@ const inspectionAcceptanceReportResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in createSingleICSAssignment:", error);
-        throw new Error(error.message || "Failed to create ICS assignment");
+        console.error('Error in createSingleICSAssignment:', error);
+        throw new Error(error.message || 'Failed to create ICS assignment');
       }
     },
 
     // Create a multi-item ICS assignment (multiple items share one ICS ID per end user)
     createMultiItemICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           items,
@@ -1151,44 +1160,41 @@ const inspectionAcceptanceReportResolver = {
         } = input;
 
         if (!items || items.length === 0) {
-          throw new Error("At least one item is required");
+          throw new Error('At least one item is required');
         }
 
-        // All items in a multi-ICS batch must share the same tag for ICS ID generation
-        // Use the first item's tag to generate the shared ID
-        const firstSource = await inspectionAcceptanceReport.findByPk(
-          items[0].sourceItemId,
-        );
-        if (!firstSource) {
-          throw new Error(
-            `Source item with ID ${items[0].sourceItemId} not found`,
-          );
-        }
-        const sharedTag = firstSource.tag;
-        if (!sharedTag || (sharedTag !== "high" && sharedTag !== "low")) {
-          throw new Error(
-            `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sharedTag}'`,
-          );
-        }
-
-        // Generate a single ICS ID for all items
-        const sharedIcsId = await generateNewIcsId(sharedTag);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, items.map(i => i.sourceItemId), context);
 
         const transaction = await sequelize.transaction();
         const newItemIds = [];
         const sourceItemIds = [];
 
         try {
+          // Validate first item's tag and generate shared ICS ID
+          const firstSource = await inspectionAcceptanceReport.findByPk(items[0].sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+          if (!firstSource) {
+            throw new Error(`Source item with ID ${items[0].sourceItemId} not found`);
+          }
+          const sharedTag = firstSource.tag;
+          if (!sharedTag || (sharedTag !== 'high' && sharedTag !== 'low')) {
+            throw new Error(
+              `Item tag must be 'high' or 'low' for ICS ID generation. Got: '${sharedTag}'`
+            );
+          }
+
+          const sharedIcsId = await nextIcsId(sharedTag, transaction);
+
           for (const entry of items) {
             const { sourceItemId, quantity } = entry;
 
-            const sourceItem = await inspectionAcceptanceReport.findByPk(
-              sourceItemId,
-              {
-                include: [PurchaseOrder],
-                transaction,
-              },
-            );
+            const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+              include: [PurchaseOrder],
+              transaction,
+              lock: transaction.LOCK.UPDATE,
+            });
 
             if (!sourceItem) {
               throw new Error(`Source item with ID ${sourceItemId} not found`);
@@ -1197,11 +1203,11 @@ const inspectionAcceptanceReportResolver = {
             const currentReceived = sourceItem.actualQuantityReceived || 0;
             if (quantity > currentReceived) {
               throw new Error(
-                `Quantity (${quantity}) exceeds available (${currentReceived}) for item "${sourceItem.description}"`,
+                `Quantity (${quantity}) exceeds available (${currentReceived}) for item "${sourceItem.description}"`
               );
             }
             if (quantity <= 0) {
-              throw new Error("Quantity must be greater than 0");
+              throw new Error('Quantity must be greater than 0');
             }
 
             const sourceData = sourceItem.toJSON();
@@ -1234,22 +1240,20 @@ const inspectionAcceptanceReportResolver = {
                 amount: quantity * parseFloat(sourceData.unitCost || 0),
                 icsId: sharedIcsId,
                 icsReceivedFrom: receivedFrom,
-                icsReceivedFromPosition: receivedFromPosition || "",
+                icsReceivedFromPosition: receivedFromPosition || '',
                 icsReceivedBy: receivedBy,
-                icsReceivedByPosition: receivedByPosition || "",
-                icsDepartment: department || "",
+                icsReceivedByPosition: receivedByPosition || '',
+                icsDepartment: department || '',
                 icsAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
-              { transaction },
+              { transaction }
             );
 
             newItemIds.push(newItem.id);
 
             const newSourceQty = currentReceived - quantity;
-            await sourceItem.update(
-              { actualQuantityReceived: newSourceQty },
-              { transaction },
-            );
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
 
             sourceItemIds.push(sourceItemId);
           }
@@ -1275,121 +1279,150 @@ const inspectionAcceptanceReportResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in createMultiItemICSAssignment:", error);
-        throw new Error(
-          error.message || "Failed to create multi-item ICS assignment",
-        );
+        console.error('Error in createMultiItemICSAssignment:', error);
+        throw new Error(error.message || 'Failed to create multi-item ICS assignment');
       }
     },
 
-    // Add an item to an existing ICS ID
+    // Add an item to an existing ICS ID - COMBINES if same source item already exists in the ICS
     addItemToExistingICS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const { sourceItemId, quantity, existingIcsId } = input;
 
         if (!existingIcsId) {
-          throw new Error("Existing ICS ID is required");
+          throw new Error('Existing ICS ID is required');
         }
 
-        const existingICSItem = await inspectionAcceptanceReport.findOne({
-          where: { icsId: existingIcsId, isDeleted: false },
-        });
-
-        if (!existingICSItem) {
-          throw new Error(
-            `No existing item found with ICS ID "${existingIcsId}"`,
-          );
-        }
-
-        const sourceItem = await inspectionAcceptanceReport.findByPk(
-          sourceItemId,
-          {
-            include: [PurchaseOrder],
-          },
-        );
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(
-            `Quantity (${quantity}) exceeds available (${currentReceived})`,
-          );
-        }
-        if (quantity <= 0) {
-          throw new Error("Quantity must be greater than 0");
-        }
-
-        const sourceData = sourceItem.toJSON();
         const transaction = await sequelize.transaction();
 
         try {
-          const newItem = await inspectionAcceptanceReport.create(
-            {
-              iarId: sourceData.iarId,
-              risId: sourceData.risId,
-              parId: sourceData.parId,
-              purchaseOrderId: sourceData.purchaseOrderId,
-              purchaseOrderItemId: sourceData.purchaseOrderItemId,
-              iarStatus: sourceData.iarStatus,
-              description: sourceData.description,
-              unit: sourceData.unit,
-              quantity: sourceData.quantity,
-              unitCost: sourceData.unitCost,
-              category: sourceData.category,
-              tag: sourceData.tag,
-              isDeleted: 0,
-              createdBy: sourceData.createdBy,
-              updatedBy: sourceData.updatedBy,
-              inventoryNumber: sourceData.inventoryNumber,
-              itemName: sourceData.itemName,
-              invoice: sourceData.invoice,
-              invoiceDate: sourceData.invoiceDate,
-              income: sourceData.income,
-              mds: sourceData.mds,
-              details: sourceData.details,
-              actualQuantityReceived: quantity,
-              amount: quantity * parseFloat(sourceData.unitCost || 0),
+          // Fetch existing ICS item for metadata (inside transaction for consistency)
+          const existingICSItem = await inspectionAcceptanceReport.findOne({
+            where: { icsId: existingIcsId, isDeleted: false },
+            transaction,
+          });
+
+          if (!existingICSItem) {
+            throw new Error(`No existing item found with ICS ID "${existingIcsId}"`);
+          }
+
+          // Lock and load the source item being reduced
+          const sourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+
+          // Check if there's already an item with the same icsId AND same purchaseOrderItemId
+          // If so, COMBINE the quantities instead of creating a duplicate
+          const existingItemWithSameSource = await inspectionAcceptanceReport.findOne({
+            where: {
               icsId: existingIcsId,
-              icsReceivedFrom: existingICSItem.icsReceivedFrom,
-              icsReceivedFromPosition: existingICSItem.icsReceivedFromPosition,
-              icsReceivedBy: existingICSItem.icsReceivedBy,
-              icsReceivedByPosition: existingICSItem.icsReceivedByPosition,
-              icsDepartment: existingICSItem.icsDepartment,
-              icsAssignedDate: new Date(),
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              isDeleted: false,
+              id: { [Op.ne]: sourceItemId }, // Not the source item itself
             },
-            { transaction },
-          );
+            transaction,
+          });
 
-          const newSourceQty = currentReceived - quantity;
-          await sourceItem.update(
-            { actualQuantityReceived: newSourceQty },
-            { transaction },
-          );
+          let resultItem;
 
-          await transaction.commit();
+          if (existingItemWithSameSource) {
+            // COMBINE: Update existing item's quantity instead of creating a new one
+            const newQty = (existingItemWithSameSource.actualQuantityReceived || 0) + quantity;
+            const newAmount = newQty * parseFloat(existingItemWithSameSource.unitCost || 0);
 
-          const updatedNewItem = await inspectionAcceptanceReport.findByPk(
-            newItem.id,
-            {
+            await existingItemWithSameSource.update(
+              {
+                actualQuantityReceived: newQty,
+                amount: newAmount,
+              },
+              { transaction }
+            );
+
+            // Update source: reduce qty
+            const newSourceQty = currentReceived - quantity;
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+            await transaction.commit();
+
+            resultItem = await inspectionAcceptanceReport.findByPk(existingItemWithSameSource.id, {
               include: [PurchaseOrder],
-            },
-          );
-          const updatedSourceItem = await inspectionAcceptanceReport.findByPk(
-            sourceItemId,
-            {
+            });
+          } else {
+            // CREATE NEW: No existing item with same source, create a new record
+            const newItem = await inspectionAcceptanceReport.create(
+              {
+                iarId: sourceData.iarId,
+                risId: sourceData.risId,
+                parId: sourceData.parId,
+                purchaseOrderId: sourceData.purchaseOrderId,
+                purchaseOrderItemId: sourceData.purchaseOrderItemId,
+                iarStatus: sourceData.iarStatus,
+                description: sourceData.description,
+                unit: sourceData.unit,
+                quantity: sourceData.quantity,
+                unitCost: sourceData.unitCost,
+                category: sourceData.category,
+                tag: sourceData.tag,
+                isDeleted: 0,
+                createdBy: sourceData.createdBy,
+                updatedBy: sourceData.updatedBy,
+                inventoryNumber: sourceData.inventoryNumber,
+                itemName: sourceData.itemName,
+                invoice: sourceData.invoice,
+                invoiceDate: sourceData.invoiceDate,
+                income: sourceData.income,
+                mds: sourceData.mds,
+                details: sourceData.details,
+                actualQuantityReceived: quantity,
+                amount: quantity * parseFloat(sourceData.unitCost || 0),
+                icsId: existingIcsId,
+                icsReceivedFrom: existingICSItem.icsReceivedFrom,
+                icsReceivedFromPosition: existingICSItem.icsReceivedFromPosition,
+                icsReceivedBy: existingICSItem.icsReceivedBy,
+                icsReceivedByPosition: existingICSItem.icsReceivedByPosition,
+                icsDepartment: existingICSItem.icsDepartment,
+                icsAssignedDate: new Date(),
+                recordType: 'issuance_clone',
+              },
+              { transaction }
+            );
+
+            const newSourceQty = currentReceived - quantity;
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+            await transaction.commit();
+
+            resultItem = await inspectionAcceptanceReport.findByPk(newItem.id, {
               include: [PurchaseOrder],
-            },
-          );
+            });
+          }
+
+          const updatedSourceItem = await inspectionAcceptanceReport.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+          });
 
           return {
-            newItem: updatedNewItem,
+            newItem: resultItem,
             sourceItem: updatedSourceItem,
             icsId: existingIcsId,
           };
@@ -1398,17 +1431,15 @@ const inspectionAcceptanceReportResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in addItemToExistingICS:", error);
-        throw new Error(error.message || "Failed to add item to existing ICS");
+        console.error('Error in addItemToExistingICS:', error);
+        throw new Error(error.message || 'Failed to add item to existing ICS');
       }
     },
 
     // Update an existing ICS assignment
     updateICSAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           itemId,
@@ -1425,6 +1456,8 @@ const inspectionAcceptanceReportResolver = {
           throw new Error(`Item with ID ${itemId} not found`);
         }
 
+        authorizeOwnership(item, context);
+
         // Build update object with only provided fields
         const updateData = {};
         if (quantity !== undefined && quantity !== null) {
@@ -1432,13 +1465,11 @@ const inspectionAcceptanceReportResolver = {
           updateData.amount = quantity * parseFloat(item.unitCost || 0);
         }
         if (department !== undefined) updateData.icsDepartment = department;
-        if (receivedFrom !== undefined)
-          updateData.icsReceivedFrom = receivedFrom;
+        if (receivedFrom !== undefined) updateData.icsReceivedFrom = receivedFrom;
         if (receivedFromPosition !== undefined)
           updateData.icsReceivedFromPosition = receivedFromPosition;
         if (receivedBy !== undefined) updateData.icsReceivedBy = receivedBy;
-        if (receivedByPosition !== undefined)
-          updateData.icsReceivedByPosition = receivedByPosition;
+        if (receivedByPosition !== undefined) updateData.icsReceivedByPosition = receivedByPosition;
 
         await item.update(updateData);
 
@@ -1449,16 +1480,18 @@ const inspectionAcceptanceReportResolver = {
 
         return updatedItem;
       } catch (error) {
-        console.error("Error in updateICSAssignment:", error);
-        throw new Error(error.message || "Failed to update ICS assignment");
+        console.error('Error in updateICSAssignment:', error);
+        throw new Error(error.message || 'Failed to update ICS assignment');
       }
     },
 
     updateItemPurpose: async (_, { ids, purpose }, context) => {
       try {
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, ids, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { purpose },
-          { where: { id: ids } },
+          { where: { id: ids } }
         );
         return {
           success: true,
@@ -1466,16 +1499,18 @@ const inspectionAcceptanceReportResolver = {
           updatedCount,
         };
       } catch (error) {
-        console.error("Error in updateItemPurpose:", error);
-        throw new Error(error.message || "Failed to update purpose");
+        console.error('Error in updateItemPurpose:', error);
+        throw new Error(error.message || 'Failed to update purpose');
       }
     },
 
     updateItemRemarks: async (_, { ids, remarks }, context) => {
       try {
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(inspectionAcceptanceReport, ids, context);
         const [updatedCount] = await inspectionAcceptanceReport.update(
           { remarks },
-          { where: { id: ids } },
+          { where: { id: ids } }
         );
         return {
           success: true,
@@ -1483,8 +1518,231 @@ const inspectionAcceptanceReportResolver = {
           updatedCount,
         };
       } catch (error) {
-        console.error("Error in updateItemRemarks:", error);
-        throw new Error(error.message || "Failed to update remarks");
+        console.error('Error in updateItemRemarks:', error);
+        throw new Error(error.message || 'Failed to update remarks');
+      }
+    },
+
+    updateIcsDetails: async (_, { id, icsDetails }, context) => {
+      try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
+        const [updatedCount] = await inspectionAcceptanceReport.update(
+          { icsDetails },
+          { where: { id } }
+        );
+        return {
+          success: true,
+          message: `Updated ICS details for item`,
+          updatedCount,
+        };
+      } catch (error) {
+        console.error('Error in updateIcsDetails:', error);
+        throw new Error(error.message || 'Failed to update ICS details');
+      }
+    },
+
+    updateParDetails: async (_, { id, parDetails }, context) => {
+      try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
+        const [updatedCount] = await inspectionAcceptanceReport.update(
+          { parDetails },
+          { where: { id } }
+        );
+        return {
+          success: true,
+          message: `Updated PAR details for item`,
+          updatedCount,
+        };
+      } catch (error) {
+        console.error('Error in updateParDetails:', error);
+        throw new Error(error.message || 'Failed to update PAR details');
+      }
+    },
+
+    updateRisDetails: async (_, { id, risDetails }, context) => {
+      try {
+        requireAuthenticated(context);
+        const record = await inspectionAcceptanceReport.findByPk(id);
+        authorizeOwnership(record, context);
+        const [updatedCount] = await inspectionAcceptanceReport.update(
+          { risDetails },
+          { where: { id } }
+        );
+        return {
+          success: true,
+          message: `Updated RIS details for item`,
+          updatedCount,
+        };
+      } catch (error) {
+        console.error('Error in updateRisDetails:', error);
+        throw new Error(error.message || 'Failed to update RIS details');
+      }
+    },
+
+    updateIARItemDisplay: async (_, { id, iarQuantityDisplay, amount }, context) => {
+      requireAuthenticated(context);
+      const item = await inspectionAcceptanceReport.findByPk(id);
+      if (!item) throw new Error(`IAR item with id ${id} not found`);
+      authorizeOwnership(item, context);
+
+      const updateData = {};
+      if (iarQuantityDisplay !== undefined) updateData.iarQuantityDisplay = iarQuantityDisplay;
+      if (amount !== undefined) updateData.amount = amount;
+
+      await item.update(updateData);
+
+      return {
+        success: true,
+        message: 'IAR item display updated successfully',
+        id: item.id,
+        iarQuantityDisplay: item.iarQuantityDisplay,
+        amount: item.amount,
+      };
+    },
+
+    // Assign a no-category IAR item: clones the record with an NC ticket ID
+    assignNoCategoryItem: async (_, { id, assignedQuantity, purpose }, context) => {
+      try {
+        requireAuthenticated(context);
+
+        // 1. Fetch the source IAR item
+        const sourceItem = await inspectionAcceptanceReport.findByPk(id, {
+          include: [PurchaseOrder],
+        });
+
+        if (!sourceItem) {
+          throw new Error(`IAR item with ID ${id} not found`);
+        }
+
+        authorizeOwnership(sourceItem, context);
+        if (sourceItem.isDeleted) {
+          throw new Error('Cannot assign a deleted item');
+        }
+        if (sourceItem.category !== null) {
+          throw new Error(
+            'This item already has a category (PAR/ICS/RIS). Use the appropriate issuance page.'
+          );
+        }
+
+        const currentReceived = Number(sourceItem.actualQuantityReceived || 0);
+        if (assignedQuantity <= 0) {
+          throw new Error('Assigned quantity must be greater than 0');
+        }
+        if (assignedQuantity > currentReceived) {
+          throw new Error(
+            `Assigned quantity (${assignedQuantity}) exceeds available quantity (${currentReceived})`
+          );
+        }
+
+        // 2. Generate NC ticket ID: NC-YYYY-MM-NNNN (auto-increment per year)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const yearPrefix = `NC-${year}-${month}-`;
+
+        // Find the highest existing NC ID for this year-month
+        const latestNc = await inspectionAcceptanceReport.findOne({
+          where: {
+            ncId: {
+              [Op.like]: `NC-${year}-${month}-%`,
+            },
+          },
+          order: [
+            [
+              Sequelize.literal(`CAST(SUBSTRING(ncId, ${yearPrefix.length + 1}) AS UNSIGNED)`),
+              'DESC',
+            ],
+          ],
+          attributes: ['ncId'],
+        });
+
+        let nextSequence = 1;
+        if (latestNc && latestNc.ncId) {
+          const parts = latestNc.ncId.split('-');
+          // NC-YYYY-MM-NNNN → parts[3] = NNNN
+          if (parts.length === 4) {
+            const lastSeq = parseInt(parts[3], 10);
+            if (!isNaN(lastSeq)) {
+              nextSequence = lastSeq + 1;
+            }
+          }
+        }
+
+        const ncId = `${yearPrefix}${String(nextSequence).padStart(4, '0')}`;
+        const sourceData = sourceItem.toJSON();
+
+        // 3. Use transaction for atomicity
+        const transaction = await sequelize.transaction();
+
+        try {
+          // Clone the source record with the assigned quantity and NC ID
+          const clonedItem = await inspectionAcceptanceReport.create(
+            {
+              iarId: sourceData.iarId,
+              icsId: sourceData.icsId,
+              risId: sourceData.risId,
+              purchaseOrderId: sourceData.purchaseOrderId,
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              iarStatus: sourceData.iarStatus,
+              description: sourceData.description,
+              generalDescription: sourceData.generalDescription,
+              specification: sourceData.specification,
+              unit: sourceData.unit,
+              quantity: sourceData.quantity,
+              unitCost: sourceData.unitCost,
+              category: null, // stays null — no category
+              tag: sourceData.tag,
+              isDeleted: 0,
+              createdBy: sourceData.createdBy,
+              updatedBy: sourceData.updatedBy,
+              inventoryNumber: sourceData.inventoryNumber,
+              itemName: sourceData.itemName,
+              invoice: sourceData.invoice,
+              invoiceDate: sourceData.invoiceDate,
+              income: sourceData.income,
+              mds: sourceData.mds,
+              details: sourceData.details,
+              poRemarks: sourceData.poRemarks,
+              // Assignment-specific fields
+              actualQuantityReceived: assignedQuantity,
+              amount: assignedQuantity * parseFloat(sourceData.unitCost || 0),
+              ncId: ncId,
+              purpose: purpose || '',
+              recordType: 'issuance_clone',
+            },
+            { transaction }
+          );
+
+          // Reduce source item's available quantity
+          const newSourceQty = currentReceived - assignedQuantity;
+          await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+          await transaction.commit();
+
+          // Fetch updated items with associations
+          const updatedClone = await inspectionAcceptanceReport.findByPk(clonedItem.id, {
+            include: [PurchaseOrder],
+          });
+          const updatedSource = await inspectionAcceptanceReport.findByPk(id, {
+            include: [PurchaseOrder],
+          });
+
+          return {
+            newItem: updatedClone,
+            sourceItem: updatedSource,
+            generatedNcId: ncId,
+          };
+        } catch (innerError) {
+          await transaction.rollback();
+          throw innerError;
+        }
+      } catch (error) {
+        console.error('Error in assignNoCategoryItem:', error);
+        throw new Error(error.message || 'Failed to assign no-category item');
       }
     },
   },

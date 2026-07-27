@@ -1,10 +1,10 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js";
-import PurchaseOrder from "./purchaseorder.js";
-import Role from "./role.js"; // new role model
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js';
+import PurchaseOrder from './purchaseorder.js';
+import Role from './role.js'; // new role model
 
 const Signatory = sequelize.define(
-  "Signatory",
+  'Signatory',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -25,16 +25,16 @@ const Signatory = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "roles",
-        key: "id",
+        model: 'roles',
+        key: 'id',
       },
     },
     purchaseOrderId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "purchase_orders",
-        key: "id",
+        model: 'purchase_orders',
+        key: 'id',
       },
     },
     isDeleted: {
@@ -44,18 +44,18 @@ const Signatory = sequelize.define(
     },
   },
   {
-    tableName: "signatories",
+    tableName: 'signatories',
     underscored: true,
     timestamps: true,
   }
 );
 
 // Associations
-Signatory.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
-PurchaseOrder.hasMany(Signatory, { foreignKey: "purchaseOrderId" });
+Signatory.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId' });
+PurchaseOrder.hasMany(Signatory, { foreignKey: 'purchaseOrderId' });
 
 // optional association to Role
-Signatory.belongsTo(Role, { foreignKey: "roleId" });
-Role.hasMany(Signatory, { foreignKey: "roleId" });
+Signatory.belongsTo(Role, { foreignKey: 'roleId' });
+Role.hasMany(Signatory, { foreignKey: 'roleId' });
 
 export default Signatory;

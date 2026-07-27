@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   CircularProgress,
   Alert,
@@ -9,7 +9,7 @@ import {
   Button,
   Tooltip,
   Backdrop,
-} from "@mui/material";
+} from '@mui/material';
 import {
   DataGrid,
   GridColDef,
@@ -19,12 +19,12 @@ import {
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
-import PrintIcon from "@mui/icons-material/Print";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { Menu, MenuItem } from "@mui/material"; // Add this import at the top
+} from '@mui/x-data-grid';
+import PrintIcon from '@mui/icons-material/Print';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { Menu, MenuItem } from '@mui/material'; // Add this import at the top
 //@ts-ignore
-import AddIcon from "@mui/icons-material/Add";
+import AddIcon from '@mui/icons-material/Add';
 export function CustomToolbarForTable({
   props,
   onExportWithItems,
@@ -48,12 +48,7 @@ export function CustomToolbarForTable({
       <GridToolbarColumnsButton />
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
-      <Button
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={() => onAddPO()}
-        sx={{ ml: 1 }}
-      >
+      <Button color="primary" startIcon={<AddIcon />} onClick={() => onAddPO()} sx={{ ml: 1 }}>
         Add PO
       </Button>
       <Tooltip title="Export">

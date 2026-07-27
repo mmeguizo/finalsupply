@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 const GET_AUTHENTICATED_USER = gql`
   query GetAuthenticatedUser {
     authUser {
@@ -31,13 +31,11 @@ const GET_ALL_USERS = gql`
   }
 `;
 
-
 const GET_USERS_COUNT = gql`
   query CountAllUsers {
     countAllUsers
   }
+`;
 
-`
-
-export { GET_AUTHENTICATED_USER , GET_USERS_COUNT, GET_ALL_USERS };
+export { GET_AUTHENTICATED_USER, GET_USERS_COUNT, GET_ALL_USERS };
 // Compare this snippet from backend/routes/user.routes.js:

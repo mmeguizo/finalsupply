@@ -82,28 +82,6 @@ type PurchaseOrderBarChartDataType {
     data : JSON
 }
 
-type ItemWithPurchaseOrder {
-    id: ID
-    itemName: String
-    purchaseOrderId: String
-    description: String
-    unit: String
-    quantity: Int
-    unitCost: Float
-    amount: Float
-    category: String
-    isDeleted: Boolean
-    actualQuantityReceived: Int
-    currentInput: Int
-    PurchaseOrder: PurchaseOrderType
-    tag : String
-    inventoryNumber : String
-    iarId : String
-    splitGroupId: String
-    splitFromItemId: Int
-    splitIndex: Int
-}
-
 type PurchaseOrderType {
     poNumber: String
     supplier: String
@@ -254,7 +232,7 @@ input PurchaseOrderInput {
 
 
 type Query {
-    purchaseOrders: [PurchaseOrder!]
+    purchaseOrders(limit: Int, offset: Int): [PurchaseOrder!]
     purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
     purchaseOrderItems(purchaseOrderId: ID!): [Item!]
     purchaseOrderItems: [Item!]

@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   CircularProgress,
   Alert,
@@ -20,14 +20,14 @@ import {
   Toolbar,
   TablePagination,
   Chip,
-} from "@mui/material";
-import Checkbox from "@mui/material/Checkbox";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import { currencyFormat, formatDateString } from "../../utils/generalUtils";
-import PreviewIcon from "@mui/icons-material/Preview";
-import PrintIcon from "@mui/icons-material/Print";
+} from '@mui/material';
+import Checkbox from '@mui/material/Checkbox';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import { currencyFormat, formatDateString } from '../../utils/generalUtils';
+import PreviewIcon from '@mui/icons-material/Preview';
+import PrintIcon from '@mui/icons-material/Print';
 
 const Row = (props: {
   row: any;
@@ -35,26 +35,20 @@ const Row = (props: {
   handleOpenAssignmentModal?: (item: any) => void;
   handleOpenMultiAssignModal?: (row: any) => void;
 }) => {
-  const {
-    row,
-    handleOpenPrintModal,
-    handleOpenAssignmentModal,
-    handleOpenMultiAssignModal,
-  } = props;
+  const { row, handleOpenPrintModal, handleOpenAssignmentModal, handleOpenMultiAssignModal } =
+    props;
   const [open, setOpen] = React.useState(false);
-  const [idSearch, setIdSearch] = React.useState("");
+  const [idSearch, setIdSearch] = React.useState('');
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const filteredItems = React.useMemo(() => {
     const term = idSearch.trim().toLowerCase();
     // Filter out items with actualQuantityReceived = 0 (fully assigned/split)
     let items = row.items.filter(
-      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.parId,
+      (item: any) => (item.actualQuantityReceived ?? 0) > 0 || item.parId
     );
     if (term) {
-      items = items.filter((item: any) =>
-        (item.parId || "").toLowerCase().includes(term),
-      );
+      items = items.filter((item: any) => (item.parId || '').toLowerCase().includes(term));
     }
     return items;
   }, [row.items, idSearch]);
@@ -102,20 +96,14 @@ const Row = (props: {
 
   // Calculate items without PAR ID (need assignment) - exclude items with 0 quantity
   const unassignedInRow = React.useMemo(() => {
-    return row.items.filter(
-      (item: any) => !item.parId && (item.actualQuantityReceived ?? 0) > 0,
-    );
+    return row.items.filter((item: any) => !item.parId && (item.actualQuantityReceived ?? 0) > 0);
   }, [row.items]);
 
   return (
     <React.Fragment>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -136,8 +124,8 @@ const Row = (props: {
           )}
         </TableCell>
         <TableCell>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            {" "}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {' '}
             {unassignedInRow.length > 0 && handleOpenMultiAssignModal && (
               <Button
                 size="small"
@@ -152,7 +140,7 @@ const Row = (props: {
               >
                 Assign PAR
               </Button>
-            )}{" "}
+            )}{' '}
             <Button
               size="small"
               onClick={(e) => {
@@ -184,11 +172,11 @@ const Row = (props: {
               </Typography>
               <Box
                 sx={{
-                  display: "flex",
+                  display: 'flex',
                   gap: 1,
-                  alignItems: "center",
+                  alignItems: 'center',
                   mb: 1,
-                  flexWrap: "wrap",
+                  flexWrap: 'wrap',
                 }}
               >
                 <TextField
@@ -217,13 +205,9 @@ const Row = (props: {
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={allFilteredSelected}
-                        indeterminate={
-                          !allFilteredSelected && someFilteredSelected
-                        }
-                        onChange={(e) =>
-                          toggleSelectAllFiltered(e.target.checked)
-                        }
-                        inputProps={{ "aria-label": "select all filtered" }}
+                        indeterminate={!allFilteredSelected && someFilteredSelected}
+                        onChange={(e) => toggleSelectAllFiltered(e.target.checked)}
+                        inputProps={{ 'aria-label': 'select all filtered' }}
                       />
                     </TableCell>
                     <TableCell>Assign PAR</TableCell>
@@ -250,10 +234,10 @@ const Row = (props: {
                       </TableCell>
                       <TableCell component="th" scope="row">
                         <Chip
-                          label={item.parId || "Click to Assign"}
+                          label={item.parId || 'Click to Assign'}
                           size="small"
-                          color={item.parId ? "success" : "warning"}
-                          variant={item.parId ? "filled" : "outlined"}
+                          color={item.parId ? 'success' : 'warning'}
+                          variant={item.parId ? 'filled' : 'outlined'}
                           clickable
                           onClick={(e) => {
                             e.stopPropagation();
@@ -262,40 +246,28 @@ const Row = (props: {
                             }
                           }}
                           sx={{
-                            cursor: "pointer",
-                            fontWeight: item.parId ? "bold" : "normal",
+                            cursor: 'pointer',
+                            fontWeight: item.parId ? 'bold' : 'normal',
                           }}
                         />
                       </TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>{item.unit}</TableCell>
-                      <TableCell align="right">
-                        {item.actualQuantityReceived}
-                      </TableCell>
+                      <TableCell align="right">{item.actualQuantityReceived}</TableCell>
                       <TableCell align="right">{item.quantity}</TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.unitCost)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {currencyFormat(item.amount)}
-                      </TableCell>
+                      <TableCell align="right">{currencyFormat(item.unitCost)}</TableCell>
+                      <TableCell align="right">{currencyFormat(item.amount)}</TableCell>
                       <TableCell>
                         {item.category
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
-                          )
-                          .join(" ")}
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
                       </TableCell>
                       <TableCell>
                         {item.tag
-                          ?.split(" ")
-                          .map(
-                            (word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1),
-                          )
-                          .join(" ") || "N/A"}
+                          ?.split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ') || 'N/A'}
                       </TableCell>
                       <TableCell>
                         <Button

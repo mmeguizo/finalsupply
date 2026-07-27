@@ -1,8 +1,8 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js';
 
 const Role = sequelize.define(
-  "Role",
+  'Role',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -31,7 +31,7 @@ const Role = sequelize.define(
     },
   },
   {
-    tableName: "roles",
+    tableName: 'roles',
     underscored: true,
     timestamps: true,
   }

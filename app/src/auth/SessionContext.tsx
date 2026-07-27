@@ -1,7 +1,7 @@
 // src/auth/SessionContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { SessionsType } from "../types/genericTypes";
-import { getStoredSession, saveSession } from "./authUtils";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { SessionsType } from '../types/genericTypes';
+import { getStoredSession, saveSession } from './authUtils';
 
 interface SessionContextType {
   session: SessionsType | null;
@@ -13,7 +13,7 @@ export const SessionContext = createContext<SessionContextType>({
   setSession: () => {},
 });
 
-export const SessionProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<SessionsType | null>(getStoredSession());
 
   // Save session to localStorage whenever it changes
@@ -24,9 +24,7 @@ export const SessionProvider: React.FC<{children: React.ReactNode}> = ({ childre
   }, [session]);
 
   return (
-    <SessionContext.Provider value={{ session, setSession }}>
-      {children}
-    </SessionContext.Provider>
+    <SessionContext.Provider value={{ session, setSession }}>{children}</SessionContext.Provider>
   );
 };
 

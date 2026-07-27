@@ -1,10 +1,11 @@
-import { capitalizeFirstLetter } from "../../utils/generalUtils";
-import { escapeHtml, nl2br } from "../../utils/textHelpers";
+import { capitalizeFirstLetter } from '../../utils/generalUtils';
+import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
 export const getInventoryTemplateForICS = (
   signatories: any,
   reportData: any,
   purpose?: string,
+  icsDetails?: string
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
@@ -14,83 +15,71 @@ export const getInventoryTemplateForICS = (
   }, 0);
 
   // Format the total amount
-  const formatTotalAmount = `₱${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const icsIds = Array.from(
-    new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)),
-  );
-  const icsIdsDisplay = icsIds.join(", ");
+  const formatTotalAmount = `₱${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const icsIds = Array.from(new Set(itemsArray.map((it: any) => it?.icsId).filter(Boolean)));
+  const icsIdsDisplay = icsIds.join(', ');
 
   // Generate rows for each item
   const itemRows = itemsArray
     .map((item, index) => {
-      const desc = escapeHtml(
-        item?.description || item?.PurchaseOrderItem?.description || "",
-      );
-      const spec =
-        item?.PurchaseOrderItem?.specification || item?.specification || "";
-      const gen =
-        item?.PurchaseOrderItem?.generalDescription ||
-        item?.generalDescription ||
-        "";
+      const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || '');
+      const spec = item?.PurchaseOrderItem?.specification || item?.specification || '';
+      const gen = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || '';
 
       const specHtml = spec
         ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(spec))}</div>`
-        : "";
+        : '';
 
       const genHtml = gen
         ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(gen))}</div>`
-        : "";
+        : '';
 
       const unitCostDisplay =
         item?.formatUnitCost ||
         (item?.unitCost
-          ? `₱${Number(item.unitCost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          : "");
+          ? `₱${Number(item.unitCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : '');
 
       const unitCost = item?.unitCost || 0;
       const actualQuantityReceived = item?.actualQuantityReceived || 0;
       const totalCost = actualQuantityReceived * unitCost;
-      const totalCostDisplay = `₱${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const totalCostDisplay = `₱${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       const inventoryItemNo =
-        item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || "";
+        item?.inventoryItemNo || item?.PurchaseOrderItem?.inventoryItemNo || '';
       const estimatedUsefulLife =
-        item?.estimatedUsefulLife ||
-        item?.PurchaseOrderItem?.estimatedUsefulLife ||
-        "";
+        item?.estimatedUsefulLife || item?.PurchaseOrderItem?.estimatedUsefulLife || '';
 
       let row = `
         <tr>
-          <td>${escapeHtml(item?.actualQuantityReceived || "")}</td>
-          <td colspan="2">${escapeHtml(item?.unit || "")}</td>
-          <td>${unitCostDisplay}</td>
-          <td>${totalCostDisplay}</td>
-          <td>${desc}${specHtml}${genHtml}</td>
-          <td style="font-size:10px; text-align:center;">${escapeHtml(inventoryItemNo)}</td>
-          <td style="font-size:10px; text-align:center;">${escapeHtml(estimatedUsefulLife)}</td>
+          <td style="text-align:center; padding:3px 4px;">${escapeHtml(item?.actualQuantityReceived || '')}</td>
+          <td colspan="2" style="text-align:center; padding:3px 4px;">${escapeHtml(item?.unit || '')}</td>
+          <td style="text-align:right; padding:3px 6px;">${unitCostDisplay}</td>
+          <td style="text-align:right; padding:3px 6px;">${totalCostDisplay}</td>
+          <td style="text-align:left; vertical-align:top; padding:4px 8px;">${desc}${specHtml}${genHtml}</td>
+          <td style="font-size:10px; text-align:center; padding:3px 4px;">${escapeHtml(inventoryItemNo)}</td>
+          <td style="font-size:10px; text-align:center; padding:3px 4px;">${escapeHtml(estimatedUsefulLife)}</td>
         </tr>
     `;
 
       return row;
     })
-    .join("");
+    .join('');
 
   // Calculate totals
   const totalCost = itemsArray.reduce(
     (sum, item) =>
-      sum +
-      (Number(item?.actualQuantityReceived) || 0) *
-        (Number(item?.unitCost) || 0),
-    0,
+      sum + (Number(item?.actualQuantityReceived) || 0) * (Number(item?.unitCost) || 0),
+    0
   );
 
   // Check if income or mds has value (item-level first, fallback to PO)
-  const hasIncome =
-    itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income;
+  const hasIncome = itemsArray[0]?.income || itemsArray[0]?.PurchaseOrder?.income;
   const hasMds = itemsArray[0]?.mds || itemsArray[0]?.PurchaseOrder?.mds;
-  const hasDetails =
-    itemsArray[0]?.details || itemsArray[0]?.PurchaseOrder?.details;
-  const purposeText = purpose || itemsArray[0]?.purpose || "";
+  // ICS has its own details field - DO NOT use IAR details for ICS printing
+  // Use provided icsDetails parameter, fallback to saved icsDetails from item
+  const hasIcsDetails = icsDetails || itemsArray[0]?.icsDetails;
+  const purposeText = purpose || itemsArray[0]?.purpose || '';
 
   const footerRows = `
   <tr>
@@ -103,19 +92,19 @@ export const getInventoryTemplateForICS = (
     <td></td>
   </tr>
   ${
-    hasDetails
+    hasIcsDetails
       ? `
   <tr>
     <td></td>
     <td colspan="2"></td>
     <td></td>
     <td></td>
-    <td style="text-align: left; font-size: 12px; padding: 4px;">Details: ${escapeHtml(hasDetails)}</td>
+    <td style="text-align: left; font-size: 12px; padding: 4px;"><strong>Details:</strong> ${escapeHtml(hasIcsDetails)}</td>
     <td></td>
     <td></td>
   </tr>
   `
-      : ""
+      : ''
   }
     `;
 
@@ -176,7 +165,7 @@ table {
   & th,
   & td {
     border: 1px solid color-mix(in srgb, black 50%, white);
-    padding: 0px 2px;
+    padding: 3px 4px;
   }
   & th {
     white-space: nowrap;
@@ -403,7 +392,7 @@ tfoot {
                             <div></div>
                             <div>
                                 <span>ICS No. ${escapeHtml(icsIdsDisplay)}</span>
-                                <span>Date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                                <span>Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                             </div>
                         </div>
                     </th>
@@ -431,17 +420,17 @@ tfoot {
                     <td style="font-weight: 600;">Total</td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td style="text-align: right; font-weight: 600;">\u20b1${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; font-weight: 600;">\u20b1${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td></td>
                     <td colspan="2" style="text-align: left; vertical-align: top; padding: 4px;">
                       <div style="display: flex; flex-direction: column; gap: 4px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
-                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasIncome ? "\u2713" : ""}</div>
-                          <span style="font-size: 12px;">INCOME ${hasIncome ? hasIncome : ""}</span>
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasIncome ? '\u2713' : ''}</div>
+                          <span style="font-size: 12px;">INCOME ${hasIncome ? hasIncome : ''}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasMds ? "\u2713" : ""}</div>
-                          <span style="font-size: 12px;">MDS ${hasMds ? hasMds : ""}</span>
+                          <div style="width: 14px; height: 14px; border: 1px solid black; display: flex; align-items: center; justify-content: center; font-size: 10px;">${hasMds ? '\u2713' : ''}</div>
+                          <span style="font-size: 12px;">MDS ${hasMds ? hasMds : ''}</span>
                         </div>
                       </div>
                     </td>
@@ -455,16 +444,16 @@ tfoot {
                     </td>
                 </tr>
                 `
-                    : ""
+                    : ''
                 }
                 <tr>
                     <td colspan="5" style="padding: 4px 0px;">
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600; font-size: 11px;">Received from:</div>
                             <div style="display: flex; flex-direction: column; padding: 2px 40px; gap: 0px; margin-top: 1px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
-                                <span style="font-size: 11px;"> ${capitalizeFirstLetter(signatories?.recieved_from || "")} </span>
+                                <span style="font-size: 11px;"> ${capitalizeFirstLetter(signatories?.recieved_from || '')} </span>
                                 <hr style="width: 100%; margin: 1px 0;" />
-                                <span style="font-weight: 600; font-size: 10px;">${capitalizeFirstLetter(signatories?.metadata?.recieved_from?.role || signatories?.metadata?.recieved_from?.position || "")}</span>
+                                <span style="font-weight: 600; font-size: 10px;">${capitalizeFirstLetter(signatories?.metadata?.recieved_from?.role || signatories?.metadata?.recieved_from?.position || '')}</span>
                             </div>
                             <div style="text-align: center; margin: 2px auto 0; display: flex; flex-direction: column; gap: 0px; font-size: 10px;">
                                 <span>Signature over Printed Name</span>
@@ -477,9 +466,9 @@ tfoot {
                         <div style="display: flex; flex-direction: column; padding: 2px;">
                             <div style="font-weight: 600; font-size: 11px;">Received by:</div>
                             <div style="display: flex; flex-direction: column; padding: 2px 40px; gap: 0px; margin-top: 1px; align-content: stretch; align-items: stretch; justify-content: flex-end; text-align: center;">
-                                <span style="font-size: 11px;"> ${capitalizeFirstLetter(signatories?.recieved_by || "")} </span>
+                                <span style="font-size: 11px;"> ${capitalizeFirstLetter(signatories?.recieved_by || '')} </span>
                                 <hr style="width: 100%; margin: 1px 0;" />
-                                <span style="font-weight: 600; font-size: 10px;">${capitalizeFirstLetter(signatories?.metadata?.recieved_by?.role || signatories?.metadata?.recieved_by?.position || "")}</span>
+                                <span style="font-weight: 600; font-size: 10px;">${capitalizeFirstLetter(signatories?.metadata?.recieved_by?.role || signatories?.metadata?.recieved_by?.position || '')}</span>
                             </div>
                             <div style="text-align: center; margin: 2px auto 0; display: flex; flex-direction: column; gap: 0px; font-size: 10px;">
                                 <span>Signature over Printed Name</span>

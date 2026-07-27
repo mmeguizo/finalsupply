@@ -1,21 +1,17 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
-import { Button, Tooltip } from "@mui/material";
+} from '@mui/x-data-grid';
+import { Button, Tooltip } from '@mui/material';
 //@ts-ignore
-import AddIcon from "@mui/icons-material/Add";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import AddIcon from '@mui/icons-material/Add';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-export function SignatoryToolbar({
-  props,
-  onAddSignatory,
-  onExportData,
-}: any) {
+export function SignatoryToolbar({ props, onAddSignatory, onExportData }: any) {
   return (
     <GridToolbarContainer>
       <GridToolbarColumnsButton />
@@ -43,7 +39,7 @@ export function SignatoryToolbar({
           </Button>
         </Tooltip>
       )}
-       <GridToolbarQuickFilter />
+      <GridToolbarQuickFilter />
     </GridToolbarContainer>
   );
 }

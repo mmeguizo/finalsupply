@@ -1,20 +1,20 @@
-import { onError } from "@apollo/client/link/error";
+import { onError } from '@apollo/client/link/error';
 
 // Create a function that can be called from anywhere to handle unauthorized errors
 export const handleUnauthorized = () => {
   // Clear cookies
-  document.cookie.split(";").forEach((cookie) => {
+  document.cookie.split(';').forEach((cookie) => {
     document.cookie = cookie
-      .replace(/^ +/, "")
+      .replace(/^ +/, '')
       .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
   });
-  
+
   // Clear local storage
-  localStorage.removeItem("session");
-  
+  localStorage.removeItem('session');
+
   // Clear session storage
   sessionStorage.clear();
-  
+
   // Redirect to sign-in page
   window.location.href = '/sign-in';
 };
@@ -28,9 +28,9 @@ export const errorLink = onError(({ graphQLErrors, networkError, operation }) =>
         message: err.message,
         operationName: operation.operationName,
         operationType: operation.query.definitions[0]?.kind,
-        variables: operation.variables
+        variables: operation.variables,
       });
-      
+
       if (err.message === 'Unauthorized') {
         console.log('❌ Unauthorized error detected, redirecting to sign-in page');
         console.log('🔍 Failed operation:', operation.operationName);
@@ -38,7 +38,7 @@ export const errorLink = onError(({ graphQLErrors, networkError, operation }) =>
       }
     }
   }
-  
+
   if (networkError) {
     console.log('🌐 Network Error:', networkError);
   }

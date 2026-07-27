@@ -4,10 +4,8 @@ interface SessionsType {
     name?: string | null;
     image?: string | null;
     email?: string | null;
-    role?: "admin" | "user"; // Add role field
+    role?: 'admin' | 'user'; // Add role field
   };
 }
-
-
 
 export type { SessionsType };

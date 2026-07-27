@@ -1,4 +1,4 @@
-export const getInventoryTemplate = (reportData: any) =>`
+export const getInventoryTemplate = (reportData: any) => `
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -734,7 +734,7 @@ tfoot {
                     <td></td>
                 </tr>
                 <tr>
-                    <td colspan="8">Remarks:</td>
+                    <td colspan="8">Remarks:${reportData?.poRemarks ? ` <span style="font-style: italic;">${reportData.poRemarks}</span>` : ''}</td>
                 </tr>
                 <tr>
                     <td colspan="4">

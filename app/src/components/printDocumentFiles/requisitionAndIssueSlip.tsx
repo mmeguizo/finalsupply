@@ -1,10 +1,11 @@
-import { capitalizeFirstLetter } from "../../utils/generalUtils";
-import { escapeHtml, nl2br } from "../../utils/textHelpers";
+import { capitalizeFirstLetter } from '../../utils/generalUtils';
+import { escapeHtml, nl2br } from '../../utils/textHelpers';
 
 export const getRequisitionAndIssueSlip = (
   signatories: any,
   reportData: any,
   purpose?: string,
+  risDetails?: string
 ) => {
   // Check if reportData is an array, if not, convert it to an array for consistent handling
   const itemsArray = Array.isArray(reportData) ? reportData : [reportData];
@@ -16,46 +17,38 @@ export const getRequisitionAndIssueSlip = (
 
   const { inspectionOfficer, supplyOfficer, receivedFrom } = signatories || {};
   // Collect unique RIS IDs
-  const risIds = Array.from(
-    new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)),
-  );
-  const risIdsDisplay = risIds.join(", ");
+  const risIds = Array.from(new Set(itemsArray.map((it: any) => it?.risId).filter(Boolean)));
+  const risIdsDisplay = risIds.join(', ');
 
   // Generate rows for each item (supports array input). description, specification and generalDescription are escaped;
   // specification and generalDescription preserve newlines via nl2br.
   const itemRows = itemsArray
     .map((item, index) => {
-      const desc = escapeHtml(
-        item?.description || item?.PurchaseOrderItem?.description || "",
-      );
-      const specRaw =
-        item?.PurchaseOrderItem?.specification || item?.specification || "";
-      const genRaw =
-        item?.PurchaseOrderItem?.generalDescription ||
-        item?.generalDescription ||
-        "";
+      const desc = escapeHtml(item?.description || item?.PurchaseOrderItem?.description || '');
+      const specRaw = item?.PurchaseOrderItem?.specification || item?.specification || '';
+      const genRaw = item?.PurchaseOrderItem?.generalDescription || item?.generalDescription || '';
 
       const specHtml = specRaw
         ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(specRaw))}</div>`
-        : "";
+        : '';
       const genHtml = genRaw
         ? `<div style="margin-top:6px; font-size:12px; color:#333; text-align:left;">${nl2br(escapeHtml(genRaw))}</div>`
-        : "";
+        : '';
 
       let row = `
                 <tr>
-                    <td>${escapeHtml(" ")}</td>
-                    <td>${index + 1}</td>
-                    <td>${escapeHtml(item?.unit ?? "")}</td>
-                    <td colspan="2">
+                    <td style="padding:3px 4px;">${escapeHtml(' ')}</td>
+                    <td style="text-align:center; padding:3px 4px;">${index + 1}</td>
+                    <td style="text-align:center; padding:3px 4px;">${escapeHtml(item?.unit ?? '')}</td>
+                    <td colspan="2" style="text-align:left; vertical-align:top; padding:4px 8px;">
                       ${desc}
                       ${specHtml}
                       ${genHtml}
                     </td>
-                    <td>${escapeHtml(String(item?.actualQuantityReceived ?? ""))}</td>
+                    <td style="text-align:center; padding:3px 6px;">${escapeHtml(String(item?.actualQuantityReceived ?? ''))}</td>
                     <td colspan="2"></td>
                     <td></td>
-                    <td>${escapeHtml(String(" "))}</td>
+                    <td>${escapeHtml(String(' '))}</td>
                     <td></td>
                 </tr>
       `;
@@ -86,11 +79,26 @@ export const getRequisitionAndIssueSlip = (
           <td></td>
         </tr>
         `;
+        if (risDetails) {
+          row += `
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="text-align: left; padding: 4px; font-size: 12px;">PO Details: ${escapeHtml(risDetails)}</td>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        `;
+        }
       }
 
       return row;
     })
-    .join("");
+    .join('');
 
   return `
 <html lang="en">
@@ -405,8 +413,8 @@ tfoot {
                 <tr class="header-2nd-row">
                     <th colspan="7">
                         <div>
-                            <span>Division: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.campus || "")}</span>
-                            <span>Office: ${escapeHtml(itemsArray[0]?.PurchaseOrder?.placeOfDelivery || "")}</span>
+                            <span>Division: ${escapeHtml(itemsArray[0]?.risDivision || itemsArray[0]?.PurchaseOrder?.campus || '')}</span>
+                            <span>Office: ${escapeHtml(itemsArray[0]?.risDepartment || itemsArray[0]?.PurchaseOrder?.placeOfDelivery || '')}</span>
                         </div>
                     </th>
                     <th></th>
@@ -440,7 +448,7 @@ tfoot {
             <tfoot>
                 <tr class="footer-1st-row">
                     <td colspan="11" style="margin: 8px; padding: 8px;">
-                        Purpose: ${escapeHtml(purpose || itemsArray[0]?.purpose || "")}
+                        Purpose: ${escapeHtml(purpose || itemsArray[0]?.purpose || '')}${itemsArray[0]?.details ? `<br/>${escapeHtml(itemsArray[0].details)}` : ''}${itemsArray[0]?.poRemarks ? `<br/>${escapeHtml(itemsArray[0].poRemarks)}` : ''}
                     </td>
                     
                 </tr>
@@ -465,10 +473,10 @@ tfoot {
                 <tr class="footer-last-rows">
                     <td colspan="2">Printed Name :</td>
                     <td></td>
-                    <td> ${signatories?.requested_by || ""}</td>
-                    <td colspan="3"> ${signatories?.approved_by || ""} </td>
-                    <td colspan="3">${signatories?.issued_by || ""}</td>
-                    <td>${signatories?.recieved_by || ""}</td>
+                    <td> ${signatories?.requested_by || ''}</td>
+                    <td colspan="3"> ${signatories?.approved_by || ''} </td>
+                    <td colspan="3">${signatories?.issued_by || ''}</td>
+                    <td>${signatories?.recieved_by || ''}</td>
                 </tr>
                 <tr class="footer-last-rows">
                     <td colspan="2">Designation :</td>

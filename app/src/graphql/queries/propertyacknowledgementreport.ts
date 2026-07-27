@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT = gql`
   query GetAllPropertyAcknowledgementReport {
@@ -70,9 +70,11 @@ const GET_ALL_PROPERTY_ACKNOWLEDGEMENT_REPORT_FOR_PROPERTY = gql`
       parDepartment
       parAssignedDate
       remarks
+      parDetails
       income
       mds
       details
+      poRemarks
       splitGroupId
       splitFromItemId
       splitIndex

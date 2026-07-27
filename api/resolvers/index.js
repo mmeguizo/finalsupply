@@ -1,12 +1,12 @@
-import { mergeResolvers } from "@graphql-tools/merge";
-import userResolver from "./user.resolver.js";
-import purchaseorderResolver from "./purchaseorder.resolver.js";
-import signatoryResolver from "./signatory.resolver.js";
-import inspectionAcceptanceReportResolver from "./inspectionacceptancereport.resolver.js";
-import propertyAcknowledgmentReportResolver from "./propertyacknowledgementrepoert.resolver.js";
-import requisitionIssueSlipResolver from "./requisitionissueslip.resolver.js";
-import departmentResolver from "./department.resolver.js";
-import roleResolver from "./role.resolver.js";
+import { mergeResolvers } from '@graphql-tools/merge';
+import userResolver from './user.resolver.js';
+import purchaseorderResolver from './purchaseorder.resolver.js';
+import signatoryResolver from './signatory.resolver.js';
+import inspectionAcceptanceReportResolver from './inspectionacceptancereport.resolver.js';
+import propertyAcknowledgmentReportResolver from './propertyacknowledgementrepoert.resolver.js';
+import requisitionIssueSlipResolver from './requisitionissueslip.resolver.js';
+import departmentResolver from './department.resolver.js';
+import roleResolver from './role.resolver.js';
 
 const mergedResolvers = mergeResolvers([
   userResolver,
@@ -16,7 +16,7 @@ const mergedResolvers = mergeResolvers([
   propertyAcknowledgmentReportResolver,
   requisitionIssueSlipResolver,
   departmentResolver,
-  roleResolver
-]); 
+  roleResolver,
+]);
 
 export default mergedResolvers;

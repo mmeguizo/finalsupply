@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   Button,
   Box,
@@ -27,36 +28,26 @@ import {
   Checkbox,
   Tabs,
   Tab,
-} from "@mui/material";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import CloseIcon from "@mui/icons-material/Close";
-import LinkIcon from "@mui/icons-material/Link";
-import { useQuery, useMutation } from "@apollo/client";
-import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from "../graphql/queries/requisitionIssueslip";
+} from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import CloseIcon from '@mui/icons-material/Close';
+import LinkIcon from '@mui/icons-material/Link';
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY } from '../graphql/queries/requisitionIssueslip';
 import {
   CREATE_MULTI_ITEM_RIS_ASSIGNMENT,
   ADD_ITEM_TO_EXISTING_RIS,
   SPLIT_AND_ASSIGN_RIS,
-} from "../graphql/mutations/requisitionIS.mutation";
-import { GET_ALL_USERS } from "../graphql/queries/user.query";
-import useSignatoryStore from "../stores/signatoryStore";
-import { currencyFormat } from "../utils/generalUtils";
-import CallSplitIcon from "@mui/icons-material/CallSplit";
-import DeleteIcon from "@mui/icons-material/Delete";
+} from '../graphql/mutations/requisitionIS.mutation';
+import { GET_ALL_DEPARTMENTS } from '../graphql/queries/department.query';
+import { currencyFormat } from '../utils/generalUtils';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
-interface UserOption {
-  id: string;
-  name: string;
-  last_name?: string;
-  position?: string;
-  role?: string;
-  label: string;
-}
 
 interface ItemEntry {
   sourceItemId: string;
@@ -78,10 +69,11 @@ interface MultiRisAssignmentModalProps {
   onAssignmentComplete: () => void;
 }
 
+const DIVISION_OPTIONS = ['Talisay Main', 'Alijis', 'Binalbagan', 'Fortune Town'];
+
 const emptySignatoryForm = {
-  department: "",
-  receivedFrom: null as UserOption | null,
-  receivedBy: null as UserOption | null,
+  department: '',
+  division: '',
 };
 
 /* ================================================================== */
@@ -100,79 +92,59 @@ export default function MultiRisAssignmentModal({
 }: MultiRisAssignmentModalProps) {
   /* ---------- GraphQL ---------- */
 
-  const { data: usersData, loading: usersLoading } = useQuery(GET_ALL_USERS);
+  const { data: departmentsData } = useQuery(GET_ALL_DEPARTMENTS);
 
   const [createMultiRIS, { loading: createLoading }] = useMutation(
     CREATE_MULTI_ITEM_RIS_ASSIGNMENT,
     {
       refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
-    },
+    }
   );
 
-  const [addToExistingRIS, { loading: addLoading }] = useMutation(
-    ADD_ITEM_TO_EXISTING_RIS,
-    {
-      refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
-    },
-  );
+  const [addToExistingRIS, { loading: addLoading }] = useMutation(ADD_ITEM_TO_EXISTING_RIS, {
+    refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
+  });
 
-  const [splitAndAssignRIS, { loading: splitLoading }] = useMutation(
-    SPLIT_AND_ASSIGN_RIS,
-    {
-      refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
-    },
-  );
-
-  /* ---------- Signatories from Zustand store ---------- */
-
-  const allSignatories = useSignatoryStore((s) => s.signatories);
-  const fetchSignatories = useSignatoryStore((s) => s.fetchSignatories);
+  const [splitAndAssignRIS, { loading: splitLoading }] = useMutation(SPLIT_AND_ASSIGN_RIS, {
+    refetchQueries: [{ query: GET_ALL_REQUISITION_ISSUE_SLIP_FOR_PROPERTY }],
+  });
 
   /* ---------- Local state ---------- */
 
   const [tabIndex, setTabIndex] = useState(0);
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
-    {},
-  );
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [signatoryForm, setSignatoryForm] = useState(emptySignatoryForm);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // For "Add to Existing" tab
-  const [selectedExistingRisId, setSelectedExistingRisId] =
-    useState<string>("");
-  const [addToExistingItem, setAddToExistingItem] = useState<string>("");
-  const [addToExistingQty, setAddToExistingQty] = useState<number>(1);
+  const [selectedExistingRisId, setSelectedExistingRisId] = useState<string>('');
+  const [addToExistingItem, setAddToExistingItem] = useState<string>('');
+  const [addToExistingQty, setAddToExistingQty] = useState<number>(0); // Default to 0 to prevent accidental submissions
 
   // For "Split & Assign" tab
-  const [splitSourceItemId, setSplitSourceItemId] = useState<string>("");
+  const [splitSourceItemId, setSplitSourceItemId] = useState<string>('');
   const [splitRows, setSplitRows] = useState<
     Array<{
       quantity: number;
       department: string;
-      receivedFrom: UserOption | null;
-      receivedBy: UserOption | null;
+      division: string;
     }>
   >([]);
+  const [splitConfirmOpen, setSplitConfirmOpen] = useState(false);
 
   /* ---------- Effects ---------- */
 
   useEffect(() => {
-    if (allSignatories.length === 0) fetchSignatories();
-  }, [allSignatories.length, fetchSignatories]);
-
-  useEffect(() => {
     if (open) {
-      setError("");
-      setSuccessMessage("");
+      setError('');
+      setSuccessMessage('');
       setSignatoryForm(emptySignatoryForm);
-      setSelectedExistingRisId("");
-      setAddToExistingItem("");
-      setAddToExistingQty(1);
-      setSplitSourceItemId("");
+      setSelectedExistingRisId('');
+      setAddToExistingItem('');
+      setAddToExistingQty(0); // Default to 0 to prevent accidental submissions
+      setSplitSourceItemId('');
       setSplitRows([]);
 
       if (preSelectedItems && preSelectedItems.length > 0) {
@@ -180,7 +152,7 @@ export default function MultiRisAssignmentModal({
         setSelectedItemIds(ids);
         const qtys: Record<string, number> = {};
         preSelectedItems.forEach((it: any) => {
-          qtys[String(it.id)] = 1;
+          qtys[String(it.id)] = 0; // Default to 0 to prevent accidental submissions
         });
         setItemQuantities(qtys);
         setTabIndex(0);
@@ -192,35 +164,18 @@ export default function MultiRisAssignmentModal({
     if (!open) {
       setSelectedItemIds(new Set());
       setItemQuantities({});
-      setSplitSourceItemId("");
+      setSplitSourceItemId('');
       setSplitRows([]);
-      setError("");
-      setSuccessMessage("");
+      setError('');
+      setSuccessMessage('');
     }
   }, [open, preSelectedItems]);
 
   /* ---------- Options ---------- */
 
-  const userOptions: UserOption[] = useMemo(() => {
-    const users = usersData?.users?.filter((u: any) => u.is_active) || [];
-    return users.map((u: any) => ({
-      id: u.id,
-      name: `${u.name} ${u.last_name || ""}`.trim(),
-      position: u.position || "",
-      label:
-        `${u.name} ${u.last_name || ""} ${u.position ? `(${u.position})` : ""}`.trim(),
-    }));
-  }, [usersData]);
-
-  const signatoryOptions: UserOption[] = useMemo(() => {
-    return (allSignatories || []).map((sig: any) => ({
-      id: sig.id,
-      name: sig.name,
-      role: sig.role,
-      position: sig.role,
-      label: `${sig.name} (${sig.role})`,
-    }));
-  }, [allSignatories]);
+  const departmentOptions: string[] = useMemo(() => {
+    return (departmentsData?.departments || []).map((d: any) => d.name);
+  }, [departmentsData]);
 
   // Unique existing RIS IDs with their end user info
   const existingRISGroups = useMemo(() => {
@@ -233,8 +188,8 @@ export default function MultiRisAssignmentModal({
         if (!groups[item.risId]) {
           groups[item.risId] = {
             risId: item.risId,
-            receivedBy: item.risReceivedBy || "",
-            department: item.risDepartment || "",
+            receivedBy: item.risReceivedBy || '',
+            department: item.risDepartment || '',
             items: [],
           };
         }
@@ -255,7 +210,7 @@ export default function MultiRisAssignmentModal({
       setItemQuantities(qtys);
     } else {
       next.add(itemId);
-      setItemQuantities((prev) => ({ ...prev, [itemId]: 1 }));
+      setItemQuantities((prev) => ({ ...prev, [itemId]: 0 })); // Default to 0 to prevent accidental submissions
     }
     setSelectedItemIds(next);
   };
@@ -269,27 +224,24 @@ export default function MultiRisAssignmentModal({
       .filter((it: any) => selectedItemIds.has(String(it.id)))
       .map((it: any) => ({
         sourceItemId: String(it.id),
-        description: it.description || it.itemName || "",
-        unit: it.unit || "",
+        description: it.description || it.itemName || '',
+        unit: it.unit || '',
         unitCost: parseFloat(it.unitCost) || 0,
         maxAvailable: it.actualQuantityReceived || 0,
         quantity: itemQuantities[String(it.id)] || 1,
       }));
   }, [availableItems, selectedItemIds, itemQuantities]);
 
-  const totalAmount = selectedEntries.reduce(
-    (sum, e) => sum + e.quantity * e.unitCost,
-    0,
-  );
+  const totalAmount = selectedEntries.reduce((sum, e) => sum + e.quantity * e.unitCost, 0);
 
   /* ---------- Submit: New RIS ---------- */
 
   const handleCreateNewRIS = async () => {
-    setError("");
-    setSuccessMessage("");
+    setError('');
+    setSuccessMessage('');
 
     if (selectedEntries.length === 0) {
-      setError("Please select at least one item.");
+      setError('Please select at least one item.');
       return;
     }
 
@@ -300,25 +252,16 @@ export default function MultiRisAssignmentModal({
       }
       if (entry.quantity > entry.maxAvailable) {
         setError(
-          `Quantity (${entry.quantity}) exceeds available (${entry.maxAvailable}) for "${entry.description}".`,
+          `Quantity (${entry.quantity}) exceeds available (${entry.maxAvailable}) for "${entry.description}".`
         );
         return;
       }
     }
 
     if (!signatoryForm.department.trim()) {
-      setError("Please enter a department.");
+      setError('Please enter a department.');
       return;
     }
-    if (!signatoryForm.receivedFrom) {
-      setError('Please select "Received From".');
-      return;
-    }
-    if (!signatoryForm.receivedBy) {
-      setError('Please select "Received By".');
-      return;
-    }
-
     try {
       const result = await createMultiRIS({
         variables: {
@@ -328,64 +271,55 @@ export default function MultiRisAssignmentModal({
               quantity: e.quantity,
             })),
             department: signatoryForm.department.trim(),
-            receivedFrom: signatoryForm.receivedFrom.name,
-            receivedFromPosition:
-              signatoryForm.receivedFrom.position ||
-              signatoryForm.receivedFrom.role ||
-              "",
-            receivedBy: signatoryForm.receivedBy.name,
-            receivedByPosition: signatoryForm.receivedBy.position || "",
+            division: signatoryForm.division,
+            receivedFrom: '',
+            receivedFromPosition: '',
+            receivedBy: '',
+            receivedByPosition: '',
           },
         },
       });
 
       const { generatedRisId } = result.data.createMultiItemRISAssignment;
-      setSuccessMessage(
-        `RIS ID ${generatedRisId} created with ${selectedEntries.length} item(s)!`,
-      );
+      setSuccessMessage(`RIS ID ${generatedRisId} created with ${selectedEntries.length} item(s)!`);
       setSelectedItemIds(new Set());
       setItemQuantities({});
       setSignatoryForm(emptySignatoryForm);
       onAssignmentComplete();
 
       setTimeout(() => {
-        setSuccessMessage("");
+        setSuccessMessage('');
         onClose();
       }, 1500);
     } catch (err: any) {
-      console.error("createMultiRIS error:", err);
-      setError(err.message || "Failed to create RIS. Please try again.");
+      console.error('createMultiRIS error:', err);
+      setError(err.message || 'Failed to create RIS. Please try again.');
     }
   };
 
   /* ---------- Submit: Add to Existing RIS ---------- */
 
   const handleAddToExisting = async () => {
-    setError("");
-    setSuccessMessage("");
+    setError('');
+    setSuccessMessage('');
 
     if (!selectedExistingRisId) {
-      setError("Please select an existing RIS ID.");
+      setError('Please select an existing RIS ID.');
       return;
     }
     if (!addToExistingItem) {
-      setError("Please select an item to add.");
+      setError('Please select an item to add.');
       return;
     }
     if (addToExistingQty <= 0) {
-      setError("Quantity must be greater than 0.");
+      setError('Quantity must be greater than 0.');
       return;
     }
 
-    const sourceItem = availableItems.find(
-      (it: any) => String(it.id) === addToExistingItem,
-    );
-    if (
-      sourceItem &&
-      addToExistingQty > (sourceItem.actualQuantityReceived || 0)
-    ) {
+    const sourceItem = availableItems.find((it: any) => String(it.id) === addToExistingItem);
+    if (sourceItem && addToExistingQty > (sourceItem.actualQuantityReceived || 0)) {
       setError(
-        `Quantity (${addToExistingQty}) exceeds available (${sourceItem.actualQuantityReceived}).`,
+        `Quantity (${addToExistingQty}) exceeds available (${sourceItem.actualQuantityReceived}).`
       );
       return;
     }
@@ -403,17 +337,17 @@ export default function MultiRisAssignmentModal({
 
       const { risId } = result.data.addItemToExistingRIS;
       setSuccessMessage(`Item added to existing RIS ID ${risId}!`);
-      setAddToExistingItem("");
+      setAddToExistingItem('');
       setAddToExistingQty(1);
       onAssignmentComplete();
 
       setTimeout(() => {
-        setSuccessMessage("");
+        setSuccessMessage('');
         onClose();
       }, 1500);
     } catch (err: any) {
-      console.error("addToExistingRIS error:", err);
-      setError(err.message || "Failed to add item to existing RIS.");
+      console.error('addToExistingRIS error:', err);
+      setError(err.message || 'Failed to add item to existing RIS.');
     }
   };
 
@@ -421,19 +355,14 @@ export default function MultiRisAssignmentModal({
 
   const splitSourceItem = useMemo(() => {
     if (!splitSourceItemId) return null;
-    return availableItems.find(
-      (it: any) => String(it.id) === splitSourceItemId,
-    );
+    return availableItems.find((it: any) => String(it.id) === splitSourceItemId);
   }, [availableItems, splitSourceItemId]);
 
   const splitTotalQty = splitRows.reduce((sum, r) => sum + r.quantity, 0);
   const splitOriginalQty = splitSourceItem?.actualQuantityReceived || 0;
 
   const addSplitRow = () => {
-    setSplitRows((prev) => [
-      ...prev,
-      { quantity: 1, department: "", receivedFrom: null, receivedBy: null },
-    ]);
+    setSplitRows((prev) => [...prev, { quantity: 1, department: '', division: '' }]);
   };
 
   const removeSplitRow = (index: number) => {
@@ -441,27 +370,31 @@ export default function MultiRisAssignmentModal({
   };
 
   const updateSplitRow = (index: number, field: string, value: any) => {
-    setSplitRows((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    );
+    setSplitRows((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
   };
 
   /* ---------- Submit: Split & Assign ---------- */
 
   const handleSplitAndAssign = async () => {
-    setError("");
-    setSuccessMessage("");
+    setError('');
+    setSuccessMessage('');
 
     if (!splitSourceItemId) {
-      setError("Please select a source item to split.");
+      setError('Please select a source item to split.');
       return;
     }
     if (splitRows.length === 0) {
-      setError("Please add at least one split row.");
+      setError('Please add at least one split row.');
       return;
     }
     if (splitTotalQty === 0) {
-      setError("Total split quantity must be greater than 0.");
+      setError('Total split quantity must be greater than 0.');
+      return;
+    }
+    if (splitTotalQty !== splitOriginalQty) {
+      setError(
+        `Total split quantity (${splitTotalQty}) must equal original quantity (${splitOriginalQty}). Please adjust split quantities.`
+      );
       return;
     }
 
@@ -471,16 +404,12 @@ export default function MultiRisAssignmentModal({
         setError(`Split row ${i + 1}: Quantity must be greater than 0.`);
         return;
       }
-      if (!row.receivedFrom) {
-        setError(`Split row ${i + 1}: Please select "Received From".`);
-        return;
-      }
-      if (!row.receivedBy) {
-        setError(`Split row ${i + 1}: Please select "Received By".`);
-        return;
-      }
     }
 
+    setSplitConfirmOpen(true);
+  };
+
+  const executeSplit = async () => {
     try {
       await splitAndAssignRIS({
         variables: {
@@ -491,11 +420,11 @@ export default function MultiRisAssignmentModal({
                 splits: splitRows.map((row) => ({
                   quantity: row.quantity,
                   department: row.department.trim(),
-                  receivedFrom: row.receivedFrom!.name,
-                  receivedFromPosition:
-                    row.receivedFrom!.position || row.receivedFrom!.role || "",
-                  receivedBy: row.receivedBy!.name,
-                  receivedByPosition: row.receivedBy!.position || "",
+                  division: row.division || '',
+                  receivedFrom: '',
+                  receivedFromPosition: '',
+                  receivedBy: '',
+                  receivedByPosition: '',
                 })),
               },
             ],
@@ -504,34 +433,41 @@ export default function MultiRisAssignmentModal({
       });
 
       setSuccessMessage(
-        `Successfully split "${splitSourceItem?.description || "item"}" into ${splitRows.length} RIS assignment(s)!`,
+        `Successfully split "${splitSourceItem?.description || 'item'}" into ${splitRows.length} RIS assignment(s)!`
       );
-      setSplitSourceItemId("");
+      setSplitSourceItemId('');
       setSplitRows([]);
       onAssignmentComplete();
 
       setTimeout(() => {
-        setSuccessMessage("");
+        setSuccessMessage('');
         onClose();
       }, 1500);
     } catch (err: any) {
-      console.error("splitAndAssignRIS error:", err);
-      setError(err.message || "Failed to split and assign RIS.");
+      console.error('splitAndAssignRIS error:', err);
+      setError(err.message || 'Failed to split and assign RIS.');
     }
   };
 
   /* ---------- Render ---------- */
 
-  const isLoading = usersLoading || createLoading || addLoading || splitLoading;
+  const isLoading = createLoading || addLoading || splitLoading;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason !== 'backdropClick') onClose();
+      }}
+      maxWidth="lg"
+      fullWidth
+    >
       <DialogTitle sx={{ pb: 1 }}>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <Box>
@@ -548,7 +484,7 @@ export default function MultiRisAssignmentModal({
 
       <DialogContent dividers>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
             {error}
           </Alert>
         )}
@@ -562,26 +498,18 @@ export default function MultiRisAssignmentModal({
           value={tabIndex}
           onChange={(_, v) => {
             setTabIndex(v);
-            setError("");
+            setError('');
           }}
           sx={{ mb: 2 }}
         >
-          <Tab
-            label="Create New RIS"
-            icon={<AddCircleOutlineIcon />}
-            iconPosition="start"
-          />
+          <Tab label="Create New RIS" icon={<AddCircleOutlineIcon />} iconPosition="start" />
           <Tab
             label={`Add to Existing RIS (${existingRISGroups.length})`}
             icon={<LinkIcon />}
             iconPosition="start"
             disabled={existingRISGroups.length === 0}
           />
-          <Tab
-            label="Split & Assign"
-            icon={<CallSplitIcon />}
-            iconPosition="start"
-          />
+          <Tab label="Split & Assign" icon={<CallSplitIcon />} iconPosition="start" />
         </Tabs>
 
         {/* ========== TAB 0: Create New RIS ========== */}
@@ -608,10 +536,7 @@ export default function MultiRisAssignmentModal({
                 </TableHead>
                 <TableBody>
                   {availableItems
-                    .filter(
-                      (it: any) =>
-                        !it.risId && (it.actualQuantityReceived ?? 0) > 0,
-                    )
+                    .filter((it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0)
                     .map((item: any) => {
                       const id = String(item.id);
                       const isSelected = selectedItemIds.has(id);
@@ -623,19 +548,15 @@ export default function MultiRisAssignmentModal({
                           key={id}
                           hover
                           selected={isSelected}
-                          sx={{ cursor: "pointer" }}
+                          sx={{ cursor: 'pointer' }}
                           onClick={() => toggleItem(id)}
                         >
                           <TableCell padding="checkbox">
                             <Checkbox checked={isSelected} />
                           </TableCell>
-                          <TableCell>
-                            {item.description || item.itemName}
-                          </TableCell>
+                          <TableCell>{item.description || item.itemName}</TableCell>
                           <TableCell>{item.unit}</TableCell>
-                          <TableCell align="right">
-                            {item.actualQuantityReceived}
-                          </TableCell>
+                          <TableCell align="right">{item.actualQuantityReceived}</TableCell>
                           <TableCell align="right">
                             {isSelected ? (
                               <TextField
@@ -649,8 +570,8 @@ export default function MultiRisAssignmentModal({
                                     0,
                                     Math.min(
                                       parseInt(e.target.value, 10) || 0,
-                                      item.actualQuantityReceived,
-                                    ),
+                                      item.actualQuantityReceived
+                                    )
                                   );
                                   updateItemQty(id, v);
                                 }}
@@ -661,34 +582,24 @@ export default function MultiRisAssignmentModal({
                                 sx={{ width: 90 }}
                               />
                             ) : (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
+                              <Typography variant="body2" color="text.secondary">
                                 -
                               </Typography>
                             )}
                           </TableCell>
+                          <TableCell align="right">{currencyFormat(cost)}</TableCell>
                           <TableCell align="right">
-                            {currencyFormat(cost)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {isSelected ? currencyFormat(qty * cost) : "-"}
+                            {isSelected ? currencyFormat(qty * cost) : '-'}
                           </TableCell>
                         </TableRow>
                       );
                     })}
                   {availableItems.filter(
-                    (it: any) =>
-                      !it.risId && (it.actualQuantityReceived ?? 0) > 0,
+                    (it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0
                   ).length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ py: 2 }}
-                        >
+                        <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                           No unassigned items available in this PO.
                         </Typography>
                       </TableCell>
@@ -702,9 +613,9 @@ export default function MultiRisAssignmentModal({
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
                   <Typography variant="body2">
@@ -720,80 +631,47 @@ export default function MultiRisAssignmentModal({
             {selectedEntries.length > 0 && (
               <Card variant="outlined">
                 <CardContent>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    gutterBottom
-                  >
+                  <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                     End User / Signatory Information
                   </Typography>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ mb: 2, display: "block" }}
+                    sx={{ mb: 2, display: 'block' }}
                   >
-                    All selected items will share the same RIS ID and signatory
-                    info.
+                    All selected items will share the same RIS ID and signatory info.
                   </Typography>
 
-                  <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                    <TextField
-                      label="Department / Office"
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <Autocomplete
                       size="small"
+                      freeSolo
+                      options={departmentOptions}
                       value={signatoryForm.department}
-                      onChange={(e) =>
+                      onInputChange={(_, v) =>
                         setSignatoryForm((prev) => ({
                           ...prev,
-                          department: e.target.value,
+                          department: v,
                         }))
                       }
+                      ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Department / Office" required />
+                      )}
                       sx={{ flexGrow: 1 }}
-                      required
-                    />
-                  </Box>
-
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Autocomplete
-                      size="small"
-                      options={signatoryOptions}
-                      value={signatoryForm.receivedFrom}
-                      onChange={(_, v) =>
-                        setSignatoryForm((prev) => ({
-                          ...prev,
-                          receivedFrom: v,
-                        }))
-                      }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Received From (Supply Officer)"
-                          required
-                        />
-                      )}
-                      sx={{ flex: 1 }}
                     />
                     <Autocomplete
                       size="small"
-                      options={userOptions}
-                      value={signatoryForm.receivedBy}
+                      options={DIVISION_OPTIONS}
+                      value={signatoryForm.division || null}
                       onChange={(_, v) =>
                         setSignatoryForm((prev) => ({
                           ...prev,
-                          receivedBy: v,
+                          division: v || '',
                         }))
                       }
-                      getOptionLabel={(o) => o.label}
-                      isOptionEqualToValue={(o, v) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Received By (End User)"
-                          required
-                        />
-                      )}
-                      sx={{ flex: 1 }}
+                      renderInput={(params) => <TextField {...params} label="Division (Campus)" />}
+                      sx={{ width: 220 }}
                     />
                   </Box>
                 </CardContent>
@@ -801,23 +679,17 @@ export default function MultiRisAssignmentModal({
             )}
 
             {selectedEntries.length > 0 && (
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
                   color="primary"
                   size="large"
-                  startIcon={
-                    createLoading ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      <VpnKeyIcon />
-                    )
-                  }
+                  startIcon={createLoading ? <CircularProgress size={20} /> : <VpnKeyIcon />}
                   onClick={handleCreateNewRIS}
                   disabled={createLoading}
                 >
                   Generate RIS ID & Save ({selectedEntries.length} item
-                  {selectedEntries.length > 1 ? "s" : ""})
+                  {selectedEntries.length > 1 ? 's' : ''})
                 </Button>
               </Box>
             )}
@@ -837,34 +709,27 @@ export default function MultiRisAssignmentModal({
                   key={group.risId}
                   variant="outlined"
                   sx={{
-                    borderColor:
-                      selectedExistingRisId === group.risId
-                        ? "primary.main"
-                        : "divider",
+                    borderColor: selectedExistingRisId === group.risId ? 'primary.main' : 'divider',
                     borderWidth: selectedExistingRisId === group.risId ? 2 : 1,
-                    cursor: "pointer",
-                    "&:hover": { bgcolor: "action.hover" },
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'action.hover' },
                   }}
                   onClick={() => setSelectedExistingRisId(group.risId)}
                 >
-                  <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1.5,
-                        flexWrap: "wrap",
+                        flexWrap: 'wrap',
                       }}
                     >
                       <Chip
                         label={group.risId}
-                        color={
-                          selectedExistingRisId === group.risId
-                            ? "primary"
-                            : "success"
-                        }
+                        color={selectedExistingRisId === group.risId ? 'primary' : 'success'}
                         size="medium"
-                        sx={{ fontWeight: "bold" }}
+                        sx={{ fontWeight: 'bold' }}
                       />
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2">
@@ -876,10 +741,8 @@ export default function MultiRisAssignmentModal({
                       </Typography>
                       <Divider orientation="vertical" flexItem />
                       <Typography variant="body2" color="text.secondary">
-                        {group.items.length} item(s):{" "}
-                        {group.items
-                          .map((it: any) => it.description)
-                          .join(", ")}
+                        {group.items.length} item(s):{' '}
+                        {group.items.map((it: any) => it.description).join(', ')}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -888,41 +751,31 @@ export default function MultiRisAssignmentModal({
             </Stack>
 
             {selectedExistingRisId && (
-              <Card variant="outlined" sx={{ borderColor: "primary.main" }}>
+              <Card variant="outlined" sx={{ borderColor: 'primary.main' }}>
                 <CardContent>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    gutterBottom
-                  >
+                  <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                     Add item to RIS {selectedExistingRisId}
                   </Typography>
 
-                  <Box
-                    sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}
-                  >
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                     <Autocomplete
                       size="small"
                       options={availableItems.filter(
-                        (it: any) =>
-                          !it.risId && (it.actualQuantityReceived ?? 0) > 0,
+                        (it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0
                       )}
                       value={
-                        availableItems.find(
-                          (it: any) => String(it.id) === addToExistingItem,
-                        ) || null
+                        availableItems.find((it: any) => String(it.id) === addToExistingItem) ||
+                        null
                       }
                       onChange={(_, v) => {
-                        setAddToExistingItem(v ? String(v.id) : "");
+                        setAddToExistingItem(v ? String(v.id) : '');
                         setAddToExistingQty(1);
                       }}
                       getOptionLabel={(o: any) =>
                         `${o.description || o.itemName} (${o.actualQuantityReceived} avail.)`
                       }
                       isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Select Item" />
-                      )}
+                      renderInput={(params) => <TextField {...params} label="Select Item" />}
                       sx={{ flex: 2 }}
                     />
                     <TextField
@@ -931,22 +784,14 @@ export default function MultiRisAssignmentModal({
                       size="small"
                       value={addToExistingQty}
                       onChange={(e) =>
-                        setAddToExistingQty(
-                          Math.max(0, parseInt(e.target.value, 10) || 0),
-                        )
+                        setAddToExistingQty(Math.max(0, parseInt(e.target.value, 10) || 0))
                       }
                       inputProps={{ min: 1 }}
                       sx={{ width: 120 }}
                     />
                     <Button
                       variant="contained"
-                      startIcon={
-                        addLoading ? (
-                          <CircularProgress size={20} />
-                        ) : (
-                          <LinkIcon />
-                        )
-                      }
+                      startIcon={addLoading ? <CircularProgress size={20} /> : <LinkIcon />}
                       onClick={handleAddToExisting}
                       disabled={addLoading || !addToExistingItem}
                     >
@@ -959,8 +804,8 @@ export default function MultiRisAssignmentModal({
 
             {existingRISGroups.length === 0 && (
               <Alert severity="info">
-                No existing RIS assignments found for this PO. Use the "Create
-                New RIS" tab to create the first assignment.
+                No existing RIS assignments found for this PO. Use the "Create New RIS" tab to
+                create the first assignment.
               </Alert>
             )}
           </Stack>
@@ -970,10 +815,9 @@ export default function MultiRisAssignmentModal({
         {tabIndex === 2 && (
           <Stack spacing={2}>
             <Alert severity="info" sx={{ mb: 1 }}>
-              Split one item into <strong>multiple end users</strong>. Each
-              split gets its own RIS ID. You can split into any number of pieces
-              (e.g. 1 lot → 6 RIS assignments). All splits are tracked back to
-              the original source item.
+              Split one item into <strong>multiple end users</strong>. Each split gets its own RIS
+              ID. You can split into any number of pieces (e.g. 1 lot → 6 RIS assignments). All
+              splits are tracked back to the original source item.
             </Alert>
 
             {/* Source item selection */}
@@ -983,24 +827,18 @@ export default function MultiRisAssignmentModal({
             <Autocomplete
               size="small"
               options={availableItems.filter(
-                (it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0,
+                (it: any) => !it.risId && (it.actualQuantityReceived ?? 0) > 0
               )}
-              value={
-                availableItems.find(
-                  (it: any) => String(it.id) === splitSourceItemId,
-                ) || null
-              }
+              value={availableItems.find((it: any) => String(it.id) === splitSourceItemId) || null}
               onChange={(_, v) => {
-                setSplitSourceItemId(v ? String(v.id) : "");
+                setSplitSourceItemId(v ? String(v.id) : '');
                 setSplitRows([]);
               }}
               getOptionLabel={(o: any) =>
-                `${o.description || o.itemName} — ${o.actualQuantityReceived} ${o.unit || "unit(s)"} available (${currencyFormat(o.unitCost)})`
+                `${o.description || o.itemName} — ${o.actualQuantityReceived} ${o.unit || 'unit(s)'} available (${currencyFormat(o.unitCost)})`
               }
               isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-              renderInput={(params) => (
-                <TextField {...params} label="Select Source Item" />
-              )}
+              renderInput={(params) => <TextField {...params} label="Select Source Item" />}
             />
 
             {/* Split rows */}
@@ -1008,37 +846,34 @@ export default function MultiRisAssignmentModal({
               <>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
                   <Typography variant="subtitle2" fontWeight="bold">
-                    2. Define splits (Original Qty: {splitOriginalQty},
-                    Splitting into: {splitTotalQty}):
+                    2. Define splits (Original Qty: {splitOriginalQty}, Splitting into:{' '}
+                    {splitTotalQty}):
                   </Typography>
                   <Button
                     size="small"
                     variant="outlined"
                     startIcon={<AddCircleOutlineIcon />}
                     onClick={addSplitRow}
+                    disabled={splitTotalQty >= splitOriginalQty}
                   >
                     Add Split
                   </Button>
                 </Box>
 
                 {splitRows.map((row, index) => (
-                  <Card
-                    key={index}
-                    variant="outlined"
-                    sx={{ borderColor: "primary.light" }}
-                  >
-                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                  <Card key={index} variant="outlined" sx={{ borderColor: 'primary.light' }}>
+                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Box
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                           mb: 1,
                         }}
                       >
@@ -1054,7 +889,7 @@ export default function MultiRisAssignmentModal({
                         </IconButton>
                       </Box>
 
-                      <Box sx={{ display: "flex", gap: 2, mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
                         <TextField
                           label="Quantity"
                           type="number"
@@ -1063,60 +898,35 @@ export default function MultiRisAssignmentModal({
                           onChange={(e) =>
                             updateSplitRow(
                               index,
-                              "quantity",
-                              Math.max(0, parseInt(e.target.value, 10) || 0),
+                              'quantity',
+                              Math.min(
+                                splitOriginalQty,
+                                Math.max(0, parseInt(e.target.value, 10) || 0)
+                              )
                             )
                           }
-                          inputProps={{ min: 1 }}
+                          inputProps={{ min: 1, max: splitOriginalQty }}
                           sx={{ width: 120 }}
                         />
-                        <TextField
-                          label="Department / Office"
+                        <Autocomplete
                           size="small"
+                          freeSolo
+                          options={departmentOptions}
                           value={row.department}
-                          onChange={(e) =>
-                            updateSplitRow(index, "department", e.target.value)
-                          }
+                          onInputChange={(_, v) => updateSplitRow(index, 'department', v)}
+                          ListboxProps={{ sx: { maxHeight: 200, overflow: 'auto' } }}
+                          renderInput={(params) => (
+                            <TextField {...params} label="Department / Office" />
+                          )}
                           sx={{ flexGrow: 1 }}
                         />
-                      </Box>
-
-                      <Box sx={{ display: "flex", gap: 2 }}>
                         <Autocomplete
                           size="small"
-                          options={signatoryOptions}
-                          value={row.receivedFrom}
-                          onChange={(_, v) =>
-                            updateSplitRow(index, "receivedFrom", v)
-                          }
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Received From (Supply Officer)"
-                              required
-                            />
-                          )}
-                          sx={{ flex: 1 }}
-                        />
-                        <Autocomplete
-                          size="small"
-                          options={userOptions}
-                          value={row.receivedBy}
-                          onChange={(_, v) =>
-                            updateSplitRow(index, "receivedBy", v)
-                          }
-                          getOptionLabel={(o) => o.label}
-                          isOptionEqualToValue={(o, v) => o.id === v.id}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Received By (End User)"
-                              required
-                            />
-                          )}
-                          sx={{ flex: 1 }}
+                          options={DIVISION_OPTIONS}
+                          value={row.division || null}
+                          onChange={(_, v) => updateSplitRow(index, 'division', v || '')}
+                          renderInput={(params) => <TextField {...params} label="Division" />}
+                          sx={{ width: 180 }}
                         />
                       </Box>
                     </CardContent>
@@ -1125,8 +935,7 @@ export default function MultiRisAssignmentModal({
 
                 {splitRows.length === 0 && (
                   <Alert severity="info">
-                    Click &quot;Add Split&quot; to define how to divide this
-                    item across end users.
+                    Click &quot;Add Split&quot; to define how to divide this item across end users.
                   </Alert>
                 )}
 
@@ -1135,20 +944,29 @@ export default function MultiRisAssignmentModal({
                   <Paper variant="outlined" sx={{ p: 2 }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <Box>
-                        <Typography variant="body2">
-                          <strong>{splitRows.length}</strong> split(s) totaling{" "}
-                          <strong>{splitTotalQty}</strong> unit(s) from original
-                          qty of {splitOriginalQty}
+                        <Typography
+                          variant="body2"
+                          color={splitTotalQty !== splitOriginalQty ? 'error' : 'text.primary'}
+                        >
+                          <strong>{splitRows.length}</strong> split(s) totaling{' '}
+                          <strong>{splitTotalQty}</strong> unit(s) from original qty of{' '}
+                          {splitOriginalQty}
+                          {splitTotalQty !== splitOriginalQty && (
+                            <>
+                              {' '}
+                              — <strong>must equal {splitOriginalQty}</strong>
+                            </>
+                          )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Each split gets its own RIS ID. All splits are tracked
-                          back to the source item.
+                          Each split gets its own RIS ID. All splits are tracked back to the source
+                          item.
                         </Typography>
                       </Box>
                       <Button
@@ -1156,14 +974,12 @@ export default function MultiRisAssignmentModal({
                         color="primary"
                         size="large"
                         startIcon={
-                          splitLoading ? (
-                            <CircularProgress size={20} />
-                          ) : (
-                            <CallSplitIcon />
-                          )
+                          splitLoading ? <CircularProgress size={20} /> : <CallSplitIcon />
                         }
                         onClick={handleSplitAndAssign}
-                        disabled={splitLoading || splitTotalQty === 0}
+                        disabled={
+                          splitLoading || splitTotalQty === 0 || splitTotalQty !== splitOriginalQty
+                        }
                       >
                         Split & Assign ({splitRows.length})
                       </Button>
@@ -1179,6 +995,42 @@ export default function MultiRisAssignmentModal({
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
+
+      <Dialog open={splitConfirmOpen} onClose={() => setSplitConfirmOpen(false)}>
+        <DialogTitle>Confirm Split</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You are about to split "{splitSourceItem?.description || 'item'}" (qty:{' '}
+            {splitOriginalQty}) into {splitRows.length} part(s). This action can only be reversed by
+            reverting the IAR.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 1 }}>
+            {splitRows.map((row, i) => (
+              <span key={i}>
+                Split #{i + 1}: {row.quantity} unit(s){i < splitRows.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 1, fontWeight: 'bold', color: 'warning.main' }}>
+            Are you sure you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSplitConfirmOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setSplitConfirmOpen(false);
+              executeSplit();
+            }}
+            variant="contained"
+            color="primary"
+          >
+            Yes, Split
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

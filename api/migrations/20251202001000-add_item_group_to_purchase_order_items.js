@@ -49,10 +49,16 @@ export async function up(queryInterface) {
 export async function down(queryInterface) {
   // drop indexes then columns (defensive)
   try {
-    await queryInterface.removeIndex('purchase_order_items', 'idx_purchase_order_items_item_group_id');
+    await queryInterface.removeIndex(
+      'purchase_order_items',
+      'idx_purchase_order_items_item_group_id'
+    );
   } catch {}
   try {
-    await queryInterface.removeIndex('purchase_order_items', 'idx_purchase_order_items_is_receipt_line');
+    await queryInterface.removeIndex(
+      'purchase_order_items',
+      'idx_purchase_order_items_is_receipt_line'
+    );
   } catch {}
 
   const [grpCol] = await queryInterface.sequelize.query(

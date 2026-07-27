@@ -48,7 +48,8 @@ input EditUserInput {
     role: String
     password: String
     confirm_password: String
-     location: String
+    current_password: String
+    location: String
 }
 
 input CreateUserInput {

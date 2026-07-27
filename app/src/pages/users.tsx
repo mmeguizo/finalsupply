@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   CircularProgress,
   Alert,
@@ -10,62 +10,49 @@ import {
   Tooltip,
   Backdrop,
   Grid,
-} from "@mui/material";
-import {
-  DataGrid,
-  GridRowParams,
-  GridToolbar,
-  GridRowSelectionModel,
-} from "@mui/x-data-grid";
-import { PageContainer } from "@toolpad/core/PageContainer";
-import { GET_ALL_USERS } from "../graphql/queries/user.query";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import NotificationDialog from "../components/notifications";
-import { createItemColumns } from "./usersFunctions/users_gridColDef";
-import { UserToolbar } from "../layouts/ui/usersToolbar";
-import ConfirmDialog from "../components/confirmationdialog";
-import { UserTypes } from "../types/user/userType";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import UserModal from "../components/userModal";
-import {
-  EDIT_USER,
-  CREATE_USER,
-  DELETE_USER,
-} from "../graphql/mutations/user.mutation";
-import { Edit } from "@mui/icons-material";
+} from '@mui/material';
+import { DataGrid, GridRowParams, GridToolbar, GridRowSelectionModel } from '@mui/x-data-grid';
+import { PageContainer } from '@toolpad/core/PageContainer';
+import { GET_ALL_USERS } from '../graphql/queries/user.query';
+import { useQuery, useMutation, useApolloClient } from '@apollo/client';
+import NotificationDialog from '../components/notifications';
+import { createItemColumns } from './usersFunctions/users_gridColDef';
+import { UserToolbar } from '../layouts/ui/usersToolbar';
+import ConfirmDialog from '../components/confirmationdialog';
+import { UserTypes } from '../types/user/userType';
+import { capitalizeFirstLetter } from '../utils/generalUtils';
+import UserModal from '../components/userModal';
+import { EDIT_USER, CREATE_USER, DELETE_USER } from '../graphql/mutations/user.mutation';
+import { Edit } from '@mui/icons-material';
 export const UsersPage = () => {
   const client = useApolloClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { data, loading, error } = useQuery(GET_ALL_USERS);
   const [openUserModal, setOpenUserModal] = React.useState(false);
   const [showNotification, setShowNotification] = React.useState(false);
-  const [notificationMessage, setNotificationMessage] = React.useState("");
+  const [notificationMessage, setNotificationMessage] = React.useState('');
   const [notificationSeverity, setNotificationSeverity] = React.useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
-  console.log("Users data:", data, loading, error);
+    'success' | 'error' | 'info' | 'warning'
+  >('success');
+  console.log('Users data:', data, loading, error);
 
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
 
-  const [selectedUser, setselectedUser] = React.useState<UserTypes | null>(
-    null
-  );
+  const [selectedUser, setselectedUser] = React.useState<UserTypes | null>(null);
   const [editingUser, setEditingUser] = React.useState<UserTypes | null>(null);
-  const [deletingUser, setDeletingUser] = React.useState<UserTypes | null>(
-    null
-  );
+  const [deletingUser, setDeletingUser] = React.useState<UserTypes | null>(null);
 
   const [deleteUser] = useMutation(DELETE_USER, {
     refetchQueries: [{ query: GET_ALL_USERS }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "users" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'users' });
       client.cache.gc();
     },
   });
   const [editUser] = useMutation(EDIT_USER, {
     refetchQueries: [{ query: GET_ALL_USERS }],
     onCompleted: () => {
-      client.cache.evict({ id: "ROOT_QUERY", fieldName: "users" });
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'users' });
       client.cache.gc();
     },
   });
@@ -77,19 +64,19 @@ export const UsersPage = () => {
   //   },
   // });
   const [createUser] = useMutation(CREATE_USER, {
-  refetchQueries: [{ query: GET_ALL_USERS }],
-  awaitRefetchQueries: true,
-});
+    refetchQueries: [{ query: GET_ALL_USERS }],
+    awaitRefetchQueries: true,
+  });
 
   const handleOpenAddModal = (item: any) => {
     // Implement your logic to open the print modal
-    console.log("Open print modal for item:", item);
+    console.log('Open print modal for item:', item);
     setEditingUser(null);
     setOpenUserModal(true);
   };
 
   const handleOpenEditModal = (user: any) => {
-    console.log("Open edit modal for user:", user);
+    console.log('Open edit modal for user:', user);
     setEditingUser(user);
     setOpenUserModal(true);
   };
@@ -114,7 +101,7 @@ export const UsersPage = () => {
   };
 
   const handleConfirmDialogClose = async (confirmed: boolean) => {
-    console.log("Confirm dialog closed with:", confirmed, deletingUser?.id);
+    console.log('Confirm dialog closed with:', confirmed, deletingUser?.id);
 
     if (confirmed && deletingUser) {
       const results = await deleteUser({
@@ -122,12 +109,10 @@ export const UsersPage = () => {
           id: deletingUser.id,
         },
       });
-      setNotificationMessage(
-        `User "${results.data.deleteUser.name}" deleted successfully.`
-      );
-      setNotificationSeverity("success");
+      setNotificationMessage(`User "${results.data.deleteUser.name}" deleted successfully.`);
+      setNotificationSeverity('success');
       setShowNotification(true);
-      console.log("User deleted successfully:", results.data.deleteUser);
+      console.log('User deleted successfully:', results.data.deleteUser);
       setDeletingUser(null);
       setConfirmDialogOpen(false);
     } else {
@@ -136,7 +121,7 @@ export const UsersPage = () => {
   };
 
   const handleSaveSignatory = async (user: UserTypes) => {
-    console.log("Saving user:", user);
+    console.log('Saving user:', user);
     setIsSubmitting(true);
     try {
       let updateUserData: any;
@@ -160,13 +145,13 @@ export const UsersPage = () => {
           },
         });
         setNotificationMessage(results.data.message);
-        setNotificationSeverity("success");
+        setNotificationSeverity('success');
         setShowNotification(true);
         updateUserData = results.data.editUser;
-        console.log("User updated successfully:", updateUserData);
+        console.log('User updated successfully:', updateUserData);
       } else {
         //adding new user
-        console.log("Adding new user:", user);
+        console.log('Adding new user:', user);
         const results = await createUser({
           variables: {
             input: {
@@ -180,20 +165,20 @@ export const UsersPage = () => {
               gender: user.gender,
               password: user.password,
               confirm_password: user.confirm_password,
-               location: user.location,
+              location: user.location,
             },
           },
         });
         updateUserData = results.data.createUser;
-        console.log("User created successfully:", updateUserData);
+        console.log('User created successfully:', updateUserData);
       }
       setselectedUser(updateUserData);
       setEditingUser(null);
       handleCloseModal();
-    } catch (error : any) {
-      console.error("Error saving user:", error);
-      setNotificationMessage("Error saving user " + error?.message);
-      setNotificationSeverity("error");
+    } catch (error: any) {
+      console.error('Error saving user:', error);
+      setNotificationMessage('Error saving user ' + error?.message);
+      setNotificationSeverity('error');
       setShowNotification(true);
     } finally {
       setIsSubmitting(false);
@@ -205,7 +190,7 @@ export const UsersPage = () => {
   };
 
   return (
-    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: "hidden" }}>
+    <PageContainer title="" breadcrumbs={[]} sx={{ overflow: 'hidden' }}>
       {loading && (
         <Box display="flex" justifyContent="center" p={2}>
           <CircularProgress />
@@ -265,8 +250,7 @@ export const UsersPage = () => {
               </Typography>
               <Box>
                 <Typography>
-                  <strong>Name:</strong>{" "}
-                  {capitalizeFirstLetter(selectedUser.name)}
+                  <strong>Name:</strong> {capitalizeFirstLetter(selectedUser.name)}
                 </Typography>
                 <Typography>
                   <strong>Role:</strong> {selectedUser.email}
@@ -275,19 +259,16 @@ export const UsersPage = () => {
                   <strong>Employee ID:</strong> {selectedUser.employee_id}
                 </Typography>
                 <Typography>
-                  <strong>Department:</strong>{" "}
-                  {capitalizeFirstLetter(selectedUser.department)}
+                  <strong>Department:</strong> {capitalizeFirstLetter(selectedUser.department)}
                 </Typography>
                 <Typography>
                   <strong>Position:</strong> {selectedUser.position}
                 </Typography>
                 <Typography>
-                  <strong>Role:</strong>{" "}
-                  {capitalizeFirstLetter(selectedUser.role)}
+                  <strong>Role:</strong> {capitalizeFirstLetter(selectedUser.role)}
                 </Typography>
                 <Typography>
-                  <strong>Location:</strong>{" "}
-                  {capitalizeFirstLetter(selectedUser.location)}
+                  <strong>Location:</strong> {capitalizeFirstLetter(selectedUser.location)}
                 </Typography>
               </Box>
             </Paper>
@@ -312,7 +293,7 @@ export const UsersPage = () => {
 
       <Backdrop
         sx={{
-          color: "#fff",
+          color: '#fff',
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
         open={isSubmitting}

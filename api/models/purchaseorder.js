@@ -1,9 +1,9 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../db/connectDB.js";
-import PurchaseOrderItems from "./purchaseorderitems.js";
-import InspectionAcceptanceReport from "./inspectionacceptancereport.js";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/connectDB.js';
+import PurchaseOrderItems from './purchaseorderitems.js';
+import InspectionAcceptanceReport from './inspectionacceptancereport.js';
 const PurchaseOrder = sequelize.define(
-  "PurchaseOrder",
+  'PurchaseOrder',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -47,15 +47,9 @@ const PurchaseOrder = sequelize.define(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM(
-        "partial",
-        "closed",
-        "cancel",
-        "completed",
-        "pending",
-      ),
+      type: DataTypes.ENUM('partial', 'closed', 'cancel', 'completed', 'pending'),
       allowNull: true,
-      defaultValue: "pending", // Default status as 'pending'
+      defaultValue: 'pending', // Default status as 'pending'
     },
     completed_status_date: {
       type: DataTypes.DATEONLY, // Using DATEONLY for date type without time
@@ -89,12 +83,12 @@ const PurchaseOrder = sequelize.define(
     tin: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      comment: "Tax Identification Number of the supplier",
+      comment: 'Tax Identification Number of the supplier',
     },
     campus: {
       type: DataTypes.STRING(50),
       allowNull: true,
-      comment: "Campus name: Talisay | Alijis | Binalbagan | Fortune Town",
+      comment: 'Campus name: Talisay | Alijis | Binalbagan | Fortune Town',
     },
     fundsource: {
       type: DataTypes.STRING(100),
@@ -103,34 +97,34 @@ const PurchaseOrder = sequelize.define(
     income: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      comment: "Income source or code",
+      comment: 'Income source or code',
     },
     mds: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      comment: "MDS reference",
+      comment: 'MDS reference',
     },
     details: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: "Additional PO details",
+      comment: 'Additional PO details',
     },
   },
   {
-    tableName: "purchase_orders", // Specify the table name
+    tableName: 'purchase_orders', // Specify the table name
     underscored: true,
     timestamps: true, // Sequelize will automatically manage createdAt and updatedAt
-  },
+  }
 );
 
 // You may add associations if necessary (e.g., PurchaseOrder has many PurchaseOrderItems)
 
-PurchaseOrder.hasMany(PurchaseOrderItems, { foreignKey: "purchaseOrderId" });
+PurchaseOrder.hasMany(PurchaseOrderItems, { foreignKey: 'purchaseOrderId' });
 PurchaseOrder.hasMany(InspectionAcceptanceReport, {
-  foreignKey: "purchaseOrderId",
+  foreignKey: 'purchaseOrderId',
 });
-PurchaseOrderItems.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
+PurchaseOrderItems.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId' });
 InspectionAcceptanceReport.belongsTo(PurchaseOrder, {
-  foreignKey: "purchaseOrderId",
+  foreignKey: 'purchaseOrderId',
 });
 export default PurchaseOrder;

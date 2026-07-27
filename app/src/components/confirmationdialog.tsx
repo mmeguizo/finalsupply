@@ -1,10 +1,10 @@
-import React from "react";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
+import React from 'react';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -12,11 +12,7 @@ interface ConfirmDialogProps {
   onClose: (confirmed: boolean) => void;
 }
 
-export default function ConfirmDialog({
-  open,
-  message,
-  onClose,
-}: ConfirmDialogProps) {
+export default function ConfirmDialog({ open, message, onClose }: ConfirmDialogProps) {
   const handleCancel = () => {
     onClose(false);
   };
@@ -34,12 +30,12 @@ export default function ConfirmDialog({
     >
       <DialogTitle id="alert-dialog-title">Confirmation</DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          {message}
-        </DialogContentText>
+        <DialogContentText id="alert-dialog-description">{message}</DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" color="primary" onClick={handleCancel}>No</Button>
+        <Button variant="outlined" color="primary" onClick={handleCancel}>
+          No
+        </Button>
         <Button variant="outlined" color="success" onClick={handleConfirm} autoFocus>
           Yes
         </Button>

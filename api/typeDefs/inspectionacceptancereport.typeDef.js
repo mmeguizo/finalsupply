@@ -19,6 +19,7 @@ type Item {
     tag : String
     iarId : String
     iarStatus : String
+    iarQuantityDisplay: String
 }
 
 type PurchaseOrderType {
@@ -100,10 +101,32 @@ type ItemWithPurchaseOrder {
     icsDepartment: String
     icsAssignedDate: String
     purpose: String
+    icsDetails: String
+    parDetails: String
+    risDetails: String
+    poRemarks: String
     remarks: String
+    # PAR signatory fields
+    parReceivedFrom: String
+    parReceivedFromPosition: String
+    parReceivedBy: String
+    parReceivedByPosition: String
+    parDepartment: String
+    parAssignedDate: String
+    # RIS signatory fields
+    risReceivedFrom: String
+    risReceivedFromPosition: String
+    risReceivedBy: String
+    risReceivedByPosition: String
+    risDepartment: String
+    risDivision: String
+    risAssignedDate: String
+    iarQuantityDisplay: String
     splitGroupId: String
     splitFromItemId: Int
     splitIndex: Int
+    recordType: String
+    ncId: String
 }
 type IARonly{
     id: ID
@@ -150,8 +173,9 @@ input ICSUpdateInput {
 }
 
 type Query {
-    inspectionAcceptanceReport: [ItemWithPurchaseOrder!]
-    inspectionAcceptanceReportForICS: [ItemWithPurchaseOrder!]
+    inspectionAcceptanceReport(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
+    inspectionAcceptanceReportForICS(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
+    inspectionAcceptanceReportNoCategory(limit: Int, offset: Int): [ItemWithPurchaseOrder]
     iarForReports: [IARonly]
     getIARItemsByIarId(iarId: String!): [ItemWithPurchaseOrder!]
 }
@@ -164,7 +188,7 @@ type Mutation {
   appendToExistingIAR(iarId: String!, items: [AppendIARItemInput!]!): AppendIARResult!
   generateIARFromPO(purchaseOrderId: Int!, items: [GenerateIARItemInput!]!, invoice: String): GenerateIARResult!
   createLineItemFromExisting(sourceItemId: Int!, newItem: CreateLineItemInput!): CreateLineItemResult!
-  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String): UpdateIARInvoicePayload!
+  updateIARInvoice(iarId: String!, invoice: String, invoiceDate: String, income: String, mds: String, details: String, poRemarks: String): UpdateIARInvoicePayload!
   splitAndAssignICS(input: SplitAndAssignICSInput!): [ItemWithPurchaseOrder]
   createSingleICSAssignment(input: CreateSingleICSInput!): CreateICSResponse!
   createMultiItemICSAssignment(input: CreateMultiItemICSInput!): CreateMultiICSResponse!
@@ -172,6 +196,11 @@ type Mutation {
   updateICSAssignment(input: UpdateICSAssignmentInput!): ItemWithPurchaseOrder!
   updateItemPurpose(ids: [ID!]!, purpose: String!): UpdatePurposeRemarksPayload!
   updateItemRemarks(ids: [ID!]!, remarks: String!): UpdatePurposeRemarksPayload!
+  updateIcsDetails(id: ID!, icsDetails: String!): UpdatePurposeRemarksPayload!
+  updateParDetails(id: ID!, parDetails: String!): UpdatePurposeRemarksPayload!
+  updateRisDetails(id: ID!, risDetails: String!): UpdatePurposeRemarksPayload!
+  updateIARItemDisplay(id: Int!, iarQuantityDisplay: String, amount: Float): UpdateIARItemDisplayPayload!
+  assignNoCategoryItem(id: Int!, assignedQuantity: Int!, purpose: String): AssignNoCategoryResponse!
 }
 
 type UpdatePurposeRemarksPayload {
@@ -189,6 +218,7 @@ type UpdateIARInvoicePayload {
     income: String
     mds: String
     details: String
+    poRemarks: String
     updatedCount: Int!
 }
 
@@ -218,7 +248,7 @@ type AppendIARResult {
 # Input and result types for generating IAR from a Purchase Order
 input GenerateIARItemInput {
     purchaseOrderItemId: Int!
-    category: String!
+    category: String
     tag: String
     received: Int!
 }
@@ -326,6 +356,20 @@ type AddItemToExistingICSResponse {
     icsId: String!
 }
 
+
+type UpdateIARItemDisplayPayload {
+    success: Boolean!
+    message: String!
+    id: Int!
+    iarQuantityDisplay: String
+    amount: Float
+}
+
+type AssignNoCategoryResponse {
+    newItem: ItemWithPurchaseOrder!
+    sourceItem: ItemWithPurchaseOrder!
+    generatedNcId: String!
+}
 
 `;
 

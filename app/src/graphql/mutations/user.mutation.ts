@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const SIGN_UP = gql`
   mutation SignUp($input: SignUpInput!) {
@@ -32,7 +32,6 @@ const LOGOUT = gql`
     }
   }
 `;
-
 
 const EDIT_USER = gql`
   mutation editUser($input: EditUserInput!) {

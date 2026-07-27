@@ -1,16 +1,10 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
-import { InspectionReportDialogProps } from "../types/printReportModal/types";
-import { capitalizeFirstLetter } from "../utils/generalUtils";
-import useSignatoryStore from "../stores/signatoryStore";
-import InspectionAcceptanceForReporting  from "./previewDocumentFiles/InspectionAcceptanceForReporting";
-import {getInspectionReportTemplateForPrinting} from "./printDocumentFiles/inspectionAcceptanceForReporting";
+import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { InspectionReportDialogProps } from '../types/printReportModal/types';
+import { capitalizeFirstLetter } from '../utils/generalUtils';
+import useSignatoryStore from '../stores/signatoryStore';
+import InspectionAcceptanceForReporting from './previewDocumentFiles/InspectionAcceptanceForReporting';
+import { getInspectionReportTemplateForPrinting } from './printDocumentFiles/inspectionAcceptanceForReporting';
 
 export default function ForPrintReporting({
   open,
@@ -19,16 +13,14 @@ export default function ForPrintReporting({
   title,
 }: InspectionReportDialogProps) {
   const InspectorOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Inspector Officer")
+    state.getSignatoryByRole('Inspector Officer')
   );
   const supplyOffice = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Property And Supply Officer")
+    state.getSignatoryByRole('Property And Supply Officer')
   );
-  const receivedFrom = useSignatoryStore((state) =>
-    state.getSignatoryByRole("Recieved From")
-  );
+  const receivedFrom = useSignatoryStore((state) => state.getSignatoryByRole('Recieved From'));
 
-  console.log("reportData", reportData);
+  console.log('reportData', reportData);
   //add the signatories to the data to be send
   let signatories = {
     inspectionOfficer: capitalizeFirstLetter(InspectorOffice?.name),
@@ -48,15 +40,36 @@ export default function ForPrintReporting({
   };
 
   const handlePrintReport = () => {
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(getReportTemplate(reportData));
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+    const htmlContent = getReportTemplate(reportData);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) {
+      alert('Failed to create print frame.');
+      return;
     }
-    handleClose();
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        handleClose();
+      }, 1000);
+    }, 500);
   };
 
   // If print view is active, render the print-friendly report

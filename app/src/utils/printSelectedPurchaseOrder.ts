@@ -1,6 +1,6 @@
-export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
+export const printSelectedPurchaseOrdersWithItems = (purchaseOrders: any) => {
   let data: any;
-  if (typeof purchaseOrders === "object" && !purchaseOrders.purchaseOrders) {
+  if (typeof purchaseOrders === 'object' && !purchaseOrders.purchaseOrders) {
     // put the object into an array
     data = [purchaseOrders];
   } else {
@@ -8,10 +8,9 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
     data = purchaseOrders.purchaseOrders;
   }
 
-
-  const printWindow = window.open("", "_blank");
+  const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert("Please allow popups to print purchase orders.");
+    alert('Please allow popups to print purchase orders.');
     return;
   }
 
@@ -36,7 +35,7 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
       <button onclick="window.print();" style="padding: 10px; margin-bottom: 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Purchase Orders</button>
   `;
 
-  data.forEach((po : any) => {
+  data.forEach((po: any) => {
     htmlContent += `
       <div class="po-section">
         <h2>Purchase Order #${po.poNumber}</h2>
@@ -49,7 +48,7 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
             <tr><td><strong>Delivery Terms:</strong></td><td>${po.deliveryTerms}</td></tr>
             <tr><td><strong>Payment Terms:</strong></td><td>${po.paymentTerms}</td></tr>
             <tr><td><strong>Status:</strong></td><td>${po.status}</td></tr>
-            <tr><td><strong>Invoice:</strong></td><td>${po.invoice || "N/A"}</td></tr>
+            <tr><td><strong>Invoice:</strong></td><td>${po.invoice || 'N/A'}</td></tr>
             <tr><td><strong>Total Amount:</strong></td><td>PHP ${po.amount.toFixed(2)}</td></tr>
           </tbody>
         </table>
@@ -73,7 +72,7 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
             <tbody>
               ${po.items
                 .map(
-                  (item: any, index : number) => `
+                  (item: any, index: number) => `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.description}</td>
@@ -85,7 +84,7 @@ export const printSelectedPurchaseOrdersWithItems = (purchaseOrders : any) => {
                 </tr>
               `
                 )
-                .join("")}
+                .join('')}
             </tbody>
           </table>
         `

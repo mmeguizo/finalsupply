@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const ADD_ROLE = gql`
   mutation AddRole($input: AddRoleInput!) {

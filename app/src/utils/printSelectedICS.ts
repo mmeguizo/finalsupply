@@ -1,15 +1,15 @@
 export const printSelectedICS = (icsData: any) => {
-    let data: any;
-    if (typeof icsData === "object" && !icsData.icsData) {
-        // put the object into an array
-        data = [icsData];
-    } else {
-        // put the array into an object
-        data = icsData.icsData;
-    }
-  const printWindow = window.open("", "_blank");
+  let data: any;
+  if (typeof icsData === 'object' && !icsData.icsData) {
+    // put the object into an array
+    data = [icsData];
+  } else {
+    // put the array into an object
+    data = icsData.icsData;
+  }
+  const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert("Please allow popups to print Inventory Custodian Slip.");
+    alert('Please allow popups to print Inventory Custodian Slip.');
     return;
   }
 
@@ -64,14 +64,14 @@ export const printSelectedICS = (icsData: any) => {
             <p style="font-size: 12px; margin-bottom: 15px;">page 1/1</p>
             <div>
               <span class="bold" style="font-size: 12px;">ICS No: </span>
-              <span style="border-bottom: 1px solid #000; padding-bottom: 2px;">${ics.PurchaseOrder.poNumber || ""}</span>
+              <span style="border-bottom: 1px solid #000; padding-bottom: 2px;">${ics.PurchaseOrder.poNumber || ''}</span>
             </div>
           </div>
         </div>
         
         <div style="margin-top: 15px; margin-bottom: 15px;">
           <p style="font-size: 14px; margin: 5px 0;">Entity Name: Carlos Hilado Memorial State University</p>
-          <p style="font-size: 14px; margin: 5px 0;">Date: ${ics.PurchaseOrder?.dateOfDelivery || ""}</p>
+          <p style="font-size: 14px; margin: 5px 0;">Date: ${ics.PurchaseOrder?.dateOfDelivery || ''}</p>
         </div>
 
         <table>
@@ -93,17 +93,17 @@ export const printSelectedICS = (icsData: any) => {
           </thead>
           <tbody>
             <tr>
-              <td class="text-center">${ics.quantity || ""}</td>
-              <td class="text-center">${ics.unit || ""}</td>
-              <td class="text-right">${ics.formatUnitCost || ics.unitCost || ""}</td>
-              <td class="text-right">${ics.formatAmount || ics.amount || ""}</td>
-              <td colspan="2">${ics.description || ""}</td>
-              <td class="text-center">${ics.id || ""}</td>
+              <td class="text-center">${ics.quantity || ''}</td>
+              <td class="text-center">${ics.unit || ''}</td>
+              <td class="text-right">${ics.formatUnitCost || ics.unitCost || ''}</td>
+              <td class="text-right">${ics.formatAmount || ics.amount || ''}</td>
+              <td colspan="2">${ics.description || ''}</td>
+              <td class="text-center">${ics.id || ''}</td>
               <td class="text-center">5 years</td>
             </tr>
             <tr>
               <td colspan="3" class="text-right bold">Total</td>
-              <td class="text-right">${ics.formatAmount || ics.amount || ""}</td>
+              <td class="text-right">${ics.formatAmount || ics.amount || ''}</td>
               <td colspan="4"></td>
             </tr>
           </tbody>
@@ -118,12 +118,12 @@ export const printSelectedICS = (icsData: any) => {
             <p class="bold">Received from:</p>
             <div style="margin: 30px 0;">
               <div class="divider"></div>
-              <p class="bold">${ics.PurchaseOrder?.supplier || ""}</p>
+              <p class="bold">${ics.PurchaseOrder?.supplier || ''}</p>
               <div class="divider"></div>
             </div>
             <p>Signature over Printed Name</p>
             <p>Position/Office</p>
-            <p>Date: ${ics.PurchaseOrder?.dateOfDelivery || ""}</p>
+            <p>Date: ${ics.PurchaseOrder?.dateOfDelivery || ''}</p>
           </div>
           
           <div class="signature-box">
@@ -135,7 +135,7 @@ export const printSelectedICS = (icsData: any) => {
             </div>
             <p>Signature over Printed Name</p>
             <p>Position/Office</p>
-            <p>Date: ${ics.PurchaseOrder?.dateOfPayment || ""}</p>
+            <p>Date: ${ics.PurchaseOrder?.dateOfPayment || ''}</p>
           </div>
         </div>
 

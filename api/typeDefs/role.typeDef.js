@@ -1,5 +1,3 @@
-
-
 const roleTypeDef = `#graphql
   type Role {
     id: ID!

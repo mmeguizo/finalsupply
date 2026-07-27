@@ -1,22 +1,19 @@
-import { useState, useEffect } from "react";
-import {
-  PurchaseOrderFormData,
-  PurchaseOrderItem,
-} from "../types/purchaseOrder";
+import { useState, useEffect } from 'react';
+import { PurchaseOrderFormData, PurchaseOrderItem } from '../types/purchaseOrder';
 
 export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
-    ponumber: purchaseOrder?.ponumber || "",
-    supplier: purchaseOrder?.supplier || "",
-    address: purchaseOrder?.address || "",
-    placeofdelivery: purchaseOrder?.placeofdelivery || "",
+    ponumber: purchaseOrder?.ponumber || '',
+    supplier: purchaseOrder?.supplier || '',
+    address: purchaseOrder?.address || '',
+    placeofdelivery: purchaseOrder?.placeofdelivery || '',
     dateofpayment: purchaseOrder?.dateofpayment
       ? new Date(Number(purchaseOrder.dateofpayment))
       : null,
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
-    status: purchaseOrder?.status || "",
-    invoice: purchaseOrder?.invoice || "",
+    status: purchaseOrder?.status || '',
+    invoice: purchaseOrder?.invoice || '',
   });
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -28,10 +25,10 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
     setHasSubmitted(false);
     if (purchaseOrder) {
       setFormData({
-        ponumber: purchaseOrder.ponumber || "",
-        supplier: purchaseOrder.supplier || "",
-        address: purchaseOrder.address || "",
-        placeofdelivery: purchaseOrder.placeofdelivery || "",
+        ponumber: purchaseOrder.ponumber || '',
+        supplier: purchaseOrder.supplier || '',
+        address: purchaseOrder.address || '',
+        placeofdelivery: purchaseOrder.placeofdelivery || '',
         dateofpayment: purchaseOrder.dateofpayment
           ? new Date(Number(purchaseOrder.dateofpayment))
           : null,
@@ -41,26 +38,24 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
             return {
               ...item,
               actualQuantityReceived:
-                purchaseOrder.status === "completed"
-                  ? item.actualQuantityReceived
-                  : 0,
+                purchaseOrder.status === 'completed' ? item.actualQuantityReceived : 0,
             };
           }) || [],
         amount: purchaseOrder.amount || 0,
-        status: purchaseOrder.status || "",
-        invoice: purchaseOrder.invoice || "",
+        status: purchaseOrder.status || '',
+        invoice: purchaseOrder.invoice || '',
       });
     } else {
       setFormData({
-        ponumber: "",
-        supplier: "",
-        address: "",
-        placeofdelivery: "",
+        ponumber: '',
+        supplier: '',
+        address: '',
+        placeofdelivery: '',
         dateofpayment: null,
         amount: 0,
         items: [],
-        status: "",
-        invoice: "",
+        status: '',
+        invoice: '',
       });
     }
   }, [purchaseOrder]);
@@ -87,10 +82,10 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       items: [
         ...formData.items,
         {
-          category: "",
-          item: "",
-          description: "",
-          unit: "",
+          category: '',
+          item: '',
+          description: '',
+          unit: '',
           quantity: 0,
           unitCost: 0,
           amount: 0,
@@ -107,17 +102,14 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
       [field]: value,
     };
 
-    if (field === "quantity" || field === "unitCost") {
+    if (field === 'quantity' || field === 'unitCost') {
       updatedItems[index].amount =
-        Number(updatedItems[index].quantity) *
-        Number(updatedItems[index].unitCost);
+        Number(updatedItems[index].quantity) * Number(updatedItems[index].unitCost);
     }
-
 
     const allItemsComplete = updatedItems.every((item) => {
       return (
-        Number(item.quantity) ===
-          Number(item.actualQuantityReceived + actualQuantityfromDb) &&
+        Number(item.quantity) === Number(item.actualQuantityReceived + actualQuantityfromDb) &&
         item.quantity > 0
       );
     });
@@ -125,7 +117,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
     setFormData({
       ...formData,
       items: updatedItems,
-      status: allItemsComplete ? "completed" : "pending",
+      status: allItemsComplete ? 'completed' : 'pending',
     });
   };
 
@@ -145,9 +137,7 @@ export const usePurchaseOrderForm = (purchaseOrder: any | null) => {
     const formattedData = {
       ...formData,
       items: cleanedItems,
-      dateofpayment: formData.dateofpayment
-        ? formData.dateofpayment.getTime().toString()
-        : null,
+      dateofpayment: formData.dateofpayment ? formData.dateofpayment.getTime().toString() : null,
       // ponumber: parseInt(formData.ponumber),
       // ponumber: parseInt(formData.ponumber),
     };

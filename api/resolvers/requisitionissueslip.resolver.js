@@ -1,64 +1,73 @@
-import PurchaseOrder from "../models/purchaseorder.js"; // Import the Sequelize models
-import requisitionIssueSlip from "../models/inspectionacceptancereport.js";
-import { Op } from "sequelize";
-import { sequelize } from "../db/connectDB.js";
-import { generateNewRisId, resetRisIdBatch } from "../utils/risIdGenerator.js";
-import PurchaseOrderItems from "../models/purchaseorderitems.js";
+import PurchaseOrder from '../models/purchaseorder.js'; // Import the Sequelize models
+import requisitionIssueSlip from '../models/inspectionacceptancereport.js';
+import { Op } from 'sequelize';
+import { sequelize } from '../db/connectDB.js';
+import { nextRisId } from '../utils/atomicIdGenerator.js';
+import PurchaseOrderItems from '../models/purchaseorderitems.js';
+import { requireAuthenticated, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
 const requisitionIssueSlipResolver = {
   Query: {
-    requisitionIssueSlip: async (_, __, context) => {
+    requisitionIssueSlip: async (_, args, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-        // Fetch a single purchase order by ID
-        const requisitionIssueSlipReportdata =
-          await requisitionIssueSlip.findAll({
-            where: { isDeleted: false },
-            order: [["createdAt", "DESC"]],
-            include: [PurchaseOrder],
-          });
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = ownershipScope(user);
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
+        const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
+          where: { isDeleted: false, ...createdByScope },
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset,
+          include: [PurchaseOrder],
+        });
 
         if (!requisitionIssueSlipReportdata) {
-          throw new Error("Purchase order not found");
+          throw new Error('Purchase order not found');
         }
         return requisitionIssueSlipReportdata;
       } catch (error) {
-        console.error("Error fetching purchase order: ", error);
-        throw new Error(error.message || "Internal server error");
+        console.error('Error fetching purchase order: ', error);
+        throw new Error(error.message || 'Internal server error');
       }
     },
-    requisitionIssueSlipForView: async (_, __, context) => {
+    requisitionIssueSlipForView: async (_, args, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
-        // Fetch a single purchase order by ID
-        const requisitionIssueSlipReportdata =
-          await requisitionIssueSlip.findAll({
-            where: {
-              isDeleted: false,
-              category: "requisition issue slip",
+        requireAuthenticated(context);
+        const user = await context.getUser();
+        const createdByScope = user?.email
+          ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
+          : {};
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
+        const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
+          where: {
+            isDeleted: false,
+            category: 'requisition issue slip',
+            ...createdByScope,
+          },
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset,
+          include: [
+            { model: PurchaseOrder },
+            {
+              model: PurchaseOrderItems,
+              as: 'PurchaseOrderItem',
+              required: false,
             },
-            order: [["createdAt", "DESC"]],
-            include: [
-              { model: PurchaseOrder },
-              // include PurchaseOrderItems using the alias used in your models / code
-              {
-                model: PurchaseOrderItems,
-                as: "PurchaseOrderItem",
-                required: false,
-              },
-            ],
-          });
+          ],
+        });
 
         if (!requisitionIssueSlipReportdata) {
-          throw new Error("Purchase order not found");
+          throw new Error('Purchase order not found');
         }
         return requisitionIssueSlipReportdata;
       } catch (error) {
-        console.error("Error fetching purchase order: ", error);
-        throw new Error(error.message || "Internal server error");
+        console.error('Error fetching purchase order: ', error);
+        throw new Error(error.message || 'Internal server error');
       }
     },
   },
@@ -66,13 +75,12 @@ const requisitionIssueSlipResolver = {
   Mutation: {
     updateRISInventoryIDs: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        await authorizeOwnershipBatch(requisitionIssueSlip, input.ids, context);
         // Generate a single batch RIS ID for all items
-        const batchRisId = await generateNewRisId();
-        console.log("Updating items with IDs:", input.ids);
-        console.log("Generated batch RIS ID:", batchRisId);
+        const batchRisId = await nextRisId();
+        console.log('Updating items with IDs:', input.ids);
+        console.log('Generated batch RIS ID:', batchRisId);
 
         // Find all items by their IDs and update them with the same ICS ID
         const updatedItems = await requisitionIssueSlip.update(
@@ -82,7 +90,7 @@ const requisitionIssueSlipResolver = {
               id: { [Op.in]: input.ids },
             },
             returning: true,
-          },
+          }
         );
         // console.log({updatedItems});
 
@@ -98,23 +106,19 @@ const requisitionIssueSlipResolver = {
 
         return items;
       } catch (error) {
-        console.error("Error updating RIS IDs:", error);
-        throw new Error(error.message || "Failed to update RIS IDs");
+        console.error('Error updating RIS IDs:', error);
+        throw new Error(error.message || 'Failed to update RIS IDs');
       }
     },
 
     // Split items by quantity and assign separate RIS IDs with per-split signatories
     splitAndAssignRIS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
+        const user = await context.getUser();
 
         const { itemSplits } = input;
         const allResultIds = [];
-
-        // Reset RIS ID batch counter so sequential IDs are generated properly
-        resetRisIdBatch();
 
         const transaction = await sequelize.transaction();
 
@@ -124,15 +128,32 @@ const requisitionIssueSlipResolver = {
 
             const original = await requisitionIssueSlip.findByPk(itemId, {
               transaction,
+              lock: transaction.LOCK.UPDATE,
               include: [PurchaseOrder],
             });
 
             if (!original) {
               throw new Error(`Item with ID ${itemId} not found`);
             }
+            authorizeOwnership(original, context);
 
             if (splits.length === 0) {
-              throw new Error("At least one split is required per item");
+              throw new Error('At least one split is required per item');
+            }
+
+            // Validate total split quantity equals original
+            const totalSplitQty = splits.reduce((sum, s) => sum + Number(s.quantity), 0);
+            const originalQty = Number(original.actualQuantityReceived || 0);
+            if (totalSplitQty !== originalQty) {
+              throw new Error(
+                `Total split quantity (${totalSplitQty}) must equal original quantity (${originalQty}).`
+              );
+            }
+            // Validate each split quantity is positive
+            for (const split of splits) {
+              if (!split.quantity || Number(split.quantity) <= 0) {
+                throw new Error('Each split must have a quantity greater than 0.');
+              }
             }
 
             // Generate a split group ID to track all pieces back to this original
@@ -141,25 +162,26 @@ const requisitionIssueSlipResolver = {
 
             // First split: update the original record
             const firstSplit = splits[0];
-            const firstRisId = await generateNewRisId();
+            const firstRisId = await nextRisId(transaction);
 
             await original.update(
               {
                 actualQuantityReceived: firstSplit.quantity,
-                amount:
-                  firstSplit.quantity * parseFloat(original.unitCost || 0),
+                amount: firstSplit.quantity * parseFloat(original.unitCost || 0),
                 risId: firstRisId,
                 risReceivedFrom: firstSplit.receivedFrom,
-                risReceivedFromPosition: firstSplit.receivedFromPosition || "",
+                risReceivedFromPosition: firstSplit.receivedFromPosition || '',
                 risReceivedBy: firstSplit.receivedBy,
-                risReceivedByPosition: firstSplit.receivedByPosition || "",
-                risDepartment: firstSplit.department || "",
+                risReceivedByPosition: firstSplit.receivedByPosition || '',
+                risDepartment: firstSplit.department || '',
+                risDivision: firstSplit.division || null,
                 risAssignedDate: new Date(),
                 splitGroupId: splitGroupId,
                 splitFromItemId: originalItemId,
                 splitIndex: 1,
+                updatedBy: user?.email || null,
               },
-              { transaction },
+              { transaction }
             );
 
             allResultIds.push(original.id);
@@ -167,7 +189,7 @@ const requisitionIssueSlipResolver = {
             // Additional splits: clone the original record
             for (let i = 1; i < splits.length; i++) {
               const split = splits[i];
-              const newRisId = await generateNewRisId();
+              const newRisId = await nextRisId(transaction);
               const originalData = original.toJSON();
 
               const clonedRecord = await requisitionIssueSlip.create(
@@ -194,21 +216,23 @@ const requisitionIssueSlipResolver = {
                   income: originalData.income,
                   mds: originalData.mds,
                   details: originalData.details,
+                  poRemarks: originalData.poRemarks,
                   actualQuantityReceived: split.quantity,
-                  amount:
-                    split.quantity * parseFloat(originalData.unitCost || 0),
+                  amount: split.quantity * parseFloat(originalData.unitCost || 0),
                   risId: newRisId,
                   risReceivedFrom: split.receivedFrom,
-                  risReceivedFromPosition: split.receivedFromPosition || "",
+                  risReceivedFromPosition: split.receivedFromPosition || '',
                   risReceivedBy: split.receivedBy,
-                  risReceivedByPosition: split.receivedByPosition || "",
-                  risDepartment: split.department || "",
+                  risReceivedByPosition: split.receivedByPosition || '',
+                  risDepartment: split.department || '',
+                  risDivision: split.division || null,
                   risAssignedDate: new Date(),
                   splitGroupId: splitGroupId,
                   splitFromItemId: originalItemId,
                   splitIndex: i + 1,
+                  recordType: 'issuance_clone',
                 },
-                { transaction },
+                { transaction }
               );
 
               allResultIds.push(clonedRecord.id);
@@ -228,17 +252,15 @@ const requisitionIssueSlipResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in splitAndAssignRIS:", error);
-        throw new Error(error.message || "Failed to split and assign RIS");
+        console.error('Error in splitAndAssignRIS:', error);
+        throw new Error(error.message || 'Failed to split and assign RIS');
       }
     },
 
     // Create a single RIS assignment (saves immediately, clones from source)
     createSingleRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           sourceItemId,
@@ -250,33 +272,34 @@ const requisitionIssueSlipResolver = {
           receivedByPosition,
         } = input;
 
-        // Fetch the source item
-        const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(
-            `Quantity (${quantity}) exceeds available (${currentReceived})`,
-          );
-        }
-        if (quantity <= 0) {
-          throw new Error("Quantity must be greater than 0");
-        }
-
-        // Generate new RIS ID
-        const newRisId = await generateNewRisId();
-        const sourceData = sourceItem.toJSON();
-
         // Use transaction for atomicity
         const transaction = await sequelize.transaction();
 
         try {
+          // Fetch the source item with lock
+          const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          // Generate new RIS ID
+          const newRisId = await nextRisId(transaction);
+          const sourceData = sourceItem.toJSON();
+
           // Create new record with the assigned quantity and RIS ID
           const newItem = await requisitionIssueSlip.create(
             {
@@ -302,42 +325,36 @@ const requisitionIssueSlipResolver = {
               income: sourceData.income,
               mds: sourceData.mds,
               details: sourceData.details,
+              poRemarks: sourceData.poRemarks,
               // Assignment-specific fields
               actualQuantityReceived: quantity,
               amount: quantity * parseFloat(sourceData.unitCost || 0),
               risId: newRisId,
               risReceivedFrom: receivedFrom,
-              risReceivedFromPosition: receivedFromPosition || "",
+              risReceivedFromPosition: receivedFromPosition || '',
               risReceivedBy: receivedBy,
-              risReceivedByPosition: receivedByPosition || "",
-              risDepartment: department || "",
+              risReceivedByPosition: receivedByPosition || '',
+              risDepartment: department || '',
+              risDivision: input.division || null,
               risAssignedDate: new Date(),
+              recordType: 'issuance_clone',
             },
-            { transaction },
+            { transaction }
           );
 
           // Update source item: reduce actualQuantityReceived
           const newSourceQty = currentReceived - quantity;
-          await sourceItem.update(
-            { actualQuantityReceived: newSourceQty },
-            { transaction },
-          );
+          await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
 
           await transaction.commit();
 
           // Fetch updated items with associations
-          const updatedNewItem = await requisitionIssueSlip.findByPk(
-            newItem.id,
-            {
-              include: [PurchaseOrder],
-            },
-          );
-          const updatedSourceItem = await requisitionIssueSlip.findByPk(
-            sourceItemId,
-            {
-              include: [PurchaseOrder],
-            },
-          );
+          const updatedNewItem = await requisitionIssueSlip.findByPk(newItem.id, {
+            include: [PurchaseOrder],
+          });
+          const updatedSourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+          });
 
           return {
             newItem: updatedNewItem,
@@ -349,17 +366,15 @@ const requisitionIssueSlipResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in createSingleRISAssignment:", error);
-        throw new Error(error.message || "Failed to create RIS assignment");
+        console.error('Error in createSingleRISAssignment:', error);
+        throw new Error(error.message || 'Failed to create RIS assignment');
       }
     },
 
     // Create a multi-item RIS assignment (multiple items share one RIS ID per end user)
     createMultiItemRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           items,
@@ -371,40 +386,39 @@ const requisitionIssueSlipResolver = {
         } = input;
 
         if (!items || items.length === 0) {
-          throw new Error("At least one item is required");
+          throw new Error('At least one item is required');
         }
-
-        // Generate a single RIS ID for all items in this assignment
-        const sharedRisId = await generateNewRisId();
 
         const transaction = await sequelize.transaction();
         const newItemIds = [];
         const sourceItemIds = [];
 
         try {
+          // Generate a single RIS ID for all items in this assignment
+          const sharedRisId = await nextRisId(transaction);
+
           for (const entry of items) {
             const { sourceItemId, quantity } = entry;
 
-            const sourceItem = await requisitionIssueSlip.findByPk(
-              sourceItemId,
-              {
-                include: [PurchaseOrder],
-                transaction,
-              },
-            );
+            const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+              include: [PurchaseOrder],
+              transaction,
+              lock: transaction.LOCK.UPDATE,
+            });
 
             if (!sourceItem) {
               throw new Error(`Source item with ID ${sourceItemId} not found`);
             }
+            authorizeOwnership(sourceItem, context);
 
             const currentReceived = sourceItem.actualQuantityReceived || 0;
             if (quantity > currentReceived) {
               throw new Error(
-                `Quantity (${quantity}) exceeds available (${currentReceived}) for item "${sourceItem.description}"`,
+                `Quantity (${quantity}) exceeds available (${currentReceived}) for item "${sourceItem.description}"`
               );
             }
             if (quantity <= 0) {
-              throw new Error("Quantity must be greater than 0");
+              throw new Error('Quantity must be greater than 0');
             }
 
             const sourceData = sourceItem.toJSON();
@@ -433,26 +447,26 @@ const requisitionIssueSlipResolver = {
                 income: sourceData.income,
                 mds: sourceData.mds,
                 details: sourceData.details,
+                poRemarks: sourceData.poRemarks,
                 actualQuantityReceived: quantity,
                 amount: quantity * parseFloat(sourceData.unitCost || 0),
                 risId: sharedRisId,
                 risReceivedFrom: receivedFrom,
-                risReceivedFromPosition: receivedFromPosition || "",
+                risReceivedFromPosition: receivedFromPosition || '',
                 risReceivedBy: receivedBy,
-                risReceivedByPosition: receivedByPosition || "",
-                risDepartment: department || "",
+                risReceivedByPosition: receivedByPosition || '',
+                risDepartment: department || '',
+                risDivision: input.division || null,
                 risAssignedDate: new Date(),
+                recordType: 'issuance_clone',
               },
-              { transaction },
+              { transaction }
             );
 
             newItemIds.push(newItem.id);
 
             const newSourceQty = currentReceived - quantity;
-            await sourceItem.update(
-              { actualQuantityReceived: newSourceQty },
-              { transaction },
-            );
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
 
             sourceItemIds.push(sourceItemId);
           }
@@ -478,24 +492,20 @@ const requisitionIssueSlipResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in createMultiItemRISAssignment:", error);
-        throw new Error(
-          error.message || "Failed to create multi-item RIS assignment",
-        );
+        console.error('Error in createMultiItemRISAssignment:', error);
+        throw new Error(error.message || 'Failed to create multi-item RIS assignment');
       }
     },
 
-    // Add an item to an existing RIS ID
+    // Add an item to an existing RIS ID - COMBINES if same source item already exists in the RIS
     addItemToExistingRIS: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const { sourceItemId, quantity, existingRisId } = input;
 
         if (!existingRisId) {
-          throw new Error("Existing RIS ID is required");
+          throw new Error('Existing RIS ID is required');
         }
 
         const existingRISItem = await requisitionIssueSlip.findOne({
@@ -503,93 +513,126 @@ const requisitionIssueSlipResolver = {
         });
 
         if (!existingRISItem) {
-          throw new Error(
-            `No existing item found with RIS ID "${existingRisId}"`,
-          );
+          throw new Error(`No existing item found with RIS ID "${existingRisId}"`);
         }
 
-        const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
-          include: [PurchaseOrder],
-        });
-
-        if (!sourceItem) {
-          throw new Error(`Source item with ID ${sourceItemId} not found`);
-        }
-
-        const currentReceived = sourceItem.actualQuantityReceived || 0;
-        if (quantity > currentReceived) {
-          throw new Error(
-            `Quantity (${quantity}) exceeds available (${currentReceived})`,
-          );
-        }
-        if (quantity <= 0) {
-          throw new Error("Quantity must be greater than 0");
-        }
-
-        const sourceData = sourceItem.toJSON();
         const transaction = await sequelize.transaction();
 
         try {
-          const newItem = await requisitionIssueSlip.create(
-            {
-              iarId: sourceData.iarId,
-              icsId: sourceData.icsId,
-              parId: sourceData.parId,
-              purchaseOrderId: sourceData.purchaseOrderId,
-              purchaseOrderItemId: sourceData.purchaseOrderItemId,
-              iarStatus: sourceData.iarStatus,
-              description: sourceData.description,
-              unit: sourceData.unit,
-              quantity: sourceData.quantity,
-              unitCost: sourceData.unitCost,
-              category: sourceData.category,
-              tag: sourceData.tag,
-              isDeleted: 0,
-              createdBy: sourceData.createdBy,
-              updatedBy: sourceData.updatedBy,
-              inventoryNumber: sourceData.inventoryNumber,
-              itemName: sourceData.itemName,
-              invoice: sourceData.invoice,
-              invoiceDate: sourceData.invoiceDate,
-              income: sourceData.income,
-              mds: sourceData.mds,
-              details: sourceData.details,
-              actualQuantityReceived: quantity,
-              amount: quantity * parseFloat(sourceData.unitCost || 0),
+          const sourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+            include: [PurchaseOrder],
+          });
+
+          if (!sourceItem) {
+            throw new Error(`Source item with ID ${sourceItemId} not found`);
+          }
+          authorizeOwnership(sourceItem, context);
+
+          const currentReceived = sourceItem.actualQuantityReceived || 0;
+          if (quantity > currentReceived) {
+            throw new Error(`Quantity (${quantity}) exceeds available (${currentReceived})`);
+          }
+          if (quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+          }
+
+          const sourceData = sourceItem.toJSON();
+          // Check if there's already an item with the same risId AND same purchaseOrderItemId
+          // If so, COMBINE the quantities instead of creating a duplicate
+          const existingItemWithSameSource = await requisitionIssueSlip.findOne({
+            where: {
               risId: existingRisId,
-              risReceivedFrom: existingRISItem.risReceivedFrom,
-              risReceivedFromPosition: existingRISItem.risReceivedFromPosition,
-              risReceivedBy: existingRISItem.risReceivedBy,
-              risReceivedByPosition: existingRISItem.risReceivedByPosition,
-              risDepartment: existingRISItem.risDepartment,
-              risAssignedDate: new Date(),
+              purchaseOrderItemId: sourceData.purchaseOrderItemId,
+              isDeleted: false,
+              id: { [Op.ne]: sourceItemId }, // Not the source item itself
             },
-            { transaction },
-          );
+            transaction,
+          });
 
-          const newSourceQty = currentReceived - quantity;
-          await sourceItem.update(
-            { actualQuantityReceived: newSourceQty },
-            { transaction },
-          );
+          let resultItem;
 
-          await transaction.commit();
+          if (existingItemWithSameSource) {
+            // COMBINE: Update existing item's quantity instead of creating a new one
+            const newQty = (existingItemWithSameSource.actualQuantityReceived || 0) + quantity;
+            const newAmount = newQty * parseFloat(existingItemWithSameSource.unitCost || 0);
 
-          const updatedNewItem = await requisitionIssueSlip.findByPk(
-            newItem.id,
-            {
+            await existingItemWithSameSource.update(
+              {
+                actualQuantityReceived: newQty,
+                amount: newAmount,
+              },
+              { transaction }
+            );
+
+            // Update source: reduce qty
+            const newSourceQty = currentReceived - quantity;
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+            await transaction.commit();
+
+            resultItem = await requisitionIssueSlip.findByPk(existingItemWithSameSource.id, {
               include: [PurchaseOrder],
-            },
-          );
-          const updatedSourceItem = await requisitionIssueSlip.findByPk(
-            sourceItemId,
-            {
+            });
+          } else {
+            // CREATE NEW: No existing item with same source, create a new record
+            const newItem = await requisitionIssueSlip.create(
+              {
+                iarId: sourceData.iarId,
+                icsId: sourceData.icsId,
+                parId: sourceData.parId,
+                purchaseOrderId: sourceData.purchaseOrderId,
+                purchaseOrderItemId: sourceData.purchaseOrderItemId,
+                iarStatus: sourceData.iarStatus,
+                description: sourceData.description,
+                unit: sourceData.unit,
+                quantity: sourceData.quantity,
+                unitCost: sourceData.unitCost,
+                category: sourceData.category,
+                tag: sourceData.tag,
+                isDeleted: 0,
+                createdBy: sourceData.createdBy,
+                updatedBy: sourceData.updatedBy,
+                inventoryNumber: sourceData.inventoryNumber,
+                itemName: sourceData.itemName,
+                invoice: sourceData.invoice,
+                invoiceDate: sourceData.invoiceDate,
+                income: sourceData.income,
+                mds: sourceData.mds,
+                details: sourceData.details,
+                poRemarks: sourceData.poRemarks,
+                actualQuantityReceived: quantity,
+                amount: quantity * parseFloat(sourceData.unitCost || 0),
+                risId: existingRisId,
+                risReceivedFrom: existingRISItem.risReceivedFrom,
+                risReceivedFromPosition: existingRISItem.risReceivedFromPosition,
+                risReceivedBy: existingRISItem.risReceivedBy,
+                risReceivedByPosition: existingRISItem.risReceivedByPosition,
+                risDepartment: existingRISItem.risDepartment,
+                risDivision: existingRISItem.risDivision || null,
+                risAssignedDate: new Date(),
+                recordType: 'issuance_clone',
+              },
+              { transaction }
+            );
+
+            const newSourceQty = currentReceived - quantity;
+            await sourceItem.update({ actualQuantityReceived: newSourceQty }, { transaction });
+
+            await transaction.commit();
+
+            resultItem = await requisitionIssueSlip.findByPk(newItem.id, {
               include: [PurchaseOrder],
-            },
-          );
+            });
+          }
+
+          const updatedSourceItem = await requisitionIssueSlip.findByPk(sourceItemId, {
+            include: [PurchaseOrder],
+          });
 
           return {
-            newItem: updatedNewItem,
+            newItem: resultItem,
             sourceItem: updatedSourceItem,
             risId: existingRisId,
           };
@@ -598,17 +641,15 @@ const requisitionIssueSlipResolver = {
           throw innerError;
         }
       } catch (error) {
-        console.error("Error in addItemToExistingRIS:", error);
-        throw new Error(error.message || "Failed to add item to existing RIS");
+        console.error('Error in addItemToExistingRIS:', error);
+        throw new Error(error.message || 'Failed to add item to existing RIS');
       }
     },
 
     // Update an existing RIS assignment
     updateRISAssignment: async (_, { input }, context) => {
       try {
-        if (!context.isAuthenticated()) {
-          throw new Error("Unauthorized");
-        }
+        requireAuthenticated(context);
 
         const {
           itemId,
@@ -624,6 +665,7 @@ const requisitionIssueSlipResolver = {
         if (!item) {
           throw new Error(`Item with ID ${itemId} not found`);
         }
+        authorizeOwnership(item, context);
 
         // Build update object with only provided fields
         const updateData = {};
@@ -632,13 +674,12 @@ const requisitionIssueSlipResolver = {
           updateData.amount = quantity * parseFloat(item.unitCost || 0);
         }
         if (department !== undefined) updateData.risDepartment = department;
-        if (receivedFrom !== undefined)
-          updateData.risReceivedFrom = receivedFrom;
+        if (input.division !== undefined) updateData.risDivision = input.division;
+        if (receivedFrom !== undefined) updateData.risReceivedFrom = receivedFrom;
         if (receivedFromPosition !== undefined)
           updateData.risReceivedFromPosition = receivedFromPosition;
         if (receivedBy !== undefined) updateData.risReceivedBy = receivedBy;
-        if (receivedByPosition !== undefined)
-          updateData.risReceivedByPosition = receivedByPosition;
+        if (receivedByPosition !== undefined) updateData.risReceivedByPosition = receivedByPosition;
 
         await item.update(updateData);
 
@@ -649,8 +690,8 @@ const requisitionIssueSlipResolver = {
 
         return updatedItem;
       } catch (error) {
-        console.error("Error in updateRISAssignment:", error);
-        throw new Error(error.message || "Failed to update RIS assignment");
+        console.error('Error in updateRISAssignment:', error);
+        throw new Error(error.message || 'Failed to update RIS assignment');
       }
     },
   },

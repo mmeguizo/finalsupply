@@ -1,53 +1,72 @@
-import {
-  capitalizeFirstLetter,
-  formatCurrencyPHP,
-} from "../../utils/generalUtils";
-import { escapeHtml, nl2br } from "../../utils/textHelpers";
+import { capitalizeFirstLetter, formatCurrencyPHP } from '../../utils/generalUtils';
+import { escapeHtml, nl2br } from '../../utils/textHelpers';
+
+// Helper: get the received quantity for an item.
+// Priority: `iarQuantityDisplay` (explicit override) -> `PurchaseOrderItem.actualQuantityReceived` -> `item.actualQuantityReceived` (IAR row)
+const getReceivedQty = (item: any): number => {
+  if (item?.iarQuantityDisplay != null) return Number(item.iarQuantityDisplay);
+  const poiQty = Number(item?.PurchaseOrderItem?.actualQuantityReceived ?? 0);
+  if (poiQty > 0) return poiQty;
+  return Number(item?.actualQuantityReceived ?? 0);
+};
 
 export const getInspectionReportTemplateForIAR = (
   signatories: any,
   reportData: any,
   poOverrides?: { invoice?: string; dateOfPayment?: string }, // NEW
+  iarDetails?: string
 ) => {
   // normalize input to array
-  const items: any[] = Array.isArray(reportData)
-    ? reportData
-    : reportData
-      ? [reportData]
-      : [];
+  const allItems: any[] = Array.isArray(reportData) ? reportData : reportData ? [reportData] : [];
+  // Diagnostic logging: show actual vs PO actual for each item
+  try {
+    allItems.forEach((it, idx) => {
+      // eslint-disable-next-line no-console
+      console.debug('printTemplate: item', idx, {
+        id: it?.id,
+        iarActual: it?.actualQuantityReceived,
+        poiActual: it?.PurchaseOrderItem?.actualQuantityReceived,
+        iarQuantityDisplay: it?.iarQuantityDisplay,
+      });
+    });
+  } catch (e) {
+    /* ignore logging errors */
+  }
+  // Show items that have a received quantity > 0 OR an explicit display override
+  const items = allItems.filter(
+    (it: any) => getReceivedQty(it) > 0 || it?.iarQuantityDisplay != null
+  );
 
-  const purchaseOrder = items[0]?.PurchaseOrder || {};
-  const invoiceText = escapeHtml(String(items[0]?.invoice ?? ""));
+  // Add console log to debug content generation
+  console.log('DEBUG: Generating print template with', items.length, 'items:', items);
+
+  // Use allItems[0] for header metadata so PO info shows even if all items are filtered
+  const headerItem = allItems[0] ?? {};
+  const purchaseOrder = headerItem?.PurchaseOrder || {};
+  const invoiceText = escapeHtml(String(headerItem?.invoice ?? ''));
   const dateOfPaymentText = escapeHtml(
-    String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? ""),
+    String(poOverrides?.dateOfPayment ?? purchaseOrder?.dateOfPayment ?? '')
   );
 
   // helpers already imported: escapeHtml, nl2br
   const rowsHtml =
     items
       .map((it: any, idx: number) => {
-        const desc = escapeHtml(
-          it.description || it.PurchaseOrderItem?.description || "",
-        );
+        const desc = escapeHtml(it.description || it.PurchaseOrderItem?.description || '');
         const specHtml = it.PurchaseOrderItem?.specification
           ? nl2br(it.PurchaseOrderItem.specification)
-          : "";
+          : '';
         const genDescHtml = it.PurchaseOrderItem?.generalDescription
           ? nl2br(it.PurchaseOrderItem.generalDescription)
-          : "";
+          : '';
 
         const qty = escapeHtml(
-          String(it.actualQuantityReceived ?? it.quantity ?? ""),
+          String(it.iarQuantityDisplay ?? getReceivedQty(it) ?? it.quantity ?? '')
         );
-        const unit = escapeHtml(it.unit ?? "");
-        const unitCost = escapeHtml(
-          String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""),
-        );
+        const unit = escapeHtml(it.unit ?? '');
+        const unitCost = escapeHtml(String(it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ''));
         const amount = escapeHtml(
-          String(
-            (it.actualQuantityReceived ?? it.quantity ?? "") *
-              (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ""),
-          ),
+          String(getReceivedQty(it) * (it.unitCost ?? it.PurchaseOrderItem?.unitCost ?? ''))
         );
         // const amount = escapeHtml(
         //   String(it.amount ?? it.PurchaseOrderItem?.amount ?? "")
@@ -55,80 +74,124 @@ export const getInspectionReportTemplateForIAR = (
 
         return `
         <tr>
-          <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${idx + 1}</td>
-          <td style="padding:4px ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${unit}</td>
-          <td colspan="3" style="padding:6px; text-align:left; vertical-align:top; ; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${idx + 1}</td>
+          <td style="text-align:center; padding:3px 4px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${unit}</td>
+          <td colspan="3" style="text-align:left; vertical-align:top; padding:4px 8px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
             ${desc}
-            ${specHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${specHtml}</div>` : ""}
-            ${genDescHtml ? `<div style="margin-top:6px; color:#333; font-size:12px; text-align:left;">${genDescHtml}</div>` : ""}
+            ${specHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${specHtml}</div>` : ''}
+            ${genDescHtml ? `<div style="margin-top:4px; font-size:12px; color:#555;">${genDescHtml}</div>` : ''}
           </td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${qty}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(unitCost)}</td>
-          <td style="padding:4px; text-align:right; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">${formatCurrencyPHP(amount)}</td>
+          <td style="text-align:center; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${qty}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(unitCost)}</td>
+          <td style="text-align:right; padding:3px 6px; vertical-align:top; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">${formatCurrencyPHP(amount)}</td>
         </tr>
       `;
       })
-      .join("\n") +
+      .join('\n') +
     (items.length
       ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td colspan="3" style="padding:4px; text-align:center; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:center; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">*****Nothing Follows*****</span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
-        <td style="padding:4px; border-left: 1px solid #000;   border-right: 1px solid #000;border-top: none;border-bottom: none; padding: 0px;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       ${
-        items[0]?.income || items[0]?.mds || items[0]?.details
+        headerItem?.income || headerItem?.mds
           ? `
       <tr>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td colspan="3" style="padding:4px; text-align:left; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;">
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:left; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
           <span style="font-size:12px; color:#333;">
-            ${items[0]?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(items[0].income)}</span></p>` : ""}
-            ${items[0]?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(items[0].mds)}</span></p>` : ""}
-            ${items[0]?.details ? `<p style="font-size:12px;">Details: <span>${capitalizeFirstLetter(items[0].details)}</span></p>` : ""}
+            ${headerItem?.income ? `<p style="font-size:12px;">Income: <span>${capitalizeFirstLetter(headerItem.income)}</span></p>` : ''}
+            ${headerItem?.mds ? `<p style="font-size:12px;">MDS: <span>${capitalizeFirstLetter(headerItem.mds)}</span></p>` : ''}
           </span>
         </td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
-        <td style="padding:4px; border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
       </tr>
       `
-          : ""
+          : ''
+      }
+      ${
+        iarDetails
+          ? `
+      <tr>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 4px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td colspan="3" style="padding:4px 8px; text-align:left; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;">
+          <p style="font-size:12px;">PO Details: <span>${capitalizeFirstLetter(iarDetails)}</span></p>
+        </td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+        <td style="padding:3px 6px; border-left:1px solid #000; border-right:1px solid #000; border-top:none; border-bottom:none;"></td>
+      </tr>
+      `
+          : ''
       }
     `
-      : "");
+      : '');
 
   const totalAmount = items.reduce(
-    (sum, it) =>
-      sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
-    0,
+    (sum, it) => sum + Number(it?.actualQuantityReceived ?? 0) * Number(it?.unitCost ?? 0),
+    0
   );
 
   console.log;
 
-  const formattedTotal =
-    items[0]?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? "";
+  const formattedTotal = headerItem?.formatAmount ?? formatCurrencyPHP(totalAmount) ?? '';
 
-  const overallComplete =
-    items.length && items.every((i) => i.iarStatus === "complete");
-  const overallPartial = items.some((i) => i.iarStatus === "partial");
+  const containerStyles = `
+    <style>
+      @media print {
+        @page {
+          size: A4;
+          margin: 20mm;
+        }
+        body {
+          visibility: visible !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .page {
+          visibility: visible !important;
+          position: static !important;
+          width: auto;
+          height: auto;
+          margin: 0;
+          padding: 0;
+        }
+        button,
+        .MuiBackdrop-root,
+        .MuiDialog-container,
+        div[role="presentation"],
+        div[role="dialog"],
+        .PrintControls {
+          display: none !important;
+        }
+      }
+    </style>
+  `;
 
-  console.log("Overall Complete:", reportData, overallComplete);
+  // Use allItems for status checks — the IAR status reflects the whole batch, not just received items
+  const overallComplete = allItems.length && allItems.every((i) => i.iarStatus === 'complete');
+  const overallPartial = allItems.some((i) => i.iarStatus === 'partial');
+
+  console.log('Overall Complete:', reportData, overallComplete);
 
   return `
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Inspection & Acceptance Report</title>
-      <link rel="stylesheet" href="./assets/styles/main.css" />
-    </head>
+    <title>Inspection & Acceptance Report</title>
+  </head>
     <style>
     * {
     margin: 0;
@@ -361,19 +424,19 @@ export const getInspectionReportTemplateForIAR = (
             </tr>
             <tr>
               <th colspan="2">Supplier:</th>
-              <th colspan="6">${reportData[0]?.PurchaseOrder?.supplier || ""}</th>
+              <th colspan="6">${reportData[0]?.PurchaseOrder?.supplier || ''}</th>
             </tr>
             <tr>
               <th colspan="2">PO # & Date:</th>
-               <th>${reportData[0]?.PurchaseOrder?.poNumber || ""}</th>
-              <th>${reportData[0]?.PurchaseOrder?.dateOfDelivery || ""}</th>
+               <th>${reportData[0]?.PurchaseOrder?.poNumber || ''}</th>
+              <th>${reportData[0]?.PurchaseOrder?.dateOfDelivery || ''}</th>
               <th>Invoice# & Date:</th>
               <th colspan="2">${invoiceText} </th>
                <th>${dateOfPaymentText}</th>
             </tr>
             <tr>
               <th colspan="3">Requisitioning Office/Department:</th>
-              <th colspan="5">${reportData[0]?.PurchaseOrder?.placeOfDelivery || ""}</th>
+              <th colspan="5">${reportData[0]?.PurchaseOrder?.placeOfDelivery || ''}</th>
             </tr>
             <tr class="tbl-headings">
               <th>Item #</th>
@@ -406,7 +469,7 @@ export const getInspectionReportTemplateForIAR = (
                     </div>
                   </div>
                   <div>
-                   ${capitalizeFirstLetter(signatories?.recieved_by) || ""}
+                   ${capitalizeFirstLetter(signatories?.recieved_by) || ''}
                     <hr />
                     Inspection Officer
                   </div>
@@ -417,24 +480,41 @@ export const getInspectionReportTemplateForIAR = (
                   <div>Date Received: _____</div>
                   <div style="display:flex; flex-direction:column; gap:6px;">
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallComplete ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
-                          ${overallComplete ? "✓" : ""}
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallComplete ? '#ccc' : 'transparent'}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                          ${overallComplete ? '✓' : ''}
                         </div>
                         <p style="margin:0; width:65px;">Complete</p>
                       </div>
 
                       <div style="display:flex; align-items:center; gap:8px;">
-                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallPartial ? "#ccc" : "transparent"}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
-                          ${overallPartial ? "✓" : ""}
+                        <div style=" height: 40px; aspect-ratio:3/2; flex: 0; border:1px dotted black; background:${overallPartial ? '#ccc' : 'transparent'}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">
+                          ${overallPartial ? '✓' : ''}
                         </div>
                         <p style="margin:0; width:65px;">Partial</p>
                       </div>
                   </div>
                   <div>
-                    ${capitalizeFirstLetter(signatories?.recieved_from) || ""}
-                    <hr />
-                     Property and Supply Management Officer
+                  ${capitalizeFirstLetter(signatories?.recieved_from) || ''}
+                  <hr />
+                  <div style="margin-bottom: 20px;">
+                    Property and Supply Management Officer
                   </div>
+                                  ${
+                                    signatories?.end_user
+                                      ? `
+                  <div style="display: block; width: 100%; text-align: center; margin-top: 10px;">
+                    <div style="font-size: 12px; margin-bottom: 2px;">
+                      ${escapeHtml(String(capitalizeFirstLetter(signatories.end_user)))}
+                    </div>
+                    <div style="border-top: 1px solid #000; width: 75%; margin: 0 auto;"></div>
+                    <div style="font-size: 11px; margin-top: 4px;">
+                      Printed name & Signature of End-User
+                    </div>
+                  </div>
+                  `
+                                      : ''
+                                  }
+                </div>
                 </div>
               </td>
             </tr>

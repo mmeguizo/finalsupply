@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const GET_SIGNATORIES = gql`
   query GetSignatories {
@@ -69,8 +69,4 @@ const GET_SIGNATORIES_BY_PURCHASE_ORDER = gql`
   }
 `;
 
-export {
-  GET_SIGNATORIES,
-  GET_SIGNATORY,
-  GET_SIGNATORIES_BY_PURCHASE_ORDER
-};
+export { GET_SIGNATORIES, GET_SIGNATORY, GET_SIGNATORIES_BY_PURCHASE_ORDER };

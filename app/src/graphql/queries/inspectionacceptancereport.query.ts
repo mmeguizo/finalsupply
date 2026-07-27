@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
   query GetAllInspectionAcceptanceReport {
@@ -28,9 +28,13 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT = gql`
       income
       mds
       details
+      poRemarks
+      remarks
       splitGroupId
       splitFromItemId
       splitIndex
+      iarQuantityDisplay
+      recordType
       PurchaseOrder {
         id
         poNumber
@@ -97,6 +101,7 @@ const GET_IAR_ITEMS_BY_IAR_ID = gql`
       risId
       parId
       iarStatus
+      iarQuantityDisplay
       PurchaseOrder {
         id
         poNumber
@@ -151,6 +156,8 @@ const GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS = gql`
       income
       mds
       details
+      icsDetails
+      poRemarks
       splitGroupId
       splitFromItemId
       splitIndex
@@ -207,9 +214,83 @@ const GET_ALL_IAR_FOR_REPORTS = gql`
   }
 `;
 
+const GET_ALL_IAR_NO_CATEGORY = gql`
+  query GetAllIARNoCategory {
+    inspectionAcceptanceReportNoCategory {
+      id
+      itemName
+      purchaseOrderId
+      description
+      unit
+      quantity
+      unitCost
+      amount
+      actualQuantityReceived
+      category
+      isDeleted
+      tag
+      iarId
+      icsId
+      risId
+      parId
+      iarStatus
+      inventoryNumber
+      ncId
+      purpose
+      income
+      mds
+      details
+      poRemarks
+      splitGroupId
+      splitFromItemId
+      splitIndex
+      recordType
+      PurchaseOrder {
+        id
+        poNumber
+        supplier
+        address
+        poNumber
+        telephone
+        placeOfDelivery
+        dateOfDelivery
+        dateOfPayment
+        deliveryTerms
+        paymentTerms
+        category
+        status
+        amount
+        invoice
+        income
+        mds
+        details
+      }
+      PurchaseOrderItem {
+        id
+        purchaseOrderId
+        itemName
+        description
+        generalDescription
+        specification
+        unit
+        quantity
+        unitCost
+        amount
+        category
+        isDeleted
+        actualQuantityReceived
+        currentInput
+        generalDescription
+        specification
+      }
+    }
+  }
+`;
+
 export {
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT,
   GET_ALL_INSPECTION_ACCEPTANCE_REPORT_FOR_ICS,
   GET_ALL_IAR_FOR_REPORTS,
+  GET_ALL_IAR_NO_CATEGORY,
   GET_IAR_ITEMS_BY_IAR_ID,
 };

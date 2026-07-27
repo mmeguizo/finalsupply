@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,19 +8,19 @@ import {
   TextField,
   Typography,
   IconButton,
-} from "@mui/material";
-import Chip from "@mui/material/Chip";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+} from '@mui/material';
+import Chip from '@mui/material/Chip';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 // @ts-ignore
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteIcon from '@mui/icons-material/Delete';
 // @ts-ignore
-import AddIcon from "@mui/icons-material/Add";
-import Grid from "@mui/material/Grid";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import LoadingButton from "@mui/lab/LoadingButton";
-import SaveIcon from "@mui/icons-material/Save";
+import AddIcon from '@mui/icons-material/Add';
+import Grid from '@mui/material/Grid';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import LoadingButton from '@mui/lab/LoadingButton';
+import SaveIcon from '@mui/icons-material/Save';
 interface PurchaseOrderModalProps {
   open: boolean;
   handleClose: () => void;
@@ -47,10 +47,10 @@ export default function PurchaseOrderModal({
 
   // Initialize form state with purchase order data or empty values
   const [formData, setFormData] = React.useState({
-    poNumber: purchaseOrder?.poNumber || "",
-    supplier: purchaseOrder?.supplier || "",
-    address: purchaseOrder?.address || "",
-    placeOfDelivery: purchaseOrder?.placeOfDelivery || "",
+    poNumber: purchaseOrder?.poNumber || '',
+    supplier: purchaseOrder?.supplier || '',
+    address: purchaseOrder?.address || '',
+    placeOfDelivery: purchaseOrder?.placeOfDelivery || '',
     // dateofdelivery: purchaseOrder?.dateofdelivery
     //   ? new Date(Number(purchaseOrder.dateofdelivery))
     //   : null,
@@ -59,8 +59,8 @@ export default function PurchaseOrderModal({
       : null,
     items: purchaseOrder?.items || [],
     amount: purchaseOrder?.amount || 0,
-    status: purchaseOrder?.status || "",
-    invoice: purchaseOrder?.invoice || "",
+    status: purchaseOrder?.status || '',
+    invoice: purchaseOrder?.invoice || '',
   });
 
   // if adding item remove disabled in input
@@ -82,11 +82,11 @@ export default function PurchaseOrderModal({
     setHasSubmitted(false);
     if (purchaseOrder) {
       setFormData({
-        poNumber: purchaseOrder.poNumber || "",
-        supplier: purchaseOrder.supplier || "",
-        address: purchaseOrder.address || "",
+        poNumber: purchaseOrder.poNumber || '',
+        supplier: purchaseOrder.supplier || '',
+        address: purchaseOrder.address || '',
 
-        placeOfDelivery: purchaseOrder.placeOfDelivery || "", // dateofdelivery: purchaseOrder.dateofdelivery
+        placeOfDelivery: purchaseOrder.placeOfDelivery || '', // dateofdelivery: purchaseOrder.dateofdelivery
         // dateofdelivery: purchaseOrder.dateofdelivery
         // ? new Date(Number(purchaseOrder.dateofdelivery))
         // : null,
@@ -101,27 +101,25 @@ export default function PurchaseOrderModal({
             originalActualQuantityReceived: Number(item.actualQuantityReceived || 0),
             // For non-completed POs, the input field represents this-session received amount
             actualQuantityReceived:
-              purchaseOrder.status === "completed"
-                ? Number(item.actualQuantityReceived || 0)
-                : 0,
+              purchaseOrder.status === 'completed' ? Number(item.actualQuantityReceived || 0) : 0,
           })) || [],
         amount: purchaseOrder.amount || 0,
-        status: purchaseOrder.status || "",
-        invoice: purchaseOrder.invoice || "",
+        status: purchaseOrder.status || '',
+        invoice: purchaseOrder.invoice || '',
       });
     } else {
       // Reset form when adding new PO
       setFormData({
-        poNumber: "",
-        supplier: "",
-        address: "",
-        placeOfDelivery: "",
+        poNumber: '',
+        supplier: '',
+        address: '',
+        placeOfDelivery: '',
         // dateofdelivery: null,
         dateOfPayment: null,
         amount: 0,
         items: [],
-        status: "", // ensure status resets so no stale 'completed' can influence UI
-        invoice: "",
+        status: '', // ensure status resets so no stale 'completed' can influence UI
+        invoice: '',
       });
     }
   }, [purchaseOrder, open]);
@@ -133,7 +131,7 @@ export default function PurchaseOrderModal({
       setHasSubmitted(false);
       setFormData((prev) => ({
         ...prev,
-        status: "",
+        status: '',
       }));
     }
   }, [open, purchaseOrder]);
@@ -165,10 +163,10 @@ export default function PurchaseOrderModal({
       items: [
         ...formData.items,
         {
-          category: "",
-          item: "",
-          description: "",
-          unit: "",
+          category: '',
+          item: '',
+          description: '',
+          unit: '',
           quantity: 0,
           unitCost: 0,
           amount: 0,
@@ -187,11 +185,10 @@ export default function PurchaseOrderModal({
     };
 
     // Auto-calculate amount if quantity or unitCost changes
-    if (field === "quantity" || field === "unitCost") {
-      formData.amount,
+    if (field === 'quantity' || field === 'unitCost') {
+      (formData.amount,
         (updatedItems[index].amount =
-          Number(updatedItems[index].quantity) *
-          Number(updatedItems[index].unitCost));
+          Number(updatedItems[index].quantity) * Number(updatedItems[index].unitCost)));
     }
 
     // Check if quantities match to update status
@@ -204,14 +201,14 @@ export default function PurchaseOrderModal({
     setFormData({
       ...formData,
       items: updatedItems,
-      status: allItemsComplete ? "completed" : "pending",
+      status: allItemsComplete ? 'completed' : 'pending',
     });
   };
 
   // Handle form submission
   const onSubmit = () => {
     // Clean items - remove __typename and handle _id appropriately
-  const cleanedItems = formData.items.map((item: any) => {
+    const cleanedItems = formData.items.map((item: any) => {
       const { __typename, ...cleanItem } = item;
       return cleanItem;
     });
@@ -223,36 +220,45 @@ export default function PurchaseOrderModal({
       // dateofdelivery: formData.dateofdelivery
       //   ? formData.dateofdelivery.getTime().toString()
       //   : null,
-      dateOfPayment: formData.dateOfPayment
-        ? formData.dateOfPayment.getTime().toString()
-        : null,
+      dateOfPayment: formData.dateOfPayment ? formData.dateOfPayment.getTime().toString() : null,
       poNumber: parseInt(formData.poNumber),
     };
 
     // Remove __typename from the main object if it exists
-  const cleanData = formattedData;
+    const cleanData = formattedData;
     setAddingItem(false);
     handleSave(cleanData);
   };
 
   // Compute Add Item disabled state
-  const dialogKey = isEditing ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}` : 'add';
+  const dialogKey = isEditing
+    ? `edit-${purchaseOrder?.id || purchaseOrder?.poNumber || 'unknown'}`
+    : 'add';
   const addItemDisabled = !isEditing
     ? false
-    : String((formData.status || purchaseOrder?.status || "")).toLowerCase() === "completed";
+    : String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed';
 
   return (
     <Dialog key={dialogKey} open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {purchaseOrder ? "Update Recieved Item or Invoice" : "Add Purchase Order"}
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {purchaseOrder ? 'Update Recieved Item or Invoice' : 'Add Purchase Order'}
         <Chip
-          label={isEditing ? `Edit • ${String(formData.status || purchaseOrder?.status || '').toUpperCase() || 'PENDING'}` : 'Add'}
+          label={
+            isEditing
+              ? `Edit • ${String(formData.status || purchaseOrder?.status || '').toUpperCase() || 'PENDING'}`
+              : 'Add'
+          }
           size="small"
-          color={isEditing && String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed' ? 'default' : 'primary'}
+          color={
+            isEditing &&
+            String(formData.status || purchaseOrder?.status || '').toLowerCase() === 'completed'
+              ? 'default'
+              : 'primary'
+          }
         />
       </DialogTitle>
-    <DialogContent>
-  <Grid container spacing={2} sx={{ mt: 1 }}>
+      <DialogContent>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic PO Info */}
 
           <Grid item xs={12} md={6}>
@@ -311,7 +317,7 @@ export default function PurchaseOrderModal({
               <DatePicker
                 label="Payment Date"
                 value={formData.dateOfPayment}
-                onChange={(date) => handleDateChange(date, "dateOfPayment")}
+                onChange={(date) => handleDateChange(date, 'dateOfPayment')}
                 disabled={true}
               />
             </LocalizationProvider>
@@ -319,10 +325,7 @@ export default function PurchaseOrderModal({
 
           {/* Items Section */}
           <Grid item xs={12}>
-            <Typography
-              variant="h6"
-              sx={{ mt: 2, mb: 2, display: "flex", alignItems: "center" }}
-            >
+            <Typography variant="h6" sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center' }}>
               Items
               <Button
                 startIcon={<AddIcon />}
@@ -345,7 +348,7 @@ export default function PurchaseOrderModal({
                   mb: 2,
                   px: 2,
                   py: 1,
-                  backgroundColor: "background.default",
+                  backgroundColor: 'background.default',
                   borderRadius: 1,
                 }}
               >
@@ -385,12 +388,12 @@ export default function PurchaseOrderModal({
                 sx={{
                   mb: 2,
                   p: 1,
-                  alignItems: "center",
-                  "&:hover": {
-                    backgroundColor: "action.hover",
+                  alignItems: 'center',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
                   },
                   borderBottom: 5,
-                  borderColor: "divider",
+                  borderColor: 'divider',
                 }}
               >
                 <Grid item xs={2}>
@@ -398,18 +401,14 @@ export default function PurchaseOrderModal({
                     fullWidth
                     size="small"
                     value={item.category}
-                    onChange={(e) =>
-                      updateItem(index, "category", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, 'category', e.target.value)}
                     label="Category"
                     disabled={isFieldDisabled(item.category)}
-                    sx={{ "& .MuiSelect-select": { py: 1 } }}
+                    sx={{ '& .MuiSelect-select': { py: 1 } }}
                   >
-                    <MenuItem value={"property acknowledgement reciept"}>
-                      PAR
-                    </MenuItem>
-                    <MenuItem value={"inventory custodian slip"}>ICS</MenuItem>
-                    <MenuItem value={"requisition issue slip"}>RIS</MenuItem>
+                    <MenuItem value={'property acknowledgement reciept'}>PAR</MenuItem>
+                    <MenuItem value={'inventory custodian slip'}>ICS</MenuItem>
+                    <MenuItem value={'requisition issue slip'}>RIS</MenuItem>
                   </Select>
                 </Grid>
 
@@ -420,7 +419,7 @@ export default function PurchaseOrderModal({
                     placeholder="Item"
                     label="Item"
                     value={item.item}
-                    onChange={(e) => updateItem(index, "item", e.target.value)}
+                    onChange={(e) => updateItem(index, 'item', e.target.value)}
                     disabled={isFieldDisabled(item.item)}
                   />
                 </Grid>
@@ -432,9 +431,7 @@ export default function PurchaseOrderModal({
                     label="Description"
                     placeholder="Description"
                     value={item.description}
-                    onChange={(e) =>
-                      updateItem(index, "description", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, 'description', e.target.value)}
                     disabled={isFieldDisabled(item.description)}
                   />
                 </Grid>
@@ -446,7 +443,7 @@ export default function PurchaseOrderModal({
                     placeholder="Unit"
                     label="Unit"
                     value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
+                    onChange={(e) => updateItem(index, 'unit', e.target.value)}
                     disabled={isFieldDisabled(item.unit)}
                   />
                 </Grid>
@@ -460,12 +457,10 @@ export default function PurchaseOrderModal({
                     placeholder="Quantity"
                     inputProps={{
                       min: 0,
-                      style: { textAlign: "right" },
+                      style: { textAlign: 'right' },
                     }}
                     value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, "quantity", Number(e.target.value))
-                    }
+                    onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                     disabled={isFieldDisabled(item.quantity)}
                   />
                 </Grid>
@@ -480,35 +475,47 @@ export default function PurchaseOrderModal({
                     value={item.actualQuantityReceived}
                     inputProps={{
                       min: 0,
-                      max: Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)),
+                      max: Math.max(
+                        0,
+                        Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)
+                      ),
                     }}
                     onChange={(e) => {
                       const value = Number(e.target.value);
-                      const remaining = Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0));
+                      const remaining = Math.max(
+                        0,
+                        Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)
+                      );
                       const clamped = Math.min(Math.max(0, value), remaining);
-                      updateItem(index, "actualQuantityReceived", clamped);
+                      updateItem(index, 'actualQuantityReceived', clamped);
                     }}
                     disabled={
-                      Math.max(0, Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)) === 0 ||
-                      ((hasSubmitted || purchaseOrder?.status === "completed") &&
-                        Number(item.originalActualQuantityReceived || 0) + Number(item.actualQuantityReceived || 0) >= Number(item.quantity))
+                      Math.max(
+                        0,
+                        Number(item.quantity) - Number(item.originalActualQuantityReceived || 0)
+                      ) === 0 ||
+                      ((hasSubmitted || purchaseOrder?.status === 'completed') &&
+                        Number(item.originalActualQuantityReceived || 0) +
+                          Number(item.actualQuantityReceived || 0) >=
+                          Number(item.quantity))
                     }
-                    onFocus={() => {
-                    }}
+                    onFocus={() => {}}
                     sx={{
-                      width: "8vw",
-                      "& .MuiInputBase-root": {
-                        height: "40px",
+                      width: '8vw',
+                      '& .MuiInputBase-root': {
+                        height: '40px',
                       },
-                      "& input": {
-                        textAlign: "right",
-                        height: "100%",
+                      '& input': {
+                        textAlign: 'right',
+                        height: '100%',
                       },
                       // Optional: Add visual feedback
                       backgroundColor:
-                        (Number(item.originalActualQuantityReceived || 0) + Number(item.actualQuantityReceived || 0)) >= Number(item.quantity)
-                          ? "action.disabledBackground"
-                          : "transparent",
+                        Number(item.originalActualQuantityReceived || 0) +
+                          Number(item.actualQuantityReceived || 0) >=
+                        Number(item.quantity)
+                          ? 'action.disabledBackground'
+                          : 'transparent',
                     }}
                   />
                 </Grid>
@@ -521,18 +528,14 @@ export default function PurchaseOrderModal({
                     label="Unit Cost"
                     placeholder="Unit Cost"
                     value={item.unitCost}
-                    onChange={(e) =>
-                      updateItem(index, "unitCost", Number(e.target.value))
-                    }
+                    onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
                     disabled={isFieldDisabled(item.unitCost)}
                     InputProps={{
                       startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
+                        <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
                       ),
                     }}
-                    sx={{ "& input": { textAlign: "right" } }}
+                    sx={{ '& input': { textAlign: 'right' } }}
                   />
                 </Grid>
 
@@ -548,12 +551,10 @@ export default function PurchaseOrderModal({
                     InputProps={{
                       readOnly: true,
                       startAdornment: (
-                        <Typography sx={{ color: "text.secondary", mr: 0.5 }}>
-                          ₱
-                        </Typography>
+                        <Typography sx={{ color: 'text.secondary', mr: 0.5 }}>₱</Typography>
                       ),
                     }}
-                    sx={{ "& input": { textAlign: "right" } }}
+                    sx={{ '& input': { textAlign: 'right' } }}
                   />
                 </Grid>
               </Grid>

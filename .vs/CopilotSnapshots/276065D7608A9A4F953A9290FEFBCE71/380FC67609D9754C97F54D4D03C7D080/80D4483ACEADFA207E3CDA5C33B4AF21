@@ -1,0 +1,25 @@
+﻿import { DataTypes } from 'sequelize';
+
+export default {
+  up: async (queryInterface, Sequelize) => {
+    const tableName = 'inspection_acceptance_report';
+    const cols = await queryInterface.describeTable(tableName);
+
+    if (!cols['ics_details']) {
+      await queryInterface.addColumn(tableName, 'ics_details', {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        comment: 'ICS-specific details (separate from IAR details)',
+      });
+      console.log('Added column ics_details');
+    } else {
+      console.log('Skipping existing column ics_details');
+    }
+  },
+
+  down: async (queryInterface, Sequelize) => {
+    const tableName = 'inspection_acceptance_report';
+    await queryInterface.removeColumn(tableName, 'ics_details');
+    console.log('Removed column ics_details');
+  },
+};

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,12 +10,12 @@ import {
   Chip,
   Alert,
   Stack,
-} from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+} from '@mui/material';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 // @ts-ignore
-import { GET_ITEM_HISTORY } from "../graphql/queries/purchaseorder.query";
-import { useQuery } from "@apollo/client";
-import { currencyFormat } from "../utils/generalUtils";
+import { GET_ITEM_HISTORY } from '../graphql/queries/purchaseorder.query';
+import { useQuery } from '@apollo/client';
+import { currencyFormat } from '../utils/generalUtils';
 
 interface PurchaseOrderHistoryModalProps {
   open: boolean;
@@ -36,7 +36,7 @@ export default function PurchaseOrderHistoryModal({
       purchaseOrderId: poId,
     },
     skip: !poId, // Skip query if no ID available
-    fetchPolicy: "network-only",
+    fetchPolicy: 'network-only',
   });
 
   React.useEffect(() => {
@@ -50,8 +50,7 @@ export default function PurchaseOrderHistoryModal({
     const map: Record<string, string> = {};
     if (purchaseOrder?.items) {
       purchaseOrder.items.forEach((item: any) => {
-        map[String(item.id)] =
-          item.itemName || item.description || `Item #${item.id}`;
+        map[String(item.id)] = item.itemName || item.description || `Item #${item.id}`;
       });
     }
     return map;
@@ -63,38 +62,37 @@ export default function PurchaseOrderHistoryModal({
     return history.map((row: any) => ({
       ...row,
       itemDescription:
-        itemLookup[String(row.purchaseOrderItemId)] ||
-        `Item #${row.purchaseOrderItemId}`,
+        itemLookup[String(row.purchaseOrderItemId)] || `Item #${row.purchaseOrderItemId}`,
     }));
   }, [data, itemLookup]);
 
   const columns: GridColDef[] = [
     {
-      field: "itemDescription",
-      headerName: "Item",
+      field: 'itemDescription',
+      headerName: 'Item',
       width: 180,
     },
     {
-      field: "changeType",
-      headerName: "Change Type",
+      field: 'changeType',
+      headerName: 'Change Type',
       width: 140,
       renderCell: (params) => {
-        const type = params.value || "";
+        const type = params.value || '';
         const colorMap: Record<
           string,
-          "default" | "primary" | "success" | "warning" | "error" | "info"
+          'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
         > = {
-          QUANTITY_UPDATE: "primary",
-          RECEIVED_UPDATE: "success",
-          AMOUNT_UPDATE: "info",
-          IAR_GENERATED: "success",
-          ITEM_ADDED: "primary",
-          ITEM_DELETED: "error",
+          QUANTITY_UPDATE: 'primary',
+          RECEIVED_UPDATE: 'success',
+          AMOUNT_UPDATE: 'info',
+          IAR_GENERATED: 'success',
+          ITEM_ADDED: 'primary',
+          ITEM_DELETED: 'error',
         };
         return (
           <Chip
-            label={type.replace(/_/g, " ")}
-            color={colorMap[type] || "default"}
+            label={type.replace(/_/g, ' ')}
+            color={colorMap[type] || 'default'}
             size="small"
             variant="outlined"
           />
@@ -102,57 +100,57 @@ export default function PurchaseOrderHistoryModal({
       },
     },
     {
-      field: "previousQuantity",
-      headerName: "Qty",
+      field: 'previousQuantity',
+      headerName: 'Qty',
       width: 80,
-      type: "number",
+      type: 'number',
     },
     {
-      field: "previousActualQuantityReceived",
-      headerName: "Prev Received",
+      field: 'previousActualQuantityReceived',
+      headerName: 'Prev Received',
       width: 110,
-      type: "number",
+      type: 'number',
     },
     {
-      field: "newActualQuantityReceived",
-      headerName: "New Received",
+      field: 'newActualQuantityReceived',
+      headerName: 'New Received',
       width: 110,
-      type: "number",
+      type: 'number',
     },
     {
-      field: "previousAmount",
-      headerName: "Prev Amount",
+      field: 'previousAmount',
+      headerName: 'Prev Amount',
       width: 120,
       valueFormatter: (params: any) => {
-        if (params == null || params === undefined) return "—";
+        if (params == null || params === undefined) return '—';
         return currencyFormat(params);
       },
     },
     {
-      field: "newAmount",
-      headerName: "New Amount",
+      field: 'newAmount',
+      headerName: 'New Amount',
       width: 120,
       valueFormatter: (params: any) => {
-        if (params == null || params === undefined) return "—";
+        if (params == null || params === undefined) return '—';
         return currencyFormat(params);
       },
     },
-    { field: "changedBy", headerName: "Changed By", width: 120 },
-    { field: "changeReason", headerName: "Reason", width: 200, flex: 1 },
+    { field: 'changedBy', headerName: 'Changed By', width: 120 },
+    { field: 'changeReason', headerName: 'Reason', width: 200, flex: 1 },
     {
-      field: "createdAt",
-      headerName: "Date",
+      field: 'createdAt',
+      headerName: 'Date',
       width: 160,
       valueFormatter: (params: any) => {
-        if (!params) return "—";
+        if (!params) return '—';
         const ts = parseInt(params);
-        if (isNaN(ts)) return "—";
-        return new Date(ts).toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
+        if (isNaN(ts)) return '—';
+        return new Date(ts).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
         });
       },
     },
@@ -184,7 +182,7 @@ export default function PurchaseOrderHistoryModal({
             No purchase order selected.
           </Alert>
         )}
-        <Box sx={{ width: "100%", minHeight: 400 }}>
+        <Box sx={{ width: '100%', minHeight: 400 }}>
           <DataGrid
             rows={enrichedRows}
             columns={columns}
@@ -194,7 +192,7 @@ export default function PurchaseOrderHistoryModal({
                 paginationModel: { pageSize: 10 },
               },
               sorting: {
-                sortModel: [{ field: "createdAt", sort: "desc" }],
+                sortModel: [{ field: 'createdAt', sort: 'desc' }],
               },
             }}
             pageSizeOptions={[5, 10, 25]}

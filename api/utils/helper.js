@@ -5,9 +5,7 @@ export function omitId(obj) {
 }
 
 export function omitFields(obj, fieldsToOmit = []) {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([key]) => !fieldsToOmit.includes(key))
-  );
+  return Object.fromEntries(Object.entries(obj).filter(([key]) => !fieldsToOmit.includes(key)));
 }
 
 // module.exports = { omitId, omitFields };

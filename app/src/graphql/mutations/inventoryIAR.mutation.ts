@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const ADD_PURCHASEORDER = gql`
   mutation AddPurchaseOrder($input: PurchaseOrderInput!) {
@@ -83,10 +83,7 @@ export const REVERT_IAR_BATCH = gql`
 `;
 
 export const APPEND_TO_EXISTING_IAR = gql`
-  mutation AppendToExistingIAR(
-    $iarId: String!
-    $items: [AppendIARItemInput!]!
-  ) {
+  mutation AppendToExistingIAR($iarId: String!, $items: [AppendIARItemInput!]!) {
     appendToExistingIAR(iarId: $iarId, items: $items) {
       success
       iarId
@@ -97,10 +94,7 @@ export const APPEND_TO_EXISTING_IAR = gql`
 `;
 
 export const CREATE_LINE_ITEM_FROM_EXISTING = gql`
-  mutation CreateLineItemFromExisting(
-    $sourceItemId: Int!
-    $newItem: CreateLineItemInput!
-  ) {
+  mutation CreateLineItemFromExisting($sourceItemId: Int!, $newItem: CreateLineItemInput!) {
     createLineItemFromExisting(sourceItemId: $sourceItemId, newItem: $newItem) {
       success
       newItemId
@@ -116,11 +110,7 @@ export const GENERATE_IAR_FROM_PO = gql`
     $items: [GenerateIARItemInput!]!
     $invoice: String
   ) {
-    generateIARFromPO(
-      purchaseOrderId: $purchaseOrderId
-      items: $items
-      invoice: $invoice
-    ) {
+    generateIARFromPO(purchaseOrderId: $purchaseOrderId, items: $items, invoice: $invoice) {
       success
       iarId
       updatedCount
@@ -137,6 +127,7 @@ export const UPDATE_IAR_INVOICE = gql`
     $income: String
     $mds: String
     $details: String
+    $poRemarks: String
   ) {
     updateIARInvoice(
       iarId: $iarId
@@ -145,6 +136,7 @@ export const UPDATE_IAR_INVOICE = gql`
       income: $income
       mds: $mds
       details: $details
+      poRemarks: $poRemarks
     ) {
       success
       message
@@ -154,6 +146,7 @@ export const UPDATE_IAR_INVOICE = gql`
       income
       mds
       details
+      poRemarks
       updatedCount
     }
   }
@@ -195,6 +188,18 @@ export const CREATE_SINGLE_ICS_ASSIGNMENT = gql`
         icsId
       }
       generatedIcsId
+    }
+  }
+`;
+
+export const UPDATE_IAR_ITEM_DISPLAY = gql`
+  mutation UpdateIARItemDisplay($id: Int!, $iarQuantityDisplay: String, $amount: Float) {
+    updateIARItemDisplay(id: $id, iarQuantityDisplay: $iarQuantityDisplay, amount: $amount) {
+      success
+      message
+      id
+      iarQuantityDisplay
+      amount
     }
   }
 `;
@@ -359,6 +364,70 @@ export const UPDATE_ITEM_REMARKS = gql`
       success
       message
       updatedCount
+    }
+  }
+`;
+
+export const UPDATE_ICS_DETAILS = gql`
+  mutation UpdateIcsDetails($id: ID!, $icsDetails: String!) {
+    updateIcsDetails(id: $id, icsDetails: $icsDetails) {
+      success
+      message
+      updatedCount
+    }
+  }
+`;
+
+export const UPDATE_PAR_DETAILS = gql`
+  mutation UpdateParDetails($id: ID!, $parDetails: String!) {
+    updateParDetails(id: $id, parDetails: $parDetails) {
+      success
+      message
+      updatedCount
+    }
+  }
+`;
+
+export const UPDATE_RIS_DETAILS = gql`
+  mutation UpdateRisDetails($id: ID!, $risDetails: String!) {
+    updateRisDetails(id: $id, risDetails: $risDetails) {
+      success
+      message
+      updatedCount
+    }
+  }
+`;
+
+export const ASSIGN_NO_CATEGORY_ITEM = gql`
+  mutation AssignNoCategoryItem($id: Int!, $assignedQuantity: Int!, $purpose: String) {
+    assignNoCategoryItem(id: $id, assignedQuantity: $assignedQuantity, purpose: $purpose) {
+      newItem {
+        id
+        ncId
+        description
+        unit
+        quantity
+        unitCost
+        amount
+        actualQuantityReceived
+        category
+        tag
+        iarId
+        purpose
+        recordType
+        PurchaseOrder {
+          id
+          poNumber
+          supplier
+          dateOfDelivery
+        }
+      }
+      sourceItem {
+        id
+        actualQuantityReceived
+        ncId
+      }
+      generatedNcId
     }
   }
 `;
