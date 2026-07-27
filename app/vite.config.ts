@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import removeConsole from 'vite-plugin-remove-console';
 
-// https://vitejs.dev/config/
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
   const url = process.env.VITE_GRAPHQL_URL;
+  const isProduction = mode === 'production' || process.env.NODE_ENV === 'production';
 
   if (process.env.CI && !url) {
     throw new Error('VITE_GRAPHQL_URL is required in CI builds. Set it to /graphql if Nginx proxies the API.');
@@ -14,12 +15,15 @@ export default defineConfig(() => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      ...(isProduction ? [removeConsole()] : []),
+    ],
     server: {
       port: 3000,
     },
     build: {
-      sourcemap: true,
+      sourcemap: !isProduction,
     },
   };
 });

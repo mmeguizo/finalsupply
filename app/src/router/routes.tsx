@@ -68,7 +68,6 @@ export const router = createBrowserRouter([
               {
                 path: 'issuance-par',
                 Component: IssuanceParPage,
-                element: <ProtectedRoute routePath="issuance" />,
               },
               {
                 path: 'issuance-ris',
