@@ -232,7 +232,7 @@ input PurchaseOrderInput {
 
 
 type Query {
-    purchaseOrders: [PurchaseOrder!]
+    purchaseOrders(limit: Int, offset: Int): [PurchaseOrder!]
     purchaseOrder(purchaseOrderId: ID!): PurchaseOrder
     purchaseOrderItems(purchaseOrderId: ID!): [Item!]
     purchaseOrderItems: [Item!]

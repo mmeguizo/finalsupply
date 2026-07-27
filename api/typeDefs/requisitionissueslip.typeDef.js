@@ -170,8 +170,8 @@ type AddItemToExistingRISResponse {
 }
 
 type Query {
-    requisitionIssueSlip: [ItemWithPurchaseOrder!]
-    requisitionIssueSlipForView: [ItemWithPurchaseOrder!]
+    requisitionIssueSlip(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
+    requisitionIssueSlipForView(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
 }
 
 type Mutation {

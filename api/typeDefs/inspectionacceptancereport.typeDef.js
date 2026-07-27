@@ -173,9 +173,9 @@ input ICSUpdateInput {
 }
 
 type Query {
-    inspectionAcceptanceReport: [ItemWithPurchaseOrder!]
-    inspectionAcceptanceReportForICS: [ItemWithPurchaseOrder!]
-    inspectionAcceptanceReportNoCategory: [ItemWithPurchaseOrder]
+    inspectionAcceptanceReport(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
+    inspectionAcceptanceReportForICS(limit: Int, offset: Int): [ItemWithPurchaseOrder!]
+    inspectionAcceptanceReportNoCategory(limit: Int, offset: Int): [ItemWithPurchaseOrder]
     iarForReports: [IARonly]
     getIARItemsByIarId(iarId: String!): [ItemWithPurchaseOrder!]
 }

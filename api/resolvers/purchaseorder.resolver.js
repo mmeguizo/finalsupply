@@ -11,13 +11,17 @@ const nanoid = customAlphabet('1234567890meguizomarkoliver', 10);
 import { nextIarId } from '../utils/atomicIdGenerator.js';
 const purchaseorderResolver = {
   Query: {
-    purchaseOrders: async (_, __, context) => {
+    purchaseOrders: async (_, args, context) => {
       try {
         requireAuthenticated(context);
-        // Fetch all purchase orders using Sequelize
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const purchaseorders = await PurchaseOrder.findAll({
-          where: { isDeleted: false }, // Only get active purchase orders
-          order: [['createdAt', 'DESC']], // Sort by date descending
+          where: { isDeleted: false },
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset,
         });
 
         return purchaseorders;
@@ -76,44 +80,48 @@ const purchaseorderResolver = {
       try {
         requireAuthenticated(context);
 
-        let totalItemAmount = await PurchaseOrderItems.findAll({
+        const result = await PurchaseOrderItems.findOne({
           where: { isDeleted: false },
-          order: [['createdAt', 'DESC']],
+          attributes: [
+            [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('amount')), 0), 'total'],
+          ],
+          raw: true,
         });
-        let totalAmount = totalItemAmount.reduce((sum, item) => {
-          return sum + (Number(item.amount) || 0);
-        }, 0);
-        return totalAmount; // Return the total amoun
+        return Number(result?.total || 0);
       } catch (error) {
-        console.error('Error fetching purchase order items: ', error);
+        console.error('Error fetching total purchase order amount: ', error);
         throw new Error(error.message || 'Internal server error');
       }
     },
     getTotalPurchaseOrderItems: async (_, __, context) => {
       try {
         requireAuthenticated(context);
-        let totalItemAmount = await PurchaseOrderItems.findAll({
+        const result = await PurchaseOrderItems.findOne({
           where: { isDeleted: false },
-          order: [['createdAt', 'DESC']],
+          attributes: [
+            [sequelize.fn('COUNT', sequelize.col('id')), 'total'],
+          ],
+          raw: true,
         });
-        let totalAmount = totalItemAmount.length;
-        return totalAmount; // Return the total amoun
+        return result?.total || 0;
       } catch (error) {
-        console.error('Error fetching purchase order items: ', error);
+        console.error('Error fetching total purchase order items: ', error);
         throw new Error(error.message || 'Internal server error');
       }
     },
     getTotalPurchaseOrders: async (_, __, context) => {
       try {
         requireAuthenticated(context);
-        let totalItemAmount = await PurchaseOrder.findAll({
+        const result = await PurchaseOrder.findOne({
           where: { isDeleted: false },
-          order: [['createdAt', 'DESC']],
+          attributes: [
+            [sequelize.fn('COUNT', sequelize.col('id')), 'total'],
+          ],
+          raw: true,
         });
-        let totalAmount = totalItemAmount.length;
-        return totalAmount; // Return the total amoun
+        return result?.total || 0;
       } catch (error) {
-        console.error('Error fetching purchase order items: ', error);
+        console.error('Error fetching total purchase orders: ', error);
         throw new Error(error.message || 'Internal server error');
       }
     },

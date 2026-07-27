@@ -11,29 +11,26 @@ import { requireAuthenticated, requireRole, ownershipScope, authorizeOwnership, 
 const nanoid = customAlphabet('1234567890meguizomarkoliver', 10);
 const inspectionAcceptanceReportResolver = {
   Query: {
-    inspectionAcceptanceReport: async (_, __, context) => {
+    inspectionAcceptanceReport: async (_, args, context) => {
       try {
         requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
           : {};
-        // Fetch a single purchase order by ID
-        // const inspectionAcceptanceReportdata =
-        //   await inspectionAcceptanceReport.findAll({
-        //     where: { isDeleted: false },
-        //     order: [["id", "DESC"]],
-        //     include: [PurchaseOrder],
-        //   });
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const rows = await inspectionAcceptanceReport.findAll({
           where: { isDeleted: false, recordType: 'iar_original', ...createdByScope },
           order: [['id', 'DESC']],
+          limit,
+          offset,
           include: [
             { model: PurchaseOrder, required: true },
             {
               model: PurchaseOrderItems,
               as: 'PurchaseOrderItem',
-              // Include all fields you need in the client shape
               attributes: [
                 'id',
                 'purchaseOrderId',
@@ -53,14 +50,9 @@ const inspectionAcceptanceReportResolver = {
                 'itemGroupId',
                 'isReceiptLine',
               ],
-              required: false, // LEFT JOIN
+              required: false,
             },
           ],
-        });
-
-        // Debug first few
-        rows.slice(0, 5).forEach((r) => {
-          const it = r.PurchaseOrderItem;
         });
 
         return rows;
@@ -69,14 +61,16 @@ const inspectionAcceptanceReportResolver = {
         throw new Error(error.message || 'Internal server error');
       }
     },
-    inspectionAcceptanceReportForICS: async (_, __, context) => {
+    inspectionAcceptanceReportForICS: async (_, args, context) => {
       try {
         requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
           : {};
-        // Fetch a single purchase order by ID
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
           where: {
             isDeleted: false,
@@ -86,9 +80,10 @@ const inspectionAcceptanceReportResolver = {
             ...createdByScope,
           },
           order: [['createdAt', 'DESC']],
+          limit,
+          offset,
           include: [
             { model: PurchaseOrder },
-            // include PurchaseOrderItems using the alias used in your models / code
             {
               model: PurchaseOrderItems,
               as: 'PurchaseOrderItem',
@@ -114,63 +109,40 @@ const inspectionAcceptanceReportResolver = {
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
           : {};
 
-        const inspectionAcceptanceReportdata = await inspectionAcceptanceReport.findAll({
-          // Explicitly select only the attributes required by the IARonly GraphQL type
-          // Using snake_case for database columns
-          attributes: ['id', 'created_at', 'iar_id', 'category', 'purchase_order_id'],
-          where: {
-            isDeleted: false,
-            ...createdByScope,
-          },
-          order: [
-            ['created_at', 'DESC'], // Order by created_at (snake_case)
-            ['id', 'DESC'], // Secondary sort for consistency
-          ],
-          include: [
-            {
-              model: PurchaseOrder, // Include the associated PurchaseOrder details
-              attributes: ['po_number'], // Assuming 'po_number' is the correct
-              // required : true // Ensures that only IARs with associated POs are returned
-            },
-          ],
-        });
+        // Use SQL aggregation (MAX(id) per iar_id) to avoid fetching the full table
+        // and deduplicating in application memory
+        const replacements = [];
+        const filters = ['iar.is_deleted = 0', 'iar.iar_id IS NOT NULL', 'iar.iar_id != \'\''];
+        if (createdByScope[Op.or]) {
+          filters.push('(iar.created_by = ? OR iar.created_by IS NULL)');
+          replacements.push(user.email);
+        }
 
-        if (!inspectionAcceptanceReportdata || inspectionAcceptanceReportdata.length === 0) {
-          console.log('No data fetched from database, returning empty array.');
+        const sql = `
+          SELECT iar.id, iar.created_at, iar.iar_id, iar.category, po.po_number
+          FROM inspection_acceptance_report iar
+          INNER JOIN purchase_orders po ON po.id = iar.purchase_order_id
+          INNER JOIN (
+            SELECT MAX(id) AS max_id
+            FROM inspection_acceptance_report
+            WHERE ${filters.join(' AND ')}
+            GROUP BY iar_id
+          ) latest ON latest.max_id = iar.id
+          ORDER BY iar.created_at DESC, iar.id DESC
+        `;
+
+        const [results] = await sequelize.query(sql, { replacements });
+
+        if (!results || results.length === 0) {
           return [];
         }
 
-        const uniqueIARs = new Map();
-
-        // Iterate through the fetched data to filter out unique iar_id values
-
-        inspectionAcceptanceReportdata.forEach((item) => {
-          // Access iar_id directly from dataValues
-          const iarIdValue = item.dataValues.iar_id;
-          console.log(item.dataValues.PurchaseOrder.dataValues.po_number);
-
-          if (iarIdValue) {
-            if (!uniqueIARs.has(iarIdValue)) {
-              uniqueIARs.set(iarIdValue, item);
-            }
-          } else {
-            // Log items being skipped if iar_id is falsy
-            // console.log(`Skipping item ID: ${item.id} because iar_id is falsy: '${iarIdValue}'`);
-          }
-        });
-        // console.log("--- UNIQUE IARS MAP CONTENT (before final map) ---");
-        // console.log(`Number of unique items found: ${uniqueIARs.size}`);
-        // console.log("--- END UNIQUE IARS MAP CONTENT ---");
-        // Convert the Map values to an array of plain objects, accessing
-        // created_at and iar_id from dataValues
-        return Array.from(uniqueIARs.values()).map((item) => ({
+        return results.map((item) => ({
           id: item.id,
-          // CRITICAL FIX: Access created_at directly from dataValues
-          createdAt: item.dataValues.created_at,
-          category: item.dataValues.category, // Assuming 'category' is the correct field
-          // CRITICAL FIX: Access iar_id directly from dataValues
-          iarId: item.dataValues.iar_id,
-          poNumber: item.dataValues.PurchaseOrder.dataValues.po_number, // Assuming 'po_number' is the correct field
+          createdAt: item.created_at,
+          category: item.category,
+          iarId: item.iar_id,
+          poNumber: item.po_number,
         }));
       } catch (error) {
         console.error('Error fetching unique inspection acceptance report data: ', error);
@@ -178,13 +150,15 @@ const inspectionAcceptanceReportResolver = {
       }
     },
     // Fetch IAR items where category IS NULL (no category assigned)
-    inspectionAcceptanceReportNoCategory: async (_, __, context) => {
+    inspectionAcceptanceReportNoCategory: async (_, args, context) => {
       try {
         requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
           : {};
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
 
         const rows = await inspectionAcceptanceReport.findAll({
           where: {
@@ -193,6 +167,8 @@ const inspectionAcceptanceReportResolver = {
             ...createdByScope,
           },
           order: [['id', 'DESC']],
+          limit,
+          offset,
           include: [
             { model: PurchaseOrder },
             {

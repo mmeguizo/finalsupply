@@ -7,15 +7,19 @@ import PurchaseOrderItems from '../models/purchaseorderitems.js';
 import { requireAuthenticated, ownershipScope, authorizeOwnership, authorizeOwnershipBatch } from '../auth/authorization.js';
 const requisitionIssueSlipResolver = {
   Query: {
-    requisitionIssueSlip: async (_, __, context) => {
+    requisitionIssueSlip: async (_, args, context) => {
       try {
         requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = ownershipScope(user);
-        // Fetch a single purchase order by ID
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
           where: { isDeleted: false, ...createdByScope },
           order: [['createdAt', 'DESC']],
+          limit,
+          offset,
           include: [PurchaseOrder],
         });
 
@@ -28,14 +32,16 @@ const requisitionIssueSlipResolver = {
         throw new Error(error.message || 'Internal server error');
       }
     },
-    requisitionIssueSlipForView: async (_, __, context) => {
+    requisitionIssueSlipForView: async (_, args, context) => {
       try {
         requireAuthenticated(context);
         const user = await context.getUser();
         const createdByScope = user?.email
           ? { [Op.or]: [{ createdBy: user.email }, { createdBy: null }] }
           : {};
-        // Fetch a single purchase order by ID
+        const limit = Math.min(Math.max(args.limit ?? 50, 1), 500);
+        const offset = Math.max(args.offset ?? 0, 0);
+
         const requisitionIssueSlipReportdata = await requisitionIssueSlip.findAll({
           where: {
             isDeleted: false,
@@ -43,9 +49,10 @@ const requisitionIssueSlipResolver = {
             ...createdByScope,
           },
           order: [['createdAt', 'DESC']],
+          limit,
+          offset,
           include: [
             { model: PurchaseOrder },
-            // include PurchaseOrderItems using the alias used in your models / code
             {
               model: PurchaseOrderItems,
               as: 'PurchaseOrderItem',
