@@ -45,7 +45,7 @@ function validate() {
 
 validate();
 
-const rawOrigins = optional('CORS_ORIGINS', 'http://localhost:3000,http://10.100.168.9:3000');
+const rawOrigins = optional('CORS_ORIGINS', '*');
 const corsOrigins = parseOrigins(rawOrigins);
 
 if (isProduction) {
